@@ -73,6 +73,17 @@ jobs:
           name: release-${{ github.sha }}
           path: release
 
+      - name: Debug SSH Key
+        run: |
+          echo "Longitud en caracteres:"
+          echo -n "${{ secrets.SSH_PRIVATE_KEY }}" | wc -c
+          echo "Numero de lineas:"
+          echo -n "${{ secrets.SSH_PRIVATE_KEY }}" | wc -l
+          echo "Cabecera:"
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | head -n 1
+          echo "Pie:"
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tail -n 1
+
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:

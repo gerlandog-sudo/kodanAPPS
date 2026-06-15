@@ -1,0 +1,25 @@
+{
+  "name": "kodanapps-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo para la suite de aplicaciones kodanAPPS",
+  "workspaces": [
+    "apps/crm",
+    "apps/tracker",
+    "packages/ui-core"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev:crm": "npm run dev --workspace=apps/crm",
+    "dev:tracker": "npm run dev --workspace=apps/tracker",
+    "build:crm": "npm run build --workspace=apps/crm",
+    "build:tracker": "npm run build --workspace=apps/tracker",
+    "build:ui": "npm run build --workspace=packages/ui-core"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3"
+  }
+}

@@ -37,7 +37,7 @@ jobs:
       - name: Install PHP dependencies (api)
         run: |
           cd apps/api
-          composer install --no-dev --optimize-autoloader --no-interaction
+          composer install --optimize-autoloader --no-interaction
 
       - name: Run PHPStan Level 9
         run: |

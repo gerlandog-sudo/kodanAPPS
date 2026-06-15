@@ -1,25 +1,31 @@
 {
-  "name": "kodanapps-monorepo",
+  "name": "kodanAPPS",
   "version": "1.0.0",
   "private": true,
-  "description": "Monorepo para la suite de aplicaciones kodanAPPS",
   "workspaces": [
-    "apps/crm",
-    "apps/tracker",
-    "packages/ui-core"
+    "packages/*",
+    "apps/*"
   ],
+  "scripts": {
+    "dev:superadmin": "npm run dev --workspace=@kodan-apps/superadmin",
+    "dev:crm": "npm run dev --workspace=@kodan-apps/crm",
+    "dev:tracker": "npm run dev --workspace=@kodan-apps/tracker",
+    "build:all": "npm run build --workspaces",
+    "build:superadmin": "npm run build --workspace=@kodan-apps/superadmin",
+    "build:crm": "npm run build --workspace=@kodan-apps/crm",
+    "build:tracker": "npm run build --workspace=@kodan-apps/tracker",
+    "lint:all": "npm run lint --workspaces",
+    "typecheck:all": "npm run typecheck --workspaces",
+    "test:api": "npm run test --workspace=@kodan-apps/api",
+    "db:migrate": "php migrations/run.php",
+    "db:seed": "php migrations/seed_superadmin.php"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
   },
-  "scripts": {
-    "dev:crm": "npm run dev --workspace=apps/crm",
-    "dev:tracker": "npm run dev --workspace=apps/tracker",
-    "build:crm": "npm run build --workspace=apps/crm",
-    "build:tracker": "npm run build --workspace=apps/tracker",
-    "build:ui": "npm run build --workspace=packages/ui-core"
-  },
-  "devDependencies": {
-    "@types/node": "^25.9.3"
-  }
+  "packageManager": "npm@10.8.0"
 }

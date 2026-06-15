@@ -1,0 +1,152 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '20'
+  SERVER_HOST: ${{ secrets.SERVER_HOST }}
+  SERVER_USER: ${{ secrets.SERVER_USER }}
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  DEPLOY_PATH: /home/admkoda/kodanAPPS
+  PUBLIC_HTML_PATH: /home/admkoda/public_html
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pdo_mysql, mbstring, xml, curl, zip, bcmath, gd, intl
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install PHP dependencies (api)
+        run: |
+          cd apps/api
+          composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Run PHPStan Level 9
+        run: |
+          cd apps/api
+          vendor/bin/phpstan analyse --level=9 --memory-limit=512M
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Frontends (crm + tracker)
+        run: |
+          npm run build:crm
+          npm run build:tracker
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: |
+            apps/api/
+            apps/crm/dist/
+            apps/tracker/dist/
+          retention-days: 7
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.sha }}
+          path: release
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ env.SSH_KEY }}
+
+      - name: Deploy Atomic Release
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          RELEASE_NAME="v${TIMESTAMP}-${GITHUB_SHA::7}"
+          
+          ssh -o StrictHostKeyChecking=no ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
+            set -e
+            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}
+          "
+          
+          # Transferir backend de API (excluyendo vendor y .env)
+          rsync -az --delete \
+            --exclude='vendor/' \
+            --exclude='.env' \
+            release/apps/api/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/
+          
+          # Transferir compilado del CRM
+          rsync -az --delete \
+            release/apps/crm/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crmv2/
+          
+          # Transferir compilado del Tracker
+          rsync -az --delete \
+            release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/trackerv2/
+          
+          # Enlazar recursos compartidos y activar release de forma atómica
+          ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
+            set -e
+            cd ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}
+            
+            # Enlaces simbólicos hacia directorio compartido
+            ln -nfs ../../shared/vendor vendor
+            ln -nfs ../../shared/.env .env
+            ln -nfs ../../shared/storage storage
+            
+            # Regenerar Autoload
+            composer dump-autoload --optimize --no-dev
+            
+            # Correr migraciones de Base de Datos
+            if [ -f migrations/run.php ]; then
+              php migrations/run.php
+            fi
+            
+            # Switch de release atómico principal
+            ln -nfs releases/${RELEASE_NAME} ${{ env.DEPLOY_PATH }}/current
+            
+            # Enlaces simbólicos públicos en public_html
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crmv2 ${{ env.PUBLIC_HTML_PATH }}/crmv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/trackerv2 ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            
+            # Mantener únicamente las últimas 5 releases para optimizar espacio
+            cd ${{ env.DEPLOY_PATH }}/releases && ls -t | tail -n +6 | xargs -r rm -rf
+          "
+
+  rollback:
+    needs: deploy
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rollback to Previous Release
+        run: |
+          ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
+            cd ${{ env.DEPLOY_PATH }}/releases
+            PREV=\$(ls -t | head -2 | tail -1)
+            ln -nfs releases/\$PREV ${{ env.DEPLOY_PATH }}/current
+            
+            # Restaurar enlaces simbólicos públicos en public_html a la versión estable anterior
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crmv2 ${{ env.PUBLIC_HTML_PATH }}/crmv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/trackerv2 ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            echo 'Rollback completado de forma atómica a: '\$PREV
+          "

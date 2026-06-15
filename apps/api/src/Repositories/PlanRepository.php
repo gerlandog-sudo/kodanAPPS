@@ -26,6 +26,7 @@ final class PlanRepository extends BaseRepository
     public function findAllWithLimits(): array
     {
         $plans = $this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
             SELECT id, name, description, price, currency, created_at, updated_at
             FROM subscription_plans
             WHERE deleted_at IS NULL
@@ -47,7 +48,7 @@ final class PlanRepository extends BaseRepository
     public function getLimits(int $planId): array
     {
         return $this->rawSelect(
-            "SELECT module, metric, value FROM plan_limits WHERE plan_id = ? ORDER BY module, metric",
+            "/* BYPASS_TENANT_SCOPE */ SELECT module, metric, value FROM plan_limits WHERE plan_id = ? ORDER BY module, metric",
             [$planId]
         );
     }
@@ -57,9 +58,9 @@ final class PlanRepository extends BaseRepository
      * 
      * @return int Nuevo plan_id
      */
-    public function create(string $name, string $description, float $price, string $currency): int
+    public function createPlan(string $name, string $description, float $price, string $currency): int
     {
-        return $this->create('subscription_plans', [
+        return parent::create('subscription_plans', [
             'name' => $name,
             'description' => $description,
             'price' => $price,
@@ -70,7 +71,7 @@ final class PlanRepository extends BaseRepository
     /**
      * Actualiza plan
      */
-    public function update(int $planId, array $data): bool
+    public function updatePlan(int $planId, array $data): bool
     {
         unset($data['id'], $data['created_at'], $data['deleted_at']);
         if (empty($data)) {
@@ -78,18 +79,18 @@ final class PlanRepository extends BaseRepository
         }
         
         $data['updated_at'] = date('Y-m-d H:i:s');
-        $rows = $this->update('subscription_plans', $data, 'id = :id', [':id' => $planId]);
+        $rows = $this->update('subscription_plans', $data, '/* BYPASS_TENANT_SCOPE */ id = :id', [':id' => $planId]);
         return $rows > 0;
     }
 
     /**
      * Elimina plan (soft delete)
      */
-    public function delete(int $planId): bool
+    public function deletePlan(int $planId): bool
     {
         $rows = $this->update('subscription_plans', [
             'deleted_at' => date('Y-m-d H:i:s'),
-        ], 'id = :id', [':id' => $planId]);
+        ], '/* BYPASS_TENANT_SCOPE */ id = :id', [':id' => $planId]);
         return $rows > 0;
     }
 
@@ -106,7 +107,7 @@ final class PlanRepository extends BaseRepository
         }
 
         $this->rawExecute(
-            "INSERT INTO plan_limits (plan_id, module, metric, value)
+            "/* BYPASS_TENANT_SCOPE */ INSERT INTO plan_limits (plan_id, module, metric, value)
              VALUES (?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE value = VALUES(value)",
             [$planId, $module, $metric, $value]
@@ -122,7 +123,7 @@ final class PlanRepository extends BaseRepository
     {
         $this->transactional(function () use ($planId, $limits) {
             // Eliminar existentes
-            $this->rawExecute("DELETE FROM plan_limits WHERE plan_id = ?", [$planId]);
+            $this->rawExecute("/* BYPASS_TENANT_SCOPE */ DELETE FROM plan_limits WHERE plan_id = ?", [$planId]);
             
             // Insertar nuevos
             foreach ($limits as $limit) {

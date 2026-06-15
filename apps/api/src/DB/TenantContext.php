@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace kodanAPPS\DB;
 
+use RuntimeException;
+
 /**
  * TenantContext - Contexto de tenant actual (request-scoped)
  * 

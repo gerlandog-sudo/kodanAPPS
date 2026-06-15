@@ -31,6 +31,11 @@ abstract class BaseRepository
      */
     protected function applyTenantScope(string &$sql, array &$params): void
     {
+        // Si la consulta solicita explícitamente saltar el scope
+        if (str_contains($sql, '/* BYPASS_TENANT_SCOPE */')) {
+            return;
+        }
+
         $tenantId = TenantContext::getTenantId();
         
         // Para prepared statements: agregar tenant_id como parámetro
@@ -98,8 +103,11 @@ abstract class BaseRepository
      */
     protected function create(string $table, array $data): int
     {
-        $tenantId = TenantContext::getTenantId();
-        $data['tenant_id'] = $tenantId;
+        $globalTables = ['tenants', 'subscription_plans', 'plan_limits'];
+        if (!in_array($table, $globalTables, true)) {
+            $tenantId = TenantContext::getTenantId();
+            $data['tenant_id'] = $tenantId;
+        }
         $data['created_at'] = date('Y-m-d H:i:s');
         
         $columns = implode(', ', array_map(fn($c) => "`{$c}`", array_keys($data)));
@@ -155,7 +163,7 @@ abstract class BaseRepository
      * 
      * @return array<int, array<string, mixed>>
      */
-    protected function rawSelect(string $sql, array $params = []): array
+    public function rawSelect(string $sql, array $params = []): array
     {
         $this->applyTenantScope($sql, $params);
         $stmt = $this->pdo->prepare($sql);
@@ -168,7 +176,7 @@ abstract class BaseRepository
      * 
      * @return int Filas afectadas
      */
-    protected function rawExecute(string $sql, array $params = []): int
+    public function rawExecute(string $sql, array $params = []): int
     {
         $this->applyTenantScope($sql, $params);
         $stmt = $this->pdo->prepare($sql);

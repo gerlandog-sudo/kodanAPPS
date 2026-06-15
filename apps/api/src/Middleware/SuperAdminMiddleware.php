@@ -22,7 +22,7 @@ use RuntimeException;
 final class SuperAdminMiddleware
 {
     private string $jwtSecret;
-    private string $systemTenantId;
+    private int $systemTenantId;
     private RefreshTokenRepository $refreshTokenRepo;
 
     public function __construct(

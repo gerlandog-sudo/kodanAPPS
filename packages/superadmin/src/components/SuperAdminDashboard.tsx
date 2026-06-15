@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { superAdminApi } from '../api/client';
-import { sonner } from 'sonner'; // opcional, si está instalado
+import { toast } from 'sonner';
 
 interface Stats {
   tenants_total: number;
@@ -52,7 +52,7 @@ export function SuperAdminDashboard() {
       const message = err instanceof Error ? err.message : 'Error cargando métricas';
       setError(message);
       console.error('[Dashboard] Error:', err);
-      sonner?.error?.(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

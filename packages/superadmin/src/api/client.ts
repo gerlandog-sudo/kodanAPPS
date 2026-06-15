@@ -40,7 +40,7 @@ async function getCsrfToken(): Promise<string> {
 }
 
 async function fetchCsrfToken(): Promise<string> {
-  const response = await fetch(`${API_BASE}${CSRF_ENDPOINT}`, {
+  const response = await fetch(new URL(`${API_BASE}${CSRF_ENDPOINT}`, window.location.origin).toString(), {
     method: 'GET',
     credentials: 'include', // Cookies HttpOnly
     headers: {
@@ -73,7 +73,7 @@ export async function apiClient<T = unknown>(
   const { params, headers, ...fetchOptions } = options;
   
   // Construir URL con query params
-  const url = new URL(`${API_BASE}${endpoint}`);
+  const url = new URL(`${API_BASE}${endpoint}`, window.location.origin);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value);

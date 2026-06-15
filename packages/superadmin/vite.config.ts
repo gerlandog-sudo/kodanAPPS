@@ -51,10 +51,11 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://api.kodan.software',
+        target: 'http://api',
         changeOrigin: true,
         secure: false,
       },

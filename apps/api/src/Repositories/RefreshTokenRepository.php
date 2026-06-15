@@ -37,11 +37,11 @@ final class RefreshTokenRepository extends BaseRepository
      * 
      * @return int Nuevo token_id
      */
-    public function create(int $userId, int $tenantId, string $tokenHash, ?string $userAgent, ?string $ipAddress): int
+    public function createRefreshToken(int $userId, int $tenantId, string $tokenHash, ?string $userAgent, ?string $ipAddress): int
     {
         $expiresAt = (new \DateTime())->modify('+30 days')->format('Y-m-d H:i:s');
         
-        return $this->create('refresh_tokens', [
+        return parent::create('refresh_tokens', [
             'user_id' => $userId,
             'tenant_id' => $tenantId,
             'token_hash' => $tokenHash,
@@ -69,7 +69,7 @@ final class RefreshTokenRepository extends BaseRepository
 
             // 2. Crear nuevo token
             $expiresAt = (new \DateTime())->modify('+30 days')->format('Y-m-d H:i:s');
-            $newTokenId = $this->create('refresh_tokens', [
+            $newTokenId = parent::create('refresh_tokens', [
                 'user_id' => $userId,
                 'tenant_id' => $tenantId,
                 'token_hash' => $newTokenHash,

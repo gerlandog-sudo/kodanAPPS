@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Seed Super Admin - kodanAPPS
  * 
@@ -10,22 +12,30 @@
  * Uso: php migrations/seed_superadmin.php
  */
 
-require_once __DIR__ . '/../apps/api/vendor/autoload.php';
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+} else {
+    require_once __DIR__ . '/../apps/api/vendor/autoload.php';
+}
 
 use PDO;
 use PDOException;
 
-declare(strict_types=1);
-
 // ============================================================
 // Configuración (en producción: variables de entorno)
 // ============================================================
+$envPath = file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env' : __DIR__ . '/../apps/api/.env';
+$dotenv = [];
+if (file_exists($envPath)) {
+    $dotenv = parse_ini_file($envPath) ?: [];
+}
+
 $config = [
-    'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
-    'port' => (int)($_ENV['DB_PORT'] ?? 3306),
-    'dbname' => $_ENV['DB_NAME'] ?? 'admkoda_BBDD_APPS',
-    'user' => $_ENV['DB_USER'] ?? 'kodan_apps',
-    'pass' => $_ENV['DB_PASS'] ?? 'secret',
+    'host' => $dotenv['DB_HOST'] ?? $_ENV['DB_HOST'] ?? '127.0.0.1',
+    'port' => (int)($dotenv['DB_PORT'] ?? $_ENV['DB_PORT'] ?? 3306),
+    'dbname' => $dotenv['DB_NAME'] ?? $_ENV['DB_NAME'] ?? 'admkoda_BBDD_APPS',
+    'user' => $dotenv['DB_USER'] ?? $_ENV['DB_USER'] ?? 'kodan_apps',
+    'pass' => $dotenv['DB_PASS'] ?? $_ENV['DB_PASS'] ?? 'secret',
     'charset' => 'utf8mb4',
 ];
 
@@ -54,7 +64,7 @@ function generatePassword(int $length = 16): string {
     $bytes = random_bytes($length);
     $password = '';
     for ($i = 0; $i < $length; $i++) {
-        $password .= $chars[$bytes[$i] % strlen($chars)];
+        $password .= $chars[ord($bytes[$i]) % strlen($chars)];
     }
     return $password;
 }

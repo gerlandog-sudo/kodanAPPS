@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import { sonner } from 'sonner';
+import { toast } from 'sonner';
 
 interface Tenant {
   tenant_id: number;
@@ -77,7 +77,7 @@ export function TenantManagement() {
       setPlans(plansRes.map((p: any) => ({ id: p.id, name: p.name, price: p.price, currency: p.currency })));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error cargando datos';
-      sonner?.error?.(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export function TenantManagement() {
         admin_email: formData.admin_email.trim().toLowerCase(),
       });
       
-      sonner?.success?.('Tenant creado exitosamente');
+      toast.success('Tenant creado exitosamente');
       setShowCreateModal(false);
       resetForm();
       await loadData();
@@ -160,7 +160,7 @@ export function TenantManagement() {
 
   const handleDeactivate = async (tenant: Tenant) => {
     if (tenant.is_system_tenant) {
-      sonner?.error?.('No se puede desactivar el tenant de sistema');
+      toast.error('No se puede desactivar el tenant de sistema');
       return;
     }
     
@@ -168,10 +168,10 @@ export function TenantManagement() {
     
     try {
       await superAdminApi.deactivateTenant(tenant.tenant_id);
-      sonner?.success?.('Tenant desactivado');
+      toast.success('Tenant desactivado');
       await loadData();
     } catch (err: any) {
-      sonner?.error?.(err.message || 'Error desactivando tenant');
+      toast.error(err.message || 'Error desactivando tenant');
     }
   };
 

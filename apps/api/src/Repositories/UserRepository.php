@@ -25,7 +25,7 @@ final class UserRepository extends BaseRepository
     public function emailExists(string $email): bool
     {
         $result = $this->rawSelect(
-            "SELECT 1 FROM users WHERE email = ? LIMIT 1",
+            "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM users WHERE email = ? LIMIT 1",
             [strtolower(trim($email))]
         );
         return !empty($result);
@@ -36,12 +36,12 @@ final class UserRepository extends BaseRepository
      * 
      * @return int Nuevo user_id
      */
-    public function create(array $data): int
+    public function createUser(array $data): int
     {
         $required = ['tenant_id', 'email', 'password_hash', 'display_name'];
         foreach ($required as $field) {
             if (!isset($data[$field])) {
-                throw new InvalidArgumentException("Campo requerido faltante: $field");
+                throw new \InvalidArgumentException("Campo requerido faltante: $field");
             }
         }
         
@@ -50,7 +50,7 @@ final class UserRepository extends BaseRepository
         $data['is_active'] = $data['is_active'] ?? 1;
         $data['created_at'] = date('Y-m-d H:i:s');
         
-        return $this->create('users', $data);
+        return parent::create('users', $data);
     }
 
     /**
@@ -74,7 +74,7 @@ final class UserRepository extends BaseRepository
     public function getUserRoles(int $userId): array
     {
         return $this->rawSelect(
-            "SELECT app_id, role, is_active FROM user_apps WHERE user_id = ? AND is_active = 1",
+            "/* BYPASS_TENANT_SCOPE */ SELECT app_id, role, is_active FROM user_apps WHERE user_id = ? AND is_active = 1",
             [$userId]
         );
     }
@@ -87,7 +87,7 @@ final class UserRepository extends BaseRepository
     public function findByEmail(string $email): ?array
     {
         return $this->rawSelect(
-            "SELECT * FROM users WHERE email = ? AND is_active = 1 LIMIT 1",
+            "/* BYPASS_TENANT_SCOPE */ SELECT * FROM users WHERE email = ? AND is_active = 1 LIMIT 1",
             [strtolower(trim($email))]
         )[0] ?? null;
     }

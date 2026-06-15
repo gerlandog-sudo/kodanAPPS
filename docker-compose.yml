@@ -44,12 +44,13 @@ services:
       DB_PASS: ${DB_PASS:-appsecret}
       JWT_SECRET: ${JWT_SECRET:-super-secret-change-in-production}
       APP_ENV: development
-      SYSTEM_TENANT_ID: 1
+      SYSTEM_TENANT_ID: 2
     ports:
       - "8080:80"
     volumes:
       - ./apps/api:/var/www/html:cached
       - ./packages:/var/www/packages:cached
+      - ./migrations:/var/www/html/migrations:cached
     depends_on:
       mariadb:
         condition: service_healthy
@@ -63,12 +64,15 @@ services:
     container_name: kodanapps_frontend
     working_dir: /app
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=
     ports:
       - "5173:5173"  # Super Admin
       - "5174:5174"  # CRM
       - "5175:5175"  # Tracker
     volumes:
+      - ./package.json:/app/package.json:cached
+      - ./package-lock.json:/app/package-lock.json:cached
+      - ./tsconfig.json:/app/tsconfig.json:cached
       - ./packages:/app/packages:cached
       - ./apps/crm:/app/apps/crm:cached
       - ./apps/tracker:/app/apps/tracker:cached
@@ -76,7 +80,7 @@ services:
     command: >
       sh -c "
         npm install --workspaces --if-present &&
-        npm run dev:superadmin -- --host 0.0.0.0 --port 5173
+        npm run dev:superadmin
       "
     depends_on:
       - api

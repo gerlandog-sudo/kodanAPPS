@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libonig-dev \
     libxml2-dev \
+    libicu-dev \
     unzip \
     git \
     curl \

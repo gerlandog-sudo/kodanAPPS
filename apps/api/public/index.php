@@ -65,8 +65,8 @@ $tenantService = new TenantService($tenantRepo, $userRepo);
 // ------------------------------------------------------------
 // Configuración Super Admin
 // ------------------------------------------------------------
-$jwtSecret = $_ENV['JWT_SECRET'] ?? 'change-me-in-production';
-$systemTenantId = (int)($_ENV['SYSTEM_TENANT_ID'] ?? 1);
+$jwtSecret = $dotenv['JWT_SECRET'] ?? $_ENV['JWT_SECRET'] ?? 'change-me-in-production';
+$systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
 
 // Middleware Super Admin
 $superAdminMiddleware = new SuperAdminMiddleware($jwtSecret, $systemTenantId, $refreshTokenRepo);
@@ -82,6 +82,9 @@ $allowedOrigins = [
     'https://crm.kodan.software',
     'https://tracker.kodan.software',
     'https://superadmin.kodan.software',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -121,11 +124,55 @@ if ($requestUri === '/api/csrf-token' && $method === 'GET') {
 }
 
 if (str_starts_with($requestUri, '/api/auth/')) {
-    // Auth routes delegar a AuthController (futuro)
-    // Por ahora 404
-    http_response_code(404);
-    echo json_encode(['error' => 'Not implemented yet']);
-    exit;
+    require_once __DIR__ . '/../src/Controllers/AuthController.php';
+    
+    // Instanciar AuthController
+    $authController = new \kodanAPPS\Controllers\AuthController(
+        $userRepo,
+        $refreshTokenRepo,
+        $jwtSecret,
+        $systemTenantId
+    );
+    
+    try {
+        if ($requestUri === '/api/auth/login' && $method === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $authController->login($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
+        if ($requestUri === '/api/auth/set-password' && $method === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $authController->setPassword($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
+        http_response_code(404);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Auth endpoint not found']);
+        exit;
+    } catch (\InvalidArgumentException $e) {
+        http_response_code(422);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'message' => 'Validation error',
+            'errors' => json_decode($e->getMessage(), true) ?? ['general' => $e->getMessage()],
+        ]);
+        exit;
+    } catch (\Throwable $e) {
+        $code = (int)$e->getCode();
+        if ($code < 400 || $code > 599) {
+            $code = 500;
+        }
+        http_response_code($code);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => $e->getMessage()]);
+        exit;
+    }
 }
 
 // ------------------------------------------------------------

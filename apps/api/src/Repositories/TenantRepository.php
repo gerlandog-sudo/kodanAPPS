@@ -29,6 +29,7 @@ final class TenantRepository extends BaseRepository
     public function findAllWithDetails(): array
     {
         $sql = "
+            /* BYPASS_TENANT_SCOPE */
             SELECT 
                 t.tenant_id,
                 t.slug,
@@ -63,6 +64,7 @@ final class TenantRepository extends BaseRepository
     public function findByIdWithDetails(int $tenantId): ?array
     {
         $sql = "
+            /* BYPASS_TENANT_SCOPE */
             SELECT 
                 t.tenant_id,
                 t.slug,
@@ -79,7 +81,8 @@ final class TenantRepository extends BaseRepository
             WHERE t.tenant_id = :tenant_id
         ";
         
-        $tenant = $this->findOne('tenants', 'tenant_id = :tenant_id', [':tenant_id' => $tenantId], $sql);
+        $results = $this->rawSelect($sql, [':tenant_id' => $tenantId]);
+        $tenant = $results[0] ?? null;
         
         if ($tenant !== null) {
             $tenant['apps'] = $this->getEnabledApps($tenantId);
@@ -96,7 +99,7 @@ final class TenantRepository extends BaseRepository
     public function getEnabledApps(int $tenantId): array
     {
         return $this->rawSelect(
-            "SELECT app_id, is_active FROM tenant_apps WHERE tenant_id = ? ORDER BY app_id",
+            "/* BYPASS_TENANT_SCOPE */ SELECT app_id, is_active FROM tenant_apps WHERE tenant_id = ? ORDER BY app_id",
             [$tenantId]
         );
     }
@@ -132,7 +135,7 @@ final class TenantRepository extends BaseRepository
         }
         
         $data['updated_at'] = date('Y-m-d H:i:s');
-        $rows = $this->update('tenants', $data, 'tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
+        $rows = $this->update('tenants', $data, '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         return $rows > 0;
     }
 
@@ -145,7 +148,7 @@ final class TenantRepository extends BaseRepository
     public function deactivateTenant(int $tenantId): bool
     {
         // Verificar que no sea tenant de sistema
-        $tenant = $this->findOne('tenants', 'tenant_id = :id', [':id' => $tenantId], 'is_system_tenant');
+        $tenant = $this->findOne('tenants', '/* BYPASS_TENANT_SCOPE */ tenant_id = :id', [':id' => $tenantId], 'is_system_tenant');
         if ($tenant !== null && (int)$tenant['is_system_tenant'] === 1) {
             throw new InvalidArgumentException('Cannot deactivate system tenant');
         }
@@ -153,7 +156,7 @@ final class TenantRepository extends BaseRepository
         $rows = $this->update('tenants', [
             'is_active' => 0,
             'updated_at' => date('Y-m-d H:i:s'),
-        ], 'tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
+        ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         
         return $rows > 0;
     }
@@ -168,7 +171,7 @@ final class TenantRepository extends BaseRepository
         $rows = $this->update('tenants', [
             'subscription_plan_id' => $newPlanId,
             'updated_at' => date('Y-m-d H:i:s'),
-        ], 'tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
+        ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         
         return $rows > 0;
     }
@@ -187,14 +190,14 @@ final class TenantRepository extends BaseRepository
         $this->transactional(function () use ($tenantId, $appIds) {
             // Desactivar todas
             $this->rawExecute(
-                "UPDATE tenant_apps SET is_active = 0 WHERE tenant_id = ?",
+                "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_apps SET is_active = 0 WHERE tenant_id = ?",
                 [$tenantId]
             );
             
             // Activar/crear seleccionadas
             foreach ($appIds as $appId) {
                 $this->rawExecute(
-                    "INSERT INTO tenant_apps (tenant_id, app_id, is_active) VALUES (?, ?, 1)
+                    "/* BYPASS_TENANT_SCOPE */ INSERT INTO tenant_apps (tenant_id, app_id, is_active) VALUES (?, ?, 1)
                      ON DUPLICATE KEY UPDATE is_active = 1",
                     [$tenantId, $appId]
                 );
@@ -209,7 +212,7 @@ final class TenantRepository extends BaseRepository
      */
     public function slugExists(string $slug, ?int $excludeTenantId = null): bool
     {
-        $sql = "SELECT 1 FROM tenants WHERE slug = ?";
+        $sql = "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM tenants WHERE slug = ?";
         $params = [$slug];
         
         if ($excludeTenantId !== null) {
@@ -229,15 +232,16 @@ final class TenantRepository extends BaseRepository
     public function getGlobalStats(): array
     {
         // Total tenants
-        $totalTenants = (int)$this->rawSelect("SELECT COUNT(*) as c FROM tenants")[0]['c'];
-        $activeTenants = (int)$this->rawSelect("SELECT COUNT(*) as c FROM tenants WHERE is_active = 1")[0]['c'];
+        $totalTenants = (int)$this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT COUNT(*) as c FROM tenants")[0]['c'];
+        $activeTenants = (int)$this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT COUNT(*) as c FROM tenants WHERE is_active = 1")[0]['c'];
         
         // Total users
-        $totalUsers = (int)$this->rawSelect("SELECT COUNT(*) as c FROM users")[0]['c'];
-        $superAdmins = (int)$this->rawSelect("SELECT COUNT(*) as c FROM users WHERE is_super_admin = 1")[0]['c'];
+        $totalUsers = (int)$this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT COUNT(*) as c FROM users")[0]['c'];
+        $superAdmins = (int)$this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT COUNT(*) as c FROM users WHERE is_super_admin = 1")[0]['c'];
         
         // Revenue (MRR estimado)
         $revenue = $this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
             SELECT COALESCE(SUM(sp.price), 0) as mrr
             FROM tenants t
             JOIN subscription_plans sp ON sp.id = t.subscription_plan_id
@@ -246,12 +250,14 @@ final class TenantRepository extends BaseRepository
         
         // API calls 24h (desde login_attempts como proxy)
         $apiCalls = (int)$this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
             SELECT COUNT(*) as c FROM login_attempts 
             WHERE attempted_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
         ")[0]['c'];
         
         // DB size
         $dbSize = $this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
             SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) as size_mb
             FROM information_schema.tables 
             WHERE table_schema = DATABASE()

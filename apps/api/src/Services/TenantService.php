@@ -92,7 +92,7 @@ final class TenantService
                 'threads' => 3,
             ]);
 
-            $adminUserId = $this->userRepo->create([
+            $adminUserId = $this->userRepo->createUser([
                 'tenant_id' => $tenantId,
                 'email' => $dto->adminEmail,
                 'password_hash' => $passwordHash,

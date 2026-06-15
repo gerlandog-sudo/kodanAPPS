@@ -176,7 +176,7 @@ final class SuperAdminController
             ], JSON_UNESCAPED_UNICODE), 422);
         }
 
-        $planId = $this->planRepo->create(
+        $planId = $this->planRepo->createPlan(
             $input['name'],
             $input['description'] ?? '',
             (float)$input['price'],
@@ -219,7 +219,7 @@ final class SuperAdminController
         }
 
         if (!empty($data)) {
-            $this->planRepo->update($planId, $data);
+            $this->planRepo->updatePlan($planId, $data);
         }
 
         $this->auditLog('PLAN_UPDATED', ['plan_id' => $planId, 'changes' => $data]);
@@ -246,7 +246,7 @@ final class SuperAdminController
             ], JSON_UNESCAPED_UNICODE), 409);
         }
 
-        $this->planRepo->delete($planId);
+        $this->planRepo->deletePlan($planId);
         $this->auditLog('PLAN_DELETED', ['plan_id' => $planId]);
 
         return ['success' => true, 'plan_id' => $planId];

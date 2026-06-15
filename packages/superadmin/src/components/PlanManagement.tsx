@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import { sonner } from 'sonner';
+import { toast } from 'sonner';
 
 interface Plan {
   id: number;
@@ -110,7 +110,7 @@ export function PlanManagement() {
       const data = await superAdminApi.listPlans();
       setPlans(data);
     } catch (err: any) {
-      sonner?.error?.(err.message || 'Error cargando planes');
+      toast.error(err.message || 'Error cargando planes');
     } finally {
       setLoading(false);
     }
@@ -154,7 +154,7 @@ export function PlanManagement() {
           currency: formData.currency.toUpperCase(),
           limits: formData.limits,
         });
-        sonner?.success?.('Plan actualizado');
+        toast.success('Plan actualizado');
       } else {
         await superAdminApi.createPlan({
           name: formData.name.trim(),
@@ -163,7 +163,7 @@ export function PlanManagement() {
           currency: formData.currency.toUpperCase(),
           limits: formData.limits,
         });
-        sonner?.success?.('Plan creado');
+        toast.success('Plan creado');
       }
       
       setShowCreateModal(false);
@@ -182,10 +182,10 @@ export function PlanManagement() {
     
     try {
       await superAdminApi.deletePlan(plan.id);
-      sonner?.success?.('Plan eliminado');
+      toast.success('Plan eliminado');
       await loadPlans();
     } catch (err: any) {
-      sonner?.error?.(err.message || 'Error eliminando plan');
+      toast.error(err.message || 'Error eliminando plan');
     }
   };
 

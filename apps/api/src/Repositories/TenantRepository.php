@@ -9,10 +9,12 @@ use kodanAPPS\DB\TenantContext;
 use InvalidArgumentException;
 
 /**
- * TenantRepository - Repositorio para tenants y tenant_apps
+ * TenantRepository - Repositorio para tenants
  * 
  * Extiende BaseRepository (Capa 1) + usa TenantAwarePDO (Capa 3).
  * Super Admin opera en tenant sistema, pero queries usan tenant_id explícito.
+ * 
+ * NOTA: tenant_apps fue eliminado — el plan determina apps disponibles.
  */
 final class TenantRepository extends BaseRepository
 {
@@ -22,7 +24,7 @@ final class TenantRepository extends BaseRepository
     }
 
     /**
-     * Lista todos los tenants con plan y apps habilitadas
+     * Lista todos los tenants con plan y módulos del plan
      * 
      * @return array<int, array<string, mixed>>
      */
@@ -32,8 +34,8 @@ final class TenantRepository extends BaseRepository
             /* BYPASS_TENANT_SCOPE */
             SELECT 
                 t.tenant_id,
-                t.slug,
                 t.name,
+                t.logo_url,
                 t.is_active,
                 t.is_system_tenant,
                 t.subscription_plan_id,
@@ -48,9 +50,16 @@ final class TenantRepository extends BaseRepository
         
         $tenants = $this->rawSelect($sql);
         
-        // Agregar apps habilitadas por tenant
+        // Obtener módulos del plan para cada tenant
         foreach ($tenants as &$tenant) {
-            $tenant['apps'] = $this->getEnabledApps((int)$tenant['tenant_id']);
+            $planId = $tenant['subscription_plan_id'];
+            $tenant['apps'] = [];
+            if ($planId !== null) {
+                $tenant['apps'] = $this->rawSelect(
+                    "/* BYPASS_TENANT_SCOPE */ SELECT DISTINCT module AS app_id, TRUE AS is_active FROM plan_limits WHERE plan_id = ? ORDER BY module",
+                    [(int)$planId]
+                );
+            }
         }
         
         return $tenants;
@@ -67,8 +76,8 @@ final class TenantRepository extends BaseRepository
             /* BYPASS_TENANT_SCOPE */
             SELECT 
                 t.tenant_id,
-                t.slug,
                 t.name,
+                t.logo_url,
                 t.is_active,
                 t.is_system_tenant,
                 t.subscription_plan_id,
@@ -84,37 +93,29 @@ final class TenantRepository extends BaseRepository
         $results = $this->rawSelect($sql, [':tenant_id' => $tenantId]);
         $tenant = $results[0] ?? null;
         
-        if ($tenant !== null) {
-            $tenant['apps'] = $this->getEnabledApps($tenantId);
+        if ($tenant !== null && $tenant['subscription_plan_id'] !== null) {
+            $tenant['apps'] = $this->rawSelect(
+                "/* BYPASS_TENANT_SCOPE */ SELECT DISTINCT module AS app_id, TRUE AS is_active FROM plan_limits WHERE plan_id = ? ORDER BY module",
+                [(int)$tenant['subscription_plan_id']]
+            );
+        } else {
+            $tenant['apps'] = [];
         }
         
         return $tenant;
     }
 
     /**
-     * Obtiene apps habilitadas para un tenant
-     * 
-     * @return array<int, array{app_id: string, is_active: bool}>
-     */
-    public function getEnabledApps(int $tenantId): array
-    {
-        return $this->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT app_id, is_active FROM tenant_apps WHERE tenant_id = ? ORDER BY app_id",
-            [$tenantId]
-        );
-    }
-
-    /**
-     * Crea tenant nuevo (solo tabla tenants)
+     * Crea tenant nuevo
      * 
      * @return int Nuevo tenant_id
      */
-    public function createTenant(string $name, string $slug, int $subscriptionPlanId): int
+    public function createTenant(string $name, int $subscriptionPlanId, ?string $logoUrl = null): int
     {
         return $this->create('tenants', [
             'name' => $name,
-            'slug' => $slug,
             'subscription_plan_id' => $subscriptionPlanId,
+            'logo_url' => $logoUrl,
             'is_active' => 1,
             'is_system_tenant' => 0,
         ]);
@@ -177,57 +178,9 @@ final class TenantRepository extends BaseRepository
     }
 
     /**
-     * Sincroniza apps habilitadas (reemplaza todas)
-     * 
-     * @param array<string> $appIds Ej: ['crm', 'tracker']
-     * @return void
-     */
-    public function syncApps(int $tenantId, array $appIds): void
-    {
-        $allowedApps = ['crm', 'tracker', 'superadmin'];
-        $appIds = array_intersect($appIds, $allowedApps);
-        
-        $this->transactional(function () use ($tenantId, $appIds) {
-            // Desactivar todas
-            $this->rawExecute(
-                "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_apps SET is_active = 0 WHERE tenant_id = ?",
-                [$tenantId]
-            );
-            
-            // Activar/crear seleccionadas
-            foreach ($appIds as $appId) {
-                $this->rawExecute(
-                    "/* BYPASS_TENANT_SCOPE */ INSERT INTO tenant_apps (tenant_id, app_id, is_active) VALUES (?, ?, 1)
-                     ON DUPLICATE KEY UPDATE is_active = 1",
-                    [$tenantId, $appId]
-                );
-            }
-        });
-    }
-
-    /**
-     * Verifica si slug existe
-     * 
-     * @return bool
-     */
-    public function slugExists(string $slug, ?int $excludeTenantId = null): bool
-    {
-        $sql = "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM tenants WHERE slug = ?";
-        $params = [$slug];
-        
-        if ($excludeTenantId !== null) {
-            $sql .= " AND tenant_id != ?";
-            $params[] = $excludeTenantId;
-        }
-        
-        $result = $this->rawSelect($sql, $params);
-        return !empty($result);
-    }
-
-    /**
      * Obtiene estadísticas globales (para SuperAdminDashboard)
      * 
-     * @return array<string, int|float>
+     * @return array<string, mixed>
      */
     public function getGlobalStats(): array
     {
@@ -263,6 +216,55 @@ final class TenantRepository extends BaseRepository
             WHERE table_schema = DATABASE()
         ")[0]['size_mb'] ?? 0;
         
+        // Audit logs count
+        $auditLogsCount = (int)$this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT COUNT(*) as c FROM audit_logs")[0]['c'];
+        
+        // Plans in use
+        $plansCount = (int)$this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
+            SELECT COUNT(DISTINCT subscription_plan_id) as c FROM tenants 
+            WHERE subscription_plan_id IS NOT NULL
+        ")[0]['c'];
+        
+        // Billing totals
+        $billingTotal = (float)$this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
+            SELECT COALESCE(SUM(amount), 0) as total FROM tenant_invoices
+        ")[0]['total'];
+        
+        $billingPaid = (float)$this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
+            SELECT COALESCE(SUM(amount), 0) as total FROM tenant_invoices WHERE status = 'paid'
+        ")[0]['total'];
+        
+        $billingPending = (float)$this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
+            SELECT COALESCE(SUM(amount), 0) as total FROM tenant_invoices WHERE status = 'pending'
+        ")[0]['total'];
+        
+        $billingOverdue = (float)$this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
+            SELECT COALESCE(SUM(amount), 0) as total FROM tenant_invoices WHERE status = 'overdue'
+        ")[0]['total'];
+        
+        // Top tenants by user count
+        $topTenants = $this->rawSelect("
+            /* BYPASS_TENANT_SCOPE */
+            SELECT t.tenant_id, t.name, t.name as display_name, COUNT(u.id) as user_count
+            FROM tenants t
+            LEFT JOIN users u ON u.tenant_id = t.tenant_id
+            GROUP BY t.tenant_id
+            ORDER BY user_count DESC
+            LIMIT 5
+        ");
+        
+        // DB version
+        $dbVersion = $this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT VERSION() as v")[0]['v'] ?? 'Unknown';
+        
+        // Memory
+        $memoryUsage = round(memory_get_usage(true) / 1024 / 1024, 1);
+        $memoryLimit = ini_get('memory_limit') ?: 'Unknown';
+        
         return [
             'tenants_total' => $totalTenants,
             'tenants_active' => $activeTenants,
@@ -272,6 +274,29 @@ final class TenantRepository extends BaseRepository
             'revenue_mrr_usd' => (float)$revenue,
             'api_calls_24h' => $apiCalls,
             'db_size_mb' => (float)$dbSize,
+            'metrics' => [
+                'tenants_count' => $totalTenants,
+                'active_tenants_count' => $activeTenants,
+                'users_count' => $totalUsers,
+                'admin_users_count' => $superAdmins,
+                'audit_logs_count' => $auditLogsCount,
+                'plans_count' => $plansCount,
+            ],
+            'billing' => [
+                'total' => $billingTotal,
+                'paid' => $billingPaid,
+                'pending' => $billingPending,
+                'overdue' => $billingOverdue,
+            ],
+            'telemetry' => [
+                'php_version' => PHP_VERSION,
+                'memory_usage' => $memoryUsage,
+                'memory_limit' => $memoryLimit,
+                'db_version' => $dbVersion,
+                'db_size_mb' => (float)$dbSize,
+                'status' => 'SALUDABLE',
+            ],
+            'top_tenants' => $topTenants,
         ];
     }
 }

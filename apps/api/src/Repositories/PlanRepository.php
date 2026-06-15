@@ -99,9 +99,6 @@ final class PlanRepository extends BaseRepository
      */
     public function addLimit(int $planId, string $module, string $metric, int $value): void
     {
-        if (!in_array($module, ['crm', 'tracker', 'api'], true)) {
-            throw new InvalidArgumentException("Módulo inválido: $module");
-        }
         if ($value < 0) {
             throw new InvalidArgumentException("El valor del límite no puede ser negativo");
         }

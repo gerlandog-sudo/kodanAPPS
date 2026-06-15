@@ -61,6 +61,11 @@ final class TenantAwarePDO extends PDO
             return; // SELECT, DDL, etc. no requieren tenant_id obligatorio
         }
 
+        // Respetar BYPASS_TENANT_SCOPE explícito (misma convención que BaseRepository)
+        if (str_contains($sql, '/* BYPASS_TENANT_SCOPE */')) {
+            return;
+        }
+
         // Permitir patrones válidos de tenant_id:
         // - tenant_id = ?
         // - tenant_id = :tenant_id
@@ -78,10 +83,7 @@ final class TenantAwarePDO extends PDO
         // Excepción: DELETE en tenants con is_system_tenant check (trigger lo maneja)
         $isTenantDelete = preg_match('/^\s*DELETE\s+FROM\s+[`"]?tenants[`"]?\s+/i', $sql) === 1;
 
-        // Excepción: Operaciones en tablas globales de planes y límites o que no contienen tenant_id
-        $isGlobalTable = preg_match('/^\s*(INSERT|UPDATE|DELETE)\s+(INTO|FROM)?\s*[`"]?(subscription_plans|plan_limits|user_apps|user_configs|login_attempts|password_resets)[`"]?\b/i', $sql) === 1;
-
-        if (!$hasTenantScope && !$isTenantInsert && !$isTenantDelete && !$isGlobalTable) {
+        if (!$hasTenantScope && !$isTenantInsert && !$isTenantDelete) {
             $msg = "[TENANT_SCOPE_MISSING] $method: $sql";
             error_log($msg);
             

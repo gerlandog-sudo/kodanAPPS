@@ -12,16 +12,20 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * TenantService - Orquesta creación completa de tenant (Blueprint Punto 1.D)
+ * TenantService - Orquesta creación completa de tenant
  * 
  * Transacción atómica:
- * 1. Crea tenant en `tenants`
- * 2. Inserta apps habilitadas en `tenant_apps`
- * 3. Inicializa contadores en `tenant_plan_usage` (0 para todas métricas del plan)
- * 4. Crea usuario admin en `users` (password temporal Argon2id)
- * 5. Asigna roles admin en apps habilitadas + superadmin en `user_apps`
- * 6. Genera token set-password en `password_resets` (email al admin)
- * 7. Auditoria en `audit_logs`
+ * 1. Crea tenant en `tenants` (name, plan, logo_url)
+ * 2. Determina apps disponibles por plan (plan_limits.module)
+ * 3. Inicializa contadores en `tenant_plan_usage`
+ * 4. Crea usuario admin con contraseña hasheada (Argon2id)
+ * 5. Asigna rol admin en apps del plan via `user_roles`
+ * 6. Guarda tema por defecto en `user_configs`
+ * 7. Auditoría en `audit_logs`
+ * 
+ * NOTA: Ya no usa tenant_apps ni user_apps.
+ * El plan determina las apps disponibles (plan_limits).
+ * Los roles se asignan vía user_roles → roles globales.
  * 
  * Cualquier error → rollback completo.
  */
@@ -43,23 +47,18 @@ final class TenantService
      * 
      * @return array{
      *     tenant_id: int,
-     *     slug: string,
-     *     admin_user_id: int,
-     *     set_password_token: string,
-     *     set_password_url: string
+     *     admin_user_id: int
      * }
      * @throws InvalidArgumentException Si validación falla
      * @throws RuntimeException Si error en transacción
      */
     public function createTenantWithAdmin(TenantCreateDTO $dto): array
     {
-        // Validaciones pre-transacción
-        if ($this->tenantRepo->slugExists($dto->slug)) {
-            throw new InvalidArgumentException(json_encode(['slug' => 'El slug ya existe'], JSON_UNESCAPED_UNICODE));
-        }
-        
+        // Verificar email único antes de la transacción
         if ($this->userRepo->emailExists($dto->adminEmail)) {
-            throw new InvalidArgumentException(json_encode(['admin_email' => 'El email ya está registrado'], JSON_UNESCAPED_UNICODE));
+            throw new InvalidArgumentException(
+                json_encode(['admin_email' => 'El email ya está registrado'], JSON_UNESCAPED_UNICODE)
+            );
         }
 
         return $this->tenantRepo->transactional(function () use ($dto) {
@@ -68,14 +67,14 @@ final class TenantService
             // ------------------------------------------------------------
             $tenantId = $this->tenantRepo->createTenant(
                 $dto->name,
-                $dto->slug,
-                $dto->subscriptionPlanId
+                $dto->subscriptionPlanId,
+                $dto->logoUrl
             );
 
             // ------------------------------------------------------------
-            // 2. Sincronizar apps habilitadas
+            // 2. Obtener módulos disponibles según el plan (plan_limits.module)
             // ------------------------------------------------------------
-            $this->tenantRepo->syncApps($tenantId, $dto->enabledApps);
+            $planModules = $this->getPlanModules($dto->subscriptionPlanId);
 
             // ------------------------------------------------------------
             // 3. Inicializar tenant_plan_usage (contadores a 0)
@@ -83,10 +82,9 @@ final class TenantService
             $this->initializePlanUsage($tenantId, $dto->subscriptionPlanId);
 
             // ------------------------------------------------------------
-            // 4. Crear usuario admin (password temporal)
+            // 4. Crear usuario admin (password directo Argon2id)
             // ------------------------------------------------------------
-            $tempPassword = $this->generateSecurePassword(16);
-            $passwordHash = password_hash($tempPassword, PASSWORD_ARGON2ID, [
+            $passwordHash = password_hash($dto->adminPassword, PASSWORD_ARGON2ID, [
                 'memory_cost' => 65536,
                 'time_cost' => 4,
                 'threads' => 3,
@@ -97,60 +95,49 @@ final class TenantService
                 'email' => $dto->adminEmail,
                 'password_hash' => $passwordHash,
                 'display_name' => $dto->adminName,
-                'is_super_admin' => 0, // Admin de tenant, no super admin global
+                'is_super_admin' => 0,
                 'is_active' => 1,
             ]);
 
             // ------------------------------------------------------------
-            // 5. Asignar roles en apps habilitadas + superadmin
+            // 5. Asignar rol admin al primer usuario en apps del plan
             // ------------------------------------------------------------
-            $appsWithRoles = $dto->enabledApps;
-            $appsWithRoles[] = 'superadmin'; // Acceso a panel Super Admin
-            
-            foreach ($appsWithRoles as $appId) {
-                $this->userRepo->assignRole($adminUserId, $appId, 'admin');
+            $adminRoleIds = $this->getAdminRoleIdsByApp($planModules);
+            foreach ($adminRoleIds as $appId => $roleId) {
+                $this->userRepo->assignRoleToApp($adminUserId, $appId, $roleId);
             }
 
             // ------------------------------------------------------------
-            // 6. Generar token set-password (tabla password_resets)
+            // 6. Guardar tema por defecto en user_configs
             // ------------------------------------------------------------
-            $setPasswordToken = bin2hex(random_bytes(32)); // 64 chars hex
-            $this->createSetPasswordToken($dto->adminEmail, $setPasswordToken);
+            $this->tenantRepo->rawExecute(
+                "INSERT INTO user_configs (user_id, app_id, theme_colors) /* BYPASS_TENANT_SCOPE */
+                 VALUES (?, 'superadmin', ?)
+                 ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)",
+                [$adminUserId, json_encode(['theme' => $dto->themePreference])]
+            );
 
             // ------------------------------------------------------------
-            // 7. Auditoria
+            // 7. Auditoría
             // ------------------------------------------------------------
             $this->auditLog(
-                tenantId: 0, // sistema
+                tenantId: TenantContext::getTenantId(),
                 userId: TenantContext::getUserId(),
                 action: 'TENANT_CREATED',
                 details: [
                     'tenant_id' => $tenantId,
-                    'slug' => $dto->slug,
                     'name' => $dto->name,
                     'plan_id' => $dto->subscriptionPlanId,
-                    'apps' => $dto->enabledApps,
+                    'modules' => $planModules,
                     'admin_user_id' => $adminUserId,
                     'admin_email' => $dto->adminEmail,
+                    'theme' => $dto->themePreference,
                 ]
-            );
-
-            // ------------------------------------------------------------
-            // Retorno para email de activación
-            // ------------------------------------------------------------
-            $setPasswordUrl = sprintf(
-                '%s/set-password?token=%s&email=%s',
-                $_ENV['SUPERADMIN_URL'] ?? 'https://superadmin.kodan.software',
-                $setPasswordToken,
-                urlencode($dto->adminEmail)
             );
 
             return [
                 'tenant_id' => $tenantId,
-                'slug' => $dto->slug,
                 'admin_user_id' => $adminUserId,
-                'set_password_token' => $setPasswordToken,
-                'set_password_url' => $setPasswordUrl,
             ];
         });
     }
@@ -165,7 +152,7 @@ final class TenantService
         $this->tenantRepo->deactivateTenant($tenantId);
         
         $this->auditLog(
-            tenantId: 0,
+            tenantId: TenantContext::getTenantId(),
             userId: $superAdminUserId,
             action: 'TENANT_DEACTIVATED',
             details: ['tenant_id' => $tenantId]
@@ -179,11 +166,10 @@ final class TenantService
     {
         $this->tenantRepo->changePlan($tenantId, $newPlanId);
         
-        // Reinicializar contadores para nuevo plan
         $this->initializePlanUsage($tenantId, $newPlanId);
         
         $this->auditLog(
-            tenantId: 0,
+            tenantId: TenantContext::getTenantId(),
             userId: $superAdminUserId,
             action: 'TENANT_PLAN_CHANGED',
             details: ['tenant_id' => $tenantId, 'new_plan_id' => $newPlanId]
@@ -191,13 +177,47 @@ final class TenantService
     }
 
     /**
+     * Obtiene módulos (apps) incluidos en un plan desde plan_limits
+     * 
+     * @return array<string> Ej: ['crm', 'tracker']
+     */
+    private function getPlanModules(int $planId): array
+    {
+        $rows = $this->tenantRepo->rawSelect(
+            "/* BYPASS_TENANT_SCOPE */ SELECT DISTINCT module FROM plan_limits WHERE plan_id = ?",
+            [$planId]
+        );
+        return array_map(fn($r) => $r['module'], $rows);
+    }
+
+    /**
+     * Obtiene role_id 'admin' para cada app
+     * 
+     * @param array<string> $modules
+     * @return array<string, int> [app_id => role_id]
+     */
+    private function getAdminRoleIdsByApp(array $modules): array
+    {
+        $result = [];
+        foreach ($modules as $appId) {
+            $rows = $this->tenantRepo->rawSelect(
+                "/* BYPASS_TENANT_SCOPE */ SELECT id FROM roles WHERE app_id = ? AND name = 'admin' AND is_active = 1 LIMIT 1",
+                [$appId]
+            );
+            if (!empty($rows)) {
+                $result[$appId] = (int)$rows[0]['id'];
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Inicializa tenant_plan_usage para todas las métricas del plan
-     * Contadores a 0 (primer uso hará UPDATE +1)
      */
     private function initializePlanUsage(int $tenantId, int $planId): void
     {
         $this->tenantRepo->rawExecute(
-            "INSERT INTO tenant_plan_usage (tenant_id, module, metric, current_value)
+            "/* BYPASS_TENANT_SCOPE */ INSERT INTO tenant_plan_usage (tenant_id, module, metric, current_value)
              SELECT ?, pl.module, pl.metric, 0
              FROM plan_limits pl WHERE pl.plan_id = ?
              ON DUPLICATE KEY UPDATE current_value = 0",
@@ -206,47 +226,12 @@ final class TenantService
     }
 
     /**
-     * Genera token set-password en tabla password_resets
-     * TTL: 1 hora
-     */
-    private function createSetPasswordToken(string $email, string $token): void
-    {
-        $tokenHash = password_hash($token, PASSWORD_ARGON2ID, [
-            'memory_cost' => 65536,
-            'time_cost' => 4,
-            'threads' => 3,
-        ]);
-        $expiresAt = (new \DateTime())->modify('+1 hour')->format('Y-m-d H:i:s');
-
-        $this->tenantRepo->rawExecute(
-            "INSERT INTO password_resets (email, token_hash, expires_at)
-             VALUES (?, ?, ?)
-             ON DUPLICATE KEY UPDATE token_hash = VALUES(token_hash), expires_at = VALUES(expires_at), created_at = CURRENT_TIMESTAMP()",
-            [$email, $tokenHash, $expiresAt]
-        );
-    }
-
-    /**
-     * Genera password seguro (16 chars, alta entropía)
-     */
-    private function generateSecurePassword(int $length = 16): string
-    {
-        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-        $bytes = random_bytes($length);
-        $password = '';
-        for ($i = 0; $i < $length; $i++) {
-            $password .= $chars[$bytes[$i] % strlen($chars)];
-        }
-        return $password;
-    }
-
-    /**
      * Escribe en audit_logs (tenant_id=0 para acciones de sistema/Super Admin)
      */
     private function auditLog(int $tenantId, int $userId, string $action, array $details): void
     {
         $this->tenantRepo->rawExecute(
-            "INSERT INTO audit_logs (tenant_id, user_id, action, details)
+            "/* BYPASS_TENANT_SCOPE */ INSERT INTO audit_logs (tenant_id, user_id, action, details)
              VALUES (?, ?, ?, ?)",
             [$tenantId, $userId, $action, json_encode($details, JSON_UNESCAPED_UNICODE)]
         );

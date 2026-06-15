@@ -8,9 +8,11 @@ use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\DB\TenantContext;
 
 /**
- * UserRepository - Repositorio para users y user_apps
+ * UserRepository - Repositorio para users y user_roles
  * 
  * Extiende BaseRepository. Usado por TenantService para crear admin de tenant.
+ * 
+ * NOTA: user_apps reemplazado por user_roles + roles (catálogo global).
  */
 final class UserRepository extends BaseRepository
 {
@@ -50,31 +52,44 @@ final class UserRepository extends BaseRepository
         $data['is_active'] = $data['is_active'] ?? 1;
         $data['created_at'] = date('Y-m-d H:i:s');
         
-        return parent::create('users', $data);
+        $columns = implode(', ', array_map(fn($c) => "`{$c}`", array_keys($data)));
+        $placeholders = ':' . implode(', :', array_keys($data));
+        $sql = "/* BYPASS_TENANT_SCOPE */ INSERT INTO `users` ({$columns}) VALUES ({$placeholders})";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($data);
+        
+        return (int)$this->pdo->lastInsertId();
     }
 
     /**
-     * Asigna rol a usuario en app específica
+     * Asigna rol a usuario en app específica (reemplaza user_apps)
+     * 
+     * @param int $roleId ID de roles table
      */
-    public function assignRole(int $userId, string $appId, string $role): void
+    public function assignRoleToApp(int $userId, string $appId, int $roleId): void
     {
         $this->rawExecute(
-            "INSERT INTO user_apps (user_id, app_id, role, is_active)
-             VALUES (?, ?, ?, 1)
-             ON DUPLICATE KEY UPDATE role = VALUES(role), is_active = 1",
-            [$userId, $appId, $role]
+            "/* BYPASS_TENANT_SCOPE */ INSERT INTO user_roles (user_id, app_id, role_id, assigned_by, created_at)
+             VALUES (?, ?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE role_id = VALUES(role_id)",
+            [$userId, $appId, $roleId, $userId]
         );
     }
 
     /**
-     * Obtiene roles de usuario por app
+     * Obtiene roles del usuario con nombre de rol (join con roles)
      * 
-     * @return array<int, array{app_id: string, role: string, is_active: int}>
+     * @return array<int, array{app_id: string, role: string, role_id: int}>
      */
     public function getUserRoles(int $userId): array
     {
         return $this->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT app_id, role, is_active FROM user_apps WHERE user_id = ? AND is_active = 1",
+            "/* BYPASS_TENANT_SCOPE */
+             SELECT ur.app_id, r.name AS role, r.id AS role_id
+             FROM user_roles ur
+             JOIN roles r ON r.id = ur.role_id
+             WHERE ur.user_id = ?",
             [$userId]
         );
     }

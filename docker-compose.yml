@@ -44,7 +44,7 @@ services:
       DB_PASS: ${DB_PASS:-appsecret}
       JWT_SECRET: ${JWT_SECRET:-super-secret-change-in-production}
       APP_ENV: development
-      SYSTEM_TENANT_ID: 2
+      SYSTEM_TENANT_ID: 1
     ports:
       - "8080:80"
     volumes:
@@ -84,6 +84,20 @@ services:
       "
     depends_on:
       - api
+
+  # ------------------------------------------------------------
+  # Adminer (Web UI para BD - http://localhost:8081)
+  # ------------------------------------------------------------
+  adminer:
+    image: adminer:latest
+    container_name: kodanapps_adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    profiles:
+      - tools
 
   # ------------------------------------------------------------
   # Mailhog (Email testing para set-password tokens)

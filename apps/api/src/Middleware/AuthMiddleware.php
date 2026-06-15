@@ -9,87 +9,97 @@ use kodanAPPS\Repositories\RefreshTokenRepository;
 use RuntimeException;
 
 /**
- * SuperAdminMiddleware - Autenticación y seguridad para panel Super Admin
+ * AuthMiddleware - Autenticación y seguridad unificada para todas las rutas API
  * 
- * Blueprint decisiones:
- * - Punto 1: JWT (access 30min + rotating refresh 30d) en cookie HttpOnly, SameSite=Strict
- * - Punto 3: CSRF Synchronizer Token Pattern en SESIÓN (no cookie legible por JS)
- * - Punto 4: Cookies en subdominio exacto api.kodan.software
- * - Verifica tenant_id del JWT == system tenant (is_system_tenant = TRUE)
+ * - JWT (access 30min) en cookie HttpOnly, SameSite=Strict
+ * - CSRF Stateless (HMAC + PHPSESSID, sin sesión)
+ * - Sin restricciones de app/rol — eso lo resuelve cada ruta
  * 
- * Rate Limiting: 5/min mutantes, 60/min lecturas (via login_attempts pattern)
+ * Uso en index.php:
+ *   $auth = $authMiddleware->handle();         // valida JWT + CSRF
+ *   $authMiddleware->requireSuperAdmin();      // opcional, para rutas superadmin
  */
-final class SuperAdminMiddleware
+final class AuthMiddleware
 {
     private string $jwtSecret;
+    private string $csrfSecret;
     private int $systemTenantId;
     private RefreshTokenRepository $refreshTokenRepo;
 
     public function __construct(
         string $jwtSecret,
+        string $csrfSecret,
         int $systemTenantId,
         RefreshTokenRepository $refreshTokenRepo
     ) {
         $this->jwtSecret = $jwtSecret;
+        $this->csrfSecret = $csrfSecret;
         $this->systemTenantId = $systemTenantId;
         $this->refreshTokenRepo = $refreshTokenRepo;
     }
 
     /**
-     * Maneja request entrante
+     * Valida JWT + CSRF y setea TenantContext
      * 
-     * @return array{user_id: int, tenant_id: int, roles: array<string>, app_id: string}|null
-     * @throws RuntimeException 401/403 con código específico
+     * @return array{user_id: int, tenant_id: int, roles: array<string>, app_id: string}
+     * @throws RuntimeException 401/403
      */
     public function handle(): array
     {
-        // 1. Leer Access Token de cookie HttpOnly
         $accessToken = $_COOKIE['access_token'] ?? '';
         if ($accessToken === '') {
             throw new RuntimeException('UNAUTHENTICATED: Access token missing', 401);
         }
 
-        // 2. Validar JWT
         $payload = $this->validateJwt($accessToken);
-        
-        // 3. Verificar claims requeridos
         $this->validateClaims($payload);
 
-        // 4. Verificar tenant_id == system tenant
-        if ((int)$payload['tid'] !== $this->systemTenantId) {
-            throw new RuntimeException('FORBIDDEN: Super Admin must operate from system tenant', 403);
-        }
-
-        // 5. Verificar is_super_admin o role admin en superadmin app
-        if (!isset($payload['is_super_admin']) || (int)$payload['is_super_admin'] !== 1) {
-            $roles = $payload['roles'] ?? [];
-            if (!in_array('admin', $roles) || ($payload['app_id'] ?? '') !== 'superadmin') {
-                throw new RuntimeException('FORBIDDEN: Super Admin privileges required', 403);
-            }
-        }
-
-        // 6. CSRF Protection para peticiones mutables (Synchronizer Token Pattern)
         $this->validateCsrf();
 
-        // 7. Setear TenantContext para repositorios
         TenantContext::set(
             (int)$payload['tid'],
             (int)$payload['sub'],
             $payload['roles'] ?? [],
-            $payload['app_id'] ?? 'superadmin'
+            $payload['app_id'] ?? ''
         );
 
         return [
             'user_id' => (int)$payload['sub'],
             'tenant_id' => (int)$payload['tid'],
             'roles' => $payload['roles'] ?? [],
-            'app_id' => $payload['app_id'] ?? 'superadmin',
+            'app_id' => $payload['app_id'] ?? '',
         ];
     }
 
     /**
-     * Valida JWT (RS256)
+     * Verifica que el usuario autenticado sea Super Admin
+     * (tenant sistema + is_super_admin o rol admin en superadmin)
+     * 
+     * @throws RuntimeException 403
      */
+    public function requireSuperAdmin(): void
+    {
+        $tenantId = TenantContext::getTenantId();
+        if ($tenantId !== $this->systemTenantId) {
+            throw new RuntimeException('FORBIDDEN: Super Admin must operate from system tenant', 403);
+        }
+
+        // Leer payload del JWT nuevamente para verificar roles
+        $accessToken = $_COOKIE['access_token'] ?? '';
+        if ($accessToken === '') {
+            throw new RuntimeException('UNAUTHENTICATED', 401);
+        }
+
+        $payload = $this->validateJwt($accessToken);
+
+        if (!isset($payload['is_super_admin']) || (int)$payload['is_super_admin'] !== 1) {
+            $roles = $payload['roles'] ?? [];
+            if (!in_array('admin', $roles) || ($payload['app_id'] ?? '') !== 'superadmin') {
+                throw new RuntimeException('FORBIDDEN: Super Admin privileges required', 403);
+            }
+        }
+    }
+
     private function validateJwt(string $token): array
     {
         $parts = explode('.', $token);
@@ -98,12 +108,11 @@ final class SuperAdminMiddleware
         }
 
         [$headerB64, $payloadB64, $signatureB64] = $parts;
-        
-        // Verificar firma (simplificado - en producción usar firebase/php-jwt o lcobucci/jwt)
+
         $expectedSignature = $this->base64UrlEncode(
             hash_hmac('sha256', "$headerB64.$payloadB64", $this->jwtSecret, true)
         );
-        
+
         if (!hash_equals($expectedSignature, $signatureB64)) {
             throw new RuntimeException('UNAUTHENTICATED: Invalid signature', 401);
         }
@@ -113,7 +122,6 @@ final class SuperAdminMiddleware
             throw new RuntimeException('UNAUTHENTICATED: Invalid payload', 401);
         }
 
-        // Verificar expiración
         if (isset($payload['exp']) && $payload['exp'] < time()) {
             throw new RuntimeException('TOKEN_EXPIRED: Access token expired', 401);
         }
@@ -121,9 +129,6 @@ final class SuperAdminMiddleware
         return $payload;
     }
 
-    /**
-     * Valida claims requeridos
-     */
     private function validateClaims(array $payload): void
     {
         $required = ['sub', 'tid', 'iat', 'exp', 'roles', 'app_id'];
@@ -134,19 +139,10 @@ final class SuperAdminMiddleware
         }
     }
 
-    /**
-     * CSRF Synchronizer Token Pattern (Blueprint Punto 3)
-     * - Token en sesión servidor ($_SESSION['csrf_token'])
-     * - Header requerido: X-CSRF-Token
-     * - Comparación hash_equals()
-     * - Rotación tras uso válido
-     * - Exclusiones: GET, HEAD, OPTIONS, /auth/*, /csrf-token
-     */
     private function validateCsrf(): void
     {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-        
-        // Excluir métodos seguros y endpoints públicos
+
         if (in_array($method, ['GET', 'HEAD', 'OPTIONS'], true)) {
             return;
         }
@@ -158,63 +154,35 @@ final class SuperAdminMiddleware
             '/api/auth/logout',
             '/api/csrf-token',
         ];
-        
+
         foreach ($excludedPaths as $excluded) {
             if (str_starts_with($path, $excluded)) {
                 return;
             }
         }
 
-        // Leer token del header
         $headerToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
         if ($headerToken === '') {
             throw new RuntimeException('CSRF_INVALID: Missing X-CSRF-Token header', 403);
         }
 
-        // Leer token de sesión
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start([
-                'cookie_httponly' => true,
-                'cookie_secure' => true,
-                'cookie_samesite' => 'Lax',
-            ]);
-        }
-        
-        $sessionToken = $_SESSION['csrf_token'] ?? '';
-        if ($sessionToken === '') {
-            throw new RuntimeException('CSRF_INVALID: No CSRF token in session', 403);
+        $sessionId = $_COOKIE['PHPSESSID'] ?? '';
+        if ($sessionId === '') {
+            throw new RuntimeException('CSRF_INVALID: No session cookie', 403);
         }
 
-        // Comparación timing-safe
-        if (!hash_equals($sessionToken, $headerToken)) {
-            // Rotar token por seguridad
-            $_SESSION['csrf_token'] = $this->generateCsrfToken();
+        $expectedToken = hash_hmac('sha256', $sessionId, $this->csrfSecret);
+
+        if (!hash_equals($expectedToken, $headerToken)) {
             throw new RuntimeException('CSRF_INVALID: Token mismatch', 403);
         }
-
-        // Rotar token tras uso válido (opcional, más seguro)
-        $_SESSION['csrf_token'] = $this->generateCsrfToken();
     }
 
-    /**
-     * Genera token CSRF seguro (32 bytes = 64 chars hex)
-     */
-    private function generateCsrfToken(): string
-    {
-        return bin2hex(random_bytes(32));
-    }
-
-    /**
-     * Base64Url encoding para JWT
-     */
     private function base64UrlEncode(string $data): string
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
-    /**
-     * Base64Url decoding para JWT
-     */
     private function base64UrlDecode(string $data): string
     {
         $padding = strlen($data) % 4;

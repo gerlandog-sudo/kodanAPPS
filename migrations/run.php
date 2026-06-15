@@ -32,16 +32,21 @@ try {
     ]);
     echo "✅ Database connection successful.\n";
     
-    $sqlFile = __DIR__ . '/001_core_schema.sql';
-    if (!file_exists($sqlFile)) {
-        throw new Exception("Schema file not found at $sqlFile");
+    $migrations = ['001_core_schema.sql', '002_tenant_wizard.sql', '003_roles_apps.sql'];
+    
+    foreach ($migrations as $migration) {
+        $sqlFile = __DIR__ . '/' . $migration;
+        if (!file_exists($sqlFile)) {
+            throw new Exception("Migration file not found at $sqlFile");
+        }
+        
+        echo "Executing migration: $migration...\n";
+        $sql = file_get_contents($sqlFile);
+        $pdo->exec($sql);
+        echo "✅ $migration applied successfully.\n";
     }
     
-    echo "Executing schema migration from 001_core_schema.sql...\n";
-    $sql = file_get_contents($sqlFile);
-    $pdo->exec($sql);
-    
-    echo "✅ Migration completed successfully!\n";
+    echo "✅ All migrations completed successfully!\n";
 } catch (Throwable $e) {
     die("❌ Error during migration: " . $e->getMessage() . "\n");
 }

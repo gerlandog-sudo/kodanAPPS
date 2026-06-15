@@ -9,27 +9,35 @@ use InvalidArgumentException;
 /**
  * DTO inmutable para validar payload de creación de Tenant (Super Admin)
  * 
- * NO incluye admin_password: el backend genera password seguro y envía
- * token set-password via email (tabla password_resets existente)
+ * Incluye:
+ * - name, subscription_plan_id (plan determina apps disponibles)
+ * - logo_url (base64 opcional)
+ * - admin_name, admin_email, admin_password
+ * - theme_preference (light/dark, opcional)
+ * 
+ * NOTA: Ya no se recibe enabled_apps — el plan determina qué apps
+ * puede usar el tenant. El admin recibe rol 'admin' en todas las apps
+ * que el plan incluya (definido por plan_limits.module).
  */
 final readonly class TenantCreateDTO
 {
     public string $name;
-    public string $slug;
     public int $subscriptionPlanId;
-    /** @var array<string> Valores permitidos: 'crm', 'tracker' */
-    public array $enabledApps;
+    public ?string $logoUrl;
+    public string $themePreference;
     public string $adminName;
     public string $adminEmail;
+    public string $adminPassword;
 
     /**
      * @param array{
      *     name: string,
-     *     slug: string,
      *     subscription_plan_id: int,
-     *     enabled_apps: array<string>,
+     *     logo_url?: string|null,
+     *     theme_preference?: string,
      *     admin_name: string,
-     *     admin_email: string
+     *     admin_email: string,
+     *     admin_password: string
      * } $data
      * 
      * @throws InvalidArgumentException Si validación falla
@@ -37,13 +45,18 @@ final readonly class TenantCreateDTO
     public function __construct(array $data)
     {
         $this->validate($data);
-        
+
         $this->name = trim($data['name']);
-        $this->slug = strtolower(trim($data['slug']));
         $this->subscriptionPlanId = (int)$data['subscription_plan_id'];
-        $this->enabledApps = array_values(array_unique(array_map('strtolower', $data['enabled_apps'])));
+        $this->logoUrl = (isset($data['logo_url']) && $data['logo_url'] !== '')
+            ? $data['logo_url']
+            : null;
+        $this->themePreference = isset($data['theme_preference']) && in_array($data['theme_preference'], ['light', 'dark'], true)
+            ? $data['theme_preference']
+            : 'dark';
         $this->adminName = trim($data['admin_name']);
         $this->adminEmail = strtolower(trim($data['admin_email']));
+        $this->adminPassword = $data['admin_password'];
     }
 
     /**
@@ -62,22 +75,6 @@ final readonly class TenantCreateDTO
             $errors['name'] = 'El nombre debe tener entre 2 y 255 caracteres';
         }
 
-        // slug: requerido, formato slug, único (se verifica en BD)
-        if (!isset($data['slug']) || !is_string($data['slug'])) {
-            $errors['slug'] = 'El slug es requerido';
-        } else {
-            $slug = strtolower(trim($data['slug']));
-            if ($slug === '') {
-                $errors['slug'] = 'El slug no puede estar vacío';
-            } elseif (!preg_match('/^[a-z0-9-]+$/', $slug)) {
-                $errors['slug'] = 'El slug solo puede contener letras minúsculas, números y guiones';
-            } elseif (strlen($slug) < 2 || strlen($slug) > 50) {
-                $errors['slug'] = 'El slug debe tener entre 2 y 50 caracteres';
-            } elseif (in_array($slug, ['api', 'crm', 'tracker', 'superadmin', 'www', 'mail', 'ftp', 'admin', 'system'], true)) {
-                $errors['slug'] = 'Este slug está reservado';
-            }
-        }
-
         // subscription_plan_id: requerido, entero positivo
         if (!isset($data['subscription_plan_id']) || !is_numeric($data['subscription_plan_id'])) {
             $errors['subscription_plan_id'] = 'El plan de suscripción es requerido';
@@ -85,19 +82,19 @@ final readonly class TenantCreateDTO
             $errors['subscription_plan_id'] = 'Plan de suscripción inválido';
         }
 
-        // enabled_apps: array, al menos uno, valores permitidos
-        if (!isset($data['enabled_apps']) || !is_array($data['enabled_apps'])) {
-            $errors['enabled_apps'] = 'Debe seleccionar al menos una aplicación';
-        } else {
-            $allowedApps = ['crm', 'tracker'];
-            $providedApps = array_map('strtolower', $data['enabled_apps']);
-            $invalidApps = array_diff($providedApps, $allowedApps);
-            if (!empty($invalidApps)) {
-                $errors['enabled_apps'] = 'Aplicaciones no válidas: ' . implode(', ', $invalidApps) . '. Permitidas: crm, tracker';
+        // enabled_apps: eliminado — el plan determina las apps disponibles
+
+        // logo_url: opcional, validar tamaño si se provee
+        if (isset($data['logo_url']) && is_string($data['logo_url']) && $data['logo_url'] !== '') {
+            $decoded = base64_decode(explode(',', $data['logo_url'])[1] ?? $data['logo_url'], true);
+            if ($decoded !== false && strlen($decoded) > 512000) {
+                $errors['logo_url'] = 'El logo no debe superar 500KB';
             }
-            if (empty($providedApps)) {
-                $errors['enabled_apps'] = 'Debe seleccionar al menos una aplicación';
-            }
+        }
+
+        // theme_preference: opcional, valores permitidos
+        if (isset($data['theme_preference']) && !in_array($data['theme_preference'], ['light', 'dark'], true)) {
+            $errors['theme_preference'] = 'El tema debe ser light o dark';
         }
 
         // admin_name: requerido, 2-100 chars
@@ -116,6 +113,13 @@ final readonly class TenantCreateDTO
             $errors['admin_email'] = 'El email no puede exceder 255 caracteres';
         }
 
+        // admin_password: requerido, mínimo 8 caracteres
+        if (!isset($data['admin_password']) || !is_string($data['admin_password'])) {
+            $errors['admin_password'] = 'La contraseña del administrador es requerida';
+        } elseif (strlen($data['admin_password']) < 8) {
+            $errors['admin_password'] = 'La contraseña debe tener al menos 8 caracteres';
+        }
+
         if (!empty($errors)) {
             throw new InvalidArgumentException(json_encode($errors, JSON_UNESCAPED_UNICODE));
         }
@@ -124,24 +128,18 @@ final readonly class TenantCreateDTO
     /**
      * Convierte a array para uso en repositorios/servicios
      * 
-     * @return array{
-     *     name: string,
-     *     slug: string,
-     *     subscription_plan_id: int,
-     *     enabled_apps: array<string>,
-     *     admin_name: string,
-     *     admin_email: string
-     * }
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
         return [
             'name' => $this->name,
-            'slug' => $this->slug,
             'subscription_plan_id' => $this->subscriptionPlanId,
-            'enabled_apps' => $this->enabledApps,
+            'logo_url' => $this->logoUrl,
+            'theme_preference' => $this->themePreference,
             'admin_name' => $this->adminName,
             'admin_email' => $this->adminEmail,
+            'admin_password' => $this->adminPassword,
         ];
     }
 }

@@ -60,64 +60,45 @@ final class AuthController
             throw new RuntimeException('Credenciales inválidas', 401);
         }
 
-        // Obtener roles en la app especificada
+        // Si es el panel superadmin, validar privilegios (sin plan_limits)
+        if ($appId === 'superadmin') {
+            if ((int)$user['is_super_admin'] !== 1) {
+                throw new RuntimeException('Acceso denegado: privilegios de Super Admin requeridos.', 403);
+            }
+            if ((int)$user['tenant_id'] !== $this->systemTenantId) {
+                throw new RuntimeException('Acceso denegado: el Super Admin debe operar desde el tenant del sistema.', 403);
+            }
+            // Super Admin pasa directo, sin chequear roles
+            return $this->buildLoginResponse($user, $appId, []);
+        }
+
+        // Validar que el plan del tenant incluya esta app (plan_limits.module)
+        $tenantPlanId = $this->userRepo->rawSelect(
+            "/* BYPASS_TENANT_SCOPE */ SELECT subscription_plan_id FROM tenants WHERE tenant_id = ? AND is_active = 1",
+            [(int)$user['tenant_id']]
+        );
+        if (empty($tenantPlanId) || $tenantPlanId[0]['subscription_plan_id'] === null) {
+            throw new RuntimeException('Acceso denegado: tenant sin plan asignado.', 403);
+        }
+        $planId = (int)$tenantPlanId[0]['subscription_plan_id'];
+        $appAvailable = $this->userRepo->rawSelect(
+            "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM plan_limits WHERE plan_id = ? AND module = ? LIMIT 1",
+            [$planId, $appId]
+        );
+        if (empty($appAvailable)) {
+            throw new RuntimeException('Acceso denegado: la aplicación no está incluida en el plan del tenant.', 403);
+        }
+
+        // Obtener roles en la app especificada (user_roles + roles)
         $allRoles = $this->userRepo->getUserRoles((int)$user['id']);
         $roles = [];
         foreach ($allRoles as $roleRow) {
-            if ($roleRow['app_id'] === $appId && (int)$roleRow['is_active'] === 1) {
+            if ($roleRow['app_id'] === $appId) {
                 $roles[] = $roleRow['role'];
             }
         }
 
-        // Si es el panel superadmin, validar privilegios
-        if ($appId === 'superadmin') {
-            if ((int)$user['is_super_admin'] !== 1 && !in_array('admin', $roles, true)) {
-                throw new RuntimeException('Acceso denegado: privilegios de Super Admin requeridos', 403);
-            }
-            if ((int)$user['tenant_id'] !== $this->systemTenantId) {
-                throw new RuntimeException('Acceso denegado: el Super Admin debe operar desde el tenant del sistema', 403);
-            }
-        } elseif (empty($roles)) {
-            throw new RuntimeException('Acceso denegado: el usuario no tiene rol asignado en esta aplicación', 403);
-        }
-
-        // Generar JWT
-        $issuedAt = time();
-        $expiresAt = $issuedAt + 1800; // 30 minutos
-        $payload = [
-            'sub' => (int)$user['id'],
-            'tid' => (int)$user['tenant_id'],
-            'iat' => $issuedAt,
-            'exp' => $expiresAt,
-            'roles' => $roles,
-            'app_id' => $appId,
-            'is_super_admin' => (int)$user['is_super_admin'],
-        ];
-
-        $jwt = $this->generateJwt($payload);
-
-        // Configurar cookie HttpOnly
-        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        setcookie('access_token', $jwt, [
-            'expires' => $expiresAt,
-            'path' => '/',
-            'domain' => '', // subdominio exacto / local
-            'secure' => $cookieSecure,
-            'httponly' => true,
-            'samesite' => 'Strict',
-        ]);
-
-        return [
-            'success' => true,
-            'user' => [
-                'id' => (int)$user['id'],
-                'email' => $user['email'],
-                'display_name' => $user['display_name'],
-                'is_super_admin' => (int)$user['is_super_admin'] === 1,
-            ],
-            'app_id' => $appId,
-            'roles' => $roles,
-        ];
+        return $this->buildLoginResponse($user, $appId, $roles);
     }
 
     /**
@@ -198,7 +179,49 @@ final class AuthController
     }
 
     /**
-     * Generación de JWT compatible con SuperAdminMiddleware
+     * Construye respuesta de login + JWT + cookie HttpOnly
+     */
+    private function buildLoginResponse(array $user, string $appId, array $roles): array
+    {
+        $issuedAt = time();
+        $expiresAt = $issuedAt + 1800;
+        $payload = [
+            'sub' => (int)$user['id'],
+            'tid' => (int)$user['tenant_id'],
+            'iat' => $issuedAt,
+            'exp' => $expiresAt,
+            'roles' => $roles,
+            'app_id' => $appId,
+            'is_super_admin' => (int)$user['is_super_admin'],
+        ];
+
+        $jwt = $this->generateJwt($payload);
+
+        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        setcookie('access_token', $jwt, [
+            'expires' => $expiresAt,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
+
+        return [
+            'success' => true,
+            'user' => [
+                'id' => (int)$user['id'],
+                'email' => $user['email'],
+                'display_name' => $user['display_name'],
+                'is_super_admin' => (int)$user['is_super_admin'] === 1,
+            ],
+            'app_id' => $appId,
+            'roles' => $roles,
+        ];
+    }
+
+    /**
+     * Generación de JWT compatible con AuthMiddleware
      */
     private function generateJwt(array $payload): string
     {

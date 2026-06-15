@@ -14,7 +14,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\DB\TenantContext;
-use kodanAPPS\Middleware\SuperAdminMiddleware;
+use kodanAPPS\Middleware\AuthMiddleware;
 use kodanAPPS\Controllers\SuperAdminController;
 use kodanAPPS\Repositories\TenantRepository;
 use kodanAPPS\Repositories\PlanRepository;
@@ -66,10 +66,11 @@ $tenantService = new TenantService($tenantRepo, $userRepo);
 // Configuración Super Admin
 // ------------------------------------------------------------
 $jwtSecret = $dotenv['JWT_SECRET'] ?? $_ENV['JWT_SECRET'] ?? 'change-me-in-production';
+$csrfSecret = $dotenv['CSRF_SECRET'] ?? $_ENV['CSRF_SECRET'] ?? 'csrf-secret-change-in-production';
 $systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
 
-// Middleware Super Admin
-$superAdminMiddleware = new SuperAdminMiddleware($jwtSecret, $systemTenantId, $refreshTokenRepo);
+// Middleware de autenticación unificado (JWT + CSRF)
+$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $refreshTokenRepo);
 
 // ------------------------------------------------------------
 // Routing simple
@@ -106,17 +107,21 @@ if ($method === 'OPTIONS') {
 // Rutas públicas (sin auth)
 // ------------------------------------------------------------
 if ($requestUri === '/api/csrf-token' && $method === 'GET') {
-    // Generar CSRF token (Synchronizer Token Pattern)
-    if (session_status() === PHP_SESSION_NONE) {
+    // Stateless CSRF: HMAC(PHPSESSID_from_cookie, server_secret)
+    // Usa $_COOKIE['PHPSESSID'] directamente (no session_id()) para garantizar
+    // que el token coincida exactamente con lo que el middleware validará.
+    // No almacenamiento en sesión, no file locking, escala horizontalmente.
+    $phpsessid = $_COOKIE['PHPSESSID'] ?? '';
+    if ($phpsessid === '') {
         session_start([
             'cookie_httponly' => true,
-            'cookie_secure' => true,
+            'cookie_secure' => false,
             'cookie_samesite' => 'Lax',
         ]);
+        $phpsessid = session_id();
     }
     
-    $token = bin2hex(random_bytes(32));
-    $_SESSION['csrf_token'] = $token;
+    $token = hash_hmac('sha256', $phpsessid, $csrfSecret);
     
     header('Content-Type: application/json');
     echo json_encode(['token' => $token]);
@@ -176,11 +181,12 @@ if (str_starts_with($requestUri, '/api/auth/')) {
 }
 
 // ------------------------------------------------------------
-// Rutas Super Admin (protegidas por middleware)
+// Rutas Super Admin (protegidas por AuthMiddleware + verificación Super Admin)
 // ------------------------------------------------------------
 if (str_starts_with($requestUri, '/api/super-admin')) {
     try {
-        $auth = $superAdminMiddleware->handle();
+        $auth = $authMiddleware->handle();
+        $authMiddleware->requireSuperAdmin();
         // $auth contiene [user_id, tenant_id, roles, app_id]
     } catch (RuntimeException $e) {
         $code = (int)$e->getCode();
@@ -191,7 +197,7 @@ if (str_starts_with($requestUri, '/api/super-admin')) {
         exit;
     }
 
-    $controller = new SuperAdminController($tenantService, $tenantRepo, $planRepo);
+    $controller = new SuperAdminController($tenantService, $tenantRepo, $planRepo, $userRepo);
     
     // Parsear ruta
     $path = str_replace('/api/super-admin', '', $requestUri);
@@ -273,10 +279,61 @@ if (str_starts_with($requestUri, '/api/super-admin')) {
             exit;
         }
         
+        // GET /api/super-admin/theme
+        if ($path === '/theme' && $method === 'GET') {
+            $data = $controller->getTheme();
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
         // PUT /api/super-admin/theme
         if ($path === '/theme' && $method === 'PUT') {
             $input = json_decode(file_get_contents('php://input'), true) ?? [];
             $data = $controller->updateTheme($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
+        // POST /api/super-admin/change-password
+        if ($path === '/change-password' && $method === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $controller->changePassword($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
+        // GET /api/super-admin/roles
+        if ($path === '/roles' && $method === 'GET') {
+            $data = $controller->listRoles();
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
+        // POST /api/super-admin/roles
+        if ($path === '/roles' && $method === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $controller->createRole($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
+        // PATCH /api/super-admin/roles/{id}
+        if (preg_match('#^/roles/(\d+)$#', $path, $matches) && $method === 'PATCH') {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $controller->updateRole((int)$matches[1], $input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
+        // DELETE /api/super-admin/roles/{id}
+        if (preg_match('#^/roles/(\d+)$#', $path, $matches) && $method === 'DELETE') {
+            $data = $controller->deleteRole((int)$matches[1]);
             header('Content-Type: application/json');
             echo json_encode($data);
             exit;
@@ -292,6 +349,44 @@ if (str_starts_with($requestUri, '/api/super-admin')) {
         exit;
     } catch (RuntimeException $e) {
         http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => $e->getMessage()]);
+        exit;
+    }
+}
+
+// ------------------------------------------------------------
+// Rutas CRM, Tracker y otras apps (protegidas por AuthMiddleware)
+// ------------------------------------------------------------
+if (str_starts_with($requestUri, '/api/') && !str_starts_with($requestUri, '/api/super-admin') && !str_starts_with($requestUri, '/api/auth') && $requestUri !== '/api/csrf-token' && $requestUri !== '/api/health') {
+    try {
+        $auth = $authMiddleware->handle();
+
+        // CRM routes (endpoints por definir)
+        if (str_starts_with($requestUri, '/api/crm')) {
+            http_response_code(501);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'CRM API not implemented yet']);
+            exit;
+        }
+
+        // Tracker routes (endpoints por definir)
+        if (str_starts_with($requestUri, '/api/tracker')) {
+            http_response_code(501);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Tracker API not implemented yet']);
+            exit;
+        }
+
+        // Otras rutas API no reconocidas
+        http_response_code(404);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Not found']);
+        exit;
+    } catch (RuntimeException $e) {
+        $code = (int)$e->getCode();
+        if ($code === 0) $code = 401;
+        http_response_code($code);
         header('Content-Type: application/json');
         echo json_encode(['error' => $e->getMessage()]);
         exit;

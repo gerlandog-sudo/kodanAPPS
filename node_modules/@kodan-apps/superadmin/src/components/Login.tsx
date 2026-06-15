@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { api } from '../api/client';
+import { Card, Button, Input } from '@kodan-apps/ui-core';
+import { LogIn, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LoginProps {
   onLoginSuccess: (user: any) => void;
@@ -9,12 +12,11 @@ interface LoginProps {
 export function Login({ onLoginSuccess, onGoToSetPassword }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     try {
@@ -23,86 +25,104 @@ export function Login({ onLoginSuccess, onGoToSetPassword }: LoginProps) {
         password,
         app_id: 'superadmin',
       });
-      
+
       if (response && response.success) {
         onLoginSuccess(response.user);
       } else {
-        setError('Error en la autenticación.');
+        toast.error('Error en la autenticación.');
       }
     } catch (err: any) {
-      console.error('[Login] Error:', err);
       const msg = err?.data?.error || err?.message || 'Error al iniciar sesión. Por favor verifica tus credenciales.';
-      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh] px-4">
-      <div className="double-bevel-card w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold">kodanAPPS</h2>
-          <p className="text-sm text-muted mt-1">Super Admin Console</p>
+    <div className="flex items-center justify-center min-h-screen px-4" style={{ background: 'var(--sys-bg)' }}>
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center mb-10">
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="kodan" className="h-8 w-auto" />
+            <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--sys-text)', fontFamily: 'var(--font-hanken)' }}>kodanAPPS</span>
+          </div>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded bg-error/10 border border-error/20 text-error text-sm">
-            {error}
+        <Card className="p-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)', fontFamily: 'var(--font-hanken)' }} htmlFor="email">
+                CORREO ELECTRÓNICO
+              </label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                icon={<Mail size={16} />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)', fontFamily: 'var(--font-hanken)' }} htmlFor="password">
+                CONTRASEÑA
+              </label>
+              <div className="relative">
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)' }} />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className="input"
+                  style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--sys-text-muted)' }}
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <Button variant="primary" type="submit" className="w-full mt-1" disabled={loading}>
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="spinner" />
+                  Iniciando...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <LogIn size={16} />
+                  Iniciar Sesión
+                </span>
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+            <button
+              type="button"
+              className="text-xs font-medium inline-flex items-center gap-1"
+              style={{ color: 'var(--sys-text-muted)' }}
+              onClick={onGoToSetPassword}
+            >
+              Establecer o recuperar contraseña
+              <ArrowRight size={12} />
+            </button>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted" htmlFor="email">
-              CORREO ELECTRÓNICO
-            </label>
-            <input
-              id="email"
-              type="email"
-              className="input"
-              placeholder="superadmin@kodan.software"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted" htmlFor="password">
-              CONTRASEÑA
-            </label>
-            <input
-              id="password"
-              type="password"
-              className="input"
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary w-full mt-2"
-            disabled={loading}
-          >
-            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center border-t border-border pt-4">
-          <button
-            type="button"
-            className="btn btn-ghost text-xs"
-            onClick={onGoToSetPassword}
-          >
-            Establecer / Recuperar Contraseña
-          </button>
-        </div>
+        </Card>
       </div>
     </div>
   );

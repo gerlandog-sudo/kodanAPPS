@@ -78,10 +78,11 @@ Controlador centralizado para la administración global. Métodos:
 5.  `updateTheme()`: Endpoint para guardar la preferencia visual en `user_configs` (`theme_colors`).
 6.  `listPlans()` / `savePlan()` / `deletePlan($id)`: CRUD de planes.
 
-#### [NEW] [SuperAdminMiddleware.php](file:///c:/Proyectos_Antigravity/kodanAPPS/apps/api/src/Middleware/SuperAdminMiddleware.php)
-Middleware de autenticación y seguridad:
-*   Valida JWT en cookie HttpOnly y que el claims contenga `is_super_admin = 1`.
-*   Valida Double Submit CSRF: compara `X-CSRF-Token` header contra el token de la cookie para peticiones mutacionales (`POST`, `PUT`, `DELETE`).
+#### [IMPLEMENTED] [AuthMiddleware.php](file:///c:/Proyectos_Antigravity/kodanAPPS/apps/api/src/Middleware/AuthMiddleware.php) — Unificado para todas las rutas API
+Middleware de autenticación y seguridad unificado (reemplaza `SuperAdminMiddleware`):
+*   `handle()`: Valida JWT en cookie HttpOnly + CSRF stateless (HMAC + PHPSESSID). Setea `TenantContext`.
+*   `requireSuperAdmin()`: Verificación adicional para rutas Super Admin (tenant sistema + `is_super_admin` o rol `admin` en `superadmin`).
+*   Protege automáticamente todas las rutas `/api/*` (CRM, Tracker, Super Admin) excepto `/api/auth/*`, `/api/csrf-token`, `/api/health`, `OPTIONS`.
 
 ---
 

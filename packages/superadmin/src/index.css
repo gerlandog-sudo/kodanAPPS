@@ -1,50 +1,127 @@
 @import "tailwindcss";
+@import "../../../packages/ui-core/src/styles/base.css";
 
-/* ============================================================
-   SUPER ADMIN - Design Tokens (Blueprint Sección 5)
-   Identidad cromática propia: Indigo neutro
-   Solo Montserrat (Blueprint 5.A: "Tipografía Exclusiva: Montserrat")
-   ============================================================ */
+:root {
+  --sys-bg: #faf8ff;
+  --sys-surface: #f2f3ff;
+  --sys-surface-raised: #ffffff;
+  --sys-surface-hover: #eaedff;
+  --sys-text: #131b2e;
+  --sys-text-muted: #3c4947;
+  --sys-border: #bbc9c6;
+  --sys-border-soft: #dae2fd;
+  --sys-primary: #006a60;
+  --sys-primary-container: #62e2d1;
+  --sys-on-primary: #ffffff;
+  --sys-primary-hover: #005048;
+  --sys-tertiary: #732ee4;
+  --sys-tertiary-container: #d9c4ff;
+  --sys-error: #ba1a1a;
+  --sys-error-container: #ffdad6;
+  --sys-success: #006a60;
+  --sys-success-bg: #62e2d1;
+  --sys-glass: rgba(250, 248, 255, 0.7);
+  --sys-glass-border: rgba(19, 27, 46, 0.08);
+}
+
+.theme-dark {
+  --sys-bg: #0b1326;
+  --sys-surface: #131b2e;
+  --sys-surface-raised: #171f33;
+  --sys-surface-hover: #222a3d;
+  --sys-text: #dae2fd;
+  --sys-text-muted: #bbc9c6;
+  --sys-border: #3c4947;
+  --sys-border-soft: #2d3449;
+  --sys-primary: #81ffed;
+  --sys-primary-container: #62e2d1;
+  --sys-on-primary: #003731;
+  --sys-primary-hover: #59daca;
+  --sys-tertiary: #f1e5ff;
+  --sys-tertiary-container: #d9c4ff;
+  --sys-error: #ffb4ab;
+  --sys-error-container: #93000a;
+  --sys-success: #81ffed;
+  --sys-success-bg: #62e2d1;
+  --sys-glass: rgba(11, 19, 38, 0.75);
+  --sys-glass-border: rgba(218, 226, 253, 0.08);
+}
 
 @theme {
-  /* Super Admin Identity Colors (Indigo neutro) */
-  --color-sys-primary: #6366f1;
-  --color-sys-primary-hover: #4f46e5;
-  --color-sys-primary-light: #e0e7ff;
-  --color-sys-on-primary: #ffffff;
-  
-  --color-sys-secondary: #64748b;
-  --color-sys-tertiary: #a855f7;
-  --color-sys-error: #ef4444;
-  --color-sys-success: #22c55e;
-  --color-sys-warning: #f59e0b;
-  --color-sys-info: #3b82f6;
+  --color-surface: #faf8ff;
+  --color-surface-dim: #d2d9f4;
+  --color-surface-bright: #faf8ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f3ff;
+  --color-surface-container: #eaedff;
+  --color-surface-container-high: #e2e7ff;
+  --color-surface-container-highest: #dae2fd;
+  --color-on-surface: #131b2e;
+  --color-on-surface-variant: #3c4947;
+  --color-inverse-surface: #283044;
+  --color-inverse-on-surface: #eef0ff;
+  --color-outline: #6c7a77;
+  --color-outline-variant: #bbc9c6;
+  --color-primary: #006a60;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #62e2d1;
+  --color-on-primary-container: #006359;
+  --color-inverse-primary: #59daca;
+  --color-secondary: #595e6f;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #dbdff4;
+  --color-on-secondary-container: #5d6274;
+  --color-tertiary: #732ee4;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #d9c4ff;
+  --color-on-tertiary-container: #6c22dd;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-background: #faf8ff;
+  --color-on-background: #131b2e;
+  --color-surface-variant: #dae2fd;
 
-  /* Surface Layers - Tema Claro */
-  --color-sys-surface-lowest: #ffffff;
-  --color-sys-surface-low: #f8fafc;
-  --color-sys-surface: #f1f5f9;
-  --color-sys-surface-high: #e2e8f0;
-  --color-sys-on-surface: #0f172a;
-  --color-sys-on-surface-variant: #475569;
+  --color-dark-surface: #0b1326;
+  --color-dark-surface-dim: #0b1326;
+  --color-dark-surface-bright: #31394d;
+  --color-dark-surface-container-lowest: #060e20;
+  --color-dark-surface-container-low: #131b2e;
+  --color-dark-surface-container: #171f33;
+  --color-dark-surface-container-high: #222a3d;
+  --color-dark-surface-container-highest: #2d3449;
+  --color-dark-on-surface: #dae2fd;
+  --color-dark-on-surface-variant: #bbc9c6;
+  --color-dark-inverse-surface: #dae2fd;
+  --color-dark-inverse-on-surface: #283044;
+  --color-dark-outline: #869490;
+  --color-dark-outline-variant: #3c4947;
+  --color-dark-primary: #81ffed;
+  --color-dark-on-primary: #003731;
+  --color-dark-primary-container: #62e2d1;
+  --color-dark-on-primary-container: #006359;
+  --color-dark-inverse-primary: #006a60;
+  --color-dark-secondary: #c1c6da;
+  --color-dark-on-secondary: #2b3040;
+  --color-dark-secondary-container: #414657;
+  --color-dark-on-secondary-container: #b0b4c8;
+  --color-dark-tertiary: #f1e5ff;
+  --color-dark-on-tertiary: #3f008e;
+  --color-dark-tertiary-container: #d9c4ff;
+  --color-dark-on-tertiary-container: #6c22dd;
+  --color-dark-error: #ffb4ab;
+  --color-dark-on-error: #690005;
+  --color-dark-error-container: #93000a;
+  --color-dark-on-error-container: #ffdad6;
+  --color-dark-background: #0b1326;
+  --color-dark-on-background: #dae2fd;
+  --color-dark-surface-variant: #2d3449;
 
-  /* Surface Layers - Tema Oscuro (override en .theme-dark) */
-  --color-sys-surface-lowest-dark: #0b0f1a;
-  --color-sys-surface-low-dark: #111827;
-  --color-sys-surface-dark: #1e293b;
-  --color-sys-surface-high-dark: #334155;
-  --color-sys-on-surface-dark: #f1f5f9;
-  --color-sys-on-surface-variant-dark: #94a3b8;
-
-  /* Borders & Outlines */
-  --color-sys-outline: #cbd5e1;
-  --color-sys-outline-variant: #94a3b8;
-
-  /* Typography - Solo Montserrat (Blueprint 5.A) */
-  --font-sans: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-montserrat: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-hanken: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Spacing (Blueprint 5.B: Base 4px) */
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 12px;
@@ -55,483 +132,127 @@
   --spacing-10: 40px;
   --spacing-12: 48px;
 
-  /* Border Radius (Blueprint 5.B) */
-  --radius-sm: 4px;   /* buttons, inputs */
-  --radius-md: 8px;   /* cards, containers */
-  --radius-lg: 12px;  /* modals, dialogs */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
 
-  /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.05);
 
-  /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Z-index */
-  --z-dropdown: 100;
-  --z-modal: 200;
-  --z-toast: 300;
-  --z-tooltip: 400;
 }
-
-/* ============================================================
-   Base Styles
-   ============================================================ */
 
 * {
   box-sizing: border-box;
 }
 
 html {
-  font-family: var(--font-sans);
+  font-family: var(--font-hanken);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Transición global suave de cambios de tema (Blueprint 5.B) */
-  transition: background-color var(--transition-normal), 
-              color var(--transition-normal), 
+  transition: background-color var(--transition-normal),
+              color var(--transition-normal),
               border-color var(--transition-normal);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: var(--color-sys-surface-low);
-  color: var(--color-sys-on-surface);
+  background-color: var(--sys-bg);
+  color: var(--sys-text);
   line-height: 1.6;
 }
 
-/* ============================================================
-   Theme Variables (Light/Dark)
-   ============================================================ */
-
-:root {
-  /* Light theme defaults */
-  --sys-bg: var(--color-sys-surface-low);
-  --sys-surface: var(--color-sys-surface);
-  --sys-surface-raised: var(--color-sys-surface-lowest);
-  --sys-text: var(--color-sys-on-surface);
-  --sys-text-muted: var(--color-sys-on-surface-variant);
-  --sys-border: var(--color-sys-outline);
-  --sys-primary: var(--color-sys-primary);
-  --sys-primary-hover: var(--color-sys-primary-hover);
-}
-
-/* Dark theme (aplicado via .theme-dark en <html>) */
-.theme-dark {
-  --sys-bg: var(--color-sys-surface-low-dark);
-  --sys-surface: var(--color-sys-surface-dark);
-  --sys-surface-raised: var(--color-sys-surface-low-dark);
-  --sys-text: var(--color-sys-on-surface-dark);
-  --sys-text-muted: var(--color-sys-on-surface-variant-dark);
-  --sys-border: var(--color-sys-outline-variant);
-}
-
-/* ============================================================
-   Double Bevel Card (Blueprint 5.B: "Técnica de Doble Bisel")
-   ============================================================ */
-
-.double-bevel-card {
-  background: var(--sys-surface-raised);
-  border: 1px solid var(--sys-border);
-  border-radius: var(--radius-md);
-  box-shadow: 
-    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,  /* Bisel interior superior */
-    0 4px 12px -2px rgba(0, 0, 0, 0.1);         /* Sombra exterior difusa */
-  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
-}
-
-.double-bevel-card:hover {
-  box-shadow: 
-    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
-    0 8px 24px -4px rgba(0, 0, 0, 0.15);
-}
-
-.theme-dark .double-bevel-card {
-  background: var(--sys-surface-raised);
-  border-color: var(--sys-border);
-  box-shadow: 
-    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
-    0 4px 12px -2px rgba(0, 0, 0, 0.3);
-}
-
-.theme-dark .double-bevel-card:hover {
-  box-shadow: 
-    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
-    0 8px 24px -4px rgba(0, 0, 0, 0.4);
-}
-
-/* ============================================================
-   Form Controls (Blueprint 6.A)
-   ============================================================ */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
-  font-family: var(--font-sans);
-  font-weight: 500;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  border-radius: var(--radius-sm);
-  border: none;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-
-.btn:active {
-  transform: scale(0.97); /* Micro-escalado Blueprint 6.A */
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-primary {
-  background: var(--sys-primary);
-  color: var(--color-sys-on-primary);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--sys-primary-hover);
-}
-
-.btn-secondary {
-  background: var(--sys-surface);
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-montserrat);
+  font-weight: 600;
+  line-height: 1.25;
   color: var(--sys-text);
-  border: 1px solid var(--sys-border);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--sys-surface-high);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--sys-text);
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background: var(--sys-surface);
-}
-
-.btn-danger {
-  background: var(--color-sys-error);
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-/* Input / Textarea (Blueprint 6.A: rounded-sm = 4px) */
-.input {
-  width: 100%;
-  padding: var(--spacing-2) var(--spacing-3);
-  font-family: var(--font-sans);
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--sys-text);
-  background: var(--sys-surface-raised);
-  border: 1px solid var(--sys-border);
-  border-radius: var(--radius-sm);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.input::placeholder {
-  color: var(--sys-text-muted);
-}
-
-.input:hover {
-  border-color: var(--sys-border);
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--sys-primary);
-  box-shadow: 0 0 0 2px var(--color-sys-primary-light);
-}
-
-.theme-dark .input:focus {
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
-}
-
-.input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-  background-position: right 0.5rem center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%233c4947' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.75rem center;
   background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
+  background-size: 1.25em 1.25em;
   padding-right: 2.5rem;
 }
 
-/* ============================================================
-   Layout Utilities
-   ============================================================ */
-
-.container {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-6);
+.theme-dark .select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23bbc9c6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
 }
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.main {
-  flex: 1;
-  padding: var(--spacing-6) 0;
-}
-
-.sidebar {
-  width: 260px;
-  flex-shrink: 0;
-  background: var(--sys-surface-raised);
-  border-right: 1px solid var(--sys-border);
-  height: 100vh;
-  position: sticky;
-  top: 0;
-  overflow-y: auto;
-}
-
-.header {
-  height: 64px;
-  background: var(--sys-surface-raised);
-  border-bottom: 1px solid var(--sys-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--spacing-6);
-  position: sticky;
-  top: 0;
-  z-index: var(--z-dropdown);
-}
-
-/* ============================================================
-   Typography (Montserrat weights per Blueprint 5.E)
-   ============================================================ */
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans);
-  font-weight: 600; /* Semibold */
-  line-height: 1.25;
-  color: var(--sys-text);
-  margin: 0 0 var(--spacing-3);
-}
-
-h1 { font-size: 2rem; }      /* 32px */
-h2 { font-size: 1.5rem; }    /* 24px */
-h3 { font-size: 1.25rem; }   /* 20px */
-h4 { font-size: 1.125rem; }  /* 18px */
-
-.text-sm { font-size: 0.875rem; }   /* 14px */
-.text-xs { font-size: 0.75rem; }    /* 12px */
-.text-lg { font-size: 1.125rem; }   /* 18px */
-
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }    /* Bold headlines */
-
-.text-muted { color: var(--sys-text-muted); }
-
-/* ============================================================
-   Tables (Blueprint 6.B: Table.tsx)
-   ============================================================ */
 
 .table-container {
   overflow-x: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--sys-border);
-  background: var(--sys-surface-raised);
 }
 
-.table {
+.table-container table {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.table th {
+.table-container th {
   text-align: left;
-  padding: var(--spacing-3) var(--spacing-4);
-  font-weight: 500;
+  padding: 0.75rem 1rem;
   font-size: 0.75rem;
-  text-transform: uppercase;
+  font-weight: 600;
   letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--sys-text-muted);
-  background: var(--sys-surface);
-  border-bottom: 1px solid var(--sys-border);
+  border-bottom: 1px solid var(--sys-border-soft);
+  font-family: var(--font-hanken);
 }
 
-.table td {
-  padding: var(--spacing-3) var(--spacing-4);
-  border-bottom: 1px solid var(--sys-border);
+.table-container td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
   color: var(--sys-text);
+  border-bottom: 1px solid var(--sys-border-soft);
+  font-family: var(--font-hanken);
 }
 
-.table tbody tr {
-  transition: background-color var(--transition-fast);
+.table-container tbody tr:hover {
+  background: var(--sys-surface-hover);
 }
-
-.table tbody tr:hover {
-  background: var(--sys-surface);
-}
-
-.table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* ============================================================
-   Badges / Status
-   ============================================================ */
 
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
-  border-radius: 9999px;
-  white-space: nowrap;
+  border-radius: 999px;
+  font-family: var(--font-hanken);
 }
 
-.badge-success { background: rgba(34, 197, 94, 0.1); color: var(--color-sys-success); }
-.badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--color-sys-warning); }
-.badge-error { background: rgba(239, 68, 68, 0.1); color: var(--color-sys-error); }
-.badge-info { background: rgba(59, 130, 246, 0.1); color: var(--color-sys-info); }
-.badge-neutral { background: var(--sys-surface-high); color: var(--sys-text-muted); }
-
-/* ============================================================
-   Modals (Blueprint 6.B: Modal.tsx - rounded-lg = 12px)
-   ============================================================ */
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-4);
-  z-index: var(--z-modal);
-  animation: fadeIn var(--transition-fast);
+.badge-active {
+  background: color-mix(in srgb, var(--sys-success-bg) 20%, transparent);
+  color: var(--sys-success);
 }
 
-.modal {
-  background: var(--sys-surface-raised);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--sys-border);
-  box-shadow: var(--shadow-xl);
-  max-width: 560px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: slideUp var(--transition-normal);
+.badge-inactive {
+  background: color-mix(in srgb, var(--sys-text-muted) 10%, transparent);
+  color: var(--sys-text-muted);
 }
 
-.modal-header {
-  padding: var(--spacing-4) var(--spacing-6);
-  border-bottom: 1px solid var(--sys-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
 
-.modal-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.modal-body {
-  padding: var(--spacing-6);
-  overflow-y: auto;
-}
-
-.modal-footer {
-  padding: var(--spacing-4) var(--spacing-6);
-  border-top: 1px solid var(--sys-border);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-3);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* ============================================================
-   Toasts (sonner integration)
-   ============================================================ */
-
-.sonner-toast {
-  font-family: var(--font-sans) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-lg) !important;
-}
-
-/* ============================================================
-   Scrollbar
-   ============================================================ */
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--sys-border);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--sys-text-muted);
-}
-
-/* ============================================================
-   Focus Visible (Accessibility)
-   ============================================================ */
-
-:focus-visible {
-  outline: 2px solid var(--sys-primary);
-  outline-offset: 2px;
-}
-
-/* ============================================================
-   Print
-   ============================================================ */
-
-@media print {
-  .no-print { display: none !important; }
-  .modal-overlay { display: none !important; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

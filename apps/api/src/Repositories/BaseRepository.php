@@ -215,7 +215,7 @@ abstract class BaseRepository
      * @param callable(): T $callback
      * @return T
      */
-    protected function transactional(callable $callback): mixed
+    public function transactional(callable $callback): mixed
     {
         $this->beginTransaction();
         try {

@@ -2,7 +2,7 @@
 
 Este documento es la especificación técnica maestra para la construcción desde cero de la plataforma **kodanAPPS** consolidada. Define la hoja de ruta secuencial de dependencias y especificaciones técnicas organizadas de arquitectura gruesa a detalle fino para guiar la codificación y despliegue por parte de desarrolladores y agentes.
 
-> **Última actualización:** 2026-06-14 — Decisiones técnicas Puntos 1-4 (Auth, Multi-tenant, CSRF, Cookie Scope) incorporadas. Dominios actualizados a `kodan.software`.
+> **Última actualización:** 2026-06-15 — CSRF migrado a stateless (HMAC + PHPSESSID, sin sesiones). `AuthMiddleware` unificado reemplaza `SuperAdminMiddleware`. Métricas de plan_limits rediseñadas (`negotiations_max`, `tasks_max`, `api_calls_month`). `@kodan-apps/ui-core` extraído con componentes compartidos (Card, Button, Input, Modal, Toaster, ThemeContext).
 
 ---
 
@@ -32,12 +32,12 @@ Decisiones de infraestructura y topología de sistemas que rigen el núcleo comp
 *   **Logout:** Local only (borra cookies). No revoca refresh token en BD (expira por TTL/rotación natural). Job diario limpia `expires_at < NOW() OR revoked_at < DATE_SUB(NOW(), INTERVAL 7 DAY)`.
 *   **Rate Limiting Login:** 5 req/min/IP + 10 req/hora/email (tabla `login_attempts`).
 
-### D. Protección CSRF — **ACTUALIZADO (Synchronizer Token Pattern en Memoria)**
-*   **Patrón:** **Synchronizer Token Pattern** (token en sesión servidor, NO en cookie legible por JS).
-*   **Generación:** `GET /api/csrf-token` (público, rate-limited 60/min/IP) → devuelve `{ token: "base64url_32bytes" }` firmado con secret rotativo. Frontend guarda en `sessionStorage` + React Context.
-*   **Validación:** Middleware en **todas** peticiones mutables (`POST`, `PUT`, `PATCH`, `DELETE`). Header requerido: `X-CSRF-Token`. Comparación `hash_equals()` contra token en sesión.
-*   **Rotación:** Token rota tras cada uso válido (nuevo token en sesión). Expiración sesión: 1 hora inactividad.
-*   **Exclusiones:** `GET`, `HEAD`, `OPTIONS`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/csrf-token`, registro público.
+### D. Protección CSRF — **ACTUALIZADO (Stateless: HMAC + PHPSESSID)**
+*   **Patrón:** **Stateless CSRF** — token = `HMAC-SHA256(PHPSESSID, server_secret)`. No requiere `$_SESSION`, no usa file locking, escala horizontalmente.
+*   **Generación:** `GET /api/csrf-token` (público) → lee `PHPSESSID` de cookie (o crea sesión si no existe) → devuelve `{ token: hash_hmac('sha256', PHPSESSID, secret) }`. Frontend guarda en `sessionStorage` + React Context.
+*   **Validación:** `AuthMiddleware` en **todas** las rutas `/api/*` protegidas (`POST`, `PUT`, `PATCH`, `DELETE`). Header requerido: `X-CSRF-Token`. Recomputa `HMAC(PHPSESSID, secret)` y compara con `hash_equals()`.
+*   **Rotación:** No requiere rotación explícita — el token es función determinística de `PHPSESSID` + `secret`. Un nuevo `PHPSESSID` genera nuevo token automáticamente.
+*   **Exclusiones:** `GET`, `HEAD`, `OPTIONS`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/csrf-token`, `/api/health`.
 
 ### E. Scope de Cookies y CORS — **ACTUALIZADO (Subdominio Exacto por App)**
 *   **NO superdominio** (`.kodan.software`). Cada app recibe cookies solo en su subdominio exacto:
@@ -107,16 +107,16 @@ Decisiones de infraestructura y topología de sistemas que rigen el núcleo comp
 
 ## 2. Modelo de Permisos y Reglas de Negocio (RBAC & Business Rules)
 
-El sistema abandona la matriz dinámica en base de datos (antigua tabla `permissions`) para reducir la sobrecarga de consultas y simplificar la lógica de control. Se implementan roles core estáticos vinculados a cada aplicación en la tabla `user_apps`:
+El sistema abandona la matriz dinámica en base de datos (antigua tabla `permissions`) y las tablas intermedias `tenant_apps`/`user_apps` para simplificar la lógica de control. Se implementan roles globales (`roles`) vinculados a cada usuario por aplicación (`user_roles.role_id → roles`).
 
 ### A. Aislamiento Multi-Tenant (Seguridad en Persistencia)
 1.  **Aislamiento Físico por Inyección:** Cada consulta del backend (SELECT, INSERT, UPDATE, DELETE) interceptada por el `BaseRepository` inyecta automáticamente la condición `tenant_id = :tenant_id` basándose en el `TenantContext` de la sesión JWT activa. Queda prohibida la consulta de datos cruzados entre inquilinos.
-2.  **Activación de Aplicaciones por Inquilino:** La tabla `tenant_apps` rige si el tenant tiene licenciados los módulos `crm` y `tracker`. Si la aplicación no está habilitada o `is_active = 0` en `tenant_apps` para ese tenant, cualquier petición de API o acceso frontend es rechazado de inmediato con un error `403 Forbidden`.
+2.  **Activación de Aplicaciones por Plan (sin `tenant_apps`):** El plan de suscripción (`subscription_plans`) determina qué aplicaciones tiene licenciadas el tenant mediante los registros en `plan_limits.module`. Si el plan no tiene límites definidos para un `module`, la app no está disponible. El login valida que `plan_limits` contenga al menos un registro para el `app_id` solicitado. Roles por usuario por app se almacenan en `user_roles` (reemplaza `user_apps`).
 
-### B. Mapeo de Roles Core RBAC (`user_apps.role`)
+### B. Mapeo de Roles Core (`user_roles.role_id → roles`)
 
 1.  **Rol `admin` (Administrador del Sistema / Tenant Admin):**
-    *   **Centralizado a nivel de Tenant (Core):** El Tenant Admin gestiona el alta de usuarios e invitaciones en el tenant global y activa/desactiva cuentas. Asigna los roles específicos a cada usuario para las aplicaciones que el Super Admin tenga previamente habilitadas en `tenant_apps`. Los usuarios son transversales al ecosistema y visibles en todas las aplicaciones habilitadas.
+    *   **Centralizado a nivel de Tenant (Core):** El Tenant Admin gestiona el alta de usuarios e invitaciones en el tenant global y activa/desactiva cuentas. Asigna los roles específicos a cada usuario para las aplicaciones que el plan de suscripción incluya (determinado por `plan_limits.module`). Los usuarios son transversales al ecosistema y visibles en todas las aplicaciones habilitadas.
     *   **En `kodanCRM`:** Configuración global de pipelines, etapas, integraciones y campos personalizados dinámicos para cuentas, contactos y oportunidades.
     *   **En `kodanTRACKER`:** Control total de la parametrización de seguimiento de tiempo. Gestiona los perfiles del tracker (`user_tracker_profiles` para asignar cargos, seniorities y costo por hora), tarifas base de facturación y categorías de tareas maestras (`tasks_master`).
     *   **Finanzas/Aprobaciones (Tracker):** Acceso completo a métricas del portfolio y aprobación de planillas globales.
@@ -184,12 +184,12 @@ Para mantener la integridad operativa del Time Tracker heredado, el backend impl
 *   **Métricas Iniciales por Módulo:**
     | Módulo | Métrica | Descripción |
     |--------|---------|-------------|
-    | `crm` | `pipelines_max` | Máximo pipelines activos por tenant |
     | `crm` | `users_max` | Máximo usuarios con rol en CRM |
-    | `tracker` | `projects_max` | Máximo proyectos activos |
+    | `crm` | `negotiations_max` | Máximo negociaciones activas |
+    | `crm` | `api_calls_month` | Llamadas API/mes (CRM) |
     | `tracker` | `users_max` | Máximo usuarios con rol en Tracker |
-    | `crm` | `storage_mb` | Almacenamiento adjuntos (MB) |
-    | `api` | `api_calls_month` | Llamadas API/mes (rate limit global) |
+    | `tracker` | `tasks_max` | Máximo tareas activas |
+    | `tracker` | `api_calls_month` | Llamadas API/mes (Tracker) |
 *   **Frontend:** Componente `PlanUsageBadge` consume `GET /api/tenant/limits` → devuelve `{ module, metric, limit, usage, percentage }` para badges visuales.
 *   **Super Admin:** CRUD completo en `plan_limits` via panel de administración.
 
@@ -202,12 +202,12 @@ Para mantener la integridad operativa del Time Tracker heredado, el backend impl
     *   Creación manual de tenants en la plataforma.
     *   Activación e inactivación física de tenants (`tenants.is_active`). La desactivación bloquea de forma inmediata cualquier login o petición API asociada.
     *   Asignación y escalado de planes de suscripción (`subscription_plan_id`).
-    *   Habilitar/desactivar el acceso granular de un tenant a las aplicaciones `crm` y `tracker` en la tabla asociativa `tenant_apps`.
+    *   Gestionar apps disponibles en el catálogo (`apps`).
     *   Configurar límites por plan/módulo/métrica en tabla relacional `plan_limits` (CRUD en panel Super Admin).
 *   **Administrador de Tenant (Local):**
     *   Crear usuarios nuevos e invitarlos al tenant.
     *   Activar y desactivar usuarios de su propio tenant (`users.is_active = 0/1`). Un administrador local no puede alterar usuarios de otros tenants.
-    *   Asignación de roles específicos por aplicación activa en `user_apps`.
+    *   Asignación de roles específicos por aplicación activa en `user_roles`.
     *   Ajuste de configuraciones de aplicación mediante `app_configs`.
 
 ### B. Módulo CRM (kodanCRM)
@@ -267,12 +267,35 @@ CREATE TABLE `subscription_plans` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Catálogo de aplicaciones (gestionado por Super Admin)
+CREATE TABLE `apps` (
+  `app_id` VARCHAR(50) NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `description` VARCHAR(255) DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  PRIMARY KEY (`app_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Catálogo global de roles por app (gestionado por Super Admin)
+CREATE TABLE `roles` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `app_id` VARCHAR(50) NOT NULL,
+  `name` VARCHAR(50) NOT NULL,
+  `description` VARCHAR(255) DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_app_name` (`app_id`, `name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Límites por plan y módulo (relacional, tipado, consultable, validable)
+-- module referencia lógicamente apps.app_id (sin FK forzada para flexibilidad)
 CREATE TABLE `plan_limits` (
   `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `plan_id` BIGINT(20) UNSIGNED NOT NULL,
-  `module` ENUM('crm', 'tracker') NOT NULL COMMENT 'Módulo al que aplica el límite',
-  `metric` VARCHAR(50) NOT NULL COMMENT 'Nombre de la métrica: pipelines_max, projects_max, users_max, storage_mb, api_calls_month, etc.',
+  `module` VARCHAR(50) NOT NULL COMMENT 'Referencia a apps.app_id',
+  `metric` VARCHAR(50) NOT NULL COMMENT 'Nombre de la métrica: users_max, negotiations_max, tasks_max, api_calls_month, etc.',
   `value` INT(11) NOT NULL DEFAULT 0 COMMENT 'Valor del límite (0 = ilimitado)',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
@@ -281,36 +304,16 @@ CREATE TABLE `plan_limits` (
   CONSTRAINT `fk_plan_limits_plan` FOREIGN KEY (`plan_id`) REFERENCES `subscription_plans` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Datos semilla (ejemplo)
-INSERT INTO `plan_limits` (`plan_id`, `module`, `metric`, `value`) VALUES
-(1, 'crm', 'pipelines_max', 5),
-(1, 'crm', 'users_max', 10),
-(1, 'tracker', 'projects_max', 20),
-(1, 'tracker', 'users_max', 15),
-(2, 'crm', 'pipelines_max', 20),
-(2, 'crm', 'users_max', 50),
-(2, 'tracker', 'projects_max', 100),
-(2, 'tracker', 'users_max', 100);
-
 CREATE TABLE `tenants` (
   `tenant_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
-  `slug` VARCHAR(50) NOT NULL,
   `name` VARCHAR(255) NOT NULL,
+  `logo_url` TEXT NULL DEFAULT NULL COMMENT 'Logo empresa (base64, máx 500KB)',
   `subscription_plan_id` BIGINT(20) UNSIGNED DEFAULT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_system_tenant` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'TRUE = tenant de control del sistema (Super Admin)',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   PRIMARY KEY (`tenant_id`),
-  UNIQUE KEY `uk_tenant_slug` (`slug`),
   CONSTRAINT `fk_tenants_subscription` FOREIGN KEY (`subscription_plan_id`) REFERENCES `subscription_plans` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `tenant_apps` (
-  `tenant_id` BIGINT(20) NOT NULL,
-  `app_id` VARCHAR(50) NOT NULL COMMENT 'crm, tracker',
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  PRIMARY KEY (`tenant_id`, `app_id`),
-  CONSTRAINT `fk_tenant_apps_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`tenant_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `users` (
@@ -329,13 +332,15 @@ CREATE TABLE `users` (
   CONSTRAINT `fk_users_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`tenant_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `user_apps` (
+CREATE TABLE `user_roles` (
   `user_id` BIGINT(20) NOT NULL,
-  `app_id` VARCHAR(50) NOT NULL COMMENT 'crm, tracker',
-  `role` VARCHAR(50) NOT NULL COMMENT 'admin, pm, commercial, staff, viewer',
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `app_id` VARCHAR(50) NOT NULL,
+  `role_id` BIGINT(20) UNSIGNED NOT NULL,
+  `assigned_by` BIGINT(20) DEFAULT NULL COMMENT 'User ID que asignó el rol',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   PRIMARY KEY (`user_id`, `app_id`),
-  CONSTRAINT `fk_user_apps_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_user_roles_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_roles_role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `user_configs` (
@@ -370,7 +375,7 @@ CREATE TABLE `tenant_invoices` (
 
 CREATE TABLE `tenant_plan_usage` (
   `tenant_id` BIGINT(20) NOT NULL,
-  `module` ENUM('crm', 'tracker') NOT NULL,
+  `module` VARCHAR(50) NOT NULL COMMENT 'Referencia a apps.app_id',
   `metric` VARCHAR(50) NOT NULL COMMENT 'Referencia a plan_limits.metric',
   `current_value` BIGINT(20) NOT NULL DEFAULT 0 COMMENT 'Contador atómico (UPDATE ... SET current_value = current_value + 1)',
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
@@ -567,6 +572,8 @@ CREATE TABLE `opportunity_line_items` (
   `product_id` BIGINT(20) NOT NULL,
   `quantity` DECIMAL(10,2) NOT NULL DEFAULT 1.00,
   `unit_price` DECIMAL(15,2) NOT NULL,
+  `discount_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `tax_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_oli_opportunity` FOREIGN KEY (`opportunity_id`) REFERENCES `opportunities` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_oli_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
@@ -591,6 +598,8 @@ CREATE TABLE `quote_line_items` (
   `product_id` BIGINT(20) NOT NULL,
   `quantity` DECIMAL(10,2) NOT NULL DEFAULT 1.00,
   `unit_price` DECIMAL(15,2) NOT NULL,
+  `discount_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `tax_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_qli_quote` FOREIGN KEY (`quote_id`) REFERENCES `quotes` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_qli_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
@@ -979,7 +988,7 @@ CREATE TABLE `custom_report_views` (
 
 ## 5. Lineamientos de Diseño Visual (UX/UI: Kinetic Blueprint)
 
-Todas las aplicaciones dentro de la suite compartida (CRM, Tracker, etc.) emplearán la misma plantilla estructural, variables de diseño y controles interactivos provistos por el paquete `@kodan-apps/ui-core`. La única diferenciación visual entre aplicaciones será su color de acento de marca (`--primary`) y el tema de preferencia seleccionado.
+Todas las aplicaciones dentro de la suite compartida (CRM, Tracker, etc.) emplearán las mismas clases de componentes estructurales provistas por `@kodan-apps/ui-core/src/styles/base.css` (`.card`, `.btn`, `.input`, `.sidebar-link`, `.modal-overlay`, etc.). Cada aplicación define **su propia paleta de colores** mediante las variables CSS `:root`/`.theme-dark` en su `index.css` de entrada, lo que le otorga identidad visual única sin duplicar estilos estructurales.
 
 ### A. Tipografía Corporativa Unificada (Montserrat)
 *   **Tipografía Exclusiva:** Se utilizará estrictamente la fuente geométrica sans-serif **Montserrat** para toda la interfaz visual de la plataforma (títulos, encabezados, cuerpo de texto, botones, campos de entrada, etiquetas de metadata, identificadores y tablas de datos). Queda prohibido el uso de JetBrains Mono o cualquier otra fuente complementaria para asegurar una uniformidad visual absoluta del 100%.
@@ -1003,21 +1012,24 @@ Todas las aplicaciones dentro de la suite compartida (CRM, Tracker, etc.) emplea
 
 ### C. Sistema de Temas Unificado (Claro y Oscuro)
 
-#### Tema Oscuro (Base Background: `#101415`)
-En ambientes oscuros, se reduce la fatiga visual de uso continuo y se proyecta profundidad a través de **Tonal Layers** en lugar de sombras pesadas:
-*   `surface-container-lowest`: `#0b0f10` (Bases)
-*   `surface-container-low`: `#191c1e` (Fondo de tarjetas)
-*   `surface-container`: `#1d2022` (Contenedores intermedios)
-*   `surface-container-high`: `#272a2c` (Bordes finos y separadores de 1px)
-*   `on-surface`: `#e1e3e5` (Texto principal)
-*   `outline`: `#8c909e` / `outline-variant`: `#424752`
+Cada aplicación define sus variables `:root` (tema claro) y `.theme-dark` (tema oscuro) en su propio `index.css`. La estructura de variables es consistente entre apps:
 
-#### Tema Claro (Base Background: `#f7f9fb`)
-*   `surface-container-lowest`: `#ffffff` (Bases de tarjetas y tablas)
-*   `surface-container-low`: `#f2f4f6` (Contenedores secundarios)
-*   `surface-container`: `#eceef0` (Divisiones y áreas laterales)
-*   `on-surface`: `#191c1e` (Texto principal)
-*   `outline`: `#727785`
+| Variable | Propósito |
+|----------|-----------|
+| `--sys-bg` | Fondo de página |
+| `--sys-surface` | Fondo de contenedores secundarios |
+| `--sys-surface-raised` | Fondo de tarjetas, modales, inputs |
+| `--sys-surface-hover` | Hover de contenedores |
+| `--sys-text` | Color de texto principal |
+| `--sys-text-muted` | Color de texto secundario / etiquetas |
+| `--sys-border` | Bordes de componentes |
+| `--sys-border-soft` | Bordes suaves / separadores |
+| `--sys-primary` | Color de acento de la app |
+| `--sys-primary-container` | Fondo de acento (botones primarios) |
+| `--sys-error` | Color de error |
+| `--sys-error-container` | Fondo de mensajes de error |
+
+Las aplicaciones comparten la misma estructura de componentes (`.card`, `.btn`, `.input`, etc.) pero cada una inyecta sus propios colores en estas variables, logrando identidad visual única sin duplicar estilos.
 
 ### D. Identidades Cromáticas por Aplicación (Acentuación Variable)
 El acento de marca principal se define de forma dinámica en tiempo de renderizado cargando la clase raíz asociada a la aplicación activa:
@@ -1066,15 +1078,19 @@ El acento de marca principal se define de forma dinámica en tiempo de renderiza
 
 ## 6. Catálogo de Componentes Unificados (@kodan-apps/ui-core)
 
-Todos los frontends utilizan el mismo catálogo de componentes.
+Todos los frontends utilizan el mismo catálogo de componentes UI definido en `packages/ui-core/`. La librería se compone de:
+
+- **`src/styles/base.css`** — Clases CSS estructurales (`.card`, `.btn`, `.input`, `.sidebar-link`, `.modal-overlay`, `.glass-panel`) que usan `var(--sys-*)`. NO define valores de color — cada app los inyecta.
+- **`src/components/`** — Componentes React compartidos (Card, Button, Input, Modal, Toaster).
+- **`src/context/ThemeContext.tsx`** — `ThemeProvider` genérico que maneja light/dark mode con `localStorage`. Acepta `onThemeChange` opcional para persistir en servidor.
 
 **Actualizaciones Optimistas (React 19 native `useOptimistic`):**
 Para lograr una experiencia interactiva instantánea e ininterrumpida (Apple/Linear-tier), todas las transiciones de estado del Kanban (`KanbanBoard`), asignaciones de tareas y disparadores del cronómetro (`TimerWidget`) deben implementar obligatoriamente el hook `useOptimistic` de React 19. La interfaz del cliente asumirá la resolución exitosa inmediatamente al interactuar (ej: mover una tarjeta de Kanban o pulsar el botón de detener tiempo) mientras la petición de API se procesa de forma asíncrona en segundo plano, revirtiendo el estado únicamente ante un error del servidor.
 
 ### A. Componentes de Formulario e Interacción (Form Controls)
-1.  **`Button.tsx` (Botón):**
+1.  **`Button.tsx` (Botón):** ✅ Implementado
     *   *Comportamiento:* Masa interactiva con micro-escalado (`active:scale-[0.97]` con transición de 150ms `cubic-bezier(0.32, 0.72, 0, 1)`). Spinner de carga integrado opcional y control deshabilitado (`disabled`).
-2.  **`Input.tsx` / `Textarea.tsx` (Campo de Entrada):**
+2.  **`Input.tsx` / `Textarea.tsx` (Campo de Entrada):** ✅ Implementado
     *   *Comportamiento:* Radio de esquina de 4px (`rounded-sm`). En hover, resalta el borde a zinc intermedio. En focus, aplica borde `--primary` y una sombra de anillo exterior de 2px a 15% de opacidad.
 3.  **`SearchableSelect.tsx` (Dropdown Simple con Buscador):**
     *   *Comportamiento:* Caja de selección simple que al abrirse despliega una sección de búsqueda en el header del menú flotante. Permite filtrado local en tiempo real y carga asíncrona de datos desde el backend (ej: asignación de cuentas o usuarios).
@@ -1088,9 +1104,9 @@ Para lograr una experiencia interactiva instantánea e ininterrumpida (Apple/Lin
     *   *Comportamiento:* Controles de estado binario consistentes con el color de acento de la app.
 
 ### B. Componentes Estructurales y de Datos
-8.  **`Card.tsx` (Tarjeta):**
+8.  **`Card.tsx` (Tarjeta):** ✅ Implementado
     *   *Comportamiento:* Contenedor base con radio de 8px (`rounded-md`), técnica de doble bisel (borde de 1px en `#e6e8ea` para claro y `#272a2c` para oscuro) y elevación por capas cromáticas.
-9.  **`Modal.tsx` (Ventana Emergente):**
+9.  **`Modal.tsx` (Ventana Emergente):** ✅ Implementado
     *   *Comportamiento:* Contenedor con radio de 12px (`rounded-lg`), centrado en pantalla, con fondo oscurecido (`backdrop-blur-md`). Animación de entrada de escala ligera (`scale-95` a `scale-100`).
 10. **`Table.tsx` / `Pagination.tsx` (Tablas y Navegación):**
     *   *Comportamiento:* Tabla unificada con cabeceras en Montserrat (Label-SM en mayúsculas). Alternancia tonal de filas y paginador unificado con saltos rápidos de página.
@@ -1119,7 +1135,7 @@ Para lograr una experiencia interactiva instantánea e ininterrumpida (Apple/Lin
 3.  **UI Componentes de Presentación (Frontend):** Vistas del chat, hilos de mensajes, grilla semanal y layout en React.
 
 #### 🟡 Código a Modificar (Refactorización)
-1.  **Control de Entidades e Identidad (Backend):** `UserRepository` se acopla a `user_tracker_profiles` para leer costos y cargos. `AuthController` valida licenciamientos (`tenant_apps`) y roles (`user_apps`).
+1.  **Control de Entidades e Identidad (Backend):** `UserRepository` se acopla a `user_tracker_profiles` para leer costos y cargos. `AuthController` valida licenciamientos por plan (`plan_limits.module`) y roles (`user_roles`).
 2.  **Transición de Clientes a Cuentas (Tracker):** Cambiar `clients` y `client_id` por `accounts` y `account_id` en todos los modelos e interfaces frontend/backend.
 3.  **Gestión de Contactos (Tracker):** Consumir contactos de la tabla unificada `contacts` y mapear puestos de trabajo desde el JSON.
 

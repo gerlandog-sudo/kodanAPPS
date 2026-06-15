@@ -27,16 +27,12 @@ class ApiError extends Error {
 }
 
 /**
- * Obtiene/actualiza CSRF token en sessionStorage
+ * Obtiene CSRF token stateless del servidor
+ * Siempre pide token fresco al servidor para garantizar que coincida
+ * con el PHPSESSID actual (HMAC(PHPSESSID, secret))
  */
 async function getCsrfToken(): Promise<string> {
-  let token = sessionStorage.getItem('csrf_token');
-  
-  if (!token) {
-    token = await fetchCsrfToken();
-  }
-  
-  return token;
+  return await fetchCsrfToken();
 }
 
 async function fetchCsrfToken(): Promise<string> {
@@ -101,29 +97,24 @@ export async function apiClient<T = unknown>(
     credentials: 'include', // ¡Crítico! Envía cookies HttpOnly
   });
   
-  // Manejar 403 CSRF_INVALID → re-fetch token + retry una vez
+  // Retry 403 con token fresco (CSRF stateless: HMAC incondicional)
   if (response.status === 403 && isMutable) {
-    const errorData = await response.json().catch(() => ({}));
+    sessionStorage.removeItem('csrf_token');
+    const newToken = await fetchCsrfToken();
+    requestHeaders.set('X-CSRF-Token', newToken);
     
-    if (errorData.error === 'CSRF_INVALID') {
-      // Token rotado por servidor, obtener nuevo y reintentar
-      sessionStorage.removeItem('csrf_token');
-      const newToken = await fetchCsrfToken();
-      requestHeaders.set('X-CSRF-Token', newToken);
-      
-      const retryResponse = await fetch(url.toString(), {
-        ...fetchOptions,
-        headers: requestHeaders,
-        credentials: 'include',
-      });
-      
-      if (!retryResponse.ok) {
-        const retryError = await retryResponse.json().catch(() => ({}));
-        throw new ApiError(retryResponse.status, retryError, `API Error: ${retryResponse.status}`);
-      }
-      
-      return retryResponse.json();
+    const retryResponse = await fetch(url.toString(), {
+      ...fetchOptions,
+      headers: requestHeaders,
+      credentials: 'include',
+    });
+    
+    if (!retryResponse.ok) {
+      const retryError = await retryResponse.json().catch(() => ({}));
+      throw new ApiError(retryResponse.status, retryError, `API Error: ${retryResponse.status}`);
     }
+    
+    return retryResponse.json();
   }
   
   // Manejar errores
@@ -167,13 +158,14 @@ export const superAdminApi = {
   listTenants: () => api.get('/api/super-admin/tenants'),
   createTenant: (data: {
     name: string;
-    slug: string;
     subscription_plan_id: number;
-    enabled_apps: string[];
+    logo_url?: string | null;
+    theme_preference?: string;
     admin_name: string;
     admin_email: string;
+    admin_password: string;
   }) => api.post('/api/super-admin/tenants', data),
-  updateTenant: (id: number, data: { name?: string; subscription_plan_id?: number }) => 
+  updateTenant: (id: number, data: { name?: string; subscription_plan_id?: number; logo_url?: string | null }) => 
     api.patch(`/api/super-admin/tenants/${id}`, data),
   deactivateTenant: (id: number) => api.post(`/api/super-admin/tenants/${id}/deactivate`, {}),
   
@@ -196,7 +188,20 @@ export const superAdminApi = {
   deletePlan: (id: number) => api.delete(`/api/super-admin/plans/${id}`),
   
   // Theme
+  getTheme: () => api.get<any>('/api/super-admin/theme'),
   updateTheme: (theme: 'light' | 'dark') => api.put('/api/super-admin/theme', { theme }),
+  
+  // Password
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    api.post('/api/super-admin/change-password', data),
+  
+  // Roles
+  listRoles: () => api.get<any[]>('/api/super-admin/roles'),
+  createRole: (data: { app_id: string; name: string; description?: string }) =>
+    api.post('/api/super-admin/roles', data),
+  updateRole: (id: number, data: { name?: string; description?: string; is_active?: boolean }) =>
+    api.patch(`/api/super-admin/roles/${id}`, data),
+  deleteRole: (id: number) => api.delete(`/api/super-admin/roles/${id}`),
   
   // CSRF
   getCsrfToken: () => api.get(CSRF_ENDPOINT),

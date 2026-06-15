@@ -42,7 +42,7 @@ jobs:
       - name: Run PHPStan Level 9
         run: |
           cd apps/api
-          vendor/bin/phpstan analyse --level=9 --memory-limit=512M
+          php vendor/bin/phpstan analyse --level=9 --memory-limit=512M
 
       - name: Install Node dependencies
         run: npm ci

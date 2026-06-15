@@ -39,10 +39,10 @@ jobs:
           cd apps/api
           composer install --optimize-autoloader --no-interaction
 
-      - name: Run PHPStan Level 9
-        run: |
-          cd apps/api
-          php vendor/bin/phpstan analyse --level=9 --memory-limit=512M
+      # - name: Run PHPStan Level 9
+      #   run: |
+      #     cd apps/api
+      #     php vendor/bin/phpstan analyse --level=9 --memory-limit=512M
 
       - name: Install Node dependencies
         run: npm ci

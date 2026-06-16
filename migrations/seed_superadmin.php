@@ -31,22 +31,37 @@ if (file_exists($envPath)) {
 }
 
 $config = [
-    'host' => $dotenv['DB_HOST'] ?? $_ENV['DB_HOST'] ?? '127.0.0.1',
-    'port' => (int)($dotenv['DB_PORT'] ?? $_ENV['DB_PORT'] ?? 3306),
-    'dbname' => $dotenv['DB_NAME'] ?? $_ENV['DB_NAME'] ?? 'admkoda_BBDD_APPS',
-    'user' => $dotenv['DB_USER'] ?? $_ENV['DB_USER'] ?? 'kodan_apps',
-    'pass' => $dotenv['DB_PASS'] ?? $_ENV['DB_PASS'] ?? 'secret',
+    'host' => getenv('DB_HOST') ?: ($dotenv['DB_HOST'] ?? $_ENV['DB_HOST'] ?? '127.0.0.1'),
+    'port' => (int)(getenv('DB_PORT') ?: ($dotenv['DB_PORT'] ?? $_ENV['DB_PORT'] ?? 3306)),
+    'dbname' => getenv('DB_NAME') ?: ($dotenv['DB_NAME'] ?? $_ENV['DB_NAME'] ?? 'admkoda_BBDD_APPS'),
+    'user' => getenv('DB_USER') ?: ($dotenv['DB_USER'] ?? $_ENV['DB_USER'] ?? 'kodan_apps'),
+    'pass' => getenv('DB_PASS') ?: ($dotenv['DB_PASS'] ?? $_ENV['DB_PASS'] ?? 'secret'),
     'charset' => 'utf8mb4',
 ];
 
 $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
 
 try {
-    $pdo = new PDO($dsn, $config['user'], $config['pass'], [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
+    try {
+        $pdo = new PDO($dsn, $config['user'], $config['pass'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
+    } catch (PDOException $e) {
+        if ($config['host'] === 'mariadb') {
+            echo "⚠️ Failed to connect to 'mariadb', trying fallback to '127.0.0.1'...\n";
+            $config['host'] = '127.0.0.1';
+            $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
+            $pdo = new PDO($dsn, $config['user'], $config['pass'], [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
+        } else {
+            throw $e;
+        }
+    }
     echo "✅ Conexión BD exitosa\n";
 } catch (PDOException $e) {
     die("❌ Error BD: " . $e->getMessage() . "\n");

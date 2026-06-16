@@ -1,12 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { KODAN_UI_VERSION } from '@kodan-apps/ui-core';
-
 const App = () => {
   return (
     <div>
       <h1>kodanTRACKER</h1>
-      <p>UI Core Versión: {KODAN_UI_VERSION}</p>
     </div>
   );
 };

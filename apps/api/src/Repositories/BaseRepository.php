@@ -8,6 +8,7 @@ use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\DB\TenantContext;
 use PDO;
 use RuntimeException;
+use Throwable;
 
 /**
  * BaseRepository - Capa 1 de defensa multi-tenant (Blueprint Punto 2)
@@ -104,7 +105,9 @@ abstract class BaseRepository
     protected function create(string $table, array $data): int
     {
         $globalTables = ['tenants', 'subscription_plans', 'plan_limits'];
-        if (!in_array($table, $globalTables, true)) {
+        $isGlobalTable = in_array($table, $globalTables, true);
+        
+        if (!$isGlobalTable) {
             $tenantId = TenantContext::getTenantId();
             $data['tenant_id'] = $tenantId;
         }
@@ -112,7 +115,8 @@ abstract class BaseRepository
         
         $columns = implode(', ', array_map(fn($c) => "`{$c}`", array_keys($data)));
         $placeholders = ':' . implode(', :', array_keys($data));
-        $sql = "INSERT INTO `{$table}` ({$columns}) VALUES ({$placeholders})";
+        $bypassComment = $isGlobalTable ? '/* BYPASS_TENANT_SCOPE */ ' : '';
+        $sql = "{$bypassComment}INSERT INTO `{$table}` ({$columns}) VALUES ({$placeholders})";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);

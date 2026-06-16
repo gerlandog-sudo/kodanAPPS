@@ -48,9 +48,9 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./apps/api:/var/www/html:cached
-      - ./packages:/var/www/packages:cached
-      - ./migrations:/var/www/html/migrations:cached
+      - ./apps/api:/var/www/html
+      - ./packages:/var/www/packages
+      - ./migrations:/var/www/html/migrations
     depends_on:
       mariadb:
         condition: service_healthy
@@ -64,23 +64,23 @@ services:
     container_name: kodanapps_frontend
     working_dir: /app
     environment:
-      - VITE_API_URL=
+      - VITE_API_URL=http://localhost:8080
     ports:
       - "5173:5173"  # Super Admin
       - "5174:5174"  # CRM
       - "5175:5175"  # Tracker
     volumes:
-      - ./package.json:/app/package.json:cached
-      - ./package-lock.json:/app/package-lock.json:cached
-      - ./tsconfig.json:/app/tsconfig.json:cached
-      - ./packages:/app/packages:cached
-      - ./apps/crm:/app/apps/crm:cached
-      - ./apps/tracker:/app/apps/tracker:cached
-      - ./packages/superadmin:/app/packages/superadmin:cached
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./packages:/app/packages
+      - ./apps/crm:/app/apps/crm
+      - ./apps/tracker:/app/apps/tracker
+      - ./packages/superadmin:/app/packages/superadmin
     command: >
       sh -c "
-        npm install --workspaces --if-present &&
-        npm run dev:superadmin
+        npm install &&
+        (npm run dev:superadmin & npm run dev:crm & npm run dev:tracker & wait)
       "
     depends_on:
       - api

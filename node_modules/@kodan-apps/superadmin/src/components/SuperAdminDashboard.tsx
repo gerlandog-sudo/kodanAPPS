@@ -16,7 +16,6 @@ import {
   HardDrive,
   Database,
   RefreshCw,
-  LayoutDashboard,
 } from 'lucide-react';
 
 interface DashboardData {
@@ -124,11 +123,9 @@ export function SuperAdminDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
+      {/* Header Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <LayoutDashboard size={22} style={{ color: 'var(--sys-primary)' }} />
-          <h2 className="text-lg font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>Panel de Control</h2>
         </div>
         <Button variant="secondary" onClick={() => loadStats(true)} disabled={refreshing}>
           <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />

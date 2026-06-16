@@ -1,160 +1,10 @@
-/**
- * API Client - Super Admin
- * 
- * Blueprint decisiones:
- * - Cookies HttpOnly en api.kodan.software (credentials: 'include')
- * - CSRF: Synchronizer Token en sessionStorage + header X-CSRF-Token
- * - Auto-retry en 403 CSRF_INVALID (rotación token)
- * - Base URL: https://api.kodan.software
- */
+import { api } from '@kodan-apps/ui-core';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'https://api.kodan.software';
-const CSRF_ENDPOINT = '/api/csrf-token';
+export { apiClient, ApiError } from '@kodan-apps/ui-core';
 
-interface RequestOptions extends RequestInit {
-  params?: Record<string, string>;
-}
-
-class ApiError extends Error {
-  constructor(
-    public status: number,
-    public data: unknown,
-    message: string
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-/**
- * Obtiene CSRF token stateless del servidor
- * Siempre pide token fresco al servidor para garantizar que coincida
- * con el PHPSESSID actual (HMAC(PHPSESSID, secret))
- */
-async function getCsrfToken(): Promise<string> {
-  return await fetchCsrfToken();
-}
-
-async function fetchCsrfToken(): Promise<string> {
-  const response = await fetch(new URL(`${API_BASE}${CSRF_ENDPOINT}`, window.location.origin).toString(), {
-    method: 'GET',
-    credentials: 'include', // Cookies HttpOnly
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch CSRF token');
-  }
-  
-  const data = await response.json();
-  const token = data.token;
-  
-  if (!token) {
-    throw new Error('Invalid CSRF token response');
-  }
-  
-  sessionStorage.setItem('csrf_token', token);
-  return token;
-}
-
-/**
- * Cliente API principal
- */
-export async function apiClient<T = unknown>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<T> {
-  const { params, headers, ...fetchOptions } = options;
-  
-  // Construir URL con query params
-  const url = new URL(`${API_BASE}${endpoint}`, window.location.origin);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, value);
-    });
-  }
-  
-  // Headers base
-  const requestHeaders = new Headers(headers);
-  requestHeaders.set('Content-Type', 'application/json');
-  requestHeaders.set('X-Requested-With', 'XMLHttpRequest');
-  
-  // CSRF para mutaciones
-  const method = (fetchOptions.method ?? 'GET').toUpperCase();
-  const isMutable = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
-  
-  if (isMutable) {
-    const csrfToken = await getCsrfToken();
-    requestHeaders.set('X-CSRF-Token', csrfToken);
-  }
-  
-  // Ejecutar request
-  const response = await fetch(url.toString(), {
-    ...fetchOptions,
-    headers: requestHeaders,
-    credentials: 'include', // ¡Crítico! Envía cookies HttpOnly
-  });
-  
-  // Retry 403 con token fresco (CSRF stateless: HMAC incondicional)
-  if (response.status === 403 && isMutable) {
-    sessionStorage.removeItem('csrf_token');
-    const newToken = await fetchCsrfToken();
-    requestHeaders.set('X-CSRF-Token', newToken);
-    
-    const retryResponse = await fetch(url.toString(), {
-      ...fetchOptions,
-      headers: requestHeaders,
-      credentials: 'include',
-    });
-    
-    if (!retryResponse.ok) {
-      const retryError = await retryResponse.json().catch(() => ({}));
-      throw new ApiError(retryResponse.status, retryError, `API Error: ${retryResponse.status}`);
-    }
-    
-    return retryResponse.json();
-  }
-  
-  // Manejar errores
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, errorData, `API Error: ${response.status}`);
-  }
-  
-  // 204 No Content
-  if (response.status === 204) {
-    return undefined as T;
-  }
-  
-  return response.json();
-}
-
-// Métodos de conveniencia
-export const api = {
-  get: <T>(endpoint: string, params?: Record<string, string>) => 
-    apiClient<T>(endpoint, { method: 'GET', params }),
-  
-  post: <T>(endpoint: string, body: unknown) => 
-    apiClient<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
-  
-  put: <T>(endpoint: string, body: unknown) => 
-    apiClient<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
-  
-  patch: <T>(endpoint: string, body: unknown) => 
-    apiClient<T>(endpoint, { method: 'PATCH', body: JSON.stringify(body) }),
-  
-  delete: <T>(endpoint: string) => 
-    apiClient<T>(endpoint, { method: 'DELETE' }),
-};
-
-// Endpoints Super Admin
 export const superAdminApi = {
-  // Stats
   getStats: () => api.get('/api/super-admin/stats'),
-  
-  // Tenants
+
   listTenants: () => api.get('/api/super-admin/tenants'),
   createTenant: (data: {
     name: string;
@@ -165,11 +15,11 @@ export const superAdminApi = {
     admin_email: string;
     admin_password: string;
   }) => api.post('/api/super-admin/tenants', data),
-  updateTenant: (id: number, data: { name?: string; subscription_plan_id?: number; logo_url?: string | null }) => 
+  updateTenant: (id: number, data: { name?: string; subscription_plan_id?: number; logo_url?: string | null }) =>
     api.patch(`/api/super-admin/tenants/${id}`, data),
   deactivateTenant: (id: number) => api.post(`/api/super-admin/tenants/${id}/deactivate`, {}),
-  
-  // Plans
+  activateTenant: (id: number) => api.post(`/api/super-admin/tenants/${id}/activate`, {}),
+
   listPlans: () => api.get('/api/super-admin/plans'),
   createPlan: (data: {
     name: string;
@@ -186,25 +36,19 @@ export const superAdminApi = {
     limits?: Array<{ module: string; metric: string; value: number }>;
   }) => api.patch(`/api/super-admin/plans/${id}`, data),
   deletePlan: (id: number) => api.delete(`/api/super-admin/plans/${id}`),
-  
-  // Theme
+
   getTheme: () => api.get<any>('/api/super-admin/theme'),
   updateTheme: (theme: 'light' | 'dark') => api.put('/api/super-admin/theme', { theme }),
-  
-  // Password
+
   changePassword: (data: { current_password: string; new_password: string }) =>
     api.post('/api/super-admin/change-password', data),
-  
-  // Roles
+
   listRoles: () => api.get<any[]>('/api/super-admin/roles'),
   createRole: (data: { app_id: string; name: string; description?: string }) =>
     api.post('/api/super-admin/roles', data),
   updateRole: (id: number, data: { name?: string; description?: string; is_active?: boolean }) =>
     api.patch(`/api/super-admin/roles/${id}`, data),
   deleteRole: (id: number) => api.delete(`/api/super-admin/roles/${id}`),
-  
-  // CSRF
-  getCsrfToken: () => api.get(CSRF_ENDPOINT),
-};
 
-export { ApiError };
+  getCsrfToken: () => api.get('/api/csrf-token'),
+};

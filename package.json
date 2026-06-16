@@ -21,6 +21,7 @@
     "db:seed": "php migrations/seed_superadmin.php"
   },
   "devDependencies": {
+    "@types/three": "^0.184.1",
     "typescript": "^5.4.0"
   },
   "engines": {

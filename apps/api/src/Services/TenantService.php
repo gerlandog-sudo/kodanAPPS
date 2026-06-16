@@ -147,13 +147,13 @@ final class TenantService
      * 
      * @throws InvalidArgumentException Si tenant de sistema
      */
-    public function deactivateTenant(int $tenantId, int $superAdminUserId): void
+    public function deactivateTenant(int $tenantId): void
     {
         $this->tenantRepo->deactivateTenant($tenantId);
         
         $this->auditLog(
             tenantId: TenantContext::getTenantId(),
-            userId: $superAdminUserId,
+            userId: TenantContext::getUserId() ?: 0,
             action: 'TENANT_DEACTIVATED',
             details: ['tenant_id' => $tenantId]
         );
@@ -162,7 +162,7 @@ final class TenantService
     /**
      * Cambia plan de tenant con auditoría
      */
-    public function changeTenantPlan(int $tenantId, int $newPlanId, int $superAdminUserId): void
+    public function changeTenantPlan(int $tenantId, int $newPlanId): void
     {
         $this->tenantRepo->changePlan($tenantId, $newPlanId);
         
@@ -170,7 +170,7 @@ final class TenantService
         
         $this->auditLog(
             tenantId: TenantContext::getTenantId(),
-            userId: $superAdminUserId,
+            userId: TenantContext::getUserId() ?: 0,
             action: 'TENANT_PLAN_CHANGED',
             details: ['tenant_id' => $tenantId, 'new_plan_id' => $newPlanId]
         );

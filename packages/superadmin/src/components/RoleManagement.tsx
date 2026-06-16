@@ -82,11 +82,7 @@ export function RoleManagement() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <Shield size={20} style={{ color: 'var(--sys-primary)' }} />
-          <h2 className="text-lg font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>Roles del Sistema</h2>
-        </div>
+      <div className="flex items-center justify-end mb-4">
         <Button variant="primary" onClick={() => setShowCreate(true)}>
           <Plus size={16} /> Nuevo Rol
         </Button>

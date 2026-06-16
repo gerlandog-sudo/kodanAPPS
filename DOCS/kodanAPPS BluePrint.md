@@ -2,7 +2,7 @@
 
 Este documento es la especificación técnica maestra para la construcción desde cero de la plataforma **kodanAPPS** consolidada. Define la hoja de ruta secuencial de dependencias y especificaciones técnicas organizadas de arquitectura gruesa a detalle fino para guiar la codificación y despliegue por parte de desarrolladores y agentes.
 
-> **Última actualización:** 2026-06-15 — CSRF migrado a stateless (HMAC + PHPSESSID, sin sesiones). `AuthMiddleware` unificado reemplaza `SuperAdminMiddleware`. Métricas de plan_limits rediseñadas (`negotiations_max`, `tasks_max`, `api_calls_month`). `@kodan-apps/ui-core` extraído con componentes compartidos (Card, Button, Input, Modal, Toaster, ThemeContext).
+> **Última actualización:** 2026-06-16 — Settings page admin-only. Pipeline Manager con colores preset (8 ui_config). Custom Fields API/UI/Form con tipos extendidos (multi_select). Nuevos componentes ui-core: Toggle, MultiSelect, ColorPicker, SlidePanel, CustomFieldsForm. Migración BD: `sort_order`/`deleted_at`/`multi_select` en custom_field_definitions, `probability`/`ui_config` en pipeline_stages. Seed de demo pipelines + custom fields.
 
 ---
 
@@ -117,7 +117,7 @@ El sistema abandona la matriz dinámica en base de datos (antigua tabla `permiss
 
 1.  **Rol `admin` (Administrador del Sistema / Tenant Admin):**
     *   **Centralizado a nivel de Tenant (Core):** El Tenant Admin gestiona el alta de usuarios e invitaciones en el tenant global y activa/desactiva cuentas. Asigna los roles específicos a cada usuario para las aplicaciones que el plan de suscripción incluya (determinado por `plan_limits.module`). Los usuarios son transversales al ecosistema y visibles en todas las aplicaciones habilitadas.
-    *   **En `kodanCRM`:** Configuración global de pipelines, etapas, integraciones y campos personalizados dinámicos para cuentas, contactos y oportunidades.
+    *   **En `kodanCRM`:** Configuración global de pipelines, etapas (con colores preset, probabilidad, estados Won/Lost), integraciones y campos personalizados dinámicos (tipos: text, number, select, multi_select, date, boolean) para cuentas, contactos y oportunidades. Acceso a la página de Ajustes (Settings) exclusiva para administradores del tenant.
     *   **En `kodanTRACKER`:** Control total de la parametrización de seguimiento de tiempo. Gestiona los perfiles del tracker (`user_tracker_profiles` para asignar cargos, seniorities y costo por hora), tarifas base de facturación y categorías de tareas maestras (`tasks_master`).
     *   **Finanzas/Aprobaciones (Tracker):** Acceso completo a métricas del portfolio y aprobación de planillas globales.
     *   **Restricción de Carga (Tracker):** No puede imputar horas para sí mismo directamente. Debe hacerlo en representación de recursos operativos (`staff`, `pm`, `commercial`).
@@ -213,8 +213,14 @@ Para mantener la integridad operativa del Time Tracker heredado, el backend impl
 ### B. Módulo CRM (kodanCRM)
 *   **Gestión B2B:** Registro elástico de cuentas y contactos con soporte para campos dinámicos definidos por el tenant.
 *   **Pipeline de Ventas Dinámico:**
-    *   Creación ilimitada de Pipelines por Tenant.
-    *   Definición de Etapas por Pipeline con control de ordenación numérica y colores HEX para el renderizado del tablero Kanban.
+    *   Creación ilimitada de Pipelines por Tenant con gestión visual desde Settings (admin-only).
+    *   Definición de Etapas por Pipeline con: orden arrastrable, nombre editable inline, selector de color preset (8 presets con ui_config: dot, badgeClass, glowClass, colorKey), probabilidad (%), y toggle Won/Lost.
+    *   Validaciones: exactamente 1 etapa Won + 1 Lost por pipeline, reassign de oportunidades huérfanas al eliminar etapa. Bulk update transaccional de etapas.
+*   **Campos Personalizados Dinámicos:**
+    *   UI de administración (Settings, admin-only) para definir campos por entidad: cuentas (accounts), contactos (contacts), oportunidades (opportunities).
+    *   Tipos soportados: text, number, select (dropdown), multi_select (tags), date, boolean (toggle).
+    *   Validación server-side por tipo con CustomFieldService. Soft delete con purge opcional (JSON_REMOVE). Reorden drag-and-drop con optimistic UI.
+    *   Integración en formularios de creación/edición de cuentas, contactos y oportunidades mediante tab secundario "Campos Personalizados".
 *   **Flujo de Cierre Comercial (Interacción Won-Opportunity):**
     *   Al transicionar una oportunidad a una etapa donde `is_won_stage = 1`, se intercepta el flujo.
     *   Se despliega un modal interactivo en frontend: *"¿Deseas crear un proyecto de seguimiento de tiempo en TimeTracker?"*, permitiendo definir el presupuesto de horas.
@@ -486,9 +492,11 @@ CREATE TABLE `custom_field_definitions` (
   `entity_type` ENUM('account', 'contact', 'opportunity') NOT NULL,
   `field_key` VARCHAR(50) NOT NULL,
   `field_label` VARCHAR(100) NOT NULL,
-  `field_type` ENUM('text', 'number', 'select', 'date', 'boolean') NOT NULL,
-  `options` JSON DEFAULT NULL,
+  `field_type` ENUM('text', 'number', 'select', 'multi_select', 'date', 'boolean') NOT NULL,
+  `options` JSON DEFAULT NULL COMMENT 'Para select/multi_select: array de opciones',
   `is_required` TINYINT(1) NOT NULL DEFAULT 0,
+  `sort_order` INT(11) NOT NULL DEFAULT 0 COMMENT 'Orden de aparición en formularios',
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Soft delete timestamp',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_tenant_entity_field` (`tenant_id`, `entity_type`, `field_key`),
@@ -528,7 +536,9 @@ CREATE TABLE `pipeline_stages` (
   `name` VARCHAR(100) NOT NULL,
   `color_hex` VARCHAR(7) NOT NULL DEFAULT '#6366F1',
   `sort_order` INT(11) NOT NULL DEFAULT 0,
+  `probability` DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Probabilidad de cierre %',
   `is_won_stage` TINYINT(1) NOT NULL DEFAULT 0,
+  `ui_config` JSON DEFAULT NULL COMMENT 'Preset metadata: colorKey, dot, badgeClass, glowClass',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_stages_pipeline` FOREIGN KEY (`pipeline_id`) REFERENCES `pipelines` (`id`) ON DELETE CASCADE
@@ -1100,8 +1110,14 @@ Para lograr una experiencia interactiva instantánea e ininterrumpida (Apple/Lin
     *   *Comportamiento:* Selector interactivo tipo calendario flotante unificado, con control manual de meses y años y navegación rápida por teclado, consistente con el tema (claro/oscuro).
 6.  **`DatePickerInline.tsx` (Selector de Rango de Fechas):**
     *   *Comportamiento:* Selector embebido directamente en la página para vistas de timeline, permitiendo arrastrar rangos de fecha rápidos.
-7.  **`Checkbox.tsx` / `Toggle.tsx` (Controles de Selección):**
-    *   *Comportamiento:* Controles de estado binario consistentes con el color de acento de la app.
+7.  **`Toggle.tsx` / `Switch`: ✅ Implementado
+    *   *Comportamiento:* Control binario con animación spring, track y thumb coloreados según acento de la app ($--sys-primary). Ideal para campos booleanos de custom fields.
+8.  **`MultiSelect.tsx` (Selector Múltiple con Tags): ✅ Implementado
+    *   *Comportamiento:* Dropdown con checkboxes que muestra selección como tags removibles con animación. Overflow indicator "+N" para muchos tags seleccionados. Ideal para custom fields type multi_select.
+9.  **`SlidePanel.tsx` (Panel Lateral Deslizante): ✅ Implementado
+    *   *Comportamiento:* Panel que se desliza desde la derecha con backdrop oscuro. Animación spring (stiffness: 100, damping: 20). Ideal para formularios de edición de registros sin perder contexto de navegación. Soporta header con título y botón de cierre, y scroll interno.
+10. **`ColorPicker.tsx` (Selector de Color Preset): ✅ Implementado
+    *   *Comportamiento:* Grid de 8 swatches circulares con los presets de etapa de ventas. Selección visual con borde animado y checkmark indicador. Retorna el colorKey del preset seleccionado.
 
 ### B. Componentes Estructurales y de Datos
 8.  **`Card.tsx` (Tarjeta):** ✅ Implementado
@@ -1122,6 +1138,9 @@ Para lograr una experiencia interactiva instantánea e ininterrumpida (Apple/Lin
     *   *Comportamiento:* Contenedor droppable de tarjetas. Su cabecera incluye un indicador circular (`dotColor`) personalizable, un badge con el nombre de la etapa en mayúsculas, y un badge con el recuento total de ítems o sumas financieras de la columna. Cambia el color de fondo en hover drag (`isOver`).
 15. **`KanbanCard.tsx` (Tarjeta de Tablero):**
     *   *Comportamiento:* Elemento arrastrable de tipo tarjeta. Aplica elevación tonal, borde suave de 1px y sombra `Shadow-MD` en hover. Diseñado de forma genérica para renderizar tanto oportunidades comerciales en el CRM como tareas asignadas a proyectos en el Tracker.
+
+16. **`CustomFieldsForm.tsx` (Formulario Dinámico de Campos Personalizados): ✅ Implementado
+    *   *Comportamiento:* Renderer dinámico que recibe `entity` (account|contact|opportunity) y auto-carga las definiciones del backend. Renderiza inputs según field_type: text → Input, number → Input[type=number], boolean → Toggle, date → date input, select → select dropdown, multi_select → MultiSelect. Validación inline de campos requeridos, estado de carga con skeleton, actualización optimista.
 
 ---
 
@@ -1183,7 +1202,16 @@ Para optimizar desarrollo y evitar código redundante, se establece el uso de:
 *   [ ] Portar el backend de Tracker eliminando iniciativas y migrando de clientes a cuentas (`account_id`), vinculando perfiles a los IDs de cargo/seniority.
 *   [ ] Refactorizar el frontend de Tracker eliminando UI de iniciativas y actualizando componentes de proyectos y cronómetro.
 
-### Fase 6: Pruebas, Optimización y Despliegue (Días 9 - 10)
+### Fase 7: Settings, Pipeline Manager y Campos Personalizados (Días 11 - 12)
+*   [ ] Migración BD: agregar sort_order/deleted_at/multi_select a custom_field_definitions, probability/ui_config a pipeline_stages.
+*   [ ] Backend: CustomFieldController (CRUD definitions + reorder masivo). CustomFieldService (validación server-side por tipo + injectFilters para búsquedas dinámicas SQL). Bulk update de etapas en PipelineController (transacción con validación Won/Lost).
+*   [ ] Frontend: Settings page (admin-only, split nav). PipelineManager (panel dividido: izquierda lista de canales, derecha etapas editables). CustomFieldsSettings (entity tabs + sortable list + SlidePanel CRUD).
+*   [ ] UI Core: Toggle, MultiSelect, ColorPicker, SlidePanel, CustomFieldsForm. Export desde index.ts con barrel.
+*   [ ] Integración: Tabs "Campos Personalizados" en modales de Accounts, Contacts, Negotiations.
+*   [ ] Seed: pipelines demo con etapas preset, custom field definitions de ejemplo con valores en entidades demo.
+*   [ ] Frontend: verificación de rol admin para acceso a Settings (ocultar nav item + backend validation).
+
+### Fase 8: Pruebas, Optimización y Despliegue (Días 9 - 10)
 *   [ ] Ejecutar pruebas de seguridad de aislamiento de datos multi-tenant.
 *   [ ] Realizar auditoría estática de código con PHPStan L9.
 *   [ ] Compilar bundles de producción en frontends y validar despliegue unificado.

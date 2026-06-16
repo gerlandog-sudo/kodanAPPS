@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { superAdminApi } from '../api/client';
-import { Button } from '@kodan-apps/ui-core';
+import { Button, Toggle } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
 import Cropper, { type Area } from 'react-easy-crop';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,7 +10,6 @@ import {
   X,
   Check,
   Shield,
-  ToggleRight,
   AlertCircle,
   ChevronRight,
   ChevronLeft,
@@ -126,6 +125,7 @@ export function TenantManagement() {
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [deactivateTarget, setDeactivateTarget] = useState<Tenant | null>(null);
+  const [activateTarget, setActivateTarget] = useState<Tenant | null>(null);
   const [editTarget, setEditTarget] = useState<Tenant | null>(null);
   const [editName, setEditName] = useState('');
   const [editPlanId, setEditPlanId] = useState(0);
@@ -294,6 +294,14 @@ export function TenantManagement() {
     setDeactivateTarget(tenant);
   };
 
+  const handleToggleTenant = (tenant: Tenant) => {
+    if (tenant.is_active) {
+      handleDeactivate(tenant);
+    } else {
+      handleActivate(tenant);
+    }
+  };
+
   const confirmDeactivate = async () => {
     if (!deactivateTarget) return;
     try {
@@ -304,6 +312,23 @@ export function TenantManagement() {
     } catch (err: any) {
       toast.error(err.message || 'Error desactivando tenant');
       setDeactivateTarget(null);
+    }
+  };
+
+  const handleActivate = (tenant: Tenant) => {
+    setActivateTarget(tenant);
+  };
+
+  const confirmActivate = async () => {
+    if (!activateTarget) return;
+    try {
+      await superAdminApi.activateTenant(activateTarget.tenant_id);
+      toast.success(`Tenant "${activateTarget.name}" reactivado`);
+      setActivateTarget(null);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Error reactivando tenant');
+      setActivateTarget(null);
     }
   };
 
@@ -330,7 +355,11 @@ export function TenantManagement() {
     reader.onloadend = () => {
       setEditImageSrc(reader.result as string);
       setEditLogoState('cropping');
+      setEditZoom(1);
+      setEditCrop({ x: 0, y: 0 });
+      setEditCroppedAreaPixels(null);
     };
+    reader.readAsDataURL(file);
     if (editFileInputRef.current) editFileInputRef.current.value = '';
   };
 
@@ -426,7 +455,7 @@ export function TenantManagement() {
               <th>Tenant</th>
               <th>Plan</th>
               <th>Estado</th>
-              <th className="text-right">Acciones</th>
+              <th className="text-right"></th>
             </tr>
           </thead>
           <tbody>
@@ -469,29 +498,30 @@ export function TenantManagement() {
                     {tenant.is_system_tenant ? (
                       <span className="badge badge-info flex items-center gap-1.5">
                         <Shield size={10} />
-                        Sistema
+                        Protegido
                       </span>
                     ) : (
-                      <span className={`badge ${tenant.is_active ? 'badge-active' : 'badge-inactive'} flex items-center gap-1.5`}>
-                        {tenant.is_active ? <Check size={10} /> : <X size={10} />}
-                        {tenant.is_active ? 'Activo' : 'Inactivo'}
-                      </span>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Toggle
+                          checked={tenant.is_active}
+                          onChange={() => handleToggleTenant(tenant)}
+                        />
+                        <span style={{
+                          fontSize: '0.6875rem',
+                          fontWeight: 600,
+                          letterSpacing: '0.04em',
+                          color: tenant.is_active ? 'var(--sys-success)' : 'var(--sys-error)',
+                        }}>
+                          {tenant.is_active ? 'ACTIVO' : 'INACTIVO'}
+                        </span>
+                      </div>
                     )}
                   </td>
                   <td className="text-right">
-<Button variant="ghost" className="text-xs flex items-center gap-1.5 ml-auto" onClick={() => openEditModal(tenant)}>
-                          <Pencil size={14} />
-                          Editar
-                        </Button>
-                        {!tenant.is_system_tenant && tenant.is_active && (
-                          <Button variant="ghost" className="text-xs flex items-center gap-1.5" onClick={() => handleDeactivate(tenant)}>
-                            <ToggleRight size={14} />
-                            Desactivar
-                          </Button>
-                        )}
-                    {tenant.is_system_tenant && (
-                      <span className="badge badge-info text-xs">Protegido</span>
-                    )}
+                    <Button variant="ghost" className="text-xs flex items-center gap-1.5 ml-auto" onClick={() => openEditModal(tenant)}>
+                      <Pencil size={14} />
+                      Editar
+                    </Button>
                   </td>
                 </tr>
               ))
@@ -881,7 +911,40 @@ export function TenantManagement() {
                 <div className="flex gap-2 justify-end">
                   <Button variant="ghost" onClick={() => setDeactivateTarget(null)}>Cancelar</Button>
                   <Button variant="secondary" onClick={confirmDeactivate}>
-                    <ToggleRight size={14} /> Desactivar
+                    Desactivar
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirm Dialog - Activar */}
+      <AnimatePresence>
+        {activateTarget && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md overflow-hidden shadow-2xl"
+              style={{ background: 'var(--sys-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--sys-border-soft)' }}
+            >
+              <div className="p-6 flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--sys-primary-container)' }}>
+                    <Check size={20} style={{ color: 'var(--sys-primary)' }} />
+                  </div>
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--sys-text)' }}>Activar Tenant</h3>
+                </div>
+                <p className="text-sm" style={{ color: 'var(--sys-text-muted)' }}>
+                  ¿Estás seguro de reactivar <strong>{activateTarget.name}</strong>? Los usuarios podrán acceder nuevamente.
+                </p>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="ghost" onClick={() => setActivateTarget(null)}>Cancelar</Button>
+                  <Button variant="primary" onClick={confirmActivate}>
+                    <Check size={14} /> Activar
                   </Button>
                 </div>
               </div>
@@ -957,9 +1020,20 @@ export function TenantManagement() {
                           onCropComplete={onEditCropComplete}
                         />
                       </div>
-                      <input type="range" min={1} max={3} step={0.1} value={editZoom} onChange={e => setEditZoom(Number(e.target.value))} className="w-full" />
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Zoom:</span>
+                        <input
+                          type="range"
+                          min={1}
+                          max={3}
+                          step={0.1}
+                          value={editZoom}
+                          onChange={e => setEditZoom(Number(e.target.value))}
+                          className="flex-1"
+                        />
+                      </div>
                       <div className="flex gap-2">
-                        <Button variant="ghost" onClick={handleEditCropCancel} className="flex-1">Cancelar</Button>
+                        <Button variant="secondary" onClick={handleEditCropCancel} className="flex-1">Cancelar</Button>
                         <Button variant="primary" onClick={handleEditCropConfirm} className="flex-1">Confirmar</Button>
                       </div>
                     </div>

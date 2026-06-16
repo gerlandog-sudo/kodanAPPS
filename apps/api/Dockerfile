@@ -25,13 +25,17 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite headers
 
 # Configurar PHP para desarrollo
-RUN echo "display_errors=On" >> /usr/local/php/php.ini-development \
-    && echo "error_reporting=E_ALL" >> /usr/local/php/php.ini-development \
-    && echo "log_errors=On" >> /usr/local/php/php.ini-development \
-    && echo "memory_limit=256M" >> /usr/local/php/php.ini-development \
-    && echo "max_execution_time=60" >> /usr/local/php/php.ini-development \
-    && echo "upload_max_filesize=10M" >> /usr/local/php/php.ini-development \
-    && echo "post_max_size=10M" >> /usr/local/php/php.ini-development
+RUN echo "display_errors=On" >> /usr/local/etc/php/php.ini-development \
+    && echo "error_reporting=E_ALL" >> /usr/local/etc/php/php.ini-development \
+    && echo "log_errors=On" >> /usr/local/etc/php/php.ini-development \
+    && echo "memory_limit=256M" >> /usr/local/etc/php/php.ini-development \
+    && echo "max_execution_time=60" >> /usr/local/etc/php/php.ini-development \
+    && echo "upload_max_filesize=10M" >> /usr/local/etc/php/php.ini-development \
+    && echo "post_max_size=10M" >> /usr/local/etc/php/php.ini-development
+
+# Configurar OPcache para desarrollo (revalidar siempre)
+RUN echo "opcache.validate_timestamps=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.revalidate_freq=0" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
 
 # Copiar configuración Apache
 COPY apache.conf /etc/apache2/sites-available/000-default.conf

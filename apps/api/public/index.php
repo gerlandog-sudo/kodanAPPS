@@ -156,6 +156,14 @@ if (str_starts_with($requestUri, '/api/auth/')) {
             exit;
         }
         
+        if ($requestUri === '/api/auth/refresh' && $method === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $authController->refresh($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+        
         http_response_code(404);
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Auth endpoint not found']);
@@ -240,6 +248,14 @@ if (str_starts_with($requestUri, '/api/super-admin')) {
         // POST /api/super-admin/tenants/{id}/deactivate
         if (preg_match('#^/tenants/(\d+)/deactivate$#', $path, $matches) && $method === 'POST') {
             $data = $controller->deactivateTenant((int)$matches[1]);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+            exit;
+        }
+
+        // POST /api/super-admin/tenants/{id}/activate
+        if (preg_match('#^/tenants/(\d+)/activate$#', $path, $matches) && $method === 'POST') {
+            $data = $controller->activateTenant((int)$matches[1]);
             header('Content-Type: application/json');
             echo json_encode($data);
             exit;
@@ -352,6 +368,16 @@ if (str_starts_with($requestUri, '/api/super-admin')) {
         header('Content-Type: application/json');
         echo json_encode(['error' => $e->getMessage()]);
         exit;
+    } catch (\Throwable $e) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'error' => 'Internal server error',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+        exit;
     }
 }
 
@@ -362,11 +388,330 @@ if (str_starts_with($requestUri, '/api/') && !str_starts_with($requestUri, '/api
     try {
         $auth = $authMiddleware->handle();
 
-        // CRM routes (endpoints por definir)
+        // CRM routes
         if (str_starts_with($requestUri, '/api/crm')) {
-            http_response_code(501);
+            // Repositorios de CRM
+            $accountRepo = new \kodanAPPS\Repositories\AccountRepository($pdo);
+            $contactRepo = new \kodanAPPS\Repositories\ContactRepository($pdo);
+            $pipelineRepo = new \kodanAPPS\Repositories\PipelineRepository($pdo);
+            $oppRepo = new \kodanAPPS\Repositories\OpportunityRepository($pdo);
+            $productRepo = new \kodanAPPS\Repositories\ProductRepository($pdo);
+            $quoteRepo = new \kodanAPPS\Repositories\QuoteRepository($pdo);
+            $taskRepo = new \kodanAPPS\Repositories\CrmTaskRepository($pdo);
+            $chatRepo = new \kodanAPPS\Repositories\ChatRepository($pdo);
+
+            // Servicios y Controladores de CRM
+            $crmCtrl = new \kodanAPPS\Controllers\CrmController($pdo);
+            $customFieldService = new \kodanAPPS\Services\CustomFieldService($pdo);
+            $customFieldCtrl = new \kodanAPPS\Controllers\CustomFieldController($customFieldService, $pdo);
+            $accountCtrl = new \kodanAPPS\Controllers\AccountController($accountRepo);
+            $contactCtrl = new \kodanAPPS\Controllers\ContactController($contactRepo);
+            $pipelineCtrl = new \kodanAPPS\Controllers\PipelineController($pipelineRepo);
+            $oppCtrl = new \kodanAPPS\Controllers\OpportunityController($oppRepo, $pipelineRepo, $crmCtrl);
+            $productCtrl = new \kodanAPPS\Controllers\ProductController($productRepo);
+            $quoteCtrl = new \kodanAPPS\Controllers\QuoteController($quoteRepo);
+            $taskCtrl = new \kodanAPPS\Controllers\CrmTaskController($taskRepo);
+            $chatCtrl = new \kodanAPPS\Controllers\ChatController($chatRepo);
+
+            $path = str_replace('/api/crm', '', $requestUri);
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
             header('Content-Type: application/json');
-            echo json_encode(['error' => 'CRM API not implemented yet']);
+
+            // 1. Límites y Estado del Plan
+            if ($path === '/plan-status' && $method === 'GET') {
+                echo json_encode($crmCtrl->getPlanStatus($auth['tenant_id']));
+                exit;
+            }
+
+            // 2. Accounts B2B
+            if ($path === '/accounts' && $method === 'GET') {
+                echo json_encode($accountCtrl->list());
+                exit;
+            }
+            if ($path === '/accounts' && $method === 'POST') {
+                echo json_encode($accountCtrl->create($input));
+                exit;
+            }
+            if (preg_match('#^/accounts/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($accountCtrl->get($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($accountCtrl->update($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($accountCtrl->delete($id));
+                    exit;
+                }
+            }
+
+            // 3. Contacts
+            if ($path === '/contacts' && $method === 'GET') {
+                echo json_encode($contactCtrl->list());
+                exit;
+            }
+            if ($path === '/contacts' && $method === 'POST') {
+                echo json_encode($contactCtrl->create($input));
+                exit;
+            }
+            if (preg_match('#^/contacts/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($contactCtrl->get($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($contactCtrl->update($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($contactCtrl->delete($id));
+                    exit;
+                }
+            }
+
+            // 4. Pipelines & Stages
+            if ($path === '/pipelines' && $method === 'GET') {
+                echo json_encode($pipelineCtrl->listPipelines());
+                exit;
+            }
+            if ($path === '/pipelines' && $method === 'POST') {
+                echo json_encode($pipelineCtrl->createPipeline($input));
+                exit;
+            }
+            if (preg_match('#^/pipelines/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($pipelineCtrl->getPipeline($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($pipelineCtrl->updatePipeline($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($pipelineCtrl->deletePipeline($id));
+                    exit;
+                }
+            }
+            if (preg_match('#^/pipelines/(\d+)/stages$#', $path, $matches)) {
+                $pipelineId = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($pipelineCtrl->listStages($pipelineId));
+                    exit;
+                }
+                if ($method === 'POST') {
+                    echo json_encode($pipelineCtrl->createStage($pipelineId, $input));
+                    exit;
+                }
+            }
+            if (preg_match('#^/pipeline-stages/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($pipelineCtrl->getStage($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($pipelineCtrl->updateStage($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($pipelineCtrl->deleteStage($id));
+                    exit;
+                }
+            }
+            // Bulk update stages
+            if ($path === '/pipeline-stages' && $method === 'PUT') {
+                echo json_encode($pipelineCtrl->bulkUpdateStages($input));
+                exit;
+            }
+
+            // 5. Products
+            if ($path === '/products' && $method === 'GET') {
+                echo json_encode($productCtrl->list());
+                exit;
+            }
+            if ($path === '/products' && $method === 'POST') {
+                echo json_encode($productCtrl->create($input));
+                exit;
+            }
+            if (preg_match('#^/products/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($productCtrl->get($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($productCtrl->update($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($productCtrl->delete($id));
+                    exit;
+                }
+            }
+
+            // 6. Opportunities & Items & Won Integration
+            if ($path === '/opportunities' && $method === 'GET') {
+                echo json_encode($oppCtrl->list());
+                exit;
+            }
+            if ($path === '/opportunities' && $method === 'POST') {
+                echo json_encode($oppCtrl->create($input));
+                exit;
+            }
+            if (preg_match('#^/opportunities/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($oppCtrl->get($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($oppCtrl->update($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($oppCtrl->delete($id));
+                    exit;
+                }
+            }
+            if (preg_match('#^/opportunities/(\d+)/items$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($oppCtrl->getLineItems($id));
+                    exit;
+                }
+                if ($method === 'POST') {
+                    echo json_encode($oppCtrl->saveLineItems($id, $input));
+                    exit;
+                }
+            }
+            if (preg_match('#^/opportunities/(\d+)/won$#', $path, $matches) && $method === 'POST') {
+                echo json_encode($oppCtrl->wonOpportunity((int)$matches[1], $input));
+                exit;
+            }
+            if (preg_match('#^/opportunities/(\d+)/archive$#', $path, $matches) && $method === 'POST') {
+                echo json_encode($oppCtrl->archive((int)$matches[1]));
+                exit;
+            }
+            if (preg_match('#^/opportunities/(\d+)/unarchive$#', $path, $matches) && $method === 'POST') {
+                echo json_encode($oppCtrl->unarchive((int)$matches[1]));
+                exit;
+            }
+
+            // 7. Quotes & Items
+            if ($path === '/quotes' && $method === 'GET') {
+                echo json_encode($quoteCtrl->list());
+                exit;
+            }
+            if ($path === '/quotes' && $method === 'POST') {
+                echo json_encode($quoteCtrl->create($input));
+                exit;
+            }
+            if (preg_match('#^/quotes/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($quoteCtrl->get($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($quoteCtrl->update($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($quoteCtrl->delete($id));
+                    exit;
+                }
+            }
+            if (preg_match('#^/quotes/(\d+)/items$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($quoteCtrl->getLineItems($id));
+                    exit;
+                }
+                if ($method === 'POST') {
+                    echo json_encode($quoteCtrl->saveLineItems($id, $input));
+                    exit;
+                }
+            }
+
+            // 8. Tasks
+            if ($path === '/tasks' && $method === 'GET') {
+                echo json_encode($taskCtrl->list());
+                exit;
+            }
+            if ($path === '/tasks' && $method === 'POST') {
+                echo json_encode($taskCtrl->create($input));
+                exit;
+            }
+            if (preg_match('#^/tasks/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($taskCtrl->get($id));
+                    exit;
+                }
+                if ($method === 'PATCH' || $method === 'PUT') {
+                    echo json_encode($taskCtrl->update($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($taskCtrl->delete($id));
+                    exit;
+                }
+            }
+
+            // 9. Chats & Mentions
+            if ($path === '/chats/unread-mentions' && $method === 'GET') {
+                echo json_encode($chatCtrl->getUnreadMentionsCount());
+                exit;
+            }
+            if (preg_match('#^/opportunities/(\d+)/chat$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'GET') {
+                    echo json_encode($chatCtrl->getMessages($id));
+                    exit;
+                }
+                if ($method === 'POST') {
+                    echo json_encode($chatCtrl->sendMessage($id, $input));
+                    exit;
+                }
+            }
+            if (preg_match('#^/chats/messages/(\d+)/attach$#', $path, $matches) && $method === 'POST') {
+                $messageId = (int)$matches[1];
+                echo json_encode($chatCtrl->uploadAttachment($messageId));
+                exit;
+            }
+
+            // 10. Custom Fields Definitions
+            if ($path === '/custom-fields' && $method === 'GET') {
+                echo json_encode($customFieldCtrl->list());
+                exit;
+            }
+            if ($path === '/custom-fields' && $method === 'POST') {
+                echo json_encode($customFieldCtrl->create($input));
+                exit;
+            }
+            if ($path === '/custom-fields/reorder' && $method === 'PUT') {
+                echo json_encode($customFieldCtrl->reorder($input));
+                exit;
+            }
+            if (preg_match('#^/custom-fields/(\d+)$#', $path, $matches)) {
+                $id = (int)$matches[1];
+                if ($method === 'PUT' || $method === 'PATCH') {
+                    echo json_encode($customFieldCtrl->update($id, $input));
+                    exit;
+                }
+                if ($method === 'DELETE') {
+                    echo json_encode($customFieldCtrl->delete($id));
+                    exit;
+                }
+            }
+
+            http_response_code(404);
+            echo json_encode(['error' => 'Endpoint CRM no encontrado.']);
             exit;
         }
 
@@ -383,12 +728,30 @@ if (str_starts_with($requestUri, '/api/') && !str_starts_with($requestUri, '/api
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Not found']);
         exit;
+    } catch (InvalidArgumentException $e) {
+        http_response_code(422);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'message' => 'Validation error',
+            'errors' => json_decode($e->getMessage(), true) ?? ['general' => $e->getMessage()],
+        ]);
+        exit;
     } catch (RuntimeException $e) {
         $code = (int)$e->getCode();
-        if ($code === 0) $code = 401;
+        if ($code < 400 || $code > 599) $code = 500;
         http_response_code($code);
         header('Content-Type: application/json');
         echo json_encode(['error' => $e->getMessage()]);
+        exit;
+    } catch (\Throwable $e) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'error' => 'Internal server error',
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
         exit;
     }
 }

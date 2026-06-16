@@ -129,14 +129,33 @@ final class TenantRepository extends BaseRepository
     public function updateTenant(int $tenantId, array $data): bool
     {
         // No permitir cambiar is_system_tenant ni tenant_id
-        unset($data['tenant_id'], $data['is_system_tenant'], $data['created_at']);
+        unset($data['tenant_id'], $data['is_system_tenant'], $data['created_at'], $data['updated_at']);
         
         if (empty($data)) {
             return false;
         }
         
-        $data['updated_at'] = date('Y-m-d H:i:s');
         $rows = $this->update('tenants', $data, '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
+        return $rows > 0;
+    }
+
+    /**
+     * Desactiva tenant (soft delete) - NO elimina físicamente
+     * 
+     * @return bool True si desactivó
+     * @throws InvalidArgumentException Si intenta desactivar tenant de sistema
+     */
+    /**
+     * Activa tenant
+     * 
+     * @return bool True si activó
+     */
+    public function activateTenant(int $tenantId): bool
+    {
+        $rows = $this->update('tenants', [
+            'is_active' => 1,
+        ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
+        
         return $rows > 0;
     }
 
@@ -156,10 +175,18 @@ final class TenantRepository extends BaseRepository
         
         $rows = $this->update('tenants', [
             'is_active' => 0,
-            'updated_at' => date('Y-m-d H:i:s'),
         ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         
         return $rows > 0;
+    }
+
+    /**
+     * Verifica si el plan del tenant es diferente al especificado
+     */
+    public function hasPlanChanged(int $tenantId, int $newPlanId): bool
+    {
+        $current = $this->findOne('tenants', '/* BYPASS_TENANT_SCOPE */ tenant_id = :id', [':id' => $tenantId], 'subscription_plan_id');
+        return $current === null || (int)$current['subscription_plan_id'] !== $newPlanId;
     }
 
     /**
@@ -171,7 +198,6 @@ final class TenantRepository extends BaseRepository
     {
         $rows = $this->update('tenants', [
             'subscription_plan_id' => $newPlanId,
-            'updated_at' => date('Y-m-d H:i:s'),
         ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         
         return $rows > 0;

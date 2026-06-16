@@ -179,7 +179,104 @@ final class AuthController
     }
 
     /**
-     * Construye respuesta de login + JWT + cookie HttpOnly
+     * POST /api/auth/refresh
+     */
+    public function refresh(array $input): array
+    {
+        $refreshToken = $input['refresh_token'] ?? '';
+        $appId = $input['app_id'] ?? '';
+
+        if ($refreshToken === '' || $appId === '') {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'Campos requeridos faltantes',
+                'errors' => [
+                    'refresh_token' => $refreshToken === '' ? 'Requerido' : null,
+                    'app_id' => $appId === '' ? 'Requerido' : null,
+                ]
+            ]));
+        }
+
+        $tokenHash = hash('sha256', $refreshToken);
+
+        $storedToken = $this->refreshTokenRepo->findByHash($tokenHash);
+        if ($storedToken === null) {
+            throw new RuntimeException('TOKEN_INVALID: Refresh token inválido o expirado', 401);
+        }
+
+        $tokenId = (int)$storedToken['id'];
+        $userId = (int)$storedToken['user_id'];
+        $tenantId = (int)$storedToken['tenant_id'];
+
+        if ($this->refreshTokenRepo->detectReuse($tokenId)) {
+            $this->refreshTokenRepo->revokeChain($tokenId);
+            throw new RuntimeException('TOKEN_STOLEN: Posible robo de sesión. Todos los tokens han sido revocados.', 401);
+        }
+
+        $user = $this->userRepo->findById($userId);
+        if ($user === null) {
+            throw new RuntimeException('TOKEN_INVALID: Usuario no encontrado', 401);
+        }
+
+        $allRoles = $this->userRepo->getUserRoles($userId);
+        $roles = [];
+        foreach ($allRoles as $roleRow) {
+            if ($roleRow['app_id'] === $appId) {
+                $roles[] = $roleRow['role'];
+            }
+        }
+
+        $newTokenRaw = bin2hex(random_bytes(32));
+        $newTokenHash = hash('sha256', $newTokenRaw);
+
+        $this->refreshTokenRepo->rotate(
+            $tokenId,
+            $userId,
+            $tenantId,
+            $newTokenHash,
+            $_SERVER['HTTP_USER_AGENT'] ?? null,
+            $_SERVER['REMOTE_ADDR'] ?? null
+        );
+
+        $issuedAt = time();
+        $expiresAt = $issuedAt + 1800;
+        $payload = [
+            'sub' => $userId,
+            'tid' => $tenantId,
+            'iat' => $issuedAt,
+            'exp' => $expiresAt,
+            'roles' => $roles,
+            'app_id' => $appId,
+            'is_super_admin' => (int)$user['is_super_admin'],
+        ];
+
+        $jwt = $this->generateJwt($payload);
+
+        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        setcookie('access_token', $jwt, [
+            'expires' => $expiresAt,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
+
+        return [
+            'success' => true,
+            'refresh_token' => $newTokenRaw,
+            'user' => [
+                'id' => $userId,
+                'email' => $user['email'],
+                'display_name' => $user['display_name'],
+                'is_super_admin' => (int)$user['is_super_admin'] === 1,
+            ],
+            'app_id' => $appId,
+            'roles' => $roles,
+        ];
+    }
+
+    /**
+     * Construye respuesta de login + JWT + cookie HttpOnly + refresh token
      */
     private function buildLoginResponse(array $user, string $appId, array $roles): array
     {
@@ -207,8 +304,19 @@ final class AuthController
             'samesite' => 'Strict',
         ]);
 
+        $refreshTokenRaw = bin2hex(random_bytes(32));
+        $refreshTokenHash = hash('sha256', $refreshTokenRaw);
+        $this->refreshTokenRepo->createRefreshToken(
+            (int)$user['id'],
+            (int)$user['tenant_id'],
+            $refreshTokenHash,
+            $_SERVER['HTTP_USER_AGENT'] ?? null,
+            $_SERVER['REMOTE_ADDR'] ?? null
+        );
+
         return [
             'success' => true,
+            'refresh_token' => $refreshTokenRaw,
             'user' => [
                 'id' => (int)$user['id'],
                 'email' => $user['email'],

@@ -93,13 +93,13 @@ final class SuperAdminController
 
     /**
      * PATCH /api/super-admin/tenants/{id}
-     * Actualiza tenant (nombre, plan)
+     * Actualiza tenant (nombre, plan, logo)
      */
     public function updateTenant(int $tenantId, array $input): array
     {
         $allowed = ['name', 'subscription_plan_id', 'logo_url'];
         $data = array_intersect_key($input, array_flip($allowed));
-        
+
         if (empty($data)) {
             throw new InvalidArgumentException(json_encode([
                 'message' => 'Ningún campo válido para actualizar',
@@ -108,17 +108,36 @@ final class SuperAdminController
         }
 
         if (isset($data['subscription_plan_id'])) {
-            $this->tenantService->changeTenantPlan(
-                $tenantId,
-                (int)$data['subscription_plan_id'],
-                TenantContext::getUserId()
-            );
-        } else {
-            $this->tenantRepo->updateTenant($tenantId, $data);
-            $this->auditLog('TENANT_UPDATED', ['tenant_id' => $tenantId, 'changes' => $data]);
+            $planId = (int)$data['subscription_plan_id'];
+            $planChanged = $this->tenantRepo->hasPlanChanged($tenantId, $planId);
+            if ($planChanged) {
+                $this->tenantService->changeTenantPlan($tenantId, $planId);
+            }
+            unset($data['subscription_plan_id']);
         }
 
+        if (!empty($data)) {
+            $this->tenantRepo->updateTenant($tenantId, $data);
+        }
+
+        $logData = array_intersect_key($input, array_flip(['name', 'subscription_plan_id']));
+        if (isset($input['logo_url'])) {
+            $logData['logo_changed'] = true;
+        }
+        $this->auditLog('TENANT_UPDATED', ['tenant_id' => $tenantId, 'changes' => $logData]);
+
         return ['success' => true, 'tenant_id' => $tenantId];
+    }
+
+    /**
+     * POST /api/super-admin/tenants/{id}/activate
+     * Reactiva tenant: is_active = 1
+     */
+    public function activateTenant(int $tenantId): array
+    {
+        $this->tenantRepo->activateTenant($tenantId);
+        $this->auditLog('TENANT_ACTIVATED', ['tenant_id' => $tenantId]);
+        return ['success' => true, 'tenant_id' => $tenantId, 'message' => 'Tenant reactivado'];
     }
 
     /**
@@ -143,7 +162,7 @@ final class SuperAdminController
             ], JSON_UNESCAPED_UNICODE), 403);
         }
 
-        $this->tenantService->deactivateTenant($tenantId, TenantContext::getUserId());
+        $this->tenantService->deactivateTenant($tenantId);
 
         return ['success' => true, 'tenant_id' => $tenantId, 'message' => 'Tenant desactivado'];
     }

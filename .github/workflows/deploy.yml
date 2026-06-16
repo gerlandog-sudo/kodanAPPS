@@ -57,6 +57,7 @@ jobs:
         with:
           name: release-${{ github.sha }}
           path: |
+            package.json
             apps/api/
             apps/crm/dist/
             apps/tracker/dist/

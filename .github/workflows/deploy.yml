@@ -97,7 +97,8 @@ jobs:
           
           ssh -o StrictHostKeyChecking=no ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
             set -e
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}
+            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crmv2
+            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/trackerv2
           "
           
           # Transferir backend de API (excluyendo vendor y .env)

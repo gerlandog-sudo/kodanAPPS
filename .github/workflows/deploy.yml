@@ -95,24 +95,18 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           RELEASE_NAME="v${TIMESTAMP}-${GITHUB_SHA::7}"
           
-          ssh -o StrictHostKeyChecking=no ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
-            set -e
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crmv2
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/trackerv2
-          "
-          
           # Transferir backend de API (excluyendo vendor y .env)
-          rsync -az --delete \
+          rsync -az --delete --mkpath \
             --exclude='vendor/' \
             --exclude='.env' \
             release/apps/api/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/
           
           # Transferir compilado del CRM
-          rsync -az --delete \
+          rsync -az --delete --mkpath \
             release/apps/crm/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crmv2/
           
           # Transferir compilado del Tracker
-          rsync -az --delete \
+          rsync -az --delete --mkpath \
             release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/trackerv2/
           
           # Enlazar recursos compartidos y activar release de forma atómica

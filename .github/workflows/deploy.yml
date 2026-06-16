@@ -90,6 +90,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Disable SSH Host Key Verification
+        run: |
+          mkdir -p ~/.ssh
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile /dev/null\n" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
       - name: Deploy Atomic Release
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)

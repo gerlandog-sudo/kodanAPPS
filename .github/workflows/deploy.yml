@@ -136,12 +136,10 @@ jobs:
             
             # Asegurar que .htaccess exista en public/ (necesario para rewrites → rutas /api/*)
             if [ ! -f public/.htaccess ]; then
-              cat > public/.htaccess << 'HTACCESS'
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ index.php [L]
-HTACCESS
+              echo 'RewriteEngine On' > public/.htaccess
+              echo 'RewriteCond %{REQUEST_FILENAME} !-d' >> public/.htaccess
+              echo 'RewriteCond %{REQUEST_FILENAME} !-f' >> public/.htaccess
+              echo 'RewriteRule ^ index.php [L]' >> public/.htaccess
             fi
             [ -f public/.htaccess ] && cp public/.htaccess .htaccess || true
             

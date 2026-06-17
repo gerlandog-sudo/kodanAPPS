@@ -30,7 +30,7 @@ interface TenantEditModalProps {
 export function TenantEditModal({ tenant, plans, open, saving, onSave, onClose }: TenantEditModalProps) {
   const [name, setName] = useState('');
   const [planId, setPlanId] = useState(0);
-  const [logo, setLogo] = useState<string | null>(null);
+  const [logo, setLogo] = useState<string | null>(tenant?.logo_url ?? null);
 
   useEffect(() => {
     if (tenant) {

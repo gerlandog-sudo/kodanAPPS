@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import Cropper, { type Area } from 'react-easy-crop';
 import { Button } from '@kodan-apps/ui-core';
 import { Building2, X } from 'lucide-react';
@@ -19,6 +19,11 @@ export function TenantLogoCropper({ value, onChange, label = 'Logo de la Empresa
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  // Sincronizar el estado interno cuando el value prop cambia
+  useEffect(() => {
+    setState(value ? 'cropped' : 'empty');
+  }, [value]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

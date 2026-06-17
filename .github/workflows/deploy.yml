@@ -110,17 +110,17 @@ jobs:
           # 2. Crear las subcarpetas del compilado en el servidor (después del rsync de la API para evitar borrado por --delete)
           ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
             set -e
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crmv2
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/trackerv2
+            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crm
+            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/tracker
           "
           
           # 3. Transferir compilado del CRM
           rsync -az --delete \
-            release/apps/crm/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crmv2/
+            release/apps/crm/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crm/
           
           # 4. Transferir compilado del Tracker
           rsync -az --delete \
-            release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/trackerv2/
+            release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/tracker/
           
           # Enlazar recursos compartidos y activar release de forma atómica
           ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
@@ -145,8 +145,8 @@ jobs:
             
             # Enlaces simbólicos públicos en public_html
             ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crmv2 ${{ env.PUBLIC_HTML_PATH }}/crmv2
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/trackerv2 ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
             
             # Mantener únicamente las últimas 5 releases para optimizar espacio
             cd ${{ env.DEPLOY_PATH }}/releases && ls -t | tail -n +6 | xargs -r rm -rf
@@ -166,7 +166,7 @@ jobs:
             
             # Restaurar enlaces simbólicos públicos en public_html a la versión estable anterior
             ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crmv2 ${{ env.PUBLIC_HTML_PATH }}/crmv2
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/trackerv2 ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
             echo 'Rollback completado de forma atómica a: '\$PREV
           "

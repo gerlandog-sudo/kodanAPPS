@@ -158,11 +158,11 @@ jobs:
             find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type d -exec chmod 755 {} +
             find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type f -exec chmod 644 {} +
             
-            # Enlaces simbólicos públicos en public_html (se eliminan enlaces viejos primero)
-            rm -f ${{ env.PUBLIC_HTML_PATH }}/api
-            rm -f ${{ env.PUBLIC_HTML_PATH }}/crmv2
-            rm -f ${{ env.PUBLIC_HTML_PATH }}/trackerv2
-            rm -f ${{ env.PUBLIC_HTML_PATH }}/superadmin
+            # Enlaces simbólicos públicos en public_html (se eliminan enlaces o directorios físicos viejos)
+            rm -rf ${{ env.PUBLIC_HTML_PATH }}/api
+            rm -rf ${{ env.PUBLIC_HTML_PATH }}/crmv2
+            rm -rf ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            rm -rf ${{ env.PUBLIC_HTML_PATH }}/superadmin
             
             ln -s ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
             ln -s ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2

@@ -98,97 +98,55 @@ jobs:
           echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile /dev/null\n" > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
-      - name: Deploy Atomic Release
+      - name: Deploy Direct to Production
         run: |
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          RELEASE_NAME="v${TIMESTAMP}-${GITHUB_SHA::7}"
-          
-          # 1. Crear el directorio de la release en el servidor
-          ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}"
-          
-          # 2. Transferir backend de API (excluyendo vendor y .env)
-          rsync -az --delete \
-            --exclude='vendor/' \
-            --exclude='.env' \
-            release/apps/api/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/
-          
-          # 3. Crear las subcarpetas del compilado en el servidor (después del rsync de la API para evitar borrado por --delete)
+          # 1. Crear los directorios de destino físicos si no existen
           ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
-            set -e
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crm
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/tracker
-            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/superadmin
+            mkdir -p ${{ env.DEPLOY_PATH }}/api
+            mkdir -p ${{ env.DEPLOY_PATH }}/crm
+            mkdir -p ${{ env.DEPLOY_PATH }}/tracker
+            mkdir -p ${{ env.DEPLOY_PATH }}/superadmin
           "
+          
+          # 2. Transferir backend de API (esta vez se incluye vendor, pero se excluyen .env y logs locales)
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='storage/logs/*' \
+            release/apps/api/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/api/
           
           # 3. Transferir compilado del CRM
           rsync -az --delete \
-            release/apps/crm/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crm/
+            release/apps/crm/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/crm/
           
           # 4. Transferir compilado del Tracker
           rsync -az --delete \
-            release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/tracker/
+            release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/tracker/
           
           # 5. Transferir compilado del Super Admin
           rsync -az --delete \
-            release/packages/superadmin/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/superadmin/
+            release/packages/superadmin/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/superadmin/
           
-          # Enlazar recursos compartidos y activar release de forma atómica
+          # 6. Ejecutar migraciones de BD y ajustar permisos (755/644) para evitar bloqueos en cPanel
           ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
             set -e
-            cd ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}
+            cd ${{ env.DEPLOY_PATH }}/api
             
-            # Enlaces simbólicos hacia directorio compartido
-            ln -nfs ../../shared/vendor vendor
-            ln -nfs ../../shared/.env .env
-            ln -nfs ../../shared/storage storage
+            # Crear carpeta de logs si no existe
+            mkdir -p storage/logs
+            chmod 775 storage/logs
             
-            # Regenerar Autoload
-            composer dump-autoload --optimize --no-dev
-            
-            # Correr migraciones de Base de Datos
+            # Correr migraciones
             if [ -f migrations/run.php ]; then
               php migrations/run.php
             fi
             
-            # Switch de release atómico principal (se elimina el link o directorio físico anterior primero para evitar bloqueos)
-            rm -rf ${{ env.DEPLOY_PATH }}/current
-            ln -s ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} ${{ env.DEPLOY_PATH }}/current
-            
-            # Ajustar permisos para evitar bloqueos por políticas restrictivas de cPanel (suexec/ruid2)
-            find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type d -exec chmod 755 {} +
-            find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type f -exec chmod 644 {} +
-            
-            # Enlaces simbólicos públicos en public_html (se eliminan enlaces o directorios físicos viejos)
-            rm -rf ${{ env.PUBLIC_HTML_PATH }}/api
-            rm -rf ${{ env.PUBLIC_HTML_PATH }}/crmv2
-            rm -rf ${{ env.PUBLIC_HTML_PATH }}/trackerv2
-            rm -rf ${{ env.PUBLIC_HTML_PATH }}/superadmin
-            
-            ln -s ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
-            ln -s ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
-            ln -s ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
-            ln -s ${{ env.DEPLOY_PATH }}/current/dist/superadmin ${{ env.PUBLIC_HTML_PATH }}/superadmin
-            
-            # Mantener únicamente las últimas 5 releases para optimizar espacio
-            cd ${{ env.DEPLOY_PATH }}/releases && ls -t | tail -n +6 | xargs -r rm -rf
-          "
-
-  rollback:
-    needs: deploy
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Rollback to Previous Release
-        run: |
-          ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
-            cd ${{ env.DEPLOY_PATH }}/releases
-            PREV=\$(ls -t | head -2 | tail -1)
-            ln -nfs releases/\$PREV ${{ env.DEPLOY_PATH }}/current
-            
-            # Restaurar enlaces simbólicos públicos en public_html a la versión estable anterior
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/superadmin ${{ env.PUBLIC_HTML_PATH }}/superadmin
-            echo 'Rollback completado de forma atómica a: '\$PREV
+            # Aplicar permisos correctos para políticas estrictivas de cPanel (suexec/ruid2)
+            find ${{ env.DEPLOY_PATH }}/api -type d -exec chmod 755 {} +
+            find ${{ env.DEPLOY_PATH }}/api -type f -exec chmod 644 {} +
+            find ${{ env.DEPLOY_PATH }}/crm -type d -exec chmod 755 {} +
+            find ${{ env.DEPLOY_PATH }}/crm -type f -exec chmod 644 {} +
+            find ${{ env.DEPLOY_PATH }}/tracker -type d -exec chmod 755 {} +
+            find ${{ env.DEPLOY_PATH }}/tracker -type f -exec chmod 644 {} +
+            find ${{ env.DEPLOY_PATH }}/superadmin -type d -exec chmod 755 {} +
+            find ${{ env.DEPLOY_PATH }}/superadmin -type f -exec chmod 644 {} +
           "

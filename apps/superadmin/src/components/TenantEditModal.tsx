@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@kodan-apps/ui-core';
-import { Building2, Loader2, Save, X } from 'lucide-react';
+import { Loader2, Save, X } from 'lucide-react';
 import { TenantLogoCropper } from './TenantLogoCropper';
 
 interface Tenant {

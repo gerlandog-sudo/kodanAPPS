@@ -4,7 +4,10 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/crm",
+    "apps/api",
+    "apps/tracker",
+    "apps/superadmin"
   ],
   "scripts": {
     "dev:superadmin": "npm run dev --workspace=@kodan-apps/superadmin",

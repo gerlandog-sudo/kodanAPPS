@@ -76,7 +76,7 @@ services:
       - ./packages:/app/packages
       - ./apps/crm:/app/apps/crm
       - ./apps/tracker:/app/apps/tracker
-      - ./packages/superadmin:/app/packages/superadmin
+      - ./apps/superadmin:/app/apps/superadmin
     command: >
       sh -c "
         npm install &&

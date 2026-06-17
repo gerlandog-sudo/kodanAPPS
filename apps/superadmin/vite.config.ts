@@ -11,7 +11,7 @@ export default defineConfig({
     {
       name: 'copy-fonts',
       writeBundle() {
-        const srcDir = path.resolve(__dirname, '../ui-core/public/fonts');
+        const srcDir = path.resolve(__dirname, '../../packages/ui-core/public/fonts');
         const destDir = path.resolve(__dirname, 'dist/fonts');
         if (!existsSync(destDir)) {
           mkdirSync(destDir, { recursive: true });
@@ -36,7 +36,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       // Aliases para desarrollo en caliente (Blueprint 1.F)
-      '@kodan-apps/ui-core': path.resolve(__dirname, '../ui-core/src'),
+      '@kodan-apps/ui-core': path.resolve(__dirname, '../../packages/ui-core/src'),
     },
   },
   build: {

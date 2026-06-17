@@ -64,7 +64,7 @@ jobs:
             apps/api/
             apps/crm/dist/
             apps/tracker/dist/
-            packages/superadmin/dist/
+            apps/superadmin/dist/
           retention-days: 7
 
   deploy:
@@ -126,7 +126,7 @@ jobs:
           
           # 5. Transferir compilado del Super Admin
           rsync -az --delete \
-            release/packages/superadmin/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/superadmin/
+            release/apps/superadmin/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/superadmin/
           
           # 6. Ejecutar migraciones de BD y ajustar permisos (755/644) para evitar bloqueos en cPanel
           ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "

@@ -1,24 +1,22 @@
 <?php
-header('Content-Type: text/plain; charset=utf-8');
-echo "PHP Version: " . phpversion() . "\n\n";
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-$errorLogPath = __DIR__ . '/error_log';
-if (file_exists($errorLogPath)) {
-    echo "--- Last 20 lines of error_log ---\n";
-    $lines = file($errorLogPath);
-    $lastLines = array_slice($lines, -20);
-    echo implode("", $lastLines);
-} else {
-    echo "No error_log file found at: $errorLogPath\n";
-    
-    // Buscar en el directorio padre por si acaso
-    $parentLog = __DIR__ . '/../error_log';
-    if (file_exists($parentLog)) {
-        echo "--- Last 20 lines of parent error_log ---\n";
-        $lines = file($parentLog);
-        $lastLines = array_slice($lines, -20);
-        echo implode("", $lastLines);
-    } else {
-        echo "No parent error_log found either.\n";
-    }
+header('Content-Type: text/plain; charset=utf-8');
+echo "Diagnosing index.php execution:\n";
+echo "---------------------------------\n";
+
+try {
+    // Intentar incluir index.php para ver si arroja algún error
+    include 'index.php';
+    echo "\n---------------------------------\n";
+    echo "index.php included successfully without uncaught exceptions.\n";
+} catch (\Throwable $e) {
+    echo "\n---------------------------------\n";
+    echo "FATAL ERROR / EXCEPTION CATALYZED:\n";
+    echo "Message: " . $e->getMessage() . "\n";
+    echo "File: " . $e->getFile() . "\n";
+    echo "Line: " . $e->getLine() . "\n";
+    echo "Trace:\n" . $e->getTraceAsString() . "\n";
 }

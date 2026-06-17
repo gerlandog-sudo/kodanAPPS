@@ -153,6 +153,10 @@ jobs:
             # Switch de release atómico principal
             ln -nfs releases/${RELEASE_NAME} ${{ env.DEPLOY_PATH }}/current
             
+            # Ajustar permisos para evitar bloqueos por políticas restrictivas de cPanel (suexec/ruid2)
+            find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type d -exec chmod 755 {} +
+            find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type f -exec chmod 644 {} +
+            
             # Enlaces simbólicos públicos en public_html
             ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
             ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2

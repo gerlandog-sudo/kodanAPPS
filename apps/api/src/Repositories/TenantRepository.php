@@ -70,9 +70,9 @@ final class TenantRepository extends BaseRepository
     /**
      * Busca tenant por ID con detalles
      * 
-     * @return array<string, mixed>|null
+     * @return array<string, mixed>
      */
-    public function findByIdWithDetails(int $tenantId): ?array
+    public function findByIdWithDetails(int $tenantId): array
     {
         $sql = "
             /* BYPASS_TENANT_SCOPE */
@@ -95,7 +95,11 @@ final class TenantRepository extends BaseRepository
         $results = $this->rawSelect($sql, [':tenant_id' => $tenantId]);
         $tenant = $results[0] ?? null;
         
-        if ($tenant !== null && $tenant['subscription_plan_id'] !== null) {
+        if ($tenant === null) {
+            throw new \RuntimeException('Tenant no encontrado.', 404);
+        }
+        
+        if ($tenant['subscription_plan_id'] !== null) {
             $tenant['apps'] = $this->rawSelect(
                 "/* BYPASS_TENANT_SCOPE */ SELECT DISTINCT module AS app_id, TRUE AS is_active FROM plan_limits WHERE plan_id = ? ORDER BY module",
                 [(int)$tenant['subscription_plan_id']]

@@ -159,14 +159,7 @@ final class SuperAdminController
      */
     public function deactivateTenant(int $tenantId): array
     {
-        // Verificar que no sea tenant de sistema
         $tenant = $this->tenantRepo->findByIdWithDetails($tenantId);
-        if ($tenant === null) {
-            throw new InvalidArgumentException(json_encode([
-                'message' => 'Tenant no encontrado',
-                'errors' => ['tenant_id' => 'No existe'],
-            ], JSON_UNESCAPED_UNICODE), 404);
-        }
 
         if ((int)$tenant['is_system_tenant'] === 1) {
             throw new InvalidArgumentException(json_encode([

@@ -51,11 +51,11 @@ abstract class BaseRepository
         
         // Para queries raw: inyectar en WHERE
         if (stripos($sql, 'WHERE') !== false) {
-            $sql = preg_replace('/\bWHERE\b/i', 'WHERE tenant_id = :tenant_id AND', $sql, 1);
+            $sql = preg_replace('/\bWHERE\b/i', 'WHERE tenant_id = :tenant_id AND', $sql, 1) ?? $sql;
             $params[':tenant_id'] = $tenantId;
         } else {
             // Sin WHERE: agregar al final antes de ORDER/LIMIT
-            $sql = preg_replace('/\s+(ORDER BY|LIMIT|$)/i', ' WHERE tenant_id = :tenant_id $1', $sql, 1);
+            $sql = preg_replace('/\s+(ORDER BY|LIMIT|$)/i', ' WHERE tenant_id = :tenant_id $1', $sql, 1) ?? $sql;
             $params[':tenant_id'] = $tenantId;
         }
     }

@@ -79,7 +79,7 @@ final class OpportunityController
         } else {
             $opp['status'] = 'open';
         }
-        $opp['is_archived'] = isset($opp['archived_at']) && $opp['archived_at'] !== null;
+        $opp['is_archived'] = isset($opp['archived_at']);
         return $opp;
     }
 

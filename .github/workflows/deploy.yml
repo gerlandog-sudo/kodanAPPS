@@ -43,7 +43,7 @@ jobs:
         run: |
           cd apps/api
           composer install --no-interaction --ignore-platform-req=php
-          php vendor/bin/phpstan analyse --memory-limit=512M
+          php vendor/bin/phpstan analyse
           composer install --optimize-autoloader --no-interaction --no-dev --ignore-platform-req=php
 
       - name: Install Node dependencies

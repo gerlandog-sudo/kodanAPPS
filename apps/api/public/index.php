@@ -10,21 +10,25 @@
  * - Multi-tenant: TenantContext + BaseRepository + TenantAwarePDO
  */
 
+// Resolutor de rutas auto-adaptable (public/ vs raíz) para compatibilidad con open_basedir de cPanel
+$vendorPath = file_exists(__DIR__ . '/vendor/autoload.php') ? __DIR__ . '/vendor/autoload.php' : __DIR__ . '/../vendor/autoload.php';
+$envPath = file_exists(__DIR__ . '/.env') ? __DIR__ . '/.env' : __DIR__ . '/../.env';
+
 if (isset($_GET['debug_api'])) {
     header('Content-Type: application/json');
     echo json_encode([
         'status' => 'debug',
         'uri' => $_SERVER['REQUEST_URI'] ?? '',
         'method' => $_SERVER['REQUEST_METHOD'] ?? '',
-        'env_exists' => file_exists(__DIR__ . '/../.env'),
-        'vendor_exists' => file_exists(__DIR__ . '/../vendor/autoload.php'),
+        'env_exists' => file_exists($envPath),
+        'vendor_exists' => file_exists($vendorPath),
         'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? '',
         'script_name' => $_SERVER['SCRIPT_NAME'] ?? '',
     ]);
     exit;
 }
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once $vendorPath;
 
 // ------------------------------------------------------------
 // CORS Early Handling (Previene fallos de preflight por errores posteriores)
@@ -70,7 +74,7 @@ try {
     // ------------------------------------------------------------
     // Configuración BD (desde .env)
     // ------------------------------------------------------------
-    $dotenv = parse_ini_file(__DIR__ . '/../.env');
+    $dotenv = parse_ini_file($envPath);
     $dbConfig = [
         'host' => $dotenv['DB_HOST'] ?? 'localhost',
         'port' => (int)($dotenv['DB_PORT'] ?? 3306),

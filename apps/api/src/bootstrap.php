@@ -158,7 +158,7 @@ $cookieDomain = $dotenv['COOKIE_DOMAIN'] ?? $_ENV['COOKIE_DOMAIN'] ?? '';
 // ------------------------------------------------------------
 // Auth Middleware
 // ------------------------------------------------------------
-$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $cookieDomain);
+$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId);
 
 // ------------------------------------------------------------
 // Controladores

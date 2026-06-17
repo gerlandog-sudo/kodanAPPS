@@ -58,6 +58,8 @@ final class SuperAdminController
     /**
      * GET /api/super-admin/stats
      * Métricas globales de toda la BD (no telemetría OS)
+     * 
+     * @return array<string, mixed>
      */
     public function getStats(): array
     {
@@ -67,6 +69,8 @@ final class SuperAdminController
     /**
      * GET /api/super-admin/tenants
      * Lista todos los tenants con detalles
+     * 
+     * @return array<int, array<string, mixed>>
      */
     public function listTenants(): array
     {
@@ -77,6 +81,8 @@ final class SuperAdminController
      * POST /api/super-admin/tenants
      * Crea tenant + admin (transacción atómica)
      * 
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
      * @throws InvalidArgumentException → 422 con errores estructurados
      * @throws RuntimeException → 500
      */
@@ -94,6 +100,9 @@ final class SuperAdminController
     /**
      * PATCH /api/super-admin/tenants/{id}
      * Actualiza tenant (nombre, plan, logo)
+     * 
+     * @param array<string, mixed> $input
+     * @return array{success: bool, tenant_id: int}
      */
     public function updateTenant(int $tenantId, array $input): array
     {
@@ -132,6 +141,8 @@ final class SuperAdminController
     /**
      * POST /api/super-admin/tenants/{id}/activate
      * Reactiva tenant: is_active = 1
+     * 
+     * @return array{success: bool, tenant_id: int, message: string}
      */
     public function activateTenant(int $tenantId): array
     {
@@ -143,6 +154,8 @@ final class SuperAdminController
     /**
      * POST /api/super-admin/tenants/{id}/deactivate
      * Soft delete: is_active = 0 (NO elimina físicamente)
+     * 
+     * @return array{success: bool, tenant_id: int, message: string}
      */
     public function deactivateTenant(int $tenantId): array
     {
@@ -170,6 +183,8 @@ final class SuperAdminController
     /**
      * GET /api/super-admin/plans
      * Lista planes con sus límites (plan_limits relacional)
+     * 
+     * @return array<int, array<string, mixed>>
      */
     public function listPlans(): array
     {
@@ -179,6 +194,9 @@ final class SuperAdminController
     /**
      * POST /api/super-admin/plans
      * Crea plan nuevo
+     * 
+     * @param array<string, mixed> $input
+     * @return array{success: bool, plan_id: int}
      */
     public function createPlan(array $input): array
     {
@@ -224,6 +242,9 @@ final class SuperAdminController
     /**
      * PATCH /api/super-admin/plans/{id}
      * Actualiza plan y sus límites
+     * 
+     * @param array<string, mixed> $input
+     * @return array{success: bool, plan_id: int}
      */
     public function updatePlan(int $planId, array $input): array
     {
@@ -253,6 +274,8 @@ final class SuperAdminController
     /**
      * DELETE /api/super-admin/plans/{id}
      * Elimina plan (solo si no tiene tenants asignados)
+     * 
+     * @return array{success: bool, plan_id: int}
      */
     public function deletePlan(int $planId): array
     {
@@ -282,6 +305,8 @@ final class SuperAdminController
     /**
      * GET /api/super-admin/theme
      * Lee preferencia de tema desde user_configs
+     * 
+     * @return array{theme: string}
      */
     public function getTheme(): array
     {
@@ -306,6 +331,9 @@ final class SuperAdminController
     /**
      * PUT /api/super-admin/theme
      * Guarda preferencia de tema en user_configs
+     * 
+     * @param array<string, mixed> $input
+     * @return array{success: bool, theme: string}
      */
     public function updateTheme(array $input): array
     {
@@ -333,6 +361,9 @@ final class SuperAdminController
     /**
      * POST /api/super-admin/change-password
      * Cambia contraseña del superadmin autenticado
+     * 
+     * @param array<string, mixed> $input
+     * @return array{success: bool, message: string}
      */
     public function changePassword(array $input): array
     {
@@ -393,6 +424,8 @@ final class SuperAdminController
     /**
      * GET /api/super-admin/roles
      * Lista roles del catálogo global
+     * 
+     * @return array<int, array<string, mixed>>
      */
     public function listRoles(): array
     {
@@ -405,6 +438,9 @@ final class SuperAdminController
     /**
      * POST /api/super-admin/roles
      * Crea rol en el catálogo global
+     * 
+     * @param array<string, mixed> $input
+     * @return array{success: bool, role_id: int}
      */
     public function createRole(array $input): array
     {
@@ -431,6 +467,9 @@ final class SuperAdminController
     /**
      * PATCH /api/super-admin/roles/{id}
      * Actualiza rol
+     * 
+     * @param array<string, mixed> $input
+     * @return array{success: bool, role_id: int}
      */
     public function updateRole(int $roleId, array $input): array
     {
@@ -457,6 +496,8 @@ final class SuperAdminController
     /**
      * DELETE /api/super-admin/roles/{id}
      * Elimina rol (solo si no tiene usuarios asignados)
+     * 
+     * @return array{success: bool, role_id: int}
      */
     public function deleteRole(int $roleId): array
     {
@@ -484,6 +525,8 @@ final class SuperAdminController
 
     /**
      * Escribe en audit_logs (tenant_id=0 para Super Admin)
+     * 
+     * @param array<string, mixed> $details
      */
     private function auditLog(string $action, array $details): void
     {

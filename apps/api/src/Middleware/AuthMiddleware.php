@@ -100,6 +100,9 @@ final class AuthMiddleware
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validateJwt(string $token): array
     {
         $parts = explode('.', $token);
@@ -129,6 +132,9 @@ final class AuthMiddleware
         return $payload;
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     private function validateClaims(array $payload): void
     {
         $required = ['sub', 'tid', 'iat', 'exp', 'roles', 'app_id'];

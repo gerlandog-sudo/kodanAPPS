@@ -23,6 +23,8 @@ final class CustomFieldController
 
     /**
      * GET /api/crm/custom-fields?entity=account|contact|opportunity
+     * 
+     * @return array<int, array<string, mixed>>
      */
     public function list(): array
     {
@@ -35,6 +37,9 @@ final class CustomFieldController
 
     /**
      * POST /api/crm/custom-fields
+     * 
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
      */
     public function create(array $input): array
     {
@@ -104,6 +109,9 @@ final class CustomFieldController
 
     /**
      * PUT /api/crm/custom-fields/{id}
+     * 
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
      */
     public function update(int $id, array $input): array
     {
@@ -145,6 +153,8 @@ final class CustomFieldController
 
     /**
      * DELETE /api/crm/custom-fields/{id}?purge=true
+     * 
+     * @return array<string, mixed>
      */
     public function delete(int $id): array
     {
@@ -191,6 +201,9 @@ final class CustomFieldController
 
     /**
      * PUT /api/crm/custom-fields/reorder
+     * 
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
      */
     public function reorder(array $input): array
     {
@@ -207,6 +220,9 @@ final class CustomFieldController
         ];
     }
 
+    /**
+     * @return array{id: int, tenant_id: int, entity_type: string, field_key: string, field_label: string, field_type: string, options: string|array|null, is_required: int, sort_order: int, deleted_at: string|null, created_at: string}
+     */
     private function findDefinition(int $id, int $tenantId): array
     {
         $stmt = $this->pdo->prepare(

@@ -21,6 +21,9 @@ final class TenantAwarePDO extends PDO
 {
     private bool $strictMode;
 
+    /**
+     * @param array<int, mixed> $options
+     */
     public function __construct(
         string $dsn,
         string $username,
@@ -107,6 +110,9 @@ final class TenantAwarePDOStatement extends PDOStatement
         $this->pdo = $pdo;
     }
 
+    /**
+     * @param array<int|string, mixed>|null $params
+     */
     public function execute(?array $params = null): bool
     {
         $this->pdo->assertTenantScope($this->queryString, 'execute');

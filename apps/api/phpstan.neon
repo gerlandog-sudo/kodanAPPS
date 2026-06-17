@@ -1,6 +1,12 @@
+includes:
+    - phpstan-baseline.neon
+
 parameters:
-    level: 0
+    level: 6
     paths:
         - src
         - public
+    tmpDir: /tmp/phpstan
+    checkMissingIterableValueType: true
+    treatPhpDocTypesAsCertain: true
 

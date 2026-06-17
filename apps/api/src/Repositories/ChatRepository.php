@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * ChatRepository - Gestión de hilos de chat, mensajes y menciones en oportunidades
+ * 
+ * @extends BaseRepository<array{id: int, tenant_id: int, opportunity_id: int|null, subject: string|null, created_at: string}>
  */
 final class ChatRepository extends BaseRepository
 {

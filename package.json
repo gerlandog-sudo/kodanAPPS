@@ -17,6 +17,7 @@
     "lint:all": "npm run lint --workspaces",
     "typecheck:all": "npm run typecheck --workspaces",
     "test:api": "npm run test --workspace=@kodan-apps/api",
+    "phpstan": "cd apps/api && composer phpstan",
     "db:migrate": "php migrations/run.php",
     "db:seed": "php migrations/seed_superadmin.php"
   },

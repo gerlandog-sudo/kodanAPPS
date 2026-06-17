@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * QuoteRepository - Gestión de Cotizaciones y líneas de cotización
+ * 
+ * @extends BaseRepository<array{id: int, tenant_id: int, opportunity_id: int, quote_number: string, status: string, total_amount: string, created_at: string}>
  */
 final class QuoteRepository extends BaseRepository
 {

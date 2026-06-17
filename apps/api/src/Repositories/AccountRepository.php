@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * AccountRepository - Gestión de Cuentas comerciales (Empresas) B2B
+ * 
+ * @extends BaseRepository<array{account_id: int, tenant_id: int, name: string, legal_name: string|null, tax_id: string|null, website: string|null, phone: string|null, address: string|null, custom_fields: string, created_at: string, updated_at: string}>
  */
 final class AccountRepository extends BaseRepository
 {

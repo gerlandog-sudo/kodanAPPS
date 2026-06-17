@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace kodanAPPS\Repositories;
 
 use kodanAPPS\DB\TenantAwarePDO;
+use InvalidArgumentException;
 
 /**
  * PlanRepository - Repositorio para subscription_plans y plan_limits
  * 
+ * @extends BaseRepository<array{id: int, name: string, description: string|null, price: string, currency: string, created_at: string, updated_at: string, deleted_at: string|null}>
+ *
  * Extiende BaseRepository. Maneja CRUD de planes y límites relacionales.
  */
 final class PlanRepository extends BaseRepository
@@ -70,6 +73,8 @@ final class PlanRepository extends BaseRepository
 
     /**
      * Actualiza plan
+     * 
+     * @param array<string, mixed> $data
      */
     public function updatePlan(int $planId, array $data): bool
     {

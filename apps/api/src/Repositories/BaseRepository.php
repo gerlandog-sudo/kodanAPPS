@@ -13,6 +13,8 @@ use Throwable;
 /**
  * BaseRepository - Capa 1 de defensa multi-tenant (Blueprint Punto 2)
  * 
+ * @template TEntity of array<string, mixed>
+ *
  * Fuerza applyTenantScope() en TODOS los métodos CRUD.
  * Inyección explícita `tenant_id = :tenant_id` en queries.
  * Extiende esta clase para repositorios específicos.
@@ -29,6 +31,8 @@ abstract class BaseRepository
     /**
      * Aplica scope de tenant a query builder / statement
      * DEBE llamarse en TODOS los métodos públicos (find*, create, update, delete)
+     * 
+     * @param array<int|string, mixed> $params
      */
     protected function applyTenantScope(string &$sql, array &$params): void
     {
@@ -59,7 +63,8 @@ abstract class BaseRepository
     /**
      * Ejecuta SELECT con tenant scope automático
      * 
-     * @return array<int, array<string, mixed>>
+     * @param array<string, mixed> $params
+     * @return array<int, TEntity>
      */
     protected function findAll(string $table, string $columns = '*', string $where = '', array $params = [], string $orderBy = '', int $limit = 0): array
     {
@@ -84,7 +89,8 @@ abstract class BaseRepository
     /**
      * Ejecuta SELECT single con tenant scope
      * 
-     * @return array<string, mixed>|null
+     * @param array<string, mixed> $params
+     * @return TEntity|null
      */
     protected function findOne(string $table, string $where, array $params = [], string $columns = '*'): ?array
     {
@@ -100,6 +106,7 @@ abstract class BaseRepository
     /**
      * Ejecuta INSERT con tenant_id automático
      * 
+     * @param array<string, mixed> $data
      * @return int Last insert ID
      */
     protected function create(string $table, array $data): int
@@ -127,6 +134,8 @@ abstract class BaseRepository
     /**
      * Ejecuta UPDATE con tenant scope obligatorio
      * 
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $whereParams
      * @return int Filas afectadas
      */
     protected function update(string $table, array $data, string $where, array $whereParams = []): int
@@ -149,6 +158,7 @@ abstract class BaseRepository
     /**
      * Ejecuta DELETE con tenant scope obligatorio
      * 
+     * @param array<string, mixed> $params
      * @return int Filas afectadas
      */
     protected function delete(string $table, string $where, array $params = []): int
@@ -165,6 +175,7 @@ abstract class BaseRepository
      * Ejecuta query raw con validación TenantAwarePDO (Capa 3)
      * Útil para queries complejas que no encajan en helpers arriba
      * 
+     * @param array<int|string, mixed> $params
      * @return array<int, array<string, mixed>>
      */
     public function rawSelect(string $sql, array $params = []): array
@@ -178,6 +189,7 @@ abstract class BaseRepository
     /**
      * Ejecuta DML raw con validación TenantAwarePDO (Capa 3)
      * 
+     * @param array<int|string, mixed> $params
      * @return int Filas afectadas
      */
     public function rawExecute(string $sql, array $params = []): int
@@ -213,11 +225,12 @@ abstract class BaseRepository
     }
 
     /**
-     * Ejecuta callback en transacción con rollback automático en excepción
+     * Transacción con tenant scope preservado
      * 
-     * @template T
-     * @param callable(): T $callback
-     * @return T
+     * @template TReturn
+     * @param callable(): TReturn $callback
+     * @return TReturn
+     * @throws Throwable
      */
     public function transactional(callable $callback): mixed
     {

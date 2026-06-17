@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * ProductRepository - Gestión del Catálogo de Productos/Servicios
+ * 
+ * @extends BaseRepository<array{id: int, tenant_id: int, name: string, sku: string|null, price: string}>
  */
 final class ProductRepository extends BaseRepository
 {

@@ -1,0 +1,31 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Method kodanAPPS\\\\Controllers\\\\CustomFieldController\\:\\:findDefinition\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Controllers/CustomFieldController.php
+
+		-
+			message: "#^Offset 'accounts'\\|'contacts'\\|'opportunities' on array\\{accounts\\: 'account_id', contacts\\: 'contact_id', opportunities\\: 'id'\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Controllers/CustomFieldController.php
+
+		-
+			message: "#^Property kodanAPPS\\\\Middleware\\\\AuthMiddleware\\:\\:\\$refreshTokenRepo is never read, only written\\.$#"
+			count: 1
+			path: src/Middleware/AuthMiddleware.php
+
+		-
+			message: "#^Method kodanAPPS\\\\Repositories\\\\PipelineRepository\\:\\:bulkUpdateStages\\(\\) has parameter \\$stages with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Repositories/PipelineRepository.php
+
+		-
+			message: "#^Offset 'name' on array\\{id\\?\\: int, name\\: string, color_hex\\?\\: string, sort_order\\?\\: int, probability\\?\\: float, is_won_stage\\?\\: int, is_lost_stage\\?\\: int, ui_config\\?\\: array\\|null\\} in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Repositories/PipelineRepository.php
+
+		-
+			message: "#^Right side of && is always true\\.$#"
+			count: 3
+			path: src/Repositories/PipelineRepository.php

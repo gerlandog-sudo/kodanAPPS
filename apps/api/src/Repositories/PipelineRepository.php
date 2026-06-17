@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * PipelineRepository - Gestión de Pipelines y Etapas comerciales
+ * 
+ * @extends BaseRepository<array{id: int, tenant_id: int, name: string, is_default: int, created_at: string}>
  */
 final class PipelineRepository extends BaseRepository
 {
@@ -179,7 +181,7 @@ final class PipelineRepository extends BaseRepository
      * Bulk update stages: crea, actualiza, reordena y elimina etapas en transaccion
      * 
      * @param int $pipelineId
-     * @param array<int, array{id?: int, name: string, color_hex?: string, sort_order?: int, probability?: float, is_won_stage?: int, ui_config?: array|null}> $stages
+     * @param array<int, array{id?: int, name: string, color_hex?: string, sort_order?: int, probability?: float, is_won_stage?: int, is_lost_stage?: int, ui_config?: array|null}> $stages
      */
     public function bulkUpdateStages(int $pipelineId, array $stages): void
     {

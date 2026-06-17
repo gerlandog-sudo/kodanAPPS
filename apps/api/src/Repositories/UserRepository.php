@@ -10,6 +10,8 @@ use kodanAPPS\DB\TenantContext;
 /**
  * UserRepository - Repositorio para users y user_roles
  * 
+ * @extends BaseRepository<array{id: int, tenant_id: int, email: string, password_hash: string, display_name: string, is_super_admin: int, language: string, is_active: int, created_at: string}>
+ *
  * Extiende BaseRepository. Usado por TenantService para crear admin de tenant.
  * 
  * NOTA: user_apps reemplazado por user_roles + roles (catálogo global).
@@ -36,6 +38,7 @@ final class UserRepository extends BaseRepository
     /**
      * Crea usuario nuevo
      * 
+     * @param array<string, mixed> $data
      * @return int Nuevo user_id
      */
     public function createUser(array $data): int

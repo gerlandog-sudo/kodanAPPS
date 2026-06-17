@@ -16,11 +16,15 @@ final class TenantContext
 {
     private static ?int $tenantId = null;
     private static ?int $userId = null;
+    /** @var string[]|null */
     private static ?array $roles = null;
     private static ?string $appId = null;
 
     private function __construct() {}
 
+    /**
+     * @param string[] $roles
+     */
     public static function set(int $tenantId, int $userId, array $roles, string $appId): void
     {
         self::$tenantId = $tenantId;
@@ -45,6 +49,9 @@ final class TenantContext
         return self::$userId;
     }
 
+    /**
+     * @return string[]
+     */
     public static function getRoles(): array
     {
         return self::$roles ?? [];

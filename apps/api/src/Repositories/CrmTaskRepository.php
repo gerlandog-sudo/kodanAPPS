@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * CrmTaskRepository - Gestión de tareas comerciales vinculadas a negociaciones
+ * 
+ * @extends BaseRepository<array{id: int, tenant_id: int, opportunity_id: int|null, title: string, description: string|null, due_date: string|null, status: string, assigned_to: int|null}>
  */
 final class CrmTaskRepository extends BaseRepository
 {

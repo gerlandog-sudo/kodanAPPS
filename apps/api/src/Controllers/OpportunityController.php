@@ -65,6 +65,9 @@ final class OpportunityController
 
     /**
      * Mapea campos heredados y calcula el status de la oportunidad dinámicamente
+     * 
+     * @param array<string, mixed> $opp
+     * @return array<string, mixed>
      */
     private function mapOpportunity(array $opp): array
     {
@@ -350,6 +353,8 @@ final class OpportunityController
 
     /**
      * POST /api/crm/opportunities/{id}/archive
+     * 
+     * @return array<string, mixed>
      */
     public function archive(int $id): array
     {
@@ -363,6 +368,8 @@ final class OpportunityController
 
     /**
      * POST /api/crm/opportunities/{id}/unarchive
+     * 
+     * @return array<string, mixed>
      */
     public function unarchive(int $id): array
     {

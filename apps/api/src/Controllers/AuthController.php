@@ -31,6 +31,9 @@ final class AuthController
 
     /**
      * POST /api/auth/login
+     * 
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
      */
     public function login(array $input): array
     {
@@ -103,6 +106,9 @@ final class AuthController
 
     /**
      * POST /api/auth/set-password
+     * 
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
      */
     public function setPassword(array $input): array
     {
@@ -180,6 +186,9 @@ final class AuthController
 
     /**
      * POST /api/auth/refresh
+     * 
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
      */
     public function refresh(array $input): array
     {
@@ -277,6 +286,10 @@ final class AuthController
 
     /**
      * Construye respuesta de login + JWT + cookie HttpOnly + refresh token
+     * 
+     * @param array{id: int, tenant_id: int, email: string, password_hash: string, display_name: string, is_super_admin: int, language: string, is_active: int, created_at: string} $user
+     * @param string[] $roles
+     * @return array<string, mixed>
      */
     private function buildLoginResponse(array $user, string $appId, array $roles): array
     {
@@ -330,6 +343,8 @@ final class AuthController
 
     /**
      * Generación de JWT compatible con AuthMiddleware
+     * 
+     * @param array<string, mixed> $payload
      */
     private function generateJwt(array $payload): string
     {

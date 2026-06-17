@@ -16,6 +16,9 @@ final class CustomFieldService
         $this->pdo = $pdo;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getDefinitions(string $entity, ?int $tenantId = null, bool $includeSoftDeleted = false): array
     {
         $tenantId ??= TenantContext::getTenantId();
@@ -38,6 +41,10 @@ final class CustomFieldService
         return $definitions;
     }
 
+    /**
+     * @param array<string, mixed> $customFields
+     * @return array<string, string>
+     */
     public function validate(string $entity, array $customFields, ?int $tenantId = null): array
     {
         $tenantId ??= TenantContext::getTenantId();
@@ -100,6 +107,10 @@ final class CustomFieldService
         return $errors;
     }
 
+    /**
+     * @param array<string, mixed> $queryParams
+     * @param array<int|string, mixed> $params
+     */
     public function injectFilters(string $entity, array $queryParams, string &$sql, array &$params, ?int $tenantId = null, string $tableAlias = ''): void
     {
         $tenantId ??= TenantContext::getTenantId();
@@ -133,6 +144,9 @@ final class CustomFieldService
         }
     }
 
+    /**
+     * @param array<int, array{id: int|string, sort_order: int|string}> $entries
+     */
     public function reorder(array $entries, ?int $tenantId = null): void
     {
         $tenantId ??= TenantContext::getTenantId();

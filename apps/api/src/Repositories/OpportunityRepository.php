@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * OpportunityRepository - Gestión de Oportunidades (Negociaciones) comerciales
+ * 
+ * @extends BaseRepository<array{id: int, tenant_id: int, account_id: int, contact_id: int|null, pipeline_stage_id: int, title: string, value: string, currency: string, close_date: string|null, owner_user_id: int|null, custom_fields: string, archived_at: string|null, created_at: string, updated_at: string}>
  */
 final class OpportunityRepository extends BaseRepository
 {

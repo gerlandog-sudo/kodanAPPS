@@ -62,6 +62,7 @@ final readonly class TenantCreateDTO
     /**
      * Validación estricta de entrada
      * 
+     * @param array<string, mixed> $data
      * @throws InvalidArgumentException Con mensaje estructurado para respuesta 422
      */
     private function validate(array $data): void

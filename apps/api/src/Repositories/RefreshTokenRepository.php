@@ -9,6 +9,8 @@ use kodanAPPS\DB\TenantAwarePDO;
 /**
  * RefreshTokenRepository - Manejo de rotating refresh tokens
  * 
+ * @extends BaseRepository<array{id: int, user_id: int, tenant_id: int, token_hash: string, user_agent: string|null, ip_address: string|null, expires_at: string, revoked_at: string|null, replaced_by_token_id: int|null, created_at: string}>
+ *
  * Blueprint Punto 1: Rotación obligatoria + Reuse Detection
  */
 final class RefreshTokenRepository extends BaseRepository

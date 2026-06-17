@@ -228,6 +228,9 @@ final class TenantService
     /**
      * Escribe en audit_logs (tenant_id=0 para acciones de sistema/Super Admin)
      */
+    /**
+     * @param array<string, mixed> $details
+     */
     private function auditLog(int $tenantId, int $userId, string $action, array $details): void
     {
         $this->tenantRepo->rawExecute(

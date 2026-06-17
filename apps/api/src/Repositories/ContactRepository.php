@@ -6,6 +6,8 @@ namespace kodanAPPS\Repositories;
 
 /**
  * ContactRepository - Gestión de Contactos comerciales
+ * 
+ * @extends BaseRepository<array{contact_id: int, tenant_id: int, account_id: int|null, first_name: string, last_name: string, email: string, phone: string|null, mobile: string|null, custom_fields: string, created_at: string, updated_at: string}>
  */
 final class ContactRepository extends BaseRepository
 {

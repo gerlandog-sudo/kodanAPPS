@@ -11,6 +11,8 @@ use InvalidArgumentException;
 /**
  * TenantRepository - Repositorio para tenants
  * 
+ * @extends BaseRepository<array{tenant_id: int, name: string, logo_url: string|null, subscription_plan_id: int|null, is_active: int, is_system_tenant: int, created_at: string}>
+ *
  * Extiende BaseRepository (Capa 1) + usa TenantAwarePDO (Capa 3).
  * Super Admin opera en tenant sistema, pero queries usan tenant_id explícito.
  * 
@@ -124,6 +126,7 @@ final class TenantRepository extends BaseRepository
     /**
      * Actualiza tenant
      * 
+     * @param array<string, mixed> $data
      * @return bool True si actualizó
      */
     public function updateTenant(int $tenantId, array $data): bool

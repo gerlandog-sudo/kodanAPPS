@@ -19,5 +19,9 @@
     "allow-plugins": {
       "pestphp/pest-plugin": true
     }
+  },
+  "scripts": {
+    "phpstan": "phpstan analyse --memory-limit=512M",
+    "phpstan:baseline": "phpstan analyse --generate-baseline --memory-limit=512M"
   }
 }

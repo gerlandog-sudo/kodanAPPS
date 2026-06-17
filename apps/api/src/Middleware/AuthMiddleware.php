@@ -23,15 +23,18 @@ final class AuthMiddleware
     private string $jwtSecret;
     private string $csrfSecret;
     private int $systemTenantId;
+    private string $cookieDomain;
 
     public function __construct(
         string $jwtSecret,
         string $csrfSecret,
-        int $systemTenantId
+        int $systemTenantId,
+        string $cookieDomain = ''
     ) {
         $this->jwtSecret = $jwtSecret;
         $this->csrfSecret = $csrfSecret;
         $this->systemTenantId = $systemTenantId;
+        $this->cookieDomain = $cookieDomain;
     }
 
     /**

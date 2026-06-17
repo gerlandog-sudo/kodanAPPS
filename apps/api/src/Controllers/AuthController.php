@@ -16,17 +16,20 @@ final class AuthController
     private RefreshTokenRepository $refreshTokenRepo;
     private string $jwtSecret;
     private int $systemTenantId;
+    private string $cookieDomain;
 
     public function __construct(
         UserRepository $userRepo,
         RefreshTokenRepository $refreshTokenRepo,
         string $jwtSecret,
-        int $systemTenantId
+        int $systemTenantId,
+        string $cookieDomain = ''
     ) {
         $this->userRepo = $userRepo;
         $this->refreshTokenRepo = $refreshTokenRepo;
         $this->jwtSecret = $jwtSecret;
         $this->systemTenantId = $systemTenantId;
+        $this->cookieDomain = $cookieDomain;
     }
 
     /**
@@ -264,10 +267,10 @@ final class AuthController
         setcookie('access_token', $jwt, [
             'expires' => $expiresAt,
             'path' => '/',
-            'domain' => '',
+            'domain' => $this->cookieDomain,
             'secure' => $cookieSecure,
             'httponly' => true,
-            'samesite' => 'Strict',
+            'samesite' => 'Lax',
         ]);
 
         return [
@@ -311,10 +314,10 @@ final class AuthController
         setcookie('access_token', $jwt, [
             'expires' => $expiresAt,
             'path' => '/',
-            'domain' => '',
+            'domain' => $this->cookieDomain,
             'secure' => $cookieSecure,
             'httponly' => true,
-            'samesite' => 'Strict',
+            'samesite' => 'Lax',
         ]);
 
         $refreshTokenRaw = bin2hex(random_bytes(32));

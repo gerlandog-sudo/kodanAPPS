@@ -22,12 +22,14 @@ return function (Router $router, array $app): void {
     // ============================================================
     $router->get('/api/csrf-token', function () use ($app) {
         $csrfSecret = $app['csrfSecret'];
+        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         $phpsessid = $_COOKIE['PHPSESSID'] ?? '';
         if ($phpsessid === '') {
             session_start([
                 'cookie_httponly' => true,
-                'cookie_secure' => false,
+                'cookie_secure' => $cookieSecure,
                 'cookie_samesite' => 'Lax',
+                'cookie_domain' => $app['cookieDomain'],
             ]);
             $phpsessid = session_id();
         }

@@ -153,16 +153,17 @@ $customFieldService = new CustomFieldService($pdo);
 $jwtSecret = $dotenv['JWT_SECRET'] ?? $_ENV['JWT_SECRET'] ?? 'change-me-in-production';
 $csrfSecret = $dotenv['CSRF_SECRET'] ?? $_ENV['CSRF_SECRET'] ?? 'csrf-secret-change-in-production';
 $systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
+$cookieDomain = $dotenv['COOKIE_DOMAIN'] ?? $_ENV['COOKIE_DOMAIN'] ?? '';
 
 // ------------------------------------------------------------
 // Auth Middleware
 // ------------------------------------------------------------
-$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId);
+$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $cookieDomain);
 
 // ------------------------------------------------------------
 // Controladores
 // ------------------------------------------------------------
-$authController = new AuthController($userRepo, $refreshTokenRepo, $jwtSecret, $systemTenantId);
+$authController = new AuthController($userRepo, $refreshTokenRepo, $jwtSecret, $systemTenantId, $cookieDomain);
 $superAdminController = new SuperAdminController($tenantService, $tenantRepo, $planRepo, $userRepo);
 $crmController = new CrmController($pdo);
 $customFieldController = new CustomFieldController($customFieldService, $pdo);
@@ -182,6 +183,7 @@ return [
     'jwtSecret' => $jwtSecret,
     'csrfSecret' => $csrfSecret,
     'systemTenantId' => $systemTenantId,
+    'cookieDomain' => $cookieDomain,
     'repos' => [
         'tenant' => $tenantRepo,
         'plan' => $planRepo,

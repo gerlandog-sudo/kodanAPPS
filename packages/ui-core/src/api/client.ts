@@ -192,8 +192,16 @@ export async function apiClient<T = unknown>(
       throw new ApiError(401, {}, 'Sesión expirada. Por favor inicia sesión nuevamente.');
     }
 
-    // No hay refresh token → es un error de autenticación (login, etc.)
-    // Leer el mensaje real del servidor
+    // No hay refresh token → sesión perdida / nunca hubo
+    // Forzar logout si no es un endpoint de auth (login, set-password)
+    const isAuthEndpoint = endpoint.startsWith('/api/auth/') || endpoint === '/api/csrf-token';
+    if (!isAuthEndpoint) {
+      triggerForceLogout();
+      // Safety redirect en caso de que el evento no sea escuchado
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
     const errorBody = await response.json().catch(() => ({}));
     const serverMsg = (errorBody as any)?.error || (errorBody as any)?.message || 'Credenciales inválidas.';
     throw new ApiError(401, errorBody, serverMsg);

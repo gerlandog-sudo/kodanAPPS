@@ -80,6 +80,9 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // CORS headers (aplicados también en Apache)
 $allowedOrigins = [
+    'https://kodan.software',
+    'https://crmv2.kodan.software',
+    'https://trackerv2.kodan.software',
     'https://crm.kodan.software',
     'https://tracker.kodan.software',
     'https://superadmin.kodan.software',

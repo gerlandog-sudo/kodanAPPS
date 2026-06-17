@@ -47,10 +47,11 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Build Frontends (crm + tracker)
+      - name: Build Frontends (crm + tracker + superadmin)
         run: |
           npm run build:crm
           npm run build:tracker
+          npm run build:superadmin
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -61,6 +62,7 @@ jobs:
             apps/api/
             apps/crm/dist/
             apps/tracker/dist/
+            packages/superadmin/dist/
           retention-days: 7
 
   deploy:
@@ -112,6 +114,7 @@ jobs:
             set -e
             mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crm
             mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/tracker
+            mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/superadmin
           "
           
           # 3. Transferir compilado del CRM
@@ -121,6 +124,10 @@ jobs:
           # 4. Transferir compilado del Tracker
           rsync -az --delete \
             release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/tracker/
+          
+          # 5. Transferir compilado del Super Admin
+          rsync -az --delete \
+            release/packages/superadmin/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/superadmin/
           
           # Enlazar recursos compartidos y activar release de forma atómica
           ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
@@ -147,6 +154,7 @@ jobs:
             ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
             ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
             ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/superadmin ${{ env.PUBLIC_HTML_PATH }}/superadmin
             
             # Mantener únicamente las últimas 5 releases para optimizar espacio
             cd ${{ env.DEPLOY_PATH }}/releases && ls -t | tail -n +6 | xargs -r rm -rf
@@ -168,5 +176,6 @@ jobs:
             ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
             ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
             ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/superadmin ${{ env.PUBLIC_HTML_PATH }}/superadmin
             echo 'Rollback completado de forma atómica a: '\$PREV
           "

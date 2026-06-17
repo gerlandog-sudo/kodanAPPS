@@ -150,18 +150,24 @@ jobs:
               php migrations/run.php
             fi
             
-            # Switch de release atómico principal
-            ln -nfs releases/${RELEASE_NAME} ${{ env.DEPLOY_PATH }}/current
+            # Switch de release atómico principal (se elimina el link anterior primero para evitar anidación)
+            rm -f ${{ env.DEPLOY_PATH }}/current
+            ln -s ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} ${{ env.DEPLOY_PATH }}/current
             
             # Ajustar permisos para evitar bloqueos por políticas restrictivas de cPanel (suexec/ruid2)
             find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type d -exec chmod 755 {} +
             find ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} -type f -exec chmod 644 {} +
             
-            # Enlaces simbólicos públicos en public_html
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
-            ln -nfs ${{ env.DEPLOY_PATH }}/current/dist/superadmin ${{ env.PUBLIC_HTML_PATH }}/superadmin
+            # Enlaces simbólicos públicos en public_html (se eliminan enlaces viejos primero)
+            rm -f ${{ env.PUBLIC_HTML_PATH }}/api
+            rm -f ${{ env.PUBLIC_HTML_PATH }}/crmv2
+            rm -f ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            rm -f ${{ env.PUBLIC_HTML_PATH }}/superadmin
+            
+            ln -s ${{ env.DEPLOY_PATH }}/current/public ${{ env.PUBLIC_HTML_PATH }}/api
+            ln -s ${{ env.DEPLOY_PATH }}/current/dist/crm ${{ env.PUBLIC_HTML_PATH }}/crmv2
+            ln -s ${{ env.DEPLOY_PATH }}/current/dist/tracker ${{ env.PUBLIC_HTML_PATH }}/trackerv2
+            ln -s ${{ env.DEPLOY_PATH }}/current/dist/superadmin ${{ env.PUBLIC_HTML_PATH }}/superadmin
             
             # Mantener únicamente las últimas 5 releases para optimizar espacio
             cd ${{ env.DEPLOY_PATH }}/releases && ls -t | tail -n +6 | xargs -r rm -rf

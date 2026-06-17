@@ -10,6 +10,20 @@
  * - Multi-tenant: TenantContext + BaseRepository + TenantAwarePDO
  */
 
+if (isset($_GET['debug_api'])) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'status' => 'debug',
+        'uri' => $_SERVER['REQUEST_URI'] ?? '',
+        'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+        'env_exists' => file_exists(__DIR__ . '/../.env'),
+        'vendor_exists' => file_exists(__DIR__ . '/../vendor/autoload.php'),
+        'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? '',
+        'script_name' => $_SERVER['SCRIPT_NAME'] ?? '',
+    ]);
+    exit;
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 // ------------------------------------------------------------

@@ -133,6 +133,16 @@ jobs:
             
             # Copiar index.php y .htaccess a la raíz de la API para compatibilidad con open_basedir
             [ -f public/index.php ] && cp public/index.php index.php || true
+            
+            # Asegurar que .htaccess exista en public/ (necesario para rewrites → rutas /api/*)
+            if [ ! -f public/.htaccess ]; then
+              cat > public/.htaccess << 'HTACCESS'
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+HTACCESS
+            fi
             [ -f public/.htaccess ] && cp public/.htaccess .htaccess || true
             
             # Crear carpeta de logs si no existe

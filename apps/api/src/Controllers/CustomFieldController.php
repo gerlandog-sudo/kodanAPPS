@@ -181,7 +181,7 @@ final class CustomFieldController
             $table = $tableMap[$entityType] ?? null;
             if ($table) {
                 $pkMap = ['accounts' => 'account_id', 'contacts' => 'contact_id', 'opportunities' => 'id'];
-                $pk = $pkMap[$table] ?? 'id';
+                $pk = $pkMap[$table];
                 $this->pdo->exec(
                     "UPDATE `{$table}` SET custom_fields = JSON_REMOVE(custom_fields, '$.{$fieldKey}') WHERE tenant_id = {$tenantId}"
                 );
@@ -221,7 +221,7 @@ final class CustomFieldController
     }
 
     /**
-     * @return array{id: int, tenant_id: int, entity_type: string, field_key: string, field_label: string, field_type: string, options: string|array|null, is_required: int, sort_order: int, deleted_at: string|null, created_at: string}
+     * @return array<string, mixed>
      */
     private function findDefinition(int $id, int $tenantId): array
     {

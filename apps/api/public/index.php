@@ -119,7 +119,7 @@ try {
     $systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
 
     // Middleware de autenticación unificado (JWT + CSRF)
-    $authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $refreshTokenRepo);
+    $authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId);
 } catch (\Throwable $e) {
     http_response_code(500);
     header('Content-Type: application/json');

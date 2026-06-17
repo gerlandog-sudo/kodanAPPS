@@ -181,7 +181,7 @@ final class PipelineRepository extends BaseRepository
      * Bulk update stages: crea, actualiza, reordena y elimina etapas en transaccion
      * 
      * @param int $pipelineId
-     * @param array<int, array{id?: int, name: string, color_hex?: string, sort_order?: int, probability?: float, is_won_stage?: int, is_lost_stage?: int, ui_config?: array|null}> $stages
+     * @param array<int, array<string, mixed>> $stages
      */
     public function bulkUpdateStages(int $pipelineId, array $stages): void
     {
@@ -198,12 +198,12 @@ final class PipelineRepository extends BaseRepository
             $submittedIds = [];
 
             foreach ($stages as $index => $stage) {
-                $name = isset($stage['name']) && is_scalar($stage['name']) ? trim((string)$stage['name']) : '';
-                $colorHex = isset($stage['color_hex']) && is_scalar($stage['color_hex']) ? trim((string)$stage['color_hex']) : '#6366F1';
+                $name = isset($stage['name']) ? trim((string)$stage['name']) : '';
+                $colorHex = isset($stage['color_hex']) ? trim((string)$stage['color_hex']) : '#6366F1';
                 $sortOrder = (int)($stage['sort_order'] ?? ($index + 1) * 10);
                 $probability = (float)($stage['probability'] ?? 0);
-                $isWon = isset($stage['is_won_stage']) && $stage['is_won_stage'] ? 1 : 0;
-                $isLost = isset($stage['is_lost_stage']) && $stage['is_lost_stage'] ? 1 : 0;
+                $isWon = !empty($stage['is_won_stage']) ? 1 : 0;
+                $isLost = !empty($stage['is_lost_stage']) ? 1 : 0;
                 $uiConfig = isset($stage['ui_config']) && is_array($stage['ui_config'])
                     ? json_encode($stage['ui_config'], JSON_UNESCAPED_UNICODE)
                     : null;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace kodanAPPS\Middleware;
 
 use kodanAPPS\DB\TenantContext;
-use kodanAPPS\Repositories\RefreshTokenRepository;
 use RuntimeException;
 
 /**
@@ -24,18 +23,15 @@ final class AuthMiddleware
     private string $jwtSecret;
     private string $csrfSecret;
     private int $systemTenantId;
-    private RefreshTokenRepository $refreshTokenRepo;
 
     public function __construct(
         string $jwtSecret,
         string $csrfSecret,
-        int $systemTenantId,
-        RefreshTokenRepository $refreshTokenRepo
+        int $systemTenantId
     ) {
         $this->jwtSecret = $jwtSecret;
         $this->csrfSecret = $csrfSecret;
         $this->systemTenantId = $systemTenantId;
-        $this->refreshTokenRepo = $refreshTokenRepo;
     }
 
     /**

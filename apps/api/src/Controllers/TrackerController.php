@@ -13,6 +13,8 @@ class TrackerController
 
     /**
      * GET /api/tracker/projects
+     *
+     * @return array<int, array<string, mixed>>
      */
     public function listProjects(): array
     {
@@ -21,6 +23,8 @@ class TrackerController
 
     /**
      * GET /api/tracker/projects/{id}
+     *
+     * @return array<string, mixed>
      */
     public function getProject(int $id): array
     {

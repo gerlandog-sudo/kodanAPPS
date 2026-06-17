@@ -150,8 +150,8 @@ jobs:
               php migrations/run.php
             fi
             
-            # Switch de release atómico principal (se elimina el link anterior primero para evitar anidación)
-            rm -f ${{ env.DEPLOY_PATH }}/current
+            # Switch de release atómico principal (se elimina el link o directorio físico anterior primero para evitar bloqueos)
+            rm -rf ${{ env.DEPLOY_PATH }}/current
             ln -s ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME} ${{ env.DEPLOY_PATH }}/current
             
             # Ajustar permisos para evitar bloqueos por políticas restrictivas de cPanel (suexec/ruid2)

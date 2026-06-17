@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
 import { Button } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
-import { SlidePanel } from './SlidePanel';
+import { SlidePanel } from '@kodan-apps/ui-core';
 import {
   CreditCard,
   Plus,

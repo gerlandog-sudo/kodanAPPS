@@ -1,12 +1,10 @@
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Toaster, Sidebar } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
 import { PlanManagement } from './components/PlanManagement';
 import { RoleManagement } from './components/RoleManagement';
-import { Login } from './components/Login';
-import { SetPassword } from './components/SetPassword';
 import { ChangePassword } from './components/ChangePassword';
 import { useState, useEffect, useCallback } from 'react';
 import {

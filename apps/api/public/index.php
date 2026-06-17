@@ -12,6 +12,36 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// ------------------------------------------------------------
+// CORS Early Handling (Previene fallos de preflight por errores posteriores)
+// ------------------------------------------------------------
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = [
+    'https://kodan.software',
+    'https://crmv2.kodan.software',
+    'https://trackerv2.kodan.software',
+    'https://crm.kodan.software',
+    'https://tracker.kodan.software',
+    'https://superadmin.kodan.software',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+];
+
+if (in_array($origin, $allowedOrigins, true)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token, X-Requested-With');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Max-Age: 3600');
+}
+
+if ($method === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\DB\TenantContext;
 use kodanAPPS\Middleware\AuthMiddleware;
@@ -76,35 +106,6 @@ $authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $
 // Routing simple
 // ------------------------------------------------------------
 $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-
-// CORS headers (aplicados también en Apache)
-$allowedOrigins = [
-    'https://kodan.software',
-    'https://crmv2.kodan.software',
-    'https://trackerv2.kodan.software',
-    'https://crm.kodan.software',
-    'https://tracker.kodan.software',
-    'https://superadmin.kodan.software',
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-];
-
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $allowedOrigins, true)) {
-    header("Access-Control-Allow-Origin: $origin");
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token, X-Requested-With');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    header('Access-Control-Max-Age: 3600');
-}
-
-// Preflight
-if ($method === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
 
 // ------------------------------------------------------------
 // Rutas públicas (sin auth)

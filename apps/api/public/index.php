@@ -66,55 +66,67 @@ use kodanAPPS\Repositories\RefreshTokenRepository;
 use kodanAPPS\Services\TenantService;
 use kodanAPPS\Repositories\UserRepository;
 
-// ------------------------------------------------------------
-// Configuración BD (desde .env)
-// ------------------------------------------------------------
-$dotenv = parse_ini_file(__DIR__ . '/../.env');
-$dbConfig = [
-    'host' => $dotenv['DB_HOST'] ?? 'localhost',
-    'port' => (int)($dotenv['DB_PORT'] ?? 3306),
-    'dbname' => $dotenv['DB_NAME'] ?? 'admkoda_BBDD_APPS',
-    'user' => $dotenv['DB_USER'] ?? 'kodan_apps',
-    'pass' => $dotenv['DB_PASS'] ?? '',
-    'charset' => 'utf8mb4',
-];
+try {
+    // ------------------------------------------------------------
+    // Configuración BD (desde .env)
+    // ------------------------------------------------------------
+    $dotenv = parse_ini_file(__DIR__ . '/../.env');
+    $dbConfig = [
+        'host' => $dotenv['DB_HOST'] ?? 'localhost',
+        'port' => (int)($dotenv['DB_PORT'] ?? 3306),
+        'dbname' => $dotenv['DB_NAME'] ?? 'admkoda_BBDD_APPS',
+        'user' => $dotenv['DB_USER'] ?? 'kodan_apps',
+        'pass' => $dotenv['DB_PASS'] ?? '',
+        'charset' => 'utf8mb4',
+    ];
 
-$dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
+    $dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
 
-// ------------------------------------------------------------
-// Inicializar TenantAwarePDO (Capa 3 defensa multi-tenant)
-// ------------------------------------------------------------
-$pdo = new TenantAwarePDO(
-    $dsn,
-    $dbConfig['user'],
-    $dbConfig['pass'],
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ],
-    // Strict mode: true en development, false en production para logging
-    ($_ENV['APP_ENV'] ?? 'production') !== 'production'
-);
+    // ------------------------------------------------------------
+    // Inicializar TenantAwarePDO (Capa 3 defensa multi-tenant)
+    // ------------------------------------------------------------
+    $pdo = new TenantAwarePDO(
+        $dsn,
+        $dbConfig['user'],
+        $dbConfig['pass'],
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ],
+        // Strict mode: true en development, false en production para logging
+        ($_ENV['APP_ENV'] ?? 'production') !== 'production'
+    );
 
-// ------------------------------------------------------------
-// Inicializar repositorios y servicios
-// ------------------------------------------------------------
-$tenantRepo = new TenantRepository($pdo);
-$planRepo = new PlanRepository($pdo);
-$userRepo = new UserRepository($pdo);
-$refreshTokenRepo = new RefreshTokenRepository($pdo);
-$tenantService = new TenantService($tenantRepo, $userRepo);
+    // ------------------------------------------------------------
+    // Inicializar repositorios y servicios
+    // ------------------------------------------------------------
+    $tenantRepo = new TenantRepository($pdo);
+    $planRepo = new PlanRepository($pdo);
+    $userRepo = new UserRepository($pdo);
+    $refreshTokenRepo = new RefreshTokenRepository($pdo);
+    $tenantService = new TenantService($tenantRepo, $userRepo);
 
-// ------------------------------------------------------------
-// Configuración Super Admin
-// ------------------------------------------------------------
-$jwtSecret = $dotenv['JWT_SECRET'] ?? $_ENV['JWT_SECRET'] ?? 'change-me-in-production';
-$csrfSecret = $dotenv['CSRF_SECRET'] ?? $_ENV['CSRF_SECRET'] ?? 'csrf-secret-change-in-production';
-$systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
+    // ------------------------------------------------------------
+    // Configuración Super Admin
+    // ------------------------------------------------------------
+    $jwtSecret = $dotenv['JWT_SECRET'] ?? $_ENV['JWT_SECRET'] ?? 'change-me-in-production';
+    $csrfSecret = $dotenv['CSRF_SECRET'] ?? $_ENV['CSRF_SECRET'] ?? 'csrf-secret-change-in-production';
+    $systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
 
-// Middleware de autenticación unificado (JWT + CSRF)
-$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $refreshTokenRepo);
+    // Middleware de autenticación unificado (JWT + CSRF)
+    $authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $refreshTokenRepo);
+} catch (\Throwable $e) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => 'Database/Bootstrap Connection Error',
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+    ]);
+    exit;
+}
 
 // ------------------------------------------------------------
 // Routing simple

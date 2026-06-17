@@ -165,25 +165,38 @@ export async function apiClient<T = unknown>(
 
   // === 401 → auto-refresh + retry ===
   if (response.status === 401) {
-    const refreshed = await attemptTokenRefresh();
-    if (refreshed) {
-      const retryResponse = await fetch(url.toString(), {
-        ...fetchOptions,
-        headers: requestHeaders,
-        credentials: 'include',
-      });
+    // Si hay refresh token, es una sesión expirada → intentar refrescar
+    const refreshToken = getStoredRefreshToken();
+    const appId = localStorage.getItem('kodan_app_id');
 
-      if (!retryResponse.ok) {
-        const retryError = await retryResponse.json().catch(() => ({}));
-        throw new ApiError(retryResponse.status, retryError, `API Error: ${retryResponse.status}`);
+    if (refreshToken && appId) {
+      const refreshed = await attemptTokenRefresh();
+      if (refreshed) {
+        const retryResponse = await fetch(url.toString(), {
+          ...fetchOptions,
+          headers: requestHeaders,
+          credentials: 'include',
+        });
+
+        if (!retryResponse.ok) {
+          const retryError = await retryResponse.json().catch(() => ({}));
+          throw new ApiError(retryResponse.status, retryError, `API Error: ${retryResponse.status}`);
+        }
+
+        if (retryResponse.status === 204) return undefined as T;
+        return retryResponse.json();
       }
 
-      if (retryResponse.status === 204) return undefined as T;
-      return retryResponse.json();
+      // Refresh falló, la sesión expiró realmente
+      triggerForceLogout();
+      throw new ApiError(401, {}, 'Sesión expirada. Por favor inicia sesión nuevamente.');
     }
 
-    triggerForceLogout();
-    throw new ApiError(401, {}, 'Sesión expirada. Por favor inicia sesión nuevamente.');
+    // No hay refresh token → es un error de autenticación (login, etc.)
+    // Leer el mensaje real del servidor
+    const errorBody = await response.json().catch(() => ({}));
+    const serverMsg = (errorBody as any)?.error || (errorBody as any)?.message || 'Credenciales inválidas.';
+    throw new ApiError(401, errorBody, serverMsg);
   }
 
   if (!response.ok) {

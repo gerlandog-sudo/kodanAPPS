@@ -14,5 +14,16 @@ export default defineConfig({
   server: {
     port: 5174,
     host: true
-  }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-three': ['three'],
+          'vendor-recharts': ['recharts'],
+          'vendor-dnd-kit': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+        },
+      },
+    },
+  },
 });

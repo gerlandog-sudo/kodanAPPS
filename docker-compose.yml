@@ -57,10 +57,10 @@ services:
     working_dir: /var/www/html
 
   # ------------------------------------------------------------
-  # Node 20 (Frontends Dev)
+  # Node 24 (Frontends Dev)
   # ------------------------------------------------------------
   frontend:
-    image: node:20-alpine
+    image: node:24-alpine
     container_name: kodanapps_frontend
     working_dir: /app
     environment:

@@ -5,6 +5,9 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "scripts": {
+    "build": "echo 'ui-core: no separate build needed, compiled within each app'"
+  },
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

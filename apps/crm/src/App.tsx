@@ -1,17 +1,6 @@
 import { ThemeProvider, useTheme, Toaster, Sidebar } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
-import { Dashboard } from './pages/Dashboard';
-import { Negotiations } from './pages/Negotiations';
-import { Accounts } from './pages/Accounts';
-import { Contacts } from './pages/Contacts';
-import { Products } from './pages/Products';
-
-import { Tasks } from './pages/Tasks';
-import { Settings } from './pages/Settings';
-import { Login } from './components/Login';
-import { SetPassword } from './components/SetPassword';
-import { Logo3D } from './components/Logo3D';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   LayoutDashboard,
   Building2,
@@ -21,7 +10,23 @@ import {
   ListTodo,
   Settings as SettingsIcon,
 } from 'lucide-react';
+import { Login } from './components/Login';
+import { SetPassword } from './components/SetPassword';
 import './index.css';
+
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Negotiations = lazy(() => import('./pages/Negotiations').then(m => ({ default: m.Negotiations })));
+const Accounts = lazy(() => import('./pages/Accounts').then(m => ({ default: m.Accounts })));
+const Contacts = lazy(() => import('./pages/Contacts').then(m => ({ default: m.Contacts })));
+const Products = lazy(() => import('./pages/Products').then(m => ({ default: m.Products })));
+const Tasks = lazy(() => import('./pages/Tasks').then(m => ({ default: m.Tasks })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+
+const Logo3D = lazy(() => import('./components/Logo3D').then(m => ({ default: m.Logo3D })));
+
+function Logo3DPlaceholder({ size }: { size?: number }) {
+  return <div style={{ width: size ?? 48, height: size ?? 48 }} />;
+}
 
 type Route = 'dashboard' | 'negotiations' | 'accounts' | 'contacts' | 'products' | 'tasks' | 'settings';
 type View = 'login' | 'set-password' | 'app';
@@ -90,18 +95,18 @@ function AppContent() {
   }, [userRoles])
 
   if (view === 'login') {
-    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestión de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Logo3D size={48} theme={theme} />} onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
+    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestión de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   if (view === 'set-password') {
-    return <SetPassword title="kodanCRM" emailPlaceholder="name@company.com" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Logo3D size={48} theme={theme} />} onBackToLogin={() => setView('login')} />;
+    return <SetPassword title="kodanCRM" emailPlaceholder="name@company.com" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onBackToLogin={() => setView('login')} />;
   }
 
   return (
     <div className="flex min-h-screen">
       <Sidebar
         title="kodanCRM"
-        logoIcon={<Logo3D size={48} theme={theme} />}
+        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>}
         navItems={navItems}
         activeKey={route}
         onNavigate={(key) => setRoute(key as Route)}
@@ -113,13 +118,19 @@ function AppContent() {
       />
       <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
         <div className="mx-auto" style={{ maxWidth: '1400px' }}>
-          {route === 'dashboard' && <Dashboard />}
-          {route === 'negotiations' && <Negotiations />}
-          {route === 'accounts' && <Accounts />}
-          {route === 'contacts' && <Contacts />}
-          {route === 'products' && <Products />}
-          {route === 'tasks' && <Tasks />}
-          {route === 'settings' && <Settings />}
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-20">
+              <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />
+            </div>
+          }>
+            {route === 'dashboard' && <Dashboard />}
+            {route === 'negotiations' && <Negotiations />}
+            {route === 'accounts' && <Accounts />}
+            {route === 'contacts' && <Contacts />}
+            {route === 'products' && <Products />}
+            {route === 'tasks' && <Tasks />}
+            {route === 'settings' && <Settings />}
+          </Suspense>
         </div>
       </main>
     </div>

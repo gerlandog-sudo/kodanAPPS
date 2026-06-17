@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@source "../../ui-core/src/**/*.{ts,tsx}";
 @import "../../../packages/ui-core/src/styles/base.css";
+@source "../../ui-core/src/**/*.{ts,tsx}";
 
 :root {
   --sys-bg: #faf8ff;

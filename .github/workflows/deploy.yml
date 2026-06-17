@@ -103,13 +103,16 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           RELEASE_NAME="v${TIMESTAMP}-${GITHUB_SHA::7}"
           
-          # 1. Transferir backend de API (excluyendo vendor y .env)
+          # 1. Crear el directorio de la release en el servidor
+          ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}"
+          
+          # 2. Transferir backend de API (excluyendo vendor y .env)
           rsync -az --delete \
             --exclude='vendor/' \
             --exclude='.env' \
             release/apps/api/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/
           
-          # 2. Crear las subcarpetas del compilado en el servidor (después del rsync de la API para evitar borrado por --delete)
+          # 3. Crear las subcarpetas del compilado en el servidor (después del rsync de la API para evitar borrado por --delete)
           ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
             set -e
             mkdir -p ${{ env.DEPLOY_PATH }}/releases/${RELEASE_NAME}/dist/crm

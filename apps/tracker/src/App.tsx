@@ -1,4 +1,4 @@
-import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar } from '@kodan-apps/ui-core';
+﻿import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { FolderKanban } from 'lucide-react';
@@ -42,7 +42,7 @@ function AppContent() {
   ];
 
   if (view === 'login') {
-    return <Login appId="tracker" title="kodanTRACKER" subtitle="Gestión de proyectos" onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
+    return <Login appId="tracker" title="kodanTRACKER" subtitle="Gestion de proyectos" onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   if (view === 'set-password') {
@@ -61,18 +61,29 @@ function AppContent() {
         onLogout={handleLogout}
         theme={theme}
         onThemeToggle={toggleTheme}
+        showUserSection={false}
       />
-      <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
-        <div className="mx-auto" style={{ maxWidth: '1400px' }}>
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-20">
-              <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />
-            </div>
-          }>
-            <Dashboard />
-          </Suspense>
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar
+          title="kodanTRACKER"
+          user={user}
+          theme={theme}
+          onThemeToggle={toggleTheme}
+          onLogout={handleLogout}
+          notificationCount={1}
+        />
+        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
+          <div className="mx-auto" style={{ maxWidth: '1400px' }}>
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-20">
+                <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />
+              </div>
+            }>
+              <Dashboard />
+            </Suspense>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

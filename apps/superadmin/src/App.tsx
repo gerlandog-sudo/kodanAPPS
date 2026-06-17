@@ -1,19 +1,20 @@
-import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Toaster, Sidebar, Login, SetPassword } from '@kodan-apps/ui-core';
-import type { NavItem } from '@kodan-apps/ui-core';
+﻿import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { Toaster, Sidebar, Login, SetPassword, TopBar } from '@kodan-apps/ui-core';
+import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
 import { PlanManagement } from './components/PlanManagement';
 import { RoleManagement } from './components/RoleManagement';
 import { ChangePassword } from './components/ChangePassword';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   LayoutDashboard,
   Building2,
   CreditCard,
   FileSearch,
   Shield,
-  KeyRound,
+  User,
+  Settings,
 } from 'lucide-react';
 import './index.css';
 
@@ -25,7 +26,7 @@ const navItems: NavItem[] = [
   { key: 'tenants', label: 'Tenants', icon: <Building2 size={18} /> },
   { key: 'plans', label: 'Planes', icon: <CreditCard size={18} /> },
   { key: 'roles', label: 'Roles', icon: <Shield size={18} /> },
-  { key: 'audit', label: 'Auditoría', icon: <FileSearch size={18} /> },
+  { key: 'audit', label: 'Auditoria', icon: <FileSearch size={18} /> },
 ];
 
 function AppContent() {
@@ -60,6 +61,11 @@ function AppContent() {
     return () => window.removeEventListener('auth:force-logout', onForceLogout);
   }, [handleLogout]);
 
+  const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
+    { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
+    { label: 'Configuracion Global', icon: <Settings size={16} />, onClick: () => {} },
+  ], []);
+
   if (view === 'login') {
     return <Login appId="superadmin" title="kodanAPPS" onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
   }
@@ -80,30 +86,37 @@ function AppContent() {
         onLogout={handleLogout}
         theme={theme}
         onThemeToggle={toggleTheme}
-        extraItems={
-          <button onClick={() => setShowPasswordModal(true)} className="sidebar-link">
-            <KeyRound size={18} />
-            <span>Cambiar Contraseña</span>
-          </button>
-        }
+        showUserSection={false}
       />
       {showPasswordModal && <ChangePassword onClose={() => setShowPasswordModal(false)} />}
-      <main className="flex-1 p-6 lg:p-10" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
-        <div className="mx-auto" style={{ maxWidth: '1400px' }}>
-          {route === 'dashboard' && <SuperAdminDashboard />}
-          {route === 'tenants' && <TenantManagement />}
-          {route === 'plans' && <PlanManagement />}
-          {route === 'roles' && <RoleManagement />}
-          {route === 'audit' && (
-            <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
-              <div className="text-center">
-                <FileSearch size={48} className="mx-auto mb-4" style={{ color: 'var(--sys-text-muted)', opacity: 0.4 }} />
-                <p style={{ color: 'var(--sys-text-muted)' }}>Auditoría Global — Próximamente</p>
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar
+          title="kodanAPPS"
+          user={user}
+          theme={theme}
+          onThemeToggle={toggleTheme}
+          onLogout={handleLogout}
+          onChangePassword={() => setShowPasswordModal(true)}
+          userMenuExtraItems={userMenuExtraItems}
+          notificationCount={5}
+        />
+        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
+          <div className="mx-auto" style={{ maxWidth: '1400px' }}>
+            {route === 'dashboard' && <SuperAdminDashboard />}
+            {route === 'tenants' && <TenantManagement />}
+            {route === 'plans' && <PlanManagement />}
+            {route === 'roles' && <RoleManagement />}
+            {route === 'audit' && (
+              <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
+                <div className="text-center">
+                  <FileSearch size={48} className="mx-auto mb-4" style={{ color: 'var(--sys-text-muted)', opacity: 0.4 }} />
+                  <p style={{ color: 'var(--sys-text-muted)' }}>Auditoria Global — Proximamente</p>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

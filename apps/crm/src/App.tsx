@@ -1,4 +1,4 @@
-import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword } from '@kodan-apps/ui-core';
+﻿import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword, TopBar } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -9,7 +9,9 @@ import {
   Tag,
   ListTodo,
   Settings as SettingsIcon,
+  User,
 } from 'lucide-react';
+import type { UserMenuItem } from '@kodan-apps/ui-core';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -35,6 +37,7 @@ function AppContent() {
   const [route, setRoute] = useState<Route>('dashboard');
   const [user, setUser] = useState<any>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     const cachedUser = localStorage.getItem('crm_user');
@@ -83,17 +86,22 @@ function AppContent() {
       { key: 'negotiations', label: 'Negociaciones', icon: <Briefcase size={18} /> },
       { key: 'accounts', label: 'Cuentas B2B', icon: <Building2 size={18} /> },
       { key: 'contacts', label: 'Contactos', icon: <Users size={18} /> },
-      { key: 'products', label: 'Catálogo', icon: <Tag size={18} /> },
+      { key: 'products', label: 'Catalogo', icon: <Tag size={18} /> },
       { key: 'tasks', label: 'Agenda', icon: <ListTodo size={18} /> },
     ]
     if (userRoles.includes('admin')) {
-      items.push({ key: 'settings', label: 'Configuración', icon: <SettingsIcon size={18} /> })
+      items.push({ key: 'settings', label: 'Configuracion', icon: <SettingsIcon size={18} /> })
     }
     return items
   }, [userRoles])
 
+  const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
+    { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
+    ...(userRoles.includes('admin') ? [{ label: 'Configuracion', icon: <SettingsIcon size={16} />, onClick: () => setRoute('settings' as Route) }] : []),
+  ], [userRoles])
+
   if (view === 'login') {
-    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestión de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
+    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   if (view === 'set-password') {
@@ -113,24 +121,37 @@ function AppContent() {
         theme={theme}
         onThemeToggle={toggleTheme}
         headerClassName="animate-fade-in"
+        showUserSection={false}
       />
-      <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
-        <div className="mx-auto" style={{ maxWidth: '1400px' }}>
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-20">
-              <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />
-            </div>
-          }>
-            {route === 'dashboard' && <Dashboard />}
-            {route === 'negotiations' && <Negotiations />}
-            {route === 'accounts' && <Accounts />}
-            {route === 'contacts' && <Contacts />}
-            {route === 'products' && <Products />}
-            {route === 'tasks' && <Tasks />}
-            {route === 'settings' && <Settings />}
-          </Suspense>
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar
+          title="kodanCRM"
+          user={user}
+          theme={theme}
+          onThemeToggle={toggleTheme}
+          onLogout={handleLogout}
+          userMenuExtraItems={userMenuExtraItems}
+          notificationCount={showNotifications ? 3 : 0}
+          onNotificationClick={() => setShowNotifications(!showNotifications)}
+        />
+        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
+          <div className="mx-auto" style={{ maxWidth: '1400px' }}>
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-20">
+                <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />
+              </div>
+            }>
+              {route === 'dashboard' && <Dashboard />}
+              {route === 'negotiations' && <Negotiations />}
+              {route === 'accounts' && <Accounts />}
+              {route === 'contacts' && <Contacts />}
+              {route === 'products' && <Products />}
+              {route === 'tasks' && <Tasks />}
+              {route === 'settings' && <Settings />}
+            </Suspense>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

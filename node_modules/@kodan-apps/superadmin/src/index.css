@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../ui-core/src/**/*.{ts,tsx}";
 @import "../../../packages/ui-core/src/styles/base.css";
 
 :root {

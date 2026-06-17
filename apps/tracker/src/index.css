@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@import "../../../packages/ui-core/src/styles/base.css";
+@source "../../../packages/ui-core/src/**/*.{ts,tsx}";
+
+:root {
+  --sys-bg: #f8fafc;
+  --sys-surface: #f1f5f9;
+  --sys-surface-raised: #ffffff;
+  --sys-surface-hover: #e2e8f0;
+  --sys-text: #0f172a;
+  --sys-text-muted: #475569;
+  --sys-border: #cbd5e1;
+  --sys-border-soft: #e2e8f0;
+  --sys-primary: #0059ba;
+  --sys-primary-container: #2372df;
+  --sys-on-primary: #ffffff;
+  --sys-primary-hover: #004799;
+  --sys-tertiary: #7c3aed;
+  --sys-tertiary-container: #ddd6fe;
+  --sys-error: #dc2626;
+  --sys-error-container: #fee2e2;
+  --font-montserrat: 'Montserrat', system-ui, sans-serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+}
+
+[data-theme="dark"] {
+  --sys-bg: #0f1117;
+  --sys-surface: #1a1d27;
+  --sys-surface-raised: #22263a;
+  --sys-surface-hover: #2a2f45;
+  --sys-text: #f1f5f9;
+  --sys-text-muted: #94a3b8;
+  --sys-border: #334155;
+  --sys-border-soft: #1e293b;
+  --sys-primary: #60a5fa;
+  --sys-primary-container: #1e40af;
+  --sys-on-primary: #ffffff;
+  --sys-primary-hover: #3b82f6;
+  --sys-tertiary: #a78bfa;
+  --sys-tertiary-container: #4c1d95;
+  --sys-error: #f87171;
+  --sys-error-container: #7f1d1d;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-inter);
+  background: var(--sys-bg);
+  color: var(--sys-text);
+}

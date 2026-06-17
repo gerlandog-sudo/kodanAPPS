@@ -1,4 +1,4 @@
-import { ThemeProvider, useTheme, Toaster, Sidebar } from '@kodan-apps/ui-core';
+import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -10,8 +10,6 @@ import {
   ListTodo,
   Settings as SettingsIcon,
 } from 'lucide-react';
-import { Login } from './components/Login';
-import { SetPassword } from './components/SetPassword';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));

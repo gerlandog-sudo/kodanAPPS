@@ -1,0 +1,189 @@
+<?php
+
+namespace kodanAPPS;
+
+/**
+ * Router simple para la API kodanAPPS
+ * 
+ * Soporta:
+ * - Métodos GET, POST, PATCH, PUT, DELETE
+ * - Parámetros dinámicos en URL ({id})
+ * - Middleware por prefijo
+ * - Error handling uniforme
+ * - Contexto de request (auth, etc.)
+ */
+class Router
+{
+    /** @var array<int, array{method: string, pattern: string, regex: string, handler: callable, params: array<string>}> */
+    private array $routes = [];
+
+    /** @var array<string, callable> Middlewares por prefijo */
+    private array $middleware = [];
+
+    /** @var array<string, mixed> Contexto de la request actual */
+    private array $context = [];
+
+    /**
+     * Registra una ruta GET
+     */
+    public function get(string $path, callable $handler): self
+    {
+        return $this->addRoute('GET', $path, $handler);
+    }
+
+    /**
+     * Registra una ruta POST
+     */
+    public function post(string $path, callable $handler): self
+    {
+        return $this->addRoute('POST', $path, $handler);
+    }
+
+    /**
+     * Registra una ruta PATCH
+     */
+    public function patch(string $path, callable $handler): self
+    {
+        return $this->addRoute('PATCH', $path, $handler);
+    }
+
+    /**
+     * Registra una ruta PUT
+     */
+    public function put(string $path, callable $handler): self
+    {
+        return $this->addRoute('PUT', $path, $handler);
+    }
+
+    /**
+     * Registra una ruta DELETE
+     */
+    public function delete(string $path, callable $handler): self
+    {
+        return $this->addRoute('DELETE', $path, $handler);
+    }
+
+    /**
+     * Asigna middleware a un prefijo de ruta
+     */
+    public function use(string $prefix, callable $middleware): self
+    {
+        $this->middleware[$prefix] = $middleware;
+        return $this;
+    }
+
+    /**
+     * Obtiene un valor del contexto de request
+     */
+    public function getContext(string $key, mixed $default = null): mixed
+    {
+        return $this->context[$key] ?? $default;
+    }
+
+    /**
+     * Establece un valor en el contexto de request
+     */
+    public function setContext(string $key, mixed $value): void
+    {
+        $this->context[$key] = $value;
+    }
+
+    /**
+     * Despacha la petición actual
+     */
+    public function dispatch(string $method, string $uri): void
+    {
+        $path = parse_url($uri, PHP_URL_PATH);
+        $path = rtrim($path, '/') ?: '/';
+
+        // Limpiar contexto para nueva request
+        $this->context = [];
+
+        try {
+            // 1. Ejecutar middleware por prefijo
+            foreach ($this->middleware as $prefix => $mw) {
+                if (str_starts_with($path, $prefix)) {
+                    $result = $mw($this);
+                    // Si el middleware retorna false, detener (error ya respondido)
+                    if ($result === false) {
+                        return;
+                    }
+                }
+            }
+
+            // 2. Buscar ruta
+            foreach ($this->routes as $route) {
+                if ($route['method'] !== $method) {
+                    continue;
+                }
+                if (preg_match($route['regex'], $path, $matches)) {
+                    $params = [];
+                    foreach ($route['params'] as $i => $name) {
+                        $params[$name] = (int)$matches[$i + 1];
+                    }
+                    ($route['handler'])($params, $this);
+                    return;
+                }
+            }
+
+            // 3. 404
+            http_response_code(404);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Not found']);
+
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'message' => 'Validation error',
+                'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
+            ]);
+        } catch (\RuntimeException $e) {
+            $code = (int)$e->getCode();
+            if ($code < 400 || $code > 599) {
+                $code = 500;
+            }
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'error' => 'Internal server error',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        }
+    }
+
+    /**
+     * Despacha usando valores de servidor
+     */
+    public function dispatchFromGlobals(): void
+    {
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $this->dispatch($method, $uri);
+    }
+
+    private function addRoute(string $method, string $path, callable $handler): self
+    {
+        $params = [];
+        $regex = preg_replace_callback('/\{(\w+)\}/', function ($m) use (&$params) {
+            $params[] = $m[1];
+            return '(\d+)';
+        }, $path);
+
+        $this->routes[] = [
+            'method' => $method,
+            'pattern' => $path,
+            'regex' => '#^' . $regex . '$#',
+            'handler' => $handler,
+            'params' => $params,
+        ];
+
+        return $this;
+    }
+}

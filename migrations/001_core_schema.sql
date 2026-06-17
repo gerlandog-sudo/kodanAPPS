@@ -58,18 +58,6 @@ CREATE TABLE `tenants` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
--- Aplicaciones Habilitadas por Tenant
--- ------------------------------------------------------------
-CREATE TABLE `tenant_apps` (
-  `tenant_id` BIGINT(20) NOT NULL,
-  `app_id` VARCHAR(50) NOT NULL COMMENT 'crm, tracker',
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  PRIMARY KEY (`tenant_id`, `app_id`),
-  CONSTRAINT `fk_tenant_apps_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`tenant_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ------------------------------------------------------------
 -- Usuarios Globales (Identidad Transversal)
 -- ------------------------------------------------------------
 CREATE TABLE `users` (
@@ -86,18 +74,6 @@ CREATE TABLE `users` (
   UNIQUE KEY `uk_user_email_global` (`email`),
   KEY `idx_users_tenant_lookup` (`tenant_id`, `id`),
   CONSTRAINT `fk_users_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`tenant_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ------------------------------------------------------------
--- Roles por Aplicación por Usuario
--- ------------------------------------------------------------
-CREATE TABLE `user_apps` (
-  `user_id` BIGINT(20) NOT NULL,
-  `app_id` VARCHAR(50) NOT NULL COMMENT 'crm, tracker, superadmin',
-  `role` VARCHAR(50) NOT NULL COMMENT 'admin, pm, commercial, staff, viewer',
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`user_id`, `app_id`),
-  CONSTRAINT `fk_user_apps_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

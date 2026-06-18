@@ -411,6 +411,7 @@ final class AuthController
      *
      * Revoca refresh token y limpia ambas cookies.
      *
+     * @param array<string, mixed> $input
      * @return array<string, mixed>
      */
     public function logout(array $input): array

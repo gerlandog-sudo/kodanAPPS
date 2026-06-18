@@ -159,7 +159,10 @@ export async function apiClient<T = unknown>(
 
   // === 401 → auto-refresh + retry ===
   if (response.status === 401) {
-    if (currentAppId) {
+    // Endpoints de login/set-password: nunca intentar refresh (no hay sesión)
+    const isLoginEndpoint = endpoint === '/api/auth/login' || endpoint === '/api/auth/set-password';
+
+    if (currentAppId && !isLoginEndpoint) {
       const refreshed = await attemptTokenRefresh();
       if (refreshed) {
         const retryResponse = await fetch(url.toString(), {
@@ -182,10 +185,10 @@ export async function apiClient<T = unknown>(
       throw new ApiError(401, {}, 'Sesión expirada. Por favor inicia sesión nuevamente.');
     }
 
-    // No hay appId configurada → sesión perdida / nunca hubo
-    // Forzar logout si no es un endpoint de auth (login, set-password)
+    // No hay appId configurada o es login → mostrar error del servidor
+    // Forzar logout solo si no es endpoint de auth
     const isAuthEndpoint = endpoint.startsWith('/api/auth/') || endpoint === '/api/csrf-token';
-    if (!isAuthEndpoint) {
+    if (!isLoginEndpoint && !isAuthEndpoint) {
       triggerForceLogout();
       // Safety redirect en caso de que el evento no sea escuchado
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {

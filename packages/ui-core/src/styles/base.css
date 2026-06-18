@@ -724,3 +724,101 @@
   animation: datagrid-fade-up 500ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
   animation-delay: calc(var(--i, 0) * 60ms);
 }
+
+/* ── Pagination ── */
+
+.datagrid-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 0.5rem 0;
+  gap: 1rem;
+}
+
+.datagrid-pagination-info {
+  font-family: Montserrat, system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sys-text-muted);
+  white-space: nowrap;
+}
+
+.datagrid-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.datagrid-pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  color: var(--sys-text-muted);
+  transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.datagrid-pagination-btn:hover:not(:disabled) {
+  background: var(--sys-surface);
+  border-color: var(--sys-border-soft);
+  color: var(--sys-text);
+}
+
+.datagrid-pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.datagrid-pagination-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: Montserrat, system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sys-text-muted);
+  transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.datagrid-pagination-page:hover {
+  background: var(--sys-surface);
+  border-color: var(--sys-border-soft);
+  color: var(--sys-text);
+}
+
+.datagrid-pagination-page.active {
+  background: var(--sys-primary-container);
+  border-color: var(--sys-primary-container);
+  color: var(--color-on-primary-container);
+  font-weight: 600;
+}
+
+.datagrid-pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 32px;
+  font-family: Montserrat, system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  color: var(--sys-text-muted);
+  opacity: 0.5;
+}
+
+/* ── Table wrapper for horizontal scroll ── */
+
+.datagrid-table-wrapper {
+  overflow-x: auto;
+}

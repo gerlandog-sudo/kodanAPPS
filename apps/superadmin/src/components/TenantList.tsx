@@ -97,7 +97,8 @@ export function TenantList({ tenants, loading, onToggle, onEdit }: TenantListPro
         description: 'Crea el primer tenant para comenzar',
       }}
       actions={actions}
-      variant="card"
+      variant="table"
+      pageSize={10}
       rowAnimation
     />
   );

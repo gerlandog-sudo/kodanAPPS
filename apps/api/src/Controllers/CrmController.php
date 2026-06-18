@@ -89,6 +89,9 @@ final class CrmController
         return $results;
     }
 
+    /**
+     * @return array{theme: string}
+     */
     public function getTheme(): array
     {
         $userId = TenantContext::getUserId();
@@ -110,6 +113,10 @@ final class CrmController
         return ['theme' => $theme];
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array{success: bool, theme: string}
+     */
     public function updateTheme(array $input): array
     {
         $theme = $input['theme'] ?? '';

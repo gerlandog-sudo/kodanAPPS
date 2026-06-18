@@ -45,6 +45,7 @@ use kodanAPPS\Repositories\CrmTaskRepository;
 use kodanAPPS\Repositories\ChatRepository;
 use kodanAPPS\Repositories\ProjectRepository;
 use kodanAPPS\Controllers\TrackerController;
+use kodanAPPS\Controllers\TenantUserController;
 use kodanAPPS\Services\TenantService;
 use kodanAPPS\Services\CustomFieldService;
 
@@ -216,6 +217,7 @@ $quoteController = new QuoteController($quoteRepo);
 $taskController = new CrmTaskController($taskRepo);
 $chatController = new ChatController($chatRepo);
 $trackerController = new TrackerController($projectRepo);
+$tenantUserController = new TenantUserController($userRepo, $pdo);
 
 return [
     'pdo' => $pdo,
@@ -257,5 +259,6 @@ return [
         'task' => $taskController,
         'chat' => $chatController,
         'tracker' => $trackerController,
+        'tenantUser' => $tenantUserController,
         ],
 ];

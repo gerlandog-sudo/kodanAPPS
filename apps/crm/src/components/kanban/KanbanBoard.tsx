@@ -130,7 +130,7 @@ export function KanbanBoard<T>({
       {createPortal(
         <DragOverlay dropAnimation={dropAnimation}>
           {draggedItem ? (
-            <div className="kanban-card-overlay rotate-1 scale-[1.02] opacity-95 pointer-events-none select-none origin-center">
+            <div className="rotate-1 scale-[1.02] opacity-95 pointer-events-none select-none origin-center">
               {renderOverlayCard
                 ? renderOverlayCard(draggedItem)
                 : renderCard(draggedItem)}

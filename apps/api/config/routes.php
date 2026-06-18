@@ -274,6 +274,18 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['crm']->getPlanStatus($auth['tenant_id'] ?? 0));
     });
 
+    // Theme
+    $router->get('/api/crm/theme', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['crm']->getTheme());
+    });
+
+    $router->put('/api/crm/theme', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['crm']->updateTheme($input));
+    });
+
     // Accounts B2B
     $router->get('/api/crm/accounts', function (array $p, Router $router) use ($app) {
         echo json_encode($app['controllers']['account']->list());
@@ -485,6 +497,30 @@ return function (Router $router, array $app): void {
     });
     $router->delete('/api/crm/custom-fields/{id}', function (array $p) use ($app) {
         echo json_encode($app['controllers']['customField']->delete($p['id']));
+    });
+
+    // Tenant Users (CRM Operators)
+    $router->get('/api/crm/users', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->listUsers());
+    });
+    $router->get('/api/crm/users/roles', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->listCrmRoles());
+    });
+    $router->post('/api/crm/users', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->createUser($input));
+    });
+    $router->put('/api/crm/users/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->updateUser($p['id'], $input));
+    });
+    $router->delete('/api/crm/users/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->deleteUser($p['id']));
     });
 
     // ============================================================

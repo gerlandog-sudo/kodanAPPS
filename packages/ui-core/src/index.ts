@@ -24,7 +24,5 @@ export type { AuthState } from './hooks/useAuth'
 export { AuthLoading } from './components/AuthLoading'
 export { Table } from './components/Table'
 export type { TableColumn, TableAction } from './components/Table'
-export { KanbanCard } from './components/KanbanCard'
-export type { KanbanCardProps, KanbanCardAction, KanbanCardMetadata, KanbanCardAssignee } from './components/KanbanCard'
 
 import './styles/base.css'

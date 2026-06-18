@@ -110,12 +110,15 @@ final class TenantService
             // ------------------------------------------------------------
             // 6. Guardar tema por defecto en user_configs
             // ------------------------------------------------------------
-            $this->tenantRepo->rawExecute(
-                "INSERT INTO user_configs (user_id, app_id, theme_colors) /* BYPASS_TENANT_SCOPE */
-                 VALUES (?, 'superadmin', ?)
-                 ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)",
-                [$adminUserId, json_encode(['theme' => $dto->themePreference])]
-            );
+            $themeJson = json_encode(['theme' => $dto->themePreference]);
+            foreach (['superadmin', 'crm'] as $appId) {
+                $this->tenantRepo->rawExecute(
+                    "INSERT INTO user_configs (user_id, app_id, theme_colors) /* BYPASS_TENANT_SCOPE */
+                     VALUES (?, ?, ?)
+                     ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)",
+                    [$adminUserId, $appId, $themeJson]
+                );
+            }
 
             // ------------------------------------------------------------
             // 7. Auditoría

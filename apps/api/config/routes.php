@@ -126,10 +126,23 @@ return function (Router $router, array $app): void {
     });
 
     $router->post('/api/auth/refresh', function () use ($app) {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        $data = $app['controllers']['auth']->refresh($input);
-        header('Content-Type: application/json');
-        echo json_encode($data);
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $app['controllers']['auth']->refresh($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Refresh error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
     });
 
     $router->get('/api/auth/validate', function () use ($app) {

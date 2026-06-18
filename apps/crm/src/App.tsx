@@ -57,6 +57,12 @@ function AppContent() {
     setView('login');
   }, [authLogout]);
 
+  useEffect(() => {
+    const onForceLogout = () => handleLogout();
+    window.addEventListener('auth:force-logout', onForceLogout);
+    return () => window.removeEventListener('auth:force-logout', onForceLogout);
+  }, [handleLogout]);
+
   const navItems = useMemo<NavItem[]>(() => {
     const items: NavItem[] = [
       { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },

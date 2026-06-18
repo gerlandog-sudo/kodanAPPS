@@ -61,6 +61,12 @@ function AppContent() {
     setView('login');
   }, [authLogout]);
 
+  useEffect(() => {
+    const onForceLogout = () => handleLogout();
+    window.addEventListener('auth:force-logout', onForceLogout);
+    return () => window.removeEventListener('auth:force-logout', onForceLogout);
+  }, [handleLogout]);
+
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
     { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
     { label: 'Configuracion Global', icon: <Settings size={16} />, onClick: () => {} },

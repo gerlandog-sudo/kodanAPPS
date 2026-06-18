@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useState, useRef, useEffect } from 'react'
 
 export interface TableAction<T> {
   icon: ReactNode
@@ -120,6 +120,8 @@ export function Table<T>({
   onPageChange,
 }: TableProps<T>) {
   const [internalPage, setInternalPage] = useState(0)
+  const tableRef = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
 
   const isControlled = currentPage !== undefined
   const activePage = isControlled ? currentPage : internalPage
@@ -129,6 +131,23 @@ export function Table<T>({
   const displayData = isControlled || !hasPages
     ? data
     : data.slice(activePage * pageSize!, (activePage + 1) * pageSize!)
+
+  useEffect(() => {
+    const el = tableRef.current
+    if (!el) return
+    setVisible(false)
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          requestAnimationFrame(() => setVisible(true))
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [data])
 
   const goToPage = (page: number) => {
     if (isControlled) {
@@ -140,35 +159,37 @@ export function Table<T>({
 
   if (loading) {
     return (
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              {columns.map(col => (
-                <th key={col.key} className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}`}>
-                  {col.header}
-                </th>
-              ))}
-              {actions && <th className="table-th table-th-right">Acciones</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: skeletonRows }).map((_, i) => (
-              <tr key={i} className="table-row">
+      <div className="table-wrapper">
+        <div className="table-container">
+          <table className="table">
+            <thead>
+              <tr>
                 {columns.map(col => (
-                  <td key={col.key} className="table-td">
-                    <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
-                  </td>
+                  <th key={col.key} className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}`}>
+                    {col.header}
+                  </th>
                 ))}
-                {actions && (
-                  <td className="table-td table-td-right">
-                    <SkeletonBar width="60px" />
-                  </td>
-                )}
+                {actions && <th className="table-th table-th-right">Acciones</th>}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {Array.from({ length: skeletonRows }).map((_, i) => (
+                <tr key={i} className="table-row">
+                  {columns.map(col => (
+                    <td key={col.key} className="table-td">
+                      <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
+                    </td>
+                  ))}
+                  {actions && (
+                    <td className="table-td table-td-right">
+                      <SkeletonBar width="60px" />
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
@@ -188,7 +209,7 @@ export function Table<T>({
   }
 
   return (
-    <div className="table-wrapper">
+    <div className="table-wrapper" ref={tableRef}>
       <div className="table-container">
         <table className="table">
           <thead>
@@ -205,8 +226,13 @@ export function Table<T>({
             </tr>
           </thead>
           <tbody>
-            {displayData.map(item => (
-              <tr key={keyExtractor(item)} className="table-row">
+            {displayData.map((item, idx) => (
+              <tr
+                key={keyExtractor(item)}
+                className="table-row table-row-anim"
+                style={{ '--i': idx } as React.CSSProperties}
+                data-visible={visible}
+              >
                 {columns.map(col => (
                   <td key={col.key} className="table-td">
                     <div className="table-cell">{col.render(item)}</div>

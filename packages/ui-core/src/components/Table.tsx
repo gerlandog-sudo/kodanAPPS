@@ -1,32 +1,28 @@
-import { type ReactNode, useRef, useState, useEffect } from 'react'
+import { type ReactNode, useState } from 'react'
 
-export interface Action<T> {
+export interface TableAction<T> {
   icon: ReactNode
   label: string
   onClick: (item: T) => void
   variant?: 'default' | 'danger'
 }
 
-export interface Column<T> {
+export interface TableColumn<T> {
   key: string
   header: string
   render: (item: T) => ReactNode
   align?: 'left' | 'right' | 'center'
   width?: string
-  hideOnMobile?: boolean
 }
 
-interface DataGridProps<T> {
+interface TableProps<T> {
   data: T[]
-  columns: Column<T>[]
+  columns: TableColumn<T>[]
   keyExtractor: (item: T) => string | number
   loading?: boolean
   skeletonRows?: number
   emptyState: { icon: ReactNode; title: string; description: string }
-  actions?: Action<T>[]
-  onRowClick?: (item: T) => void
-  variant?: 'table' | 'card'
-  rowAnimation?: boolean
+  actions?: TableAction<T>[]
   pageSize?: number
   currentPage?: number
   totalRecords?: number
@@ -34,7 +30,7 @@ interface DataGridProps<T> {
 }
 
 function SkeletonBar({ width }: { width: string }) {
-  return <div className="datagrid-skeleton" style={{ width }} />
+  return <div className="table-skeleton" style={{ width }} />
 }
 
 function PaginationBar({
@@ -67,13 +63,13 @@ function PaginationBar({
   }
 
   return (
-    <div className="datagrid-pagination">
-      <span className="datagrid-pagination-info">
-        Mostrando {start}-{end} de {totalRecords}
+    <div className="table-pagination">
+      <span className="table-pagination-info">
+        Mostrando {start}–{end} de {totalRecords}
       </span>
-      <div className="datagrid-pagination-controls">
+      <div className="table-pagination-controls">
         <button
-          className="datagrid-pagination-btn"
+          className="table-pagination-btn"
           disabled={page === 0}
           onClick={() => onPageChange(page - 1)}
         >
@@ -84,11 +80,11 @@ function PaginationBar({
 
         {pages.map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`e${i}`} className="datagrid-pagination-ellipsis">...</span>
+            <span key={`e${i}`} className="table-pagination-ellipsis">...</span>
           ) : (
             <button
               key={p}
-              className={`datagrid-pagination-page${p === page ? ' active' : ''}`}
+              className={`table-pagination-page${p === page ? ' active' : ''}`}
               onClick={() => onPageChange(p)}
             >
               {p + 1}
@@ -97,7 +93,7 @@ function PaginationBar({
         )}
 
         <button
-          className="datagrid-pagination-btn"
+          className="table-pagination-btn"
           disabled={page >= totalPages - 1}
           onClick={() => onPageChange(page + 1)}
         >
@@ -110,7 +106,7 @@ function PaginationBar({
   )
 }
 
-function DataGridInner<T>({
+export function Table<T>({
   data,
   columns,
   keyExtractor,
@@ -118,46 +114,21 @@ function DataGridInner<T>({
   skeletonRows = 10,
   emptyState,
   actions,
-  onRowClick,
-  rowAnimation = true,
   pageSize,
   currentPage,
   totalRecords,
   onPageChange,
-}: DataGridProps<T>) {
-  const gridRef = useRef<HTMLDivElement>(null)
-  const [animated, setAnimated] = useState(!rowAnimation)
+}: TableProps<T>) {
   const [internalPage, setInternalPage] = useState(0)
 
   const isControlled = currentPage !== undefined
   const activePage = isControlled ? currentPage : internalPage
   const total = totalRecords ?? data.length
-  const hasPagination = pageSize !== undefined && pageSize > 0
-  const totalPages = hasPagination ? Math.ceil(total / pageSize!) : 1
-
-  const displayData = isControlled || !hasPagination
+  const hasPages = pageSize !== undefined && pageSize > 0
+  const totalPages = hasPages ? Math.ceil(total / pageSize!) : 1
+  const displayData = isControlled || !hasPages
     ? data
     : data.slice(activePage * pageSize!, (activePage + 1) * pageSize!)
-
-  useEffect(() => {
-    if (!rowAnimation) return
-    setAnimated(false)
-    const el = gridRef.current
-    if (!el) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          requestAnimationFrame(() => setAnimated(true))
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [data, rowAnimation])
 
   const goToPage = (page: number) => {
     if (isControlled) {
@@ -167,63 +138,30 @@ function DataGridInner<T>({
     }
   }
 
-  const renderRows = () =>
-    displayData.map((item, idx) => (
-      <tr
-        key={keyExtractor(item)}
-        className={`datagrid-row${onRowClick ? ' datagrid-row-clickable' : ''}${rowAnimation ? ' datagrid-fade' : ''}`}
-        style={rowAnimation ? { '--i': idx } as React.CSSProperties : undefined}
-        data-visible={animated}
-        onClick={() => onRowClick?.(item)}
-      >
-        {columns.map(col => (
-          <td key={col.key}>
-            <div className="datagrid-cell-inner">{col.render(item)}</div>
-          </td>
-        ))}
-        {actions && (
-          <td className="datagrid-actions-cell">
-            <div className="datagrid-actions">
-              {actions.map((action, ai) => (
-                <button
-                  key={ai}
-                  className={`datagrid-action-btn${action.variant === 'danger' ? ' danger' : ''}`}
-                  title={action.label}
-                  onClick={e => { e.stopPropagation(); action.onClick(item) }}
-                >
-                  {action.icon}
-                </button>
-              ))}
-            </div>
-          </td>
-        )}
-      </tr>
-    ))
-
   if (loading) {
     return (
-      <div ref={gridRef} className="datagrid">
-        <table className="datagrid-table">
+      <div className="table-container">
+        <table className="table">
           <thead>
             <tr>
               {columns.map(col => (
-                <th key={col.key} className={`datagrid-th${col.align === 'right' ? ' text-right' : col.align === 'center' ? ' text-center' : ''}`}>
+                <th key={col.key} className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}`}>
                   {col.header}
                 </th>
               ))}
-              {actions && <th className="datagrid-th text-right">Acciones</th>}
+              {actions && <th className="table-th table-th-right">Acciones</th>}
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: skeletonRows }).map((_, i) => (
-              <tr key={i} className="datagrid-row">
+              <tr key={i} className="table-row">
                 {columns.map(col => (
-                  <td key={col.key}>
+                  <td key={col.key} className="table-td">
                     <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
                   </td>
                 ))}
                 {actions && (
-                  <td className="text-right">
+                  <td className="table-td table-td-right">
                     <SkeletonBar width="60px" />
                   </td>
                 )}
@@ -237,12 +175,12 @@ function DataGridInner<T>({
 
   if (data.length === 0) {
     return (
-      <div ref={gridRef} className="datagrid">
-        <div className="datagrid-empty">
+      <div className="table-wrapper">
+        <div className="table-empty">
           {emptyState.icon}
-          <p className="datagrid-empty-title">{emptyState.title}</p>
+          <p className="table-empty-title">{emptyState.title}</p>
           {emptyState.description && (
-            <p className="datagrid-empty-desc">{emptyState.description}</p>
+            <p className="table-empty-desc">{emptyState.description}</p>
           )}
         </div>
       </div>
@@ -250,29 +188,53 @@ function DataGridInner<T>({
   }
 
   return (
-    <div ref={gridRef} className="datagrid">
-      <div className="datagrid-table-wrapper">
-        <table className="datagrid-table">
+    <div className="table-wrapper">
+      <div className="table-container">
+        <table className="table">
           <thead>
             <tr>
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`datagrid-th${col.align === 'right' ? ' text-right' : col.align === 'center' ? ' text-center' : ''}`}
+                  className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}`}
                 >
                   {col.header}
                 </th>
               ))}
-              {actions && <th className="datagrid-th text-right">Acciones</th>}
+              {actions && <th className="table-th table-th-right">Acciones</th>}
             </tr>
           </thead>
           <tbody>
-            {renderRows()}
+            {displayData.map(item => (
+              <tr key={keyExtractor(item)} className="table-row">
+                {columns.map(col => (
+                  <td key={col.key} className="table-td">
+                    <div className="table-cell">{col.render(item)}</div>
+                  </td>
+                ))}
+                {actions && (
+                  <td className="table-td table-td-right">
+                    <div className="table-actions">
+                      {actions.map((action, ai) => (
+                        <button
+                          key={ai}
+                          className={`table-action-btn${action.variant === 'danger' ? ' table-action-btn-danger' : ''}`}
+                          title={action.label}
+                          onClick={e => { e.stopPropagation(); action.onClick(item) }}
+                        >
+                          {action.icon}
+                        </button>
+                      ))}
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      {hasPagination && totalPages > 1 && (
+      {hasPages && totalPages > 1 && (
         <PaginationBar
           page={activePage}
           totalPages={totalPages}
@@ -283,8 +245,4 @@ function DataGridInner<T>({
       )}
     </div>
   )
-}
-
-export function DataGrid<T>(props: DataGridProps<T>) {
-  return <DataGridInner {...props} />
 }

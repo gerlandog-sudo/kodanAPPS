@@ -443,47 +443,31 @@
 }
 
 /* =========================================================================
-   DataGrid
+   Table
    ========================================================================= */
 
-@keyframes datagrid-shimmer {
+@keyframes table-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
-@keyframes datagrid-fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.datagrid {
+.table-wrapper {
   width: 100%;
 }
 
-/* ── Skeleton ── */
-
-.datagrid-skeleton {
-  height: 14px;
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--sys-surface) 25%,
-    var(--sys-surface-hover) 50%,
-    var(--sys-surface) 75%
-  );
-  background-size: 200% 100%;
-  animation: datagrid-shimmer 1.4s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+.table-container {
+  overflow-x: auto;
 }
 
-/* ── Table variant ── */
-
-.datagrid-table {
+.table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
 
-.datagrid-th {
+/* ── Headers ── */
+
+.table-th {
   text-align: left;
   padding: 0.875rem 1rem;
   font-family: Montserrat, system-ui, -apple-system, sans-serif;
@@ -496,19 +480,25 @@
   white-space: nowrap;
 }
 
-.datagrid-th.text-right {
+.table-th-right {
   text-align: right;
 }
 
-.datagrid-th.text-center {
+.table-th-center {
   text-align: center;
 }
 
-.datagrid-row {
-  transition: all 350ms cubic-bezier(0.32, 0.72, 0, 1);
+/* ── Rows ── */
+
+.table-row {
+  transition: background 350ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.datagrid-row td {
+.table-row:hover {
+  background: var(--sys-surface-hover);
+}
+
+.table-td {
   padding: 0.75rem 1rem;
   font-family: Montserrat, system-ui, -apple-system, sans-serif;
   font-size: 0.8125rem;
@@ -518,38 +508,41 @@
   vertical-align: middle;
 }
 
-.datagrid-row:hover {
-  background: var(--sys-surface-hover);
+.table-td-right {
+  text-align: right;
 }
 
-.datagrid-row-clickable {
-  cursor: pointer;
-}
-
-.datagrid-row-clickable:active {
-  transform: scale(0.998);
-}
-
-.datagrid-cell-inner {
+.table-cell {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-/* ── Actions ── */
+/* ── Skeleton ── */
 
-.datagrid-actions-cell {
-  width: 1%;
+.table-skeleton {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--sys-surface) 25%,
+    var(--sys-surface-hover) 50%,
+    var(--sys-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: table-shimmer 1.4s cubic-bezier(0.32, 0.72, 0, 1) infinite;
 }
 
-.datagrid-actions {
+/* ── Actions ── */
+
+.table-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 2px;
 }
 
-.datagrid-action-btn {
+.table-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -563,130 +556,32 @@
   transition: all 350ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.datagrid-action-btn:hover {
+.table-action-btn:hover {
   background: var(--sys-surface);
   border-color: var(--sys-border-soft);
+  color: var(--sys-text);
 }
 
-.datagrid-action-btn:hover svg {
-  translate: 1px 0;
-}
-
-.datagrid-action-btn svg {
+.table-action-btn svg {
   transition: translate 350ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.datagrid-action-btn.danger {
+.table-action-btn:hover svg {
+  translate: 2px 0;
+}
+
+.table-action-btn-danger {
   color: var(--sys-error);
 }
 
-.datagrid-action-btn.danger:hover {
+.table-action-btn-danger:hover {
   background: var(--sys-error-container);
   border-color: color-mix(in srgb, var(--sys-error) 20%, transparent);
 }
 
-.datagrid-action-btn.danger:hover svg {
-  translate: 1px 0;
-}
-
-/* ── Card variant ── */
-
-.datagrid-card-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .datagrid-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  }
-}
-
-.datagrid-card {
-  background: var(--sys-surface-raised);
-  border: 1px solid var(--sys-border-soft);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  transition: all 350ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.datagrid-card:hover {
-  border-color: var(--sys-primary-container);
-  box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.1);
-}
-
-.datagrid-card-clickable {
-  cursor: pointer;
-}
-
-.datagrid-card-clickable:active {
-  transform: scale(0.995);
-}
-
-.datagrid-card-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.datagrid-card-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.datagrid-card-label {
-  font-family: Montserrat, system-ui, -apple-system, sans-serif;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--sys-text-muted);
-}
-
-.datagrid-card-value {
-  font-family: Montserrat, system-ui, -apple-system, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--sys-text);
-}
-
-.datagrid-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--sys-border-soft);
-}
-
-/* ── Card skeleton ── */
-
-.datagrid-card-skeleton-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.datagrid-card-skeleton-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
-}
-
-.datagrid-card-skeleton-body {
-  display: flex;
-  gap: 1rem;
-  padding-top: 0.5rem;
-}
-
 /* ── Empty state ── */
 
-.datagrid-empty {
+.table-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -697,7 +592,7 @@
   opacity: 0.35;
 }
 
-.datagrid-empty-title {
+.table-empty-title {
   margin-top: 0.75rem;
   font-family: Montserrat, system-ui, -apple-system, sans-serif;
   font-size: 0.875rem;
@@ -705,7 +600,7 @@
   color: var(--sys-text-muted);
 }
 
-.datagrid-empty-desc {
+.table-empty-desc {
   margin-top: 0.25rem;
   font-family: Montserrat, system-ui, -apple-system, sans-serif;
   font-size: 0.75rem;
@@ -713,21 +608,9 @@
   opacity: 0.7;
 }
 
-/* ── Staggered fade-up animation ── */
-
-.datagrid-fade {
-  opacity: 0;
-  transform: translateY(16px);
-}
-
-.datagrid-fade[data-visible="true"] {
-  animation: datagrid-fade-up 500ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
-  animation-delay: calc(var(--i, 0) * 60ms);
-}
-
 /* ── Pagination ── */
 
-.datagrid-pagination {
+.table-pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -735,7 +618,7 @@
   gap: 1rem;
 }
 
-.datagrid-pagination-info {
+.table-pagination-info {
   font-family: Montserrat, system-ui, -apple-system, sans-serif;
   font-size: 0.75rem;
   font-weight: 500;
@@ -743,13 +626,13 @@
   white-space: nowrap;
 }
 
-.datagrid-pagination-controls {
+.table-pagination-controls {
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
-.datagrid-pagination-btn {
+.table-pagination-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -763,18 +646,18 @@
   transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.datagrid-pagination-btn:hover:not(:disabled) {
+.table-pagination-btn:hover:not(:disabled) {
   background: var(--sys-surface);
   border-color: var(--sys-border-soft);
   color: var(--sys-text);
 }
 
-.datagrid-pagination-btn:disabled {
+.table-pagination-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.datagrid-pagination-page {
+.table-pagination-page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -792,20 +675,20 @@
   transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.datagrid-pagination-page:hover {
+.table-pagination-page:hover {
   background: var(--sys-surface);
   border-color: var(--sys-border-soft);
   color: var(--sys-text);
 }
 
-.datagrid-pagination-page.active {
+.table-pagination-page.active {
   background: var(--sys-primary-container);
   border-color: var(--sys-primary-container);
-  color: var(--color-on-primary-container);
+  color: var(--sys-on-primary);
   font-weight: 600;
 }
 
-.datagrid-pagination-ellipsis {
+.table-pagination-ellipsis {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -815,10 +698,4 @@
   font-size: 0.75rem;
   color: var(--sys-text-muted);
   opacity: 0.5;
-}
-
-/* ── Table wrapper for horizontal scroll ── */
-
-.datagrid-table-wrapper {
-  overflow-x: auto;
 }

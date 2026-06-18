@@ -1,5 +1,5 @@
-import { DataGrid, Toggle } from '@kodan-apps/ui-core';
-import type { Column, Action } from '@kodan-apps/ui-core';
+import { Table, Toggle } from '@kodan-apps/ui-core';
+import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
 import { Building2, Pencil, Shield } from 'lucide-react';
 
 interface Tenant {
@@ -24,7 +24,7 @@ interface TenantListProps {
 }
 
 export function TenantList({ tenants, loading, onToggle, onEdit }: TenantListProps) {
-  const columns: Column<Tenant>[] = [
+  const columns: TableColumn<Tenant>[] = [
     {
       key: 'name',
       header: 'Tenant',
@@ -81,12 +81,12 @@ export function TenantList({ tenants, loading, onToggle, onEdit }: TenantListPro
     },
   ];
 
-  const actions: Action<Tenant>[] = [
+  const actions: TableAction<Tenant>[] = [
     { icon: <Pencil size={14} />, label: 'Editar', onClick: onEdit },
   ];
 
   return (
-    <DataGrid
+    <Table
       data={tenants}
       columns={columns}
       keyExtractor={t => t.tenant_id}
@@ -97,9 +97,7 @@ export function TenantList({ tenants, loading, onToggle, onEdit }: TenantListPro
         description: 'Crea el primer tenant para comenzar',
       }}
       actions={actions}
-      variant="table"
       pageSize={10}
-      rowAnimation
     />
   );
 }

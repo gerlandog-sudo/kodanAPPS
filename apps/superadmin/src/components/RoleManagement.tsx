@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import { Button } from '@kodan-apps/ui-core';
+import { Button, Table } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import {
@@ -8,6 +8,7 @@ import {
   Plus,
   X,
   Check,
+  Trash2,
   AlertCircle,
   Loader2,
 } from 'lucide-react';
@@ -88,59 +89,49 @@ export function RoleManagement() {
         </Button>
       </div>
 
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>App</th>
-              <th>Rol</th>
-              <th>Descripción</th>
-              <th>Activo</th>
-              <th className="text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? Array.from({ length: 3 }).map((_, i) => (
-              <tr key={i}>
-                {Array.from({ length: 5 }).map((_, j) => (
-                  <td key={j}><div className="skeleton h-4 w-full" /></td>
-                ))}
-              </tr>
-            )) : roles.length === 0 ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Shield size={40} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
-                    <p className="mt-3 text-sm font-medium" style={{ color: 'var(--sys-text-muted)' }}>No hay roles configurados</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              roles.map(role => (
-                <tr key={role.id}>
-                  <td><span className="badge badge-plan text-xs">{role.app_id}</span></td>
-                  <td className="font-medium text-sm">{role.name}</td>
-                  <td className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>{role.description || '—'}</td>
-                  <td>
-                    <button onClick={() => toggleActive(role)} className="flex items-center gap-1.5 text-xs">
-                      {role.is_active ? (
-                        <><Check size={12} style={{ color: 'var(--sys-success)' }} /> Activo</>
-                      ) : (
-                        <><X size={12} style={{ color: 'var(--sys-error)' }} /> Inactivo</>
-                      )}
-                    </button>
-                  </td>
-                  <td className="text-right">
-                    <Button variant="ghost" className="text-xs" onClick={() => handleDelete(role)}>
-                      Eliminar
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table<Role>
+        data={roles}
+        columns={[
+          {
+            key: 'app',
+            header: 'App',
+            render: role => <span className="badge badge-plan text-xs">{role.app_id}</span>,
+          },
+          {
+            key: 'name',
+            header: 'Rol',
+            render: role => <span className="font-semibold text-sm">{role.name}</span>,
+          },
+          {
+            key: 'description',
+            header: 'Descripción',
+            render: role => <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{role.description || '—'}</span>,
+          },
+          {
+            key: 'active',
+            header: 'Activo',
+            render: role => (
+              <button onClick={() => toggleActive(role)} className="flex items-center gap-1.5 text-xs">
+                {role.is_active ? (
+                  <><Check size={12} style={{ color: 'var(--sys-success)' }} /> Activo</>
+                ) : (
+                  <><X size={12} style={{ color: 'var(--sys-error)' }} /> Inactivo</>
+                )}
+              </button>
+            ),
+          },
+        ]}
+        keyExtractor={role => role.id}
+        loading={loading}
+        emptyState={{
+          icon: <Shield size={40} />,
+          title: 'No hay roles configurados',
+          description: '',
+        }}
+        actions={[
+          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: handleDelete },
+        ]}
+      />
 
       {/* Create Modal */}
       {showCreate && (

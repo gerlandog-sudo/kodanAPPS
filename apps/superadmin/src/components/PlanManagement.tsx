@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import { Button } from '@kodan-apps/ui-core';
+import { Button, Table, SlidePanel } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
-import { SlidePanel } from '@kodan-apps/ui-core';
 import {
   CreditCard,
   Plus,
@@ -41,18 +40,6 @@ const METRIC_LABELS: Record<string, string> = {
   tasks_max: 'Tareas máx.',
   api_calls_month: 'API calls/mes',
 };
-
-function SkeletonRow() {
-  return (
-    <tr>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <td key={i} className="py-3 px-4">
-          <div className="skeleton h-4 w-full" style={{ maxWidth: i === 0 ? '140px' : '100px' }} />
-        </td>
-      ))}
-    </tr>
-  );
-}
 
 export function PlanManagement() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -205,65 +192,58 @@ export function PlanManagement() {
         </Button>
       </div>
 
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Plan</th>
-              <th className="text-right">Precio</th>
-              <th>Límites CRM</th>
-              <th>Límites Tracker</th>
-              <th className="text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)
-            ) : plans.length === 0 ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <CreditCard size={40} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
-                    <p className="mt-3 text-sm font-medium" style={{ color: 'var(--sys-text-muted)' }}>No hay planes configurados</p>
-                    <p className="text-xs mt-1" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }}>Crea el primer plan de suscripción</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              plans.map(plan => (
-                <tr key={plan.id}>
-                  <td>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold" style={{ background: 'var(--sys-surface)', color: 'var(--sys-tertiary)' }}>
-                        <CreditCard size={14} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{plan.name}</p>
-                        {plan.description && <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>{plan.description}</p>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-right font-medium text-sm">
-                    ${plan.price.toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="font-normal" style={{ color: 'var(--sys-text-muted)' }}>/{plan.currency}</span>
-                  </td>
-                  <td><LimitChips limits={plan.limits} module="crm" /></td>
-                  <td><LimitChips limits={plan.limits} module="tracker" /></td>
-                  <td className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" className="p-1.5" onClick={() => { setEditingPlan(plan); setShowCreateModal(true); }} title="Editar">
-                        <Edit3 size={14} />
-                      </Button>
-                      <Button variant="ghost" className="p-1.5" style={{ color: 'var(--sys-error)' }} onClick={() => handleDelete(plan)} title="Eliminar">
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table<Plan>
+        data={plans}
+        columns={[
+          {
+            key: 'plan',
+            header: 'Plan',
+            render: plan => (
+              <>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0" style={{ background: 'var(--sys-surface)', color: 'var(--sys-tertiary)' }}>
+                  <CreditCard size={14} />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">{plan.name}</p>
+                  {plan.description && <p className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{plan.description}</p>}
+                </div>
+              </>
+            ),
+          },
+          {
+            key: 'price',
+            header: 'Precio',
+            align: 'right',
+            render: plan => (
+              <>
+                ${plan.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <span className="font-normal" style={{ color: 'var(--sys-text-muted)' }}>/{plan.currency}</span>
+              </>
+            ),
+          },
+          {
+            key: 'limits_crm',
+            header: 'Límites CRM',
+            render: plan => <LimitChips limits={plan.limits} module="crm" />,
+          },
+          {
+            key: 'limits_tracker',
+            header: 'Límites Tracker',
+            render: plan => <LimitChips limits={plan.limits} module="tracker" />,
+          },
+        ]}
+        keyExtractor={plan => plan.id}
+        loading={loading}
+        emptyState={{
+          icon: <CreditCard size={40} />,
+          title: 'No hay planes configurados',
+          description: 'Crea el primer plan de suscripción',
+        }}
+        actions={[
+          { icon: <Edit3 size={14} />, label: 'Editar', onClick: plan => { setEditingPlan(plan); setShowCreateModal(true); } },
+          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: handleDelete },
+        ]}
+      />
 
       <SlidePanel open={showCreateModal || !!editingPlan} onClose={() => { setShowCreateModal(false); setEditingPlan(null); }} title={editingPlan ? 'Editar Plan' : 'Nuevo Plan'}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6" style={{ minHeight: 'calc(100vh - 120px)' }}>

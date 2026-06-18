@@ -23,6 +23,9 @@ abstract class BaseRepository
 {
     protected TenantAwarePDO $pdo;
 
+    /** Nombre de tabla. Sobrescribir en cada subclase. */
+    protected const TABLE = '';
+
     /**
      * Nombre de la columna primary key de la tabla.
      * Sobrescribir en subclases si difiere de 'id'.

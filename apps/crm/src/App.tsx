@@ -1,4 +1,4 @@
-﻿import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading } from '@kodan-apps/ui-core';
+﻿import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react';
 import type { UserMenuItem } from '@kodan-apps/ui-core';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -32,7 +33,7 @@ type Route = 'dashboard' | 'negotiations' | 'accounts' | 'contacts' | 'products'
 type View = 'login' | 'set-password' | 'app';
 
 function AppContent() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, loadUserTheme } = useTheme();
   const { logout: authLogout, setAuthenticated, loading, authenticated, user, roles } = useAuth('crm');
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
@@ -50,7 +51,10 @@ function AppContent() {
     if (loading) return;
 
     setView(authenticated ? 'app' : 'login');
-  }, [loading, authenticated, view]);
+    if (authenticated) {
+      loadUserTheme();
+    }
+  }, [loading, authenticated, view, loadUserTheme]);
 
   const handleLogout = useCallback(() => {
     authLogout();
@@ -72,9 +76,6 @@ function AppContent() {
       { key: 'products', label: 'Catalogo', icon: <Tag size={18} /> },
       { key: 'tasks', label: 'Agenda', icon: <ListTodo size={18} /> },
     ]
-    if (roles.includes('admin')) {
-      items.push({ key: 'settings', label: 'Configuracion', icon: <SettingsIcon size={18} /> })
-    }
     return items
   }, [roles])
 
@@ -92,7 +93,7 @@ function AppContent() {
   }
 
   if (!authenticated) {
-    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={(data) => { setAuthenticated(data); setView('app'); }} onGoToSetPassword={() => setView('set-password')} />;
+    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={(data) => { setAuthenticated(data); setView('app'); loadUserTheme(); }} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   return (
@@ -121,8 +122,8 @@ function AppContent() {
           notificationCount={showNotifications ? 3 : 0}
           onNotificationClick={() => setShowNotifications(!showNotifications)}
         />
-        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
-          <div className="mx-auto" style={{ maxWidth: '1400px' }}>
+        <main className="flex flex-col flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)' }}>
+          <div className="flex flex-col flex-1 mx-auto" style={{ maxWidth: '1400px' }}>
             <Suspense fallback={
               <div className="flex items-center justify-center py-20">
                 <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />
@@ -145,7 +146,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider>
       <Toaster />
       <AppContent />
     </ThemeProvider>

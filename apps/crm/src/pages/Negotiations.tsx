@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, CustomFieldsForm } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, KanbanCard, type KanbanCardMetadata } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
@@ -56,47 +56,31 @@ interface CardProps {
   opp: Opportunity;
   isDropped: boolean;
   onOpenDetail: (opp: Opportunity) => void;
+  stageColor?: string;
 }
 
-function OppCard({ opp, isDropped, onOpenDetail }: CardProps) {
-  return (
-    <div
-      onClick={() => onOpenDetail(opp)}
-      className={`p-4 cursor-pointer hover:scale-[1.02] active:scale-95 duration-150 flex flex-col gap-3 select-none rounded-lg border transition-all
-        ${isDropped ? 'animate-drop-shake' : ''}`}
-      style={{
-        background: 'var(--sys-surface-raised)',
-        borderColor: 'var(--sys-border-soft)',
-      }}
-    >
-      <div>
-        <h4 className="font-bold text-sm tracking-tight line-clamp-1">{opp.name}</h4>
-        <p className="text-xs font-semibold mt-1" style={{ color: 'var(--sys-primary)' }}>
-          {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(opp.value) || 0)}
-        </p>
-      </div>
+function OppCard({ opp, isDropped, onOpenDetail, stageColor }: CardProps) {
+  const metadata: KanbanCardMetadata[] = [];
+  if (opp.account_name) {
+    metadata.push({ icon: <Building size={12} />, label: opp.account_name, weight: 'normal', size: '0.7rem' });
+  }
+  if (opp.contact_name) {
+    metadata.push({ icon: <User size={12} />, label: opp.contact_name, weight: 'normal', size: '0.7rem' });
+  }
+  if (opp.close_date) {
+    metadata.push({ icon: <Calendar size={12} />, label: `Cierre: ${opp.close_date}`, weight: 'normal', size: '0.7rem' });
+  }
 
-      <div className="flex flex-col gap-1.5 text-[11px]" style={{ color: 'var(--sys-text-muted)' }}>
-        {opp.account_name && (
-          <div className="flex items-center gap-1">
-            <Building size={12} />
-            <span className="truncate">{opp.account_name}</span>
-          </div>
-        )}
-        {opp.contact_name && (
-          <div className="flex items-center gap-1">
-            <User size={12} />
-            <span className="truncate">{opp.contact_name}</span>
-          </div>
-        )}
-        {opp.close_date && (
-          <div className="flex items-center gap-1">
-            <Calendar size={12} />
-            <span>Cierre: {opp.close_date}</span>
-          </div>
-        )}
-      </div>
-    </div>
+  return (
+    <KanbanCard
+      title={opp.name}
+      value={new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(opp.value) || 0)}
+      valuePrefix="$"
+      dotColor={stageColor}
+      metadata={metadata}
+      isDropped={isDropped}
+      onClick={() => onOpenDetail(opp)}
+    />
   );
 }
 
@@ -470,20 +454,24 @@ export function Negotiations() {
   );
 
   const renderCard = useCallback(
-    (opp: Opportunity) => (
-      <OppCard
-        opp={opp}
-        isDropped={justDroppedId === opp.id}
-        onOpenDetail={openDetailDrawer}
-      />
-    ),
-    [justDroppedId]
+    (opp: Opportunity) => {
+      const stage = stages.find((s) => s.id === opp.pipeline_stage_id);
+      return (
+        <OppCard
+          opp={opp}
+          isDropped={justDroppedId === opp.id}
+          onOpenDetail={openDetailDrawer}
+          stageColor={stage?.color_hex}
+        />
+      );
+    },
+    [justDroppedId, stages]
   );
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 48px)' }}>
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Top Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 shrink-0 pb-6 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-3 shrink-0 pb-4 w-full">
         <div className="flex items-center gap-3">
           <select
             className="input select max-w-xs"

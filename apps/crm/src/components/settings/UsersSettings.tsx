@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { Button, Input, SlidePanel, Toggle, useAuth } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import { 
@@ -56,7 +57,6 @@ export function UsersSettings() {
       setUsers(usersData)
       setRoles(rolesData)
       
-      // Obtener el límite de usuarios de la métrica del plan
       const userLimitMetric = planStatus.find((m: any) => m.metric === 'users_max')
       if (userLimitMetric) {
         setUsersLimit(userLimitMetric.limit_value)
@@ -161,7 +161,6 @@ export function UsersSettings() {
     }
   }
 
-  // Helper para obtener iconos de rol específicos de lucide-react
   const getRoleIcon = (roleName: string) => {
     const name = roleName.toLowerCase()
     if (name.includes('admin')) return <Shield size={16} />
@@ -171,7 +170,6 @@ export function UsersSettings() {
     return <User size={16} />
   }
 
-  // Estilos de badge por rol de CRM
   const getRoleBadgeStyle = (roleName: string) => {
     const name = roleName.toLowerCase()
     if (name.includes('admin')) {
@@ -187,13 +185,13 @@ export function UsersSettings() {
   }
 
   return (
-    <div className="flex flex-col gap-6 font-sans text-xs">
+    <div className="flex flex-col gap-6 font-sans text-xs w-full">
       
       {/* Barra superior de Licencias y Capacidad (Premium Tier) */}
       {!loading && (
-        <div className="p-4 rounded-xl bg-[var(--sys-surface)] border border-[var(--sys-border-soft)] flex flex-col gap-2.5">
+        <div className="p-4 rounded-xl bg-[var(--sys-surface)] border border-[var(--sys-border-soft)] flex flex-col gap-2 w-full">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--sys-text-muted)] flex items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--sys-text-muted)] flex items-center gap-1.5 select-none">
               <CheckCircle2 size={12} className="text-emerald-500" /> Capacidad de Licencias en CRM
             </span>
             <span className="font-mono text-[10px] font-extrabold text-[var(--sys-text)]">
@@ -215,7 +213,7 @@ export function UsersSettings() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--sys-border-soft)] pb-4">
+      <div className="flex items-center justify-between border-b border-[var(--sys-border-soft)] pb-4 w-full">
         <div>
           <h3 className="text-sm font-bold tracking-wider uppercase text-[var(--sys-text)] m-0">
             Miembros y Roles
@@ -224,21 +222,21 @@ export function UsersSettings() {
             Operadores con acceso al entorno de relaciones del CRM
           </p>
         </div>
-        <Button variant="primary" className="btn-primary flex items-center gap-1.5" onClick={handleOpenCreate}>
-          <UserPlus size={14} /> Añadir Operador
+        <Button variant="primary" className="btn-primary flex items-center gap-1.5" style={{ padding: '0.4rem 0.8rem', fontSize: '11px' }} onClick={handleOpenCreate}>
+          <UserPlus size={13} /> Añadir Operador
         </Button>
       </div>
 
       {/* Lista de usuarios (Tabla de Contraste Extremo) */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[30vh] py-12 text-center">
+        <div className="flex flex-col items-center justify-center min-h-[30vh] py-12 text-center w-full">
           <RefreshCw className="w-6 h-6 text-[var(--sys-primary)] animate-spin mb-2" />
           <span className="text-[10px] font-sans uppercase tracking-wider text-gray-500">
             Consultando Base de Datos...
           </span>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--sys-border-soft)]">
@@ -248,14 +246,14 @@ export function UsersSettings() {
                 <th className="py-3 px-4 text-[9px] font-bold uppercase tracking-widest text-[var(--sys-text-muted)] select-none text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--sys-border-soft)]/40">
+            <tbody className="divide-y divide-[var(--sys-border-soft)]/30">
               {users.map((u) => {
                 const isSelf = currentUser && currentUser.id === u.id
                 return (
-                  <tr key={u.id} className="group hover:bg-[var(--sys-surface-hover)]/30 transition-colors">
+                  <tr key={u.id} className="group hover:bg-[var(--sys-surface-hover)]/20 transition-colors">
                     
                     {/* Nombre e Email */}
-                    <td className="py-3.5 px-4 min-w-[200px]">
+                    <td className="py-3 px-4 min-w-[200px]">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full border border-[var(--sys-border-soft)] bg-[var(--sys-surface)] flex items-center justify-center shrink-0">
                           <span className="font-extrabold text-[10px] text-[var(--sys-primary)]">
@@ -277,7 +275,7 @@ export function UsersSettings() {
                     </td>
 
                     {/* Rol */}
-                    <td className="py-3.5 px-4 vertical-middle">
+                    <td className="py-3 px-4 vertical-middle">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border uppercase tracking-wider ${getRoleBadgeStyle(u.role_name || '')}`}>
                         {getRoleIcon(u.role_name || '')}
                         {u.role_name}
@@ -285,7 +283,7 @@ export function UsersSettings() {
                     </td>
 
                     {/* Estado con Pulso Animado */}
-                    <td className="py-3.5 px-4 text-center vertical-middle">
+                    <td className="py-3 px-4 text-center vertical-middle">
                       <div className="flex items-center justify-center">
                         {u.is_active === 1 ? (
                           <span className="relative flex h-2 w-2" title="Activo">
@@ -301,7 +299,7 @@ export function UsersSettings() {
                     </td>
 
                     {/* Acciones con Opacidad */}
-                    <td className="py-3.5 px-4 text-right vertical-middle">
+                    <td className="py-3 px-4 text-right vertical-middle">
                       <div className="inline-flex items-center gap-1.5 md:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                         <button
                           onClick={() => handleOpenEdit(u)}
@@ -328,7 +326,7 @@ export function UsersSettings() {
           </table>
 
           {users.length === 0 && (
-            <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-2xl text-center mt-4" style={{ borderColor: 'var(--sys-border-soft)' }}>
+            <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-2xl text-center mt-4 w-full" style={{ borderColor: 'var(--sys-border-soft)' }}>
               <Users className="w-8 h-8 text-[var(--sys-text-muted)] mx-auto mb-3" />
               <p className="text-xs italic" style={{ color: 'var(--sys-text-muted)' }}>
                 No hay operadores registrados en este inquilino.
@@ -338,126 +336,129 @@ export function UsersSettings() {
         </div>
       )}
 
-      {/* SlidePanel Crear/Editar */}
-      <SlidePanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        title={editingUser ? 'Editar Operador' : 'Nuevo Operador de CRM'}
-      >
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
-          
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-              Nombre Completo *
-            </label>
-            <Input
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              placeholder="Ej: Juan Pérez"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-              Correo Electrónico *
-            </label>
-            <Input
-              type="email"
-              value={formEmail}
-              onChange={(e) => setFormEmail(e.target.value)}
-              placeholder="juan.perez@empresa.com"
-              disabled={!!editingUser}
-              required
-            />
-          </div>
-
-          {!editingUser && (
+      {/* SlidePanel Portalizado en document.body (Resuelve superposiciones y distorsión del DOM) */}
+      {panelOpen && createPortal(
+        <SlidePanel
+          open={panelOpen}
+          onClose={() => setPanelOpen(false)}
+          title={editingUser ? 'Editar Operador' : 'Nuevo Operador de CRM'}
+        >
+          <form onSubmit={handleSave} className="flex flex-col gap-4">
+            
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-                Contraseña Inicial *
+                Nombre Completo *
               </label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formPassword}
-                  onChange={(e) => setFormPassword(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sys-text-muted)] hover:text-[var(--sys-text)]"
-                >
-                  {showPassword ? <X size={13} /> : <Key size={13} />}
-                </button>
+              <Input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Ej: Juan Pérez"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
+                Correo Electrónico *
+              </label>
+              <Input
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="juan.perez@empresa.com"
+                disabled={!!editingUser}
+                required
+              />
+            </div>
+
+            {!editingUser && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
+                  Contraseña Inicial *
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formPassword}
+                    onChange={(e) => setFormPassword(e.target.value)}
+                    placeholder="Mínimo 8 caracteres"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sys-text-muted)] hover:text-[var(--sys-text)]"
+                  >
+                    {showPassword ? <X size={13} /> : <Key size={13} />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Tarjetas Interactivas de Selección de Rol (Card Selectors) */}
+            <div className="flex flex-col gap-1.5 pt-1">
+              <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
+                Seleccionar Rol del Operador *
+              </label>
+              <div className="grid grid-cols-1 gap-2 mt-1">
+                {roles.map((r) => {
+                  const isSelected = formRoleId === r.id
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setFormRoleId(r.id)}
+                      className="w-full flex items-start gap-3 p-3 rounded-xl border text-left cursor-pointer transition-all duration-200 focus:outline-none"
+                      style={{
+                        background: isSelected ? 'var(--sys-surface-hover)' : 'transparent',
+                        borderColor: isSelected ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
+                      }}
+                    >
+                      <div className={`p-2 rounded-lg border shrink-0 transition-transform ${isSelected ? 'text-[var(--sys-primary)] bg-[var(--sys-surface-raised)] border-[var(--sys-primary-soft)]/30 scale-105' : 'text-[var(--sys-text-muted)] border-[var(--sys-border-soft)]'}`}>
+                        {getRoleIcon(r.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <span className={`text-xs font-extrabold uppercase tracking-wide block ${isSelected ? 'text-[var(--sys-primary)]' : 'text-[var(--sys-text)]'}`}>
+                          {r.name}
+                        </span>
+                        <span className="text-[9px] text-[var(--sys-text-muted)] block mt-0.5 leading-relaxed">
+                          {r.description}
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
-          )}
 
-          {/* Tarjetas Interactivas de Selección de Rol (Card Selectors) */}
-          <div className="flex flex-col gap-1.5 pt-1">
-            <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-              Seleccionar Rol del Operador *
-            </label>
-            <div className="grid grid-cols-1 gap-2.5 mt-1">
-              {roles.map((r) => {
-                const isSelected = formRoleId === r.id
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setFormRoleId(r.id)}
-                    className="w-full flex items-start gap-3 p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 focus:outline-none"
-                    style={{
-                      background: isSelected ? 'var(--sys-surface-hover)' : 'transparent',
-                      borderColor: isSelected ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
-                    }}
-                  >
-                    <div className={`p-2 rounded-lg border shrink-0 transition-transform ${isSelected ? 'text-[var(--sys-primary)] bg-[var(--sys-surface-raised)] border-[var(--sys-primary-soft)]/30 scale-105' : 'text-[var(--sys-text-muted)] border-[var(--sys-border-soft)]'}`}>
-                      {getRoleIcon(r.name)}
-                    </div>
-                    <div className="min-w-0">
-                      <span className={`text-xs font-extrabold uppercase tracking-wide block ${isSelected ? 'text-[var(--sys-primary)]' : 'text-[var(--sys-text)]'}`}>
-                        {r.name}
-                      </span>
-                      <span className="text-[10px] text-[var(--sys-text-muted)] block mt-0.5 leading-relaxed">
-                        {r.description}
-                      </span>
-                    </div>
-                  </button>
-                )
-              })}
+            {editingUser && currentUser && currentUser.id !== editingUser.id && (
+              <div className="flex flex-col gap-1 pt-2 border-t border-[var(--sys-border-soft)]/50 mt-2">
+                <Toggle
+                  checked={formActive}
+                  onChange={(e) => setFormActive(e.target.checked)}
+                  label="Usuario Activo"
+                />
+                <p className="text-[9px]" style={{ color: 'var(--sys-text-muted)', marginTop: '2px' }}>
+                  Si se desactiva, se revocarán todos los permisos de acceso al CRM de forma inmediata.
+                </p>
+              </div>
+            )}
+
+            <div
+              className="flex justify-end gap-3 pt-4"
+              style={{ borderTop: '1px solid var(--sys-border-soft)' }}
+            >
+              <Button variant="secondary" type="button" onClick={() => setPanelOpen(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" type="submit" className="btn-primary">
+                {editingUser ? 'Guardar Cambios' : 'Añadir Operador'}
+              </Button>
             </div>
-          </div>
-
-          {editingUser && currentUser && currentUser.id !== editingUser.id && (
-            <div className="flex flex-col gap-1 pt-2 border-t border-[var(--sys-border-soft)]/50 mt-2">
-              <Toggle
-                checked={formActive}
-                onChange={(e) => setFormActive(e.target.checked)}
-                label="Usuario Activo"
-              />
-              <p className="text-[9px]" style={{ color: 'var(--sys-text-muted)', marginTop: '2px' }}>
-                Si se desactiva, se revocarán todos los permisos de acceso al CRM de forma inmediata.
-              </p>
-            </div>
-          )}
-
-          <div
-            className="flex justify-end gap-3 pt-4"
-            style={{ borderTop: '1px solid var(--sys-border-soft)' }}
-          >
-            <Button variant="secondary" type="button" onClick={() => setPanelOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="primary" type="submit" className="btn-primary">
-              {editingUser ? 'Guardar Cambios' : 'Añadir Operador'}
-            </Button>
-          </div>
-        </form>
-      </SlidePanel>
+          </form>
+        </SlidePanel>,
+        document.body
+      )}
     </div>
   )
 }

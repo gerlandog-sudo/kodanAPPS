@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Button, Input, SlidePanel, MultiSelect, Toggle } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import type { CustomFieldDef } from '../../api/client'
-import { Plus, Edit2, Trash2, GripVertical, Building2, Users, Briefcase } from 'lucide-react'
+import { Plus, Edit2, Trash2, GripVertical, Building2, Users, Briefcase, Type, Hash, List, CheckSquare, ToggleRight, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 
 type EntityType = 'account' | 'contact' | 'opportunity'
@@ -265,118 +266,151 @@ export function CustomFieldsSettings() {
         </div>
       )}
 
-      {/* SlidePanel */}
-      <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editingField ? 'Editar Campo' : 'Nuevo Campo Personalizado'}>
-        <form onSubmit={e => { e.preventDefault(); handleSave() }} className="flex flex-col gap-4">
-          {!editingField && (
+      {/* SlidePanel Portalizado en document.body */}
+      {panelOpen && createPortal(
+        <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editingField ? 'Editar Campo' : 'Nuevo Campo Personalizado'}>
+          <form onSubmit={e => { e.preventDefault(); handleSave() }} className="flex flex-col gap-4">
+            {!editingField && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>CLAVE TÉCNICA (field_key) *</label>
+                <Input
+                  value={formKey}
+                  onChange={e => setFormKey(e.target.value)}
+                  placeholder="Ej: numero_empleados"
+                  disabled={!!editingField}
+                  required
+                />
+                <p className="text-[10px]" style={{ color: 'var(--sys-text-muted)' }}>
+                  Solo minúsculas, números y guión bajo. Se auto-genera a partir del nombre visible.
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>CLAVE TÉCNICA (field_key) *</label>
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NOMBRE VISIBLE *</label>
               <Input
-                value={formKey}
-                onChange={e => setFormKey(e.target.value)}
-                placeholder="Ej: numero_empleados"
-                disabled={!!editingField}
+                value={formLabel}
+                onChange={e => {
+                  setFormLabel(e.target.value)
+                  if (!editingField) {
+                    const generated = e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9\s_-]/g, '')
+                      .trim()
+                      .replace(/[\s_-]+/g, '_')
+                    setFormKey(generated)
+                  }
+                }}
+                placeholder="Ej: Número de empleados"
                 required
               />
-              <p className="text-[10px]" style={{ color: 'var(--sys-text-muted)' }}>
-                Solo minúsculas, números y guión bajo. Se auto-genera a partir del nombre visible.
-              </p>
             </div>
-          )}
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NOMBRE VISIBLE *</label>
-            <Input
-              value={formLabel}
-              onChange={e => {
-                setFormLabel(e.target.value)
-                if (!editingField) {
-                  const generated = e.target.value
-                    .toLowerCase()
-                    .replace(/[^a-z0-9\s_-]/g, '')
-                    .trim()
-                    .replace(/[\s_-]+/g, '_')
-                  setFormKey(generated)
-                }
-              }}
-              placeholder="Ej: Número de empleados"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>TIPO DE CAMPO</label>
-            <select
-              className="input"
-              value={formType}
-              onChange={e => setFormType(e.target.value)}
-              style={{ appearance: 'auto', cursor: 'pointer' }}
-              disabled={!!editingField}
-            >
-              {FIELD_TYPE_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {['select', 'multi_select'].includes(formType) && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>OPCIONES</label>
-              <MultiSelect
-                options={formOptions.map(o => ({ value: o, label: o }))}
-                values={formOptions}
-                onChange={setFormOptions}
-              />
-              <div className="flex gap-2 mt-1">
-                <Input
-                  placeholder="Escribe y presiona Enter para agregar..."
-                  value={''}
-                  onChange={() => {}}
-                  onKeyDown={(e: any) => {
-                    if (e.key === 'Enter' && e.target.value.trim()) {
-                      e.preventDefault()
-                      const val = e.target.value.trim()
-                      if (!formOptions.includes(val)) {
-                        setFormOptions(prev => [...prev, val])
-                      }
-                      e.target.value = ''
-                    }
-                  }}
-                />
-              </div>
-              {formOptions.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {formOptions.map((opt, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1.5"
-                      style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', color: 'var(--sys-text)' }}
+            <div className="flex flex-col gap-1.5 pt-1">
+              <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
+                Tipo de Campo *
+              </label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                {[
+                  { value: 'text', label: 'Texto', desc: 'Línea de texto estándar', icon: <Type size={14} /> },
+                  { value: 'number', label: 'Número', desc: 'Valores numéricos enteros o decimales', icon: <Hash size={14} /> },
+                  { value: 'select', label: 'Lista Desplegable', desc: 'Opción única de un listado', icon: <List size={14} /> },
+                  { value: 'multi_select', label: 'Selección Múltiple', desc: 'Múltiples opciones de un listado', icon: <CheckSquare size={14} /> },
+                  { value: 'date', label: 'Fecha', desc: 'Selector de fecha del calendario', icon: <Calendar size={14} /> },
+                  { value: 'boolean', label: 'Sí / No', desc: 'Interruptor de encendido o apagado', icon: <ToggleRight size={14} /> },
+                ].map((o) => {
+                  const isSelected = formType === o.value
+                  const isDisabled = !!editingField
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => setFormType(o.value)}
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-200 focus:outline-none ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      style={{
+                        background: isSelected ? 'var(--sys-surface-hover)' : 'transparent',
+                        borderColor: isSelected ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
+                      }}
                     >
-                      {opt}
-                      <button type="button" onClick={() => setFormOptions(prev => prev.filter((_, j) => j !== i))} style={{ color: 'var(--sys-error)', cursor: 'pointer' }}>×</button>
-                    </span>
-                  ))}
-                </div>
-              )}
+                      <div className={`p-1.5 rounded-lg border shrink-0 transition-transform ${isSelected ? 'text-[var(--sys-primary)] bg-[var(--sys-surface-raised)] border-[var(--sys-primary-soft)]/30 scale-105' : 'text-[var(--sys-text-muted)] border-[var(--sys-border-soft)]'}`}>
+                        {o.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <span className={`text-[11px] font-extrabold uppercase tracking-wide block ${isSelected ? 'text-[var(--sys-primary)]' : 'text-[var(--sys-text)]'}`}>
+                          {o.label}
+                        </span>
+                        <span className="text-[9px] text-[var(--sys-text-muted)] block mt-0.5 leading-tight">
+                          {o.desc}
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          )}
 
-          <div className="pt-2">
-            <Toggle
-              checked={formRequired}
-              onChange={e => setFormRequired(e.target.checked)}
-              label="Campo obligatorio"
-            />
-          </div>
+            {['select', 'multi_select'].includes(formType) && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>OPCIONES</label>
+                <MultiSelect
+                  options={formOptions.map(o => ({ value: o, label: o }))}
+                  values={formOptions}
+                  onChange={setFormOptions}
+                />
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    placeholder="Escribe y presiona Enter para agregar..."
+                    value={''}
+                    onChange={() => {}}
+                    onKeyDown={(e: any) => {
+                      if (e.key === 'Enter' && e.target.value.trim()) {
+                        e.preventDefault()
+                        const val = e.target.value.trim()
+                        if (!formOptions.includes(val)) {
+                          setFormOptions(prev => [...prev, val])
+                        }
+                        e.target.value = ''
+                      }
+                    }}
+                  />
+                </div>
+                {formOptions.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {formOptions.map((opt, i) => (
+                      <span
+                        key={i}
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1.5"
+                        style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', color: 'var(--sys-text)' }}
+                      >
+                        {opt}
+                        <button type="button" onClick={() => setFormOptions(prev => prev.filter((_, j) => j !== i))} style={{ color: 'var(--sys-error)', cursor: 'pointer' }}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-          <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
-            <Button variant="secondary" type="button" onClick={() => setPanelOpen(false)}>Cancelar</Button>
-            <Button variant="primary" type="submit" className="btn-primary">
-              {editingField ? 'Actualizar' : 'Crear Campo'}
-            </Button>
-          </div>
-        </form>
-      </SlidePanel>
+            <div className="pt-2">
+              <Toggle
+                checked={formRequired}
+                onChange={e => setFormRequired(e.target.checked)}
+                label="Campo obligatorio"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+              <Button variant="secondary" type="button" onClick={() => setPanelOpen(false)}>Cancelar</Button>
+              <Button variant="primary" type="submit" className="btn-primary">
+                {editingField ? 'Actualizar' : 'Crear Campo'}
+              </Button>
+            </div>
+          </form>
+        </SlidePanel>,
+        document.body
+      )}
+
     </div>
   )
 }

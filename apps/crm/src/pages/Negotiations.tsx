@@ -35,6 +35,11 @@ interface Opportunity {
   pipeline_id?: number;
   custom_fields?: Record<string, any>;
   is_archived?: boolean;
+  created_at?: string;
+  owner_user_id?: number | null;
+  owner_name?: string;
+  owner_avatar?: string | null;
+  line_items_count?: number;
 }
 
 interface Stage {

@@ -1,6 +1,6 @@
-﻿import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword, TopBar } from '@kodan-apps/ui-core';
+﻿import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
-import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
   LayoutDashboard,
   Building2,
@@ -33,52 +33,29 @@ type View = 'login' | 'set-password' | 'app';
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme();
-  const [view, setView] = useState<View>('login');
+  const { logout: authLogout, setAuthenticated, loading, authenticated, user, roles } = useAuth('crm');
+  const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
-  const [user, setUser] = useState<any>(null);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
-    const cachedUser = localStorage.getItem('crm_user');
-    if (cachedUser) {
-      try {
-        const parsed = JSON.parse(cachedUser);
-        setUser(parsed);
-        setUserRoles(parsed.roles || []);
-        setView('app');
-      } catch {
-        localStorage.removeItem('crm_user');
-      }
-    }
-
     const params = new URLSearchParams(window.location.search);
     if (params.get('token')) {
       setView('set-password');
     }
   }, []);
 
-  const handleLoginSuccess = useCallback((userData: any) => {
-    const roles = userData.roles || [];
-    const data = { ...userData, roles };
-    setUser(data);
-    setUserRoles(roles);
-    localStorage.setItem('crm_user', JSON.stringify(data));
-    setView('app');
-  }, []);
+  useEffect(() => {
+    if (view !== 'initial') return;
+    if (loading) return;
+
+    setView(authenticated ? 'app' : 'login');
+  }, [loading, authenticated, view]);
 
   const handleLogout = useCallback(() => {
-    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    localStorage.removeItem('crm_user');
-    setUser(null);
+    authLogout();
     setView('login');
-  }, []);
-
-  useEffect(() => {
-    const onForceLogout = () => handleLogout();
-    window.addEventListener('auth:force-logout', onForceLogout);
-    return () => window.removeEventListener('auth:force-logout', onForceLogout);
-  }, [handleLogout]);
+  }, [authLogout]);
 
   const navItems = useMemo<NavItem[]>(() => {
     const items: NavItem[] = [
@@ -89,23 +66,27 @@ function AppContent() {
       { key: 'products', label: 'Catalogo', icon: <Tag size={18} /> },
       { key: 'tasks', label: 'Agenda', icon: <ListTodo size={18} /> },
     ]
-    if (userRoles.includes('admin')) {
+    if (roles.includes('admin')) {
       items.push({ key: 'settings', label: 'Configuracion', icon: <SettingsIcon size={18} /> })
     }
     return items
-  }, [userRoles])
+  }, [roles])
 
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
     { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
-    ...(userRoles.includes('admin') ? [{ label: 'Configuracion', icon: <SettingsIcon size={16} />, onClick: () => setRoute('settings' as Route) }] : []),
-  ], [userRoles])
+    ...(roles.includes('admin') ? [{ label: 'Configuracion', icon: <SettingsIcon size={16} />, onClick: () => setRoute('settings' as Route) }] : []),
+  ], [roles])
 
-  if (view === 'login') {
-    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
+  if (view === 'initial' || loading) {
+    return <AuthLoading />;
   }
 
   if (view === 'set-password') {
     return <SetPassword title="kodanCRM" emailPlaceholder="name@company.com" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onBackToLogin={() => setView('login')} />;
+  }
+
+  if (!authenticated) {
+    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={(data) => { setAuthenticated(data); setView('app'); }} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   return (

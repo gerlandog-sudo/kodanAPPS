@@ -16,26 +16,16 @@ export class ApiError extends Error {
   }
 }
 
-// --- Refresh token management ---
-const REFRESH_TOKEN_KEY = 'kodan_refresh_token';
+// --- Current appId (set by useAuth hook) ---
+let currentAppId = '';
 
-function getStoredRefreshToken(): string | null {
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
-}
-
-export function setStoredRefreshToken(token: string): void {
-  localStorage.setItem(REFRESH_TOKEN_KEY, token);
-}
-
-export function clearStoredRefreshToken(): void {
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+export function setCurrentAppId(appId: string): void {
+  currentAppId = appId;
 }
 
 // --- Force logout event ---
 export function triggerForceLogout(): void {
-  clearStoredRefreshToken();
   sessionStorage.removeItem('csrf_token');
-  localStorage.removeItem('crm_user');
   document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   window.dispatchEvent(new CustomEvent('auth:force-logout'));
 }
@@ -50,16 +40,14 @@ async function attemptTokenRefresh(): Promise<boolean> {
 
   refreshPromise = (async () => {
     try {
-      const refreshToken = getStoredRefreshToken();
-      const appId = localStorage.getItem('kodan_app_id');
-      if (!refreshToken || !appId) return false;
+      if (!currentAppId) return false;
 
       const response = await fetch(
         new URL(`${API_BASE}/api/auth/refresh`, window.location.origin).toString(),
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: refreshToken, app_id: appId }),
+          body: JSON.stringify({ app_id: currentAppId }),
           credentials: 'include',
         }
       );
@@ -67,11 +55,7 @@ async function attemptTokenRefresh(): Promise<boolean> {
       if (!response.ok) return false;
 
       const data = await response.json();
-      if (data.success && data.refresh_token) {
-        setStoredRefreshToken(data.refresh_token);
-        return true;
-      }
-      return false;
+      return data.success === true;
     } catch {
       return false;
     }
@@ -165,11 +149,7 @@ export async function apiClient<T = unknown>(
 
   // === 401 → auto-refresh + retry ===
   if (response.status === 401) {
-    // Si hay refresh token, es una sesión expirada → intentar refrescar
-    const refreshToken = getStoredRefreshToken();
-    const appId = localStorage.getItem('kodan_app_id');
-
-    if (refreshToken && appId) {
+    if (currentAppId) {
       const refreshed = await attemptTokenRefresh();
       if (refreshed) {
         const retryResponse = await fetch(url.toString(), {
@@ -192,7 +172,7 @@ export async function apiClient<T = unknown>(
       throw new ApiError(401, {}, 'Sesión expirada. Por favor inicia sesión nuevamente.');
     }
 
-    // No hay refresh token → sesión perdida / nunca hubo
+    // No hay appId configurada → sesión perdida / nunca hubo
     // Forzar logout si no es un endpoint de auth (login, set-password)
     const isAuthEndpoint = endpoint.startsWith('/api/auth/') || endpoint === '/api/csrf-token';
     if (!isAuthEndpoint) {

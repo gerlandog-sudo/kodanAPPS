@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { api, setStoredRefreshToken } from '../api/client';
+import { api } from '../api/client';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Input } from './Input';
@@ -47,10 +47,6 @@ export function Login({
       });
 
       if (response && response.success) {
-        if (response.refresh_token) {
-          setStoredRefreshToken(response.refresh_token);
-        }
-        localStorage.setItem('kodan_app_id', appId);
         onLoginSuccess({ ...response.user, roles: response.roles || [] });
       } else {
         toast.error('Error en la autenticación.');

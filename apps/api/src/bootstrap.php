@@ -163,7 +163,7 @@ $authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId);
 // ------------------------------------------------------------
 // Controladores
 // ------------------------------------------------------------
-$authController = new AuthController($userRepo, $refreshTokenRepo, $jwtSecret, $systemTenantId, $cookieDomain);
+$authController = new AuthController($userRepo, $refreshTokenRepo, $jwtSecret, $systemTenantId, $pdo, $cookieDomain);
 $superAdminController = new SuperAdminController($tenantService, $tenantRepo, $planRepo, $userRepo);
 $crmController = new CrmController($pdo);
 $customFieldController = new CustomFieldController($customFieldService, $pdo);

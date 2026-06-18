@@ -1,12 +1,12 @@
 ﻿import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Toaster, Sidebar, Login, SetPassword, TopBar } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading } from '@kodan-apps/ui-core';
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
 import { PlanManagement } from './components/PlanManagement';
 import { RoleManagement } from './components/RoleManagement';
 import { ChangePassword } from './components/ChangePassword';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   LayoutDashboard,
   Building2,
@@ -30,11 +30,11 @@ const navItems: NavItem[] = [
 ];
 
 function AppContent() {
-  const [view, setView] = useState<View>('login');
+  const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
-  const [user, setUser] = useState<any>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const { loadUserTheme, theme, toggleTheme } = useTheme();
+  const { logout: authLogout, setAuthenticated, loading, authenticated, user } = useAuth('superadmin');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -43,35 +43,39 @@ function AppContent() {
     }
   }, []);
 
-  const handleLoginSuccess = useCallback(async (userData: any) => {
-    setUser(userData);
+  useEffect(() => {
+    if (view !== 'initial') return;
+    if (loading) return;
+
+    setView(authenticated ? 'app' : 'login');
+  }, [loading, authenticated, view]);
+
+  const handleLoginSuccess = useCallback((data: any) => {
+    setAuthenticated(data);
     setView('app');
-    await loadUserTheme();
-  }, [loadUserTheme]);
+    loadUserTheme();
+  }, [setAuthenticated, loadUserTheme]);
 
   const handleLogout = useCallback(() => {
-    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    setUser(null);
+    authLogout();
     setView('login');
-  }, []);
-
-  useEffect(() => {
-    const onForceLogout = () => handleLogout();
-    window.addEventListener('auth:force-logout', onForceLogout);
-    return () => window.removeEventListener('auth:force-logout', onForceLogout);
-  }, [handleLogout]);
+  }, [authLogout]);
 
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
     { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
     { label: 'Configuracion Global', icon: <Settings size={16} />, onClick: () => {} },
   ], []);
 
-  if (view === 'login') {
-    return <Login appId="superadmin" title="kodanAPPS" onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
+  if (view === 'initial' || loading) {
+    return <AuthLoading />;
   }
 
   if (view === 'set-password') {
     return <SetPassword onBackToLogin={() => setView('login')} />;
+  }
+
+  if (!authenticated) {
+    return <Login appId="superadmin" title="kodanAPPS" onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   return (

@@ -47,7 +47,7 @@ return function (Router $router, array $app): void {
     });
 
     // ============================================================
-    // Auth Routes (públicas)
+    // Auth Routes
     // ============================================================
     $router->post('/api/auth/login', function () use ($app) {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -66,6 +66,28 @@ return function (Router $router, array $app): void {
     $router->post('/api/auth/refresh', function () use ($app) {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         $data = $app['controllers']['auth']->refresh($input);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+    });
+
+    $router->get('/api/auth/validate', function () use ($app) {
+        $authMiddleware = $app['auth'];
+        try {
+            $authMiddleware->handle();
+            $data = $app['controllers']['auth']->validate();
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\RuntimeException $e) {
+            $code = (int)$e->getCode();
+            if ($code === 0) $code = 401;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    });
+
+    $router->post('/api/auth/logout', function () use ($app) {
+        $data = $app['controllers']['auth']->logout();
         header('Content-Type: application/json');
         echo json_encode($data);
     });

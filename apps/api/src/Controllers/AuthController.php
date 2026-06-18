@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace kodanAPPS\Controllers;
 
+use kodanAPPS\DB\TenantAwarePDO;
+use kodanAPPS\DB\TenantContext;
 use kodanAPPS\Repositories\UserRepository;
 use kodanAPPS\Repositories\RefreshTokenRepository;
 use InvalidArgumentException;
@@ -17,18 +19,21 @@ final class AuthController
     private string $jwtSecret;
     private int $systemTenantId;
     private string $cookieDomain;
+    private TenantAwarePDO $pdo;
 
     public function __construct(
         UserRepository $userRepo,
         RefreshTokenRepository $refreshTokenRepo,
         string $jwtSecret,
         int $systemTenantId,
+        TenantAwarePDO $pdo,
         string $cookieDomain = ''
     ) {
         $this->userRepo = $userRepo;
         $this->refreshTokenRepo = $refreshTokenRepo;
         $this->jwtSecret = $jwtSecret;
         $this->systemTenantId = $systemTenantId;
+        $this->pdo = $pdo;
         $this->cookieDomain = $cookieDomain;
     }
 
@@ -195,7 +200,7 @@ final class AuthController
      */
     public function refresh(array $input): array
     {
-        $refreshToken = $input['refresh_token'] ?? '';
+        $refreshToken = $_COOKIE['refresh_token'] ?? '';
         $appId = $input['app_id'] ?? '';
 
         if ($refreshToken === '' || $appId === '') {
@@ -273,9 +278,17 @@ final class AuthController
             'samesite' => 'Lax',
         ]);
 
+        setcookie('refresh_token', $newTokenRaw, [
+            'expires' => time() + 2592000,
+            'path' => '/',
+            'domain' => $this->cookieDomain,
+            'secure' => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
         return [
             'success' => true,
-            'refresh_token' => $newTokenRaw,
             'user' => [
                 'id' => $userId,
                 'email' => $user['email'],
@@ -330,9 +343,18 @@ final class AuthController
             $_SERVER['REMOTE_ADDR'] ?? null
         );
 
+        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        setcookie('refresh_token', $refreshTokenRaw, [
+            'expires' => time() + 2592000,
+            'path' => '/',
+            'domain' => $this->cookieDomain,
+            'secure' => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
         return [
             'success' => true,
-            'refresh_token' => $refreshTokenRaw,
             'user' => [
                 'id' => (int)$user['id'],
                 'email' => $user['email'],
@@ -342,6 +364,89 @@ final class AuthController
             'app_id' => $appId,
             'roles' => $roles,
         ];
+    }
+
+    /**
+     * GET /api/auth/validate
+     *
+     * Valida sesión activa (requiere AuthMiddleware), retorna user + roles + plan_status genérico.
+     *
+     * @return array<string, mixed>
+     */
+    public function validate(): array
+    {
+        $tenantId = TenantContext::getTenantId();
+        $userId = TenantContext::getUserId();
+        $roles = TenantContext::getRoles();
+        $appId = TenantContext::getAppId();
+
+        $user = $this->userRepo->findById($userId);
+        if ($user === null) {
+            throw new RuntimeException('Usuario no encontrado', 401);
+        }
+
+        $stmt = $this->pdo->prepare("
+            SELECT module, metric, limit_value, current_usage, has_capacity
+            FROM v_tenant_plan_limits
+            WHERE tenant_id = ? AND module = ?
+        ");
+        $stmt->execute([$tenantId, $appId]);
+        $planStatus = $stmt->fetchAll();
+
+        return [
+            'authenticated' => true,
+            'user' => [
+                'id' => $userId,
+                'email' => $user['email'],
+                'display_name' => $user['display_name'],
+                'is_super_admin' => (int)$user['is_super_admin'] === 1,
+            ],
+            'roles' => $roles,
+            'app_id' => $appId,
+            'plan_status' => $planStatus ?: [],
+        ];
+    }
+
+    /**
+     * POST /api/auth/logout
+     *
+     * Revoca refresh token y limpia ambas cookies.
+     *
+     * @return array<string, mixed>
+     */
+    public function logout(): array
+    {
+        $refreshToken = $_COOKIE['refresh_token'] ?? '';
+        if ($refreshToken !== '') {
+            $tokenHash = hash('sha256', $refreshToken);
+            $storedToken = $this->refreshTokenRepo->findByHash($tokenHash);
+            if ($storedToken !== null) {
+                $this->refreshTokenRepo->revokeChain((int)$storedToken['id']);
+            }
+        }
+
+        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        $expired = time() - 3600;
+
+        setcookie('access_token', '', [
+            'expires' => $expired,
+            'path' => '/',
+            'domain' => $this->cookieDomain,
+            'secure' => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        setcookie('refresh_token', '', [
+            'expires' => $expired,
+            'path' => '/',
+            'domain' => $this->cookieDomain,
+            'secure' => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        return ['success' => true];
     }
 
     /**

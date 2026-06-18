@@ -27,7 +27,7 @@
 
 | # | Tarea | Esfuerzo | Hecho | Commit/PR | Notas |
 |---|-------|----------|-------|-----------|-------|
-| P1-1 | **Suite de tests Pest para AuthController** | M (2-3 días) | [ ] | | Login, refresh, set-password, logout — happy path + 1 fail c/u |
+| P1-1 | **Suite de tests Pest para AuthController** | M (2-3 días) | [x] | | Login, refresh, set-password, logout — happy path + 1 fail c/u |
 | P1-2 | **Suite de tests Pest para TenantService** | M (2-3 días) | [ ] | | createTenantWithAdmin, deactivateTenant, changeTenantPlan |
 | P1-3 | **Suite de tests Pest para UserRepository** | S (1-2 días) | [ ] | | emailExists, createUser, findByEmail, assignRoleToApp, getUserRoles |
 | P1-4 | **Configurar CI para ejecutar tests + phpstan** | S (1 día) | [ ] | | `composer phpstan` + `vendor/bin/pest` en pipeline |
@@ -74,6 +74,7 @@
 | 2026-06-17 | 65 | +7 | QW-1, QW-4, QW-5, QW-5b, QW-5c, QW-6, QW-7, QW-8 ejecutados. 10 archivos eliminados (4 wrappers, 2 tablas SQL, scratch/ + tmp_*.php). Package.json saneado. |
 | 2026-06-17 | 78 | +13 | P2-1 (SlidePanel), P2-2 (API refactor: 805→30 líneas), P2-3 Opción B (Tracker scaffold con auth + Dashboard + API) |
 | 2026-06-17 | 87 | +9 | P3-1 (TenantManagement: 1085→172 líneas, 6 componentes extraídos) |
+| 2026-06-18 | 97 | +10 | P1-1 (Tests Pest AuthController), PHPStan + TypeScript fixes |
 
 > **Meta:** ≥85 antes de deploy a producción. Cada CRITICAL/HIGH resuelto suma ~15-20 pts.
 
@@ -155,5 +156,5 @@ apps/api/tests/
 
 ---
 
-**Última actualización:** 2026-06-17  
+**Última actualización:** 2026-06-18  
 **Próxima revisión:** Al completar P1 (tests) — re-evaluar score

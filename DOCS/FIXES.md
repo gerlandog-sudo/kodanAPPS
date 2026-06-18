@@ -60,8 +60,8 @@
 | # | Tarea | Esfuerzo | Hecho | Commit/PR | Notas |
 |---|-------|----------|-------|-----------|-------|
 | P4-1 | **Eliminar ColorPicker + MultiSelect component files** | S | [ ] | | Solo si QW-3 confirma que no se usan |
-| P4-2 | **Revisar `react-easy-crop` en SuperAdmin (¿se usa?)** | S | [ ] | | Solo en `TenantManagement` para logo — OK mantener |
-| P4-3 | **Revisar `motion` en SuperAdmin (¿se usa?)** | S | [ ] | | `RoleManagement`, `TenantManagement` — OK mantener |
+| P4-2 | **Revisar `react-easy-crop` en SuperAdmin (¿se usa?)** | S | [x] | | Confirmado: usado en TenantLogoCropper para recorte de logo — OK mantener |
+| P4-3 | **Revisar `motion` en SuperAdmin (¿se usa?)** | S | [x] | | Confirmado: usado en RoleManagement y TenantCreateWizard (stepper animado) — OK mantener |
 | P4-4 | **Documentar arquitectura multi-tenant (3 capas)** | S | [ ] | | Para onboarding: BaseRepository (Capa 1), QueryBuilder (Capa 2), TenantAwarePDO (Capa 3) |
 
 ---

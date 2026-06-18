@@ -54,14 +54,29 @@ use kodanAPPS\Services\CustomFieldService;
 // ------------------------------------------------------------
 if (isset($_GET['debug_api'])) {
     header('Content-Type: application/json');
+
+    $publicDir  = __DIR__ . '/../public';
+    $apiDir     = __DIR__ . '/..';
+    $rootDir    = __DIR__ . '/../..';
+
     echo json_encode([
         'status' => 'debug',
         'uri' => $_SERVER['REQUEST_URI'] ?? '',
         'method' => $_SERVER['REQUEST_METHOD'] ?? '',
         'env_exists' => file_exists(__DIR__ . '/../.env'),
-        'vendor_exists' => file_exists(__DIR__ . '/../../vendor/autoload.php'),
+        'vendor_paths' => [
+            'public/vendor/autoload.php' => file_exists($publicDir . '/vendor/autoload.php'),
+            'api/vendor/autoload.php'    => file_exists($apiDir . '/vendor/autoload.php'),
+            'root/vendor/autoload.php'   => file_exists($rootDir . '/vendor/autoload.php'),
+        ],
+        'doc_root_relative' => [
+            'public/vendor' => file_exists(($_SERVER['DOCUMENT_ROOT'] ?? '') . '/vendor/autoload.php'),
+            'parent_vendor' => file_exists(dirname($_SERVER['DOCUMENT_ROOT'] ?? '') . '/vendor/autoload.php'),
+        ],
+        'open_basedir' => ini_get('open_basedir') ?: '(not set)',
         'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? '',
         'script_name' => $_SERVER['SCRIPT_NAME'] ?? '',
+        'script_filename' => $_SERVER['SCRIPT_FILENAME'] ?? '',
     ]);
     exit;
 }

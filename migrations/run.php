@@ -46,7 +46,7 @@ try {
     }
     echo "✅ Database connection successful.\n";
     
-    $migrations = ['001_core_schema.sql', '002_tenant_wizard.sql', '003_crm_schema.sql', '004_tracker_preview.sql', '005_settings_features.sql', '006_pipeline_fixes.sql'];
+    $migrations = ['001_core_schema.sql', '002_tenant_wizard.sql', '003_crm_schema.sql', '004_tracker_preview.sql', '005_settings_features.sql', '006_pipeline_fixes.sql', '007_drop_refresh_tokens.sql'];
     
     foreach ($migrations as $migration) {
         $sqlFile = __DIR__ . '/' . $migration;

@@ -34,47 +34,6 @@ export function triggerForceLogout(): void {
   window.dispatchEvent(new CustomEvent('auth:force-logout'));
 }
 
-// --- Token refresh with mutex for concurrent calls ---
-let refreshPromise: Promise<boolean> | null = null;
-
-async function attemptTokenRefresh(): Promise<boolean> {
-  if (refreshPromise) {
-    return refreshPromise;
-  }
-
-  refreshPromise = (async () => {
-    try {
-      if (!currentAppId) return false;
-
-      const response = await fetch(
-        new URL(`${API_BASE}/api/auth/refresh`, window.location.origin).toString(),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-App-ID': currentAppId,
-          },
-          body: JSON.stringify({ app_id: currentAppId }),
-          credentials: 'include',
-        }
-      );
-
-      if (!response.ok) return false;
-
-      const data = await response.json();
-      return data.success === true;
-    } catch {
-      return false;
-    }
-  })();
-
-  try {
-    return await refreshPromise;
-  } finally {
-    refreshPromise = null;
-  }
-}
-
 // --- CSRF token ---
 async function getCsrfToken(): Promise<string> {
   const cached = sessionStorage.getItem('csrf_token');
@@ -157,43 +116,12 @@ export async function apiClient<T = unknown>(
     return retryResponse.json();
   }
 
-  // === 401 → auto-refresh + retry ===
+  // === 401 → sesión expirada (JWT simple 4h, sin refresh) ===
   if (response.status === 401) {
-    // Endpoints de login/set-password: nunca intentar refresh (no hay sesión)
-    const isLoginEndpoint = endpoint === '/api/auth/login' || endpoint === '/api/auth/set-password';
-
-    if (currentAppId && !isLoginEndpoint) {
-      const refreshed = await attemptTokenRefresh();
-      if (refreshed) {
-        const retryResponse = await fetch(url.toString(), {
-          ...fetchOptions,
-          headers: requestHeaders,
-          credentials: 'include',
-        });
-
-        if (!retryResponse.ok) {
-          const retryError = await retryResponse.json().catch(() => ({}));
-          throw new ApiError(retryResponse.status, retryError, `API Error: ${retryResponse.status}`);
-        }
-
-        if (retryResponse.status === 204) return undefined as T;
-        return retryResponse.json();
-      }
-
-      // Refresh falló, la sesión expiró realmente
+    const isLoginOrSetPassword = endpoint === '/api/auth/login' || endpoint === '/api/auth/set-password';
+    if (currentAppId && !isLoginOrSetPassword) {
       triggerForceLogout();
       throw new ApiError(401, {}, 'Sesión expirada. Por favor inicia sesión nuevamente.');
-    }
-
-    // No hay appId configurada o es login → mostrar error del servidor
-    // Forzar logout solo si no es endpoint de auth
-    const isAuthEndpoint = endpoint.startsWith('/api/auth/') || endpoint === '/api/csrf-token';
-    if (!isLoginEndpoint && !isAuthEndpoint) {
-      triggerForceLogout();
-      // Safety redirect en caso de que el evento no sea escuchado
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
     }
     const errorBody = await response.json().catch(() => ({}));
     const serverMsg = (errorBody as any)?.error || (errorBody as any)?.message || 'Credenciales inválidas.';

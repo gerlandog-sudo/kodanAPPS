@@ -2,7 +2,7 @@
 
 Este documento es la especificación técnica maestra para la construcción desde cero de la plataforma **kodanAPPS** consolidada. Define la hoja de ruta secuencial de dependencias y especificaciones técnicas organizadas de arquitectura gruesa a detalle fino para guiar la codificación y despliegue por parte de desarrolladores y agentes.
 
-> **Última actualización:** 2026-06-16 — Settings page admin-only. Pipeline Manager con colores preset (8 ui_config). Custom Fields API/UI/Form con tipos extendidos (multi_select). Nuevos componentes ui-core: Toggle, MultiSelect, ColorPicker, SlidePanel, CustomFieldsForm. Migración BD: `sort_order`/`deleted_at`/`multi_select` en custom_field_definitions, `probability`/`ui_config` en pipeline_stages. Seed de demo pipelines + custom fields.
+> **Última actualización:** 2026-06-18 — **Simplificación Auth: Access Token JWT 4h sin Refresh Tokens**. Eliminado `/api/auth/refresh`, tabla `refresh_tokens`, rotación obligatoria y reuse detection. SameSite=Lax para cookies cross-origin. Access token por app (`access_token_{appId}`). Rate limiting login intacto. (Previo: 2026-06-16 Settings admin-only, Pipeline Manager, Custom Fields, componentes ui-core).
 
 ---
 
@@ -24,28 +24,33 @@ Decisiones de infraestructura y topología de sistemas que rigen el núcleo comp
     4.  **Capa 4 - CI Gate:** PHPStan rule + Pest test que escanea código buscando DML raw sin `tenant_id`. Falla el build si detecta violaciones.
 *   **Usuario BD dedicado:** `kodan_apps`@`%` con solo `SELECT, INSERT, UPDATE, DELETE, EXECUTE` (sin `SUPER`, `CREATE USER`, `DROP`, `GRANT OPTION`).
 
-### C. Autenticación y Autorización (JWT + Rotating Refresh Tokens) — **NUEVO**
-*   **Access Token (JWT):** 30 min TTL, `RS256`, claims `{sub, tid, roles, app_id, iat, ex}`. Transporte: **Cookie HttpOnly, Secure, SameSite=Strict, Domain=api.kodan.software**.
-*   **Refresh Token:** 30 días sliding window, **Rotación obligatoria** (Rotating Refresh Tokens). Al usar `/api/auth/refresh`: token actual → `revoked_at=NOW()`, `replaced_by_token_id=NEW`, se emite nuevo par. Transporte: **Cookie HttpOnly, Secure, SameSite=Strict, Domain=api.kodan.software**.
-*   **Almacenamiento Refresh Tokens:** Tabla `refresh_tokens` con `token_hash` (bcrypt), `user_id`, `tenant_id`, `expires_at`, `revoked_at`, `replaced_by_token_id`, `user_agent`, `ip_address`. Índices: `idx_rt_user_active (user_id, revoked_at, expires_at)`, `idx_rt_token_hash (token_hash)`.
-*   **Reuse Detection:** Si `replaced_by_token_id` ya tiene valor → **posible robo** → revocar toda la cadena (`UPDATE ... SET revoked_at=NOW() WHERE id IN (chain)`) + alerta en `audit_logs`.
-*   **Logout:** Local only (borra cookies). No revoca refresh token en BD (expira por TTL/rotación natural). Job diario limpia `expires_at < NOW() OR revoked_at < DATE_SUB(NOW(), INTERVAL 7 DAY)`.
+### C. Autenticación y Autorización (JWT Simple — Sin Refresh Tokens) — **SIMPLIFICADO 2026-06-18**
+*   **Access Token (JWT):** **4 horas TTL** (configurable via `JWT_TTL_HOURS`), algoritmo `HS256`, claims `{sub, tid, roles, app_id, iat, exp, is_super_admin}`. Transporte: **Cookie HttpOnly, Secure, SameSite=Lax, Domain=api.kodan.software**.
+*   **Sin Refresh Tokens:** Se elimina completamente el mecanismo de rotating refresh tokens (`/api/auth/refresh`, tabla `refresh_tokens`, rotación, reuse detection). Decisión: la complejidad operativa (cookies cross-subdominio, race conditions, detección de reuso falso positivo) superaba el beneficio de seguridad marginal para este contexto.
+*   **Expiración de sesión:** Al expirar el access token (4h), el frontend detecta 401 en `/api/auth/validate` o llamadas API → limpia estado local y redirige a `/login`. El usuario vuelve a autenticarse (credenciales o set-password si es primer acceso).
+*   **Logout:** Local only (borra cookie `access_token_{appId}`). No hay estado server-side que revocar.
 *   **Rate Limiting Login:** 5 req/min/IP + 10 req/hora/email (tabla `login_attempts`).
+*   **Justificación simplificación:**
+    - Access token 4h cubre jornada laboral típica sin interrupciones
+    - Elimina endpoint `/api/auth/refresh` (fuente de 500s y bugs cross-app)
+    - Elimina tabla `refresh_tokens` y lógica de rotación/reuse detection
+    - Reduce superficie de ataque (no hay refresh tokens robables)
+    - UX: re-login rápido con credenciales guardadas en password manager
 
 ### D. Protección CSRF — **ACTUALIZADO (Stateless: HMAC + PHPSESSID)**
 *   **Patrón:** **Stateless CSRF** — token = `HMAC-SHA256(PHPSESSID, server_secret)`. No requiere `$_SESSION`, no usa file locking, escala horizontalmente.
 *   **Generación:** `GET /api/csrf-token` (público) → lee `PHPSESSID` de cookie (o crea sesión si no existe) → devuelve `{ token: hash_hmac('sha256', PHPSESSID, secret) }`. Frontend guarda en `sessionStorage` + React Context.
 *   **Validación:** `AuthMiddleware` en **todas** las rutas `/api/*` protegidas (`POST`, `PUT`, `PATCH`, `DELETE`). Header requerido: `X-CSRF-Token`. Recomputa `HMAC(PHPSESSID, secret)` y compara con `hash_equals()`.
 *   **Rotación:** No requiere rotación explícita — el token es función determinística de `PHPSESSID` + `secret`. Un nuevo `PHPSESSID` genera nuevo token automáticamente.
-*   **Exclusiones:** `GET`, `HEAD`, `OPTIONS`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/csrf-token`, `/api/health`.
+*   **Exclusiones:** `GET`, `HEAD`, `OPTIONS`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/set-password`, `/api/csrf-token`, `/api/health`, `/api/auth/validate`.
 
-### E. Scope de Cookies y CORS — **ACTUALIZADO (Subdominio Exacto por App)**
+### E. Scope de Cookies y CORS — **ACTUALIZADO (Subdominio Exacto por App, Sin Refresh Tokens)**
 *   **NO superdominio** (`.kodan.software`). Cada app recibe cookies solo en su subdominio exacto:
     | Cookie | Domain | Path | SameSite | Uso |
     |--------|--------|------|----------|-----|
-    | `access_token` | `api.kodan.software` | `/` | `Strict` | Solo API backend |
-    | `refresh_token` | `api.kodan.software` | `/` | `Strict` | Solo API backend |
-    | `csrf_token` (sesión) | `crm.kodan.software` / `tracker.kodan.software` | `/` | `Lax` | Solo frontend correspondiente |
+    | `access_token_{appId}` | `api.kodan.software` | `/` | `Lax` | Solo API backend (una por app: crm, tracker, superadmin) |
+    | `csrf_token` (sesión) | `crm.kodan.software` / `tracker.kodan.software` / `superadmin.kodan.software` | `/` | `Lax` | Solo frontend correspondiente |
+*   **Nota:** `SameSite=Lax` (no `Strict`) para permitir navegación cross-origin desde frontends a API tras login. `access_token` usa sufijo `{appId}` para aislar sesiones por app en multi-tab.
 *   **CORS Estricto:** Orígenes explícitos en allowlist (`https://crm.kodan.software`, `https://tracker.kodan.software`). `Access-Control-Allow-Credentials: true`. **Sin wildcard**.
 *   **Flujo Login Cross-Origin:** Frontend llama `POST https://api.kodan.software/api/auth/login` con `credentials: 'include'`. API setea cookies en `api.kodan.software`. Frontend obtiene CSRF token via `GET https://api.kodan.software/api/csrf-token` (también `credentials: 'include'`).
 
@@ -429,26 +434,9 @@ CREATE TABLE `password_resets` (
   PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabla para Refresh Tokens con rotación obligatoria
-CREATE TABLE `refresh_tokens` (
-  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user_id` BIGINT(20) NOT NULL,
-  `tenant_id` BIGINT(20) NOT NULL,
-  `token_hash` VARCHAR(255) NOT NULL COMMENT 'bcrypt(token_raw)',
-  `user_agent` VARCHAR(500) DEFAULT NULL,
-  `ip_address` VARCHAR(45) DEFAULT NULL,
-  `expires_at` DATETIME NOT NULL COMMENT 'now() + 30 días (sliding window)',
-  `revoked_at` DATETIME DEFAULT NULL,
-  `replaced_by_token_id` BIGINT(20) UNSIGNED DEFAULT NULL COMMENT 'Chain de rotación para detección de reuso',
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_rt_user_active` (`user_id`, `revoked_at`, `expires_at`),
-  KEY `idx_rt_token_hash` (`token_hash`),
-  CONSTRAINT `fk_rt_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_rt_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`tenant_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_rt_replaced` FOREIGN KEY (`replaced_by_token_id`) REFERENCES `refresh_tokens` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-```
+-- REFRESH TOKENS ELIMINADOS (2026-06-18): Se usa access token JWT de 4h TTL sin refresh.
+-- Ver sección C: Autenticación y Autorización (JWT Simple — Sin Refresh Tokens)
+-- La tabla `refresh_tokens` y endpoint `/api/auth/refresh` han sido removidos.
 
 ### B. Entidades de Soporte y Datos Elásticos
 

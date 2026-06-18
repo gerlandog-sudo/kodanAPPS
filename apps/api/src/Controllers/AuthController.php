@@ -7,7 +7,6 @@ namespace kodanAPPS\Controllers;
 use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\DB\TenantContext;
 use kodanAPPS\Repositories\UserRepository;
-use kodanAPPS\Repositories\RefreshTokenRepository;
 use InvalidArgumentException;
 use RuntimeException;
 use DateTime;
@@ -15,7 +14,6 @@ use DateTime;
 final class AuthController
 {
     private UserRepository $userRepo;
-    private RefreshTokenRepository $refreshTokenRepo;
     private string $jwtSecret;
     private int $systemTenantId;
     private string $cookieDomain;
@@ -23,14 +21,12 @@ final class AuthController
 
     public function __construct(
         UserRepository $userRepo,
-        RefreshTokenRepository $refreshTokenRepo,
         string $jwtSecret,
         int $systemTenantId,
         TenantAwarePDO $pdo,
         string $cookieDomain = ''
     ) {
         $this->userRepo = $userRepo;
-        $this->refreshTokenRepo = $refreshTokenRepo;
         $this->jwtSecret = $jwtSecret;
         $this->systemTenantId = $systemTenantId;
         $this->pdo = $pdo;
@@ -193,115 +189,7 @@ final class AuthController
     }
 
     /**
-     * POST /api/auth/refresh
-     * 
-     * @param array<string, mixed> $input
-     * @return array<string, mixed>
-     */
-    public function refresh(array $input): array
-    {
-        $appId = $input['app_id'] ?? '';
-        $refreshToken = $_COOKIE["refresh_token_{$appId}"] ?? '';
-
-        if ($refreshToken === '' || $appId === '') {
-            throw new InvalidArgumentException(json_encode([
-                'message' => 'Campos requeridos faltantes',
-                'errors' => [
-                    'refresh_token' => $refreshToken === '' ? 'Requerido' : null,
-                    'app_id' => $appId === '' ? 'Requerido' : null,
-                ]
-            ]));
-        }
-
-        $tokenHash = hash('sha256', $refreshToken);
-
-        $storedToken = $this->refreshTokenRepo->findByHash($tokenHash);
-        if ($storedToken === null) {
-            throw new RuntimeException('TOKEN_INVALID: Refresh token inválido o expirado', 401);
-        }
-
-        $tokenId = (int)$storedToken['id'];
-        $userId = (int)$storedToken['user_id'];
-        $tenantId = (int)$storedToken['tenant_id'];
-
-        if ($this->refreshTokenRepo->detectReuse($tokenId)) {
-            $this->refreshTokenRepo->revokeChain($tokenId);
-            throw new RuntimeException('TOKEN_STOLEN: Posible robo de sesión. Todos los tokens han sido revocados.', 401);
-        }
-
-        $user = $this->userRepo->findById($userId);
-        if ($user === null) {
-            throw new RuntimeException('TOKEN_INVALID: Usuario no encontrado', 401);
-        }
-
-        $allRoles = $this->userRepo->getUserRoles($userId);
-        $roles = [];
-        foreach ($allRoles as $roleRow) {
-            if ($roleRow['app_id'] === $appId) {
-                $roles[] = $roleRow['role'];
-            }
-        }
-
-        $newTokenRaw = bin2hex(random_bytes(32));
-        $newTokenHash = hash('sha256', $newTokenRaw);
-
-        $this->refreshTokenRepo->rotate(
-            $tokenId,
-            $userId,
-            $tenantId,
-            $newTokenHash,
-            $_SERVER['HTTP_USER_AGENT'] ?? null,
-            $_SERVER['REMOTE_ADDR'] ?? null
-        );
-
-        $issuedAt = time();
-        $expiresAt = $issuedAt + 1800;
-        $payload = [
-            'sub' => $userId,
-            'tid' => $tenantId,
-            'iat' => $issuedAt,
-            'exp' => $expiresAt,
-            'roles' => $roles,
-            'app_id' => $appId,
-            'is_super_admin' => (int)$user['is_super_admin'],
-        ];
-
-        $jwt = $this->generateJwt($payload);
-
-        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        setcookie("access_token_{$appId}", $jwt, [
-            'expires' => $expiresAt,
-            'path' => '/',
-            'domain' => $this->cookieDomain,
-            'secure' => $cookieSecure,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-
-        setcookie("refresh_token_{$appId}", $newTokenRaw, [
-            'expires' => time() + 2592000,
-            'path' => '/',
-            'domain' => $this->cookieDomain,
-            'secure' => $cookieSecure,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-
-        return [
-            'success' => true,
-            'user' => [
-                'id' => $userId,
-                'email' => $user['email'],
-                'display_name' => $user['display_name'],
-                'is_super_admin' => (int)$user['is_super_admin'] === 1,
-            ],
-            'app_id' => $appId,
-            'roles' => $roles,
-        ];
-    }
-
-    /**
-     * Construye respuesta de login + JWT + cookie HttpOnly + refresh token
+     * Construye respuesta de login + JWT en cookie HttpOnly (sin refresh token)
      * 
      * @param array{id: int, tenant_id: int, email: string, password_hash: string, display_name: string, is_super_admin: int, language: string, is_active: int, created_at: string} $user
      * @param string[] $roles
@@ -309,8 +197,9 @@ final class AuthController
      */
     private function buildLoginResponse(array $user, string $appId, array $roles): array
     {
+        $jwtTtl = 14400; // 4 horas
         $issuedAt = time();
-        $expiresAt = $issuedAt + 1800;
+        $expiresAt = $issuedAt + $jwtTtl;
         $payload = [
             'sub' => (int)$user['id'],
             'tid' => (int)$user['tenant_id'],
@@ -326,25 +215,6 @@ final class AuthController
         $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         setcookie("access_token_{$appId}", $jwt, [
             'expires' => $expiresAt,
-            'path' => '/',
-            'domain' => $this->cookieDomain,
-            'secure' => $cookieSecure,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-
-        $refreshTokenRaw = bin2hex(random_bytes(32));
-        $refreshTokenHash = hash('sha256', $refreshTokenRaw);
-        $this->refreshTokenRepo->createRefreshToken(
-            (int)$user['id'],
-            (int)$user['tenant_id'],
-            $refreshTokenHash,
-            $_SERVER['HTTP_USER_AGENT'] ?? null,
-            $_SERVER['REMOTE_ADDR'] ?? null
-        );
-
-        setcookie("refresh_token_{$appId}", $refreshTokenRaw, [
-            'expires' => time() + 2592000,
             'path' => '/',
             'domain' => $this->cookieDomain,
             'secure' => $cookieSecure,
@@ -409,7 +279,7 @@ final class AuthController
     /**
      * POST /api/auth/logout
      *
-     * Revoca refresh token y limpia ambas cookies.
+     * Limpia cookie del access token (sin refresh tokens).
      *
      * @param array<string, mixed> $input
      * @return array<string, mixed>
@@ -423,28 +293,10 @@ final class AuthController
             ]));
         }
 
-        $refreshToken = $_COOKIE["refresh_token_{$appId}"] ?? '';
-        if ($refreshToken !== '') {
-            $tokenHash = hash('sha256', $refreshToken);
-            $storedToken = $this->refreshTokenRepo->findByHash($tokenHash);
-            if ($storedToken !== null) {
-                $this->refreshTokenRepo->revokeChain((int)$storedToken['id']);
-            }
-        }
-
         $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         $expired = time() - 3600;
 
         setcookie("access_token_{$appId}", '', [
-            'expires' => $expired,
-            'path' => '/',
-            'domain' => $this->cookieDomain,
-            'secure' => $cookieSecure,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
-
-        setcookie("refresh_token_{$appId}", '', [
             'expires' => $expired,
             'path' => '/',
             'domain' => $this->cookieDomain,

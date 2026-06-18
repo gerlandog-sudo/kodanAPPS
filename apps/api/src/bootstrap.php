@@ -34,7 +34,6 @@ use kodanAPPS\Controllers\CrmTaskController;
 use kodanAPPS\Controllers\ChatController;
 use kodanAPPS\Repositories\TenantRepository;
 use kodanAPPS\Repositories\PlanRepository;
-use kodanAPPS\Repositories\RefreshTokenRepository;
 use kodanAPPS\Repositories\UserRepository;
 use kodanAPPS\Repositories\AccountRepository;
 use kodanAPPS\Repositories\ContactRepository;
@@ -172,7 +171,6 @@ $pdo = new TenantAwarePDO(
 $tenantRepo = new TenantRepository($pdo);
 $planRepo = new PlanRepository($pdo);
 $userRepo = new UserRepository($pdo);
-$refreshTokenRepo = new RefreshTokenRepository($pdo);
 $accountRepo = new AccountRepository($pdo);
 $contactRepo = new ContactRepository($pdo);
 $pipelineRepo = new PipelineRepository($pdo);
@@ -205,7 +203,7 @@ $authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId);
 // ------------------------------------------------------------
 // Controladores
 // ------------------------------------------------------------
-$authController = new AuthController($userRepo, $refreshTokenRepo, $jwtSecret, $systemTenantId, $pdo, $cookieDomain);
+$authController = new AuthController($userRepo, $jwtSecret, $systemTenantId, $pdo, $cookieDomain);
 $superAdminController = new SuperAdminController($tenantService, $tenantRepo, $planRepo, $userRepo);
 $crmController = new CrmController($pdo);
 $customFieldController = new CustomFieldController($customFieldService, $pdo);
@@ -230,7 +228,6 @@ return [
         'tenant' => $tenantRepo,
         'plan' => $planRepo,
         'user' => $userRepo,
-        'refreshToken' => $refreshTokenRepo,
         'account' => $accountRepo,
         'contact' => $contactRepo,
         'pipeline' => $pipelineRepo,

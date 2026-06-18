@@ -40,84 +40,34 @@ export function Settings() {
     loadStats()
   }, [activePanel])
 
-  // Menú lateral compacto cuando hay un panel activo
-  const sidebarItems = [
-    {
-      key: 'pipeline' as SettingsPanel,
-      label: 'Canales Comerciales',
-      icon: <GitBranch size={16} />,
-      info: loadingStats ? '...' : `${pipelineCount} Activo${pipelineCount !== 1 ? 's' : ''}`,
-    },
-    {
-      key: 'custom-fields' as SettingsPanel,
-      label: 'Campos Personalizados',
-      icon: <Settings2 size={16} />,
-      info: loadingStats ? '...' : `${fieldsCount} Campo${fieldsCount !== 1 ? 's' : ''}`,
-    },
-    {
-      key: 'users' as SettingsPanel,
-      label: 'Usuarios y Accesos',
-      icon: <Users size={16} />,
-      info: loadingStats ? '...' : `${usersCount} Activo${usersCount !== 1 ? 's' : ''}`,
-    },
-  ]
+
 
   if (activePanel !== null) {
     return (
-      <div className="flex flex-col md:flex-row gap-8 min-h-[75vh] w-full animate-fade-in font-sans">
+      <div className="flex flex-col gap-6 min-h-[75vh] w-full animate-fade-in font-sans">
         
-        {/* Barra Lateral Izquierda (Menú de Ajustes Colapsado) */}
-        <div className="w-full md:w-72 flex-shrink-0 flex flex-col gap-5 border-b md:border-b-0 md:border-r border-[var(--sys-border-soft)] pb-6 md:pb-0 md:pr-6">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setActivePanel(null)}
-              className="flex items-center justify-center p-2 rounded-xl border border-[var(--sys-border-soft)] hover:bg-[var(--sys-surface-hover)] text-[var(--sys-text-muted)] hover:text-[var(--sys-text)] transition-all cursor-pointer shadow-sm"
-              title="Volver a Ajustes"
-            >
-              <ArrowLeft size={14} />
-            </button>
-            <div>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--sys-primary)] block">
-                Ajustes del Sistema
-              </span>
-              <span className="text-xs font-black text-[var(--sys-text)] uppercase tracking-wider block mt-0.5">
-                Panel General
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5 mt-2">
-            {sidebarItems.map((item) => {
-              const isActive = activePanel === item.key
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => setActivePanel(item.key)}
-                  className="w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 text-left border cursor-pointer focus:outline-none"
-                  style={{
-                    background: isActive ? 'var(--sys-surface-hover)' : 'transparent',
-                    borderColor: isActive ? 'var(--sys-primary)' : 'transparent',
-                    color: isActive ? 'var(--sys-primary)' : 'var(--sys-text)',
-                  }}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className={isActive ? 'text-[var(--sys-primary)]' : 'text-[var(--sys-text-muted)]'}>
-                      {item.icon}
-                    </span>
-                    <span className="text-xs font-semibold truncate">
-                      {item.label}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold font-mono opacity-85 pl-2 shrink-0">
-                    {item.info}
-                  </span>
-                </button>
-              )
-            })}
+        {/* Cabecera y botón de retroceso */}
+        <div className="flex items-center gap-3 border-b border-[var(--sys-border-soft)] pb-4 shrink-0">
+          <button
+            onClick={() => setActivePanel(null)}
+            className="flex items-center justify-center p-2 rounded-xl border border-[var(--sys-border-soft)] hover:bg-[var(--sys-surface-hover)] text-[var(--sys-text-muted)] hover:text-[var(--sys-text)] transition-all cursor-pointer shadow-sm"
+            title="Volver a Ajustes"
+          >
+            <ArrowLeft size={14} />
+          </button>
+          <div>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--sys-primary)] block">
+              Ajustes del Sistema
+            </span>
+            <span className="text-xs font-black text-[var(--sys-text)] uppercase tracking-wider block mt-0.5">
+              {activePanel === 'pipeline' && 'Canales Comerciales'}
+              {activePanel === 'custom-fields' && 'Campos Personalizados'}
+              {activePanel === 'users' && 'Usuarios y Accesos'}
+            </span>
           </div>
         </div>
 
-        {/* Panel Activo a la Derecha (Contenedor Estático de alta gama) */}
+        {/* Panel Activo a Pantalla Completa (Contenedor Estático de alta gama) */}
         <div className="flex-1 min-w-0 flex flex-col gap-4 animate-slide-left">
           <div className="p-6 md:p-8 border border-[var(--sys-border-soft)] bg-[var(--sys-surface-raised)] rounded-2xl shadow-md min-h-[60vh] w-full">
             {activePanel === 'pipeline' && <PipelineManager />}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Input, Modal } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, Table } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
-import { Plus, Edit, Trash2, Tag, DollarSign, PackageOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, Tag, PackageOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Products() {
@@ -117,58 +117,64 @@ export function Products() {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <span className="spinner" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map(p => (
-            <Card key={p.id} className="p-5 double-bevel-card flex flex-col justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--sys-primary) 12%, transparent)', color: 'var(--sys-primary)' }}>
-                      <Tag size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm tracking-tight">{p.name}</h4>
-                      {p.sku && <p className="text-[10px] uppercase font-mono" style={{ color: 'var(--sys-text-muted)' }}>SKU: {p.sku}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleOpenEdit(p)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" title="Editar">
-                      <Edit size={14} />
-                    </button>
-                    <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+      <Table
+        data={products}
+        columns={[
+          {
+            key: 'product',
+            header: 'Producto',
+            render: p => (
+              <>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'color-mix(in srgb, var(--sys-primary) 12%, transparent)', color: 'var(--sys-primary)' }}>
+                  <Tag size={14} />
                 </div>
-
-                <p className="text-xs line-clamp-2 mt-2" style={{ color: 'var(--sys-text-muted)' }}>{p.description || 'Sin descripción comercial disponible.'}</p>
-              </div>
-
-              <div className="flex items-center justify-between border-t pt-3 text-xs" style={{ borderColor: 'var(--sys-border-soft)' }}>
-                <div className="flex items-center gap-1">
-                  <DollarSign size={14} style={{ color: 'var(--sys-primary)' }} />
-                  <span className="font-bold text-sm">{formatCurrency(p.price)}</span>
+                <div>
+                  <p className="font-semibold text-sm">{p.name}</p>
+                  {p.sku && <p className="text-xs font-normal uppercase" style={{ color: 'var(--sys-text-muted)' }}>SKU: {p.sku}</p>}
                 </div>
-                <span className={`badge ${p.is_active ? 'badge-active' : 'badge-inactive'}`}>
-                  {p.is_active ? 'Activo' : 'Inactivo'}
-                </span>
-              </div>
-            </Card>
-          ))}
-
-          {products.length === 0 && (
-            <div className="col-span-full flex flex-col items-center justify-center p-10 bg-slate-50 dark:background-slate-900 rounded-xl border border-dashed">
-              <PackageOpen size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
-              <p className="text-sm italic mt-2" style={{ color: 'var(--sys-text-muted)' }}>No hay productos registrados en el catálogo comercial.</p>
-            </div>
-          )}
-        </div>
-      )}
+              </>
+            ),
+          },
+          {
+            key: 'description',
+            header: 'Descripción',
+            render: p => (
+              <span className="text-xs font-normal line-clamp-2" style={{ color: 'var(--sys-text-muted)' }}>
+                {p.description || 'Sin descripción'}
+              </span>
+            ),
+          },
+          {
+            key: 'price',
+            header: 'Precio',
+            align: 'right',
+            render: p => (
+              <span className="font-semibold text-sm">{formatCurrency(p.price)}</span>
+            ),
+          },
+          {
+            key: 'status',
+            header: 'Estado',
+            render: p => (
+              <span className={`badge ${p.is_active ? 'badge-active' : 'badge-inactive'}`}>
+                {p.is_active ? 'Activo' : 'Inactivo'}
+              </span>
+            ),
+          },
+        ]}
+        keyExtractor={p => p.id}
+        loading={loading}
+        emptyState={{
+          icon: <PackageOpen size={40} />,
+          title: 'No hay productos registrados en el catálogo',
+          description: '',
+        }}
+        actions={[
+          { icon: <Edit size={14} />, label: 'Editar', onClick: p => handleOpenEdit(p) },
+          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: p => handleDelete(p.id) },
+        ]}
+        pageSize={15}
+      />
 
       {/* Modal Creación / Edición */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedProduct ? 'Editar Producto del Catálogo' : 'Nuevo Producto del Catálogo'}>

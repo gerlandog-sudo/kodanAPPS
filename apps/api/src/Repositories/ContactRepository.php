@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class ContactRepository extends BaseRepository
 {
-    protected const TABLE = self::TABLE;
+    protected const TABLE = 'contacts';
 
     /**
      * Obtiene un contacto por su ID

@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class QuoteRepository extends BaseRepository
 {
-    protected const TABLE = self::TABLE;
+    protected const TABLE = 'quotes';
 
     /**
      * Obtiene una cotización por su ID

@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class ProductRepository extends BaseRepository
 {
-    protected const TABLE = self::TABLE;
+    protected const TABLE = 'products';
 
     /**
      * Obtiene un producto por su ID

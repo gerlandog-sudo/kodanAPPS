@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class CrmTaskRepository extends BaseRepository
 {
-    protected const TABLE = self::TABLE;
+    protected const TABLE = 'tasks';
 
     /**
      * Obtiene una tarea por su ID

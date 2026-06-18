@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class AccountRepository extends BaseRepository
 {
-    protected const TABLE = self::TABLE;
+    protected const TABLE = 'accounts';
 
     /**
      * Obtiene una cuenta por su ID

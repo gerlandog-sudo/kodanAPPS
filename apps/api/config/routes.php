@@ -92,10 +92,30 @@ return function (Router $router, array $app): void {
     // Auth Routes
     // ============================================================
     $router->post('/api/auth/login', function () use ($app) {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        $data = $app['controllers']['auth']->login($input);
-        header('Content-Type: application/json');
-        echo json_encode($data);
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $app['controllers']['auth']->login($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'message' => 'Validation error',
+                'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
+            ]);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Login error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
     });
 
     $router->post('/api/auth/set-password', function () use ($app) {
@@ -113,10 +133,23 @@ return function (Router $router, array $app): void {
     });
 
     $router->get('/api/auth/validate', function () use ($app) {
-        $app['auth']->handle();
-        $data = $app['controllers']['auth']->validate();
-        header('Content-Type: application/json');
-        echo json_encode($data);
+        try {
+            $app['auth']->handle();
+            $data = $app['controllers']['auth']->validate();
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Validate error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
     });
 
     $router->post('/api/auth/logout', function () use ($app) {

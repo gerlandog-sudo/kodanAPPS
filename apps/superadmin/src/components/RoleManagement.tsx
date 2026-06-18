@@ -114,11 +114,13 @@ export function RoleManagement() {
           {
             key: 'app',
             header: 'App',
+            sortable: true,
             render: role => <span className="badge badge-plan text-xs">{role.app_id}</span>,
           },
           {
             key: 'name',
             header: 'Rol',
+            sortable: true,
             render: role => <span className="font-semibold text-sm">{role.name}</span>,
           },
           {
@@ -149,6 +151,7 @@ export function RoleManagement() {
         }}
         editable={{ onClick: handleOpenEdit }}
         deletable={{ onClick: handleDelete }}
+        maxHeight="calc(100vh - 220px)"
       />
 
       {/* Create / Edit Modal */}

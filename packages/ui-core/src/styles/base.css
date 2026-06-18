@@ -468,6 +468,7 @@
 
 .table-container {
   overflow-x: auto;
+  overflow-y: auto;
 }
 
 .table {
@@ -479,6 +480,9 @@
 /* ── Headers ── */
 
 .table-th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   text-align: left;
   padding: 1rem 1.25rem;
   font-family: Montserrat, system-ui, -apple-system, sans-serif;
@@ -487,6 +491,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--sys-text-muted);
+  background: var(--sys-surface-raised);
   border-bottom: 1px solid var(--sys-border-soft);
   white-space: nowrap;
 }
@@ -497,6 +502,21 @@
 
 .table-th-center {
   text-align: center;
+}
+
+.table-th-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.table-th-sortable:hover {
+  color: var(--sys-text);
+}
+
+.table-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ── Rows ── */
@@ -511,6 +531,10 @@
 
 .table-row:last-child .table-td {
   border-bottom: none;
+}
+
+.table-row-clickable {
+  cursor: pointer;
 }
 
 .table-td {

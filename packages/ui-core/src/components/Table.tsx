@@ -1,5 +1,5 @@
-import { type ReactNode, useState, useRef, useEffect } from 'react'
-import { Edit, Trash2 } from 'lucide-react'
+import { type ReactNode, useState, useRef, useEffect, useMemo } from 'react'
+import { Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
 
 export interface TableAction<T> {
   icon: ReactNode
@@ -14,6 +14,7 @@ export interface TableColumn<T> {
   render: (item: T) => ReactNode
   align?: 'left' | 'right' | 'center'
   width?: string
+  sortable?: boolean
 }
 
 interface TableProps<T> {
@@ -30,6 +31,9 @@ interface TableProps<T> {
   currentPage?: number
   totalRecords?: number
   onPageChange?: (page: number) => void
+  maxHeight?: string
+  onRowClick?: (item: T) => void
+  onSort?: (key: string, direction: 'asc' | 'desc') => void
 }
 
 function SkeletonBar({ width }: { width: string }) {
@@ -123,7 +127,11 @@ export function Table<T>({
   currentPage,
   totalRecords,
   onPageChange,
+  maxHeight,
+  onRowClick,
+  onSort: _onSort,
 }: TableProps<T>) {
+  const onSort = _onSort
   const [internalPage, setInternalPage] = useState(0)
   const tableRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -159,6 +167,30 @@ export function Table<T>({
     return () => observer.disconnect()
   }, [data])
 
+  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  const handleSort = (key: string) => {
+    const newDir = sortKey === key && sortDir === 'asc' ? 'desc' : 'asc'
+    setSortKey(key)
+    setSortDir(newDir)
+    if (onSort) onSort(key, newDir)
+  }
+
+  const sortedData = useMemo(() => {
+    if (!sortKey || onSort) return displayData
+    return [...displayData].sort((a: any, b: any) => {
+      const aVal = a[sortKey]
+      const bVal = b[sortKey]
+      if (aVal == null) return 1
+      if (bVal == null) return -1
+      if (typeof aVal === 'string') {
+        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      }
+      return sortDir === 'asc' ? aVal - bVal : bVal - aVal
+    })
+  }, [displayData, sortKey, sortDir, onSort])
+
   const goToPage = (page: number) => {
     if (isControlled) {
       onPageChange!(page)
@@ -170,13 +202,13 @@ export function Table<T>({
   if (loading) {
     return (
       <div className="table-wrapper">
-        <div className="table-container">
+        <div className="table-container" style={maxHeight ? { maxHeight } : undefined}>
           <table className="table">
             <thead>
               <tr>
                 {columns.map(col => (
-                  <th key={col.key} className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}`}>
-                    {col.header}
+                  <th key={col.key} className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}${col.sortable ? ' table-th-sortable' : ''}`}>
+                    <span className="table-th-content">{col.header}</span>
                   </th>
                 ))}
                 {combinedActions.length > 0 && <th className="table-th table-th-right">Acciones</th>}
@@ -220,28 +252,35 @@ export function Table<T>({
 
   return (
     <div className="table-wrapper" ref={tableRef}>
-      <div className="table-container">
+      <div className="table-container" style={maxHeight ? { maxHeight } : undefined}>
         <table className="table">
           <thead>
             <tr>
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}`}
+                  className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}${col.sortable ? ' table-th-sortable' : ''}`}
+                  onClick={col.sortable ? () => handleSort(col.key) : undefined}
                 >
-                  {col.header}
+                  <span className="table-th-content">
+                    {col.header}
+                    {col.sortable && sortKey === col.key && (
+                      sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                    )}
+                  </span>
                 </th>
               ))}
               {combinedActions.length > 0 && <th className="table-th table-th-right">Acciones</th>}
             </tr>
           </thead>
           <tbody>
-            {displayData.map((item, idx) => (
+            {sortedData.map((item, idx) => (
               <tr
                 key={keyExtractor(item)}
-                className="table-row table-row-anim"
+                className={`table-row table-row-anim${onRowClick ? ' table-row-clickable' : ''}`}
                 style={{ '--i': idx } as React.CSSProperties}
                 data-visible={visible}
+                onClick={onRowClick ? () => onRowClick(item) : undefined}
               >
                 {columns.map(col => (
                   <td key={col.key} className="table-td">

@@ -8,7 +8,6 @@ import {
   Plus,
   X,
   Check,
-  Trash2,
   AlertCircle,
   Loader2,
 } from 'lucide-react';
@@ -25,9 +24,10 @@ interface Role {
 export function RoleManagement() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [newRole, setNewRole] = useState({ app_id: 'crm', name: '', description: '' });
+  const [form, setForm] = useState({ app_id: 'crm', name: '', description: '' });
   const [error, setError] = useState('');
 
   useEffect(() => { loadRoles(); }, []);
@@ -42,22 +42,41 @@ export function RoleManagement() {
     } finally { setLoading(false); }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setSelectedRole(null);
+    setForm({ app_id: 'crm', name: '', description: '' });
+    setError('');
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (role: Role) => {
+    setSelectedRole(role);
+    setForm({ app_id: role.app_id, name: role.name, description: role.description });
+    setError('');
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newRole.name.trim()) {
+    if (!form.name.trim()) {
       setError('El nombre es requerido');
       return;
     }
     setSubmitting(true);
     setError('');
     try {
-      await superAdminApi.createRole(newRole);
-      toast.success('Rol creado');
-      setShowCreate(false);
-      setNewRole({ app_id: 'crm', name: '', description: '' });
+      if (selectedRole) {
+        await superAdminApi.updateRole(selectedRole.id, form);
+        toast.success('Rol actualizado');
+      } else {
+        await superAdminApi.createRole(form);
+        toast.success('Rol creado');
+      }
+      setShowModal(false);
+      setForm({ app_id: 'crm', name: '', description: '' });
       await loadRoles();
     } catch (err: any) {
-      setError(err.message || 'Error creando rol');
+      setError(err.message || 'Error guardando rol');
     } finally { setSubmitting(false); }
   };
 
@@ -84,7 +103,7 @@ export function RoleManagement() {
   return (
     <div>
       <div className="flex items-center justify-end mb-4">
-        <Button variant="primary" onClick={() => setShowCreate(true)}>
+        <Button variant="primary" onClick={handleOpenCreate}>
           <Plus size={16} /> Nuevo Rol
         </Button>
       </div>
@@ -128,13 +147,12 @@ export function RoleManagement() {
           title: 'No hay roles configurados',
           description: '',
         }}
-        actions={[
-          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: handleDelete },
-        ]}
+        editable={{ onClick: handleOpenEdit }}
+        deletable={{ onClick: handleDelete }}
       />
 
-      {/* Create Modal */}
-      {showCreate && (
+      {/* Create / Edit Modal */}
+      {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -143,12 +161,12 @@ export function RoleManagement() {
             style={{ background: 'var(--sys-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--sys-border-soft)' }}
           >
             <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--sys-border-soft)' }}>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--sys-text)' }}>Nuevo Rol</h3>
-              <button onClick={() => setShowCreate(false)} className="flex items-center justify-center w-7 h-7 rounded-lg" style={{ color: 'var(--sys-text-muted)' }}>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--sys-text)' }}>{selectedRole ? 'Editar Rol' : 'Nuevo Rol'}</h3>
+              <button onClick={() => setShowModal(false)} className="flex items-center justify-center w-7 h-7 rounded-lg" style={{ color: 'var(--sys-text-muted)' }}>
                 <X size={16} />
               </button>
             </div>
-            <form onSubmit={handleCreate} className="p-6 flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
               {error && (
                 <div className="p-3 rounded-lg text-sm flex items-center gap-2" style={{ background: 'var(--sys-error-container)', color: 'var(--color-on-error-container)' }}>
                   <AlertCircle size={14} /> {error}
@@ -158,8 +176,8 @@ export function RoleManagement() {
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>App</label>
                 <select
                   className="input select"
-                  value={newRole.app_id}
-                  onChange={e => setNewRole(p => ({ ...p, app_id: e.target.value }))}
+                  value={form.app_id}
+                  onChange={e => setForm(p => ({ ...p, app_id: e.target.value }))}
                 >
                   <option value="crm">kodanCRM</option>
                   <option value="tracker">kodanTracker</option>
@@ -170,8 +188,8 @@ export function RoleManagement() {
                 <input
                   type="text"
                   className="input"
-                  value={newRole.name}
-                  onChange={e => setNewRole(p => ({ ...p, name: e.target.value }))}
+                  value={form.name}
+                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                   placeholder="Ej: supervisor"
                   autoFocus
                 />
@@ -181,13 +199,13 @@ export function RoleManagement() {
                 <input
                   type="text"
                   className="input"
-                  value={newRole.description}
-                  onChange={e => setNewRole(p => ({ ...p, description: e.target.value }))}
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                   placeholder="Opcional"
                 />
               </div>
               <Button variant="primary" type="submit" disabled={submitting}>
-                {submitting ? <><Loader2 size={16} className="animate-spin" /> Creando...</> : 'Crear Rol'}
+                {submitting ? <><Loader2 size={16} className="animate-spin" /> Guardando...</> : selectedRole ? 'Actualizar Rol' : 'Crear Rol'}
               </Button>
             </form>
           </motion.div>

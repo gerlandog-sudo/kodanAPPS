@@ -1,6 +1,6 @@
 import { Table, Toggle } from '@kodan-apps/ui-core';
-import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
-import { Building2, Pencil, Shield } from 'lucide-react';
+import type { TableColumn } from '@kodan-apps/ui-core';
+import { Building2, Shield } from 'lucide-react';
 
 interface Tenant {
   tenant_id: number;
@@ -81,10 +81,6 @@ export function TenantList({ tenants, loading, onToggle, onEdit }: TenantListPro
     },
   ];
 
-  const actions: TableAction<Tenant>[] = [
-    { icon: <Pencil size={14} />, label: 'Editar', onClick: onEdit },
-  ];
-
   return (
     <Table
       data={tenants}
@@ -96,7 +92,7 @@ export function TenantList({ tenants, loading, onToggle, onEdit }: TenantListPro
         title: 'No hay tenants registrados',
         description: 'Crea el primer tenant para comenzar',
       }}
-      actions={actions}
+      editable={{ onClick: onEdit }}
       pageSize={10}
     />
   );

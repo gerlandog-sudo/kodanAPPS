@@ -1,4 +1,5 @@
 import { type ReactNode, useState, useRef, useEffect } from 'react'
+import { Edit, Trash2 } from 'lucide-react'
 
 export interface TableAction<T> {
   icon: ReactNode
@@ -22,6 +23,8 @@ interface TableProps<T> {
   loading?: boolean
   skeletonRows?: number
   emptyState: { icon: ReactNode; title: string; description: string }
+  editable?: { onClick: (item: T) => void }
+  deletable?: { onClick: (item: T) => void }
   actions?: TableAction<T>[]
   pageSize?: number
   currentPage?: number
@@ -113,6 +116,8 @@ export function Table<T>({
   loading = false,
   skeletonRows = 10,
   emptyState,
+  editable,
+  deletable,
   actions,
   pageSize,
   currentPage,
@@ -122,6 +127,11 @@ export function Table<T>({
   const [internalPage, setInternalPage] = useState(0)
   const tableRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
+
+  const combinedActions: TableAction<T>[] = []
+  if (editable) combinedActions.push({ icon: <Edit size={14} />, label: 'Editar', onClick: editable.onClick })
+  if (deletable) combinedActions.push({ icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: deletable.onClick })
+  if (actions) combinedActions.push(...actions)
 
   const isControlled = currentPage !== undefined
   const activePage = isControlled ? currentPage : internalPage
@@ -169,7 +179,7 @@ export function Table<T>({
                     {col.header}
                   </th>
                 ))}
-                {actions && <th className="table-th table-th-right">Acciones</th>}
+                {combinedActions.length > 0 && <th className="table-th table-th-right">Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -180,7 +190,7 @@ export function Table<T>({
                       <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
                     </td>
                   ))}
-                  {actions && (
+                  {combinedActions.length > 0 && (
                     <td className="table-td table-td-right">
                       <SkeletonBar width="60px" />
                     </td>
@@ -222,7 +232,7 @@ export function Table<T>({
                   {col.header}
                 </th>
               ))}
-              {actions && <th className="table-th table-th-right">Acciones</th>}
+              {combinedActions.length > 0 && <th className="table-th table-th-right">Acciones</th>}
             </tr>
           </thead>
           <tbody>
@@ -238,10 +248,10 @@ export function Table<T>({
                     <div className="table-cell">{col.render(item)}</div>
                   </td>
                 ))}
-                {actions && (
+                {combinedActions.length > 0 && (
                   <td className="table-td table-td-right">
                     <div className="table-actions">
-                      {actions.map((action, ai) => (
+                      {combinedActions.map((action, ai) => (
                         <button
                           key={ai}
                           className={`table-action-btn${action.variant === 'danger' ? ' table-action-btn-danger' : ''}`}

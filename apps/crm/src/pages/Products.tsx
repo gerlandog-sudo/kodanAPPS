@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button, Input, Modal, Table } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
-import { Plus, Edit, Trash2, Tag, PackageOpen } from 'lucide-react';
+import { Plus, Tag, PackageOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Products() {
@@ -169,10 +169,8 @@ export function Products() {
           title: 'No hay productos registrados en el catálogo',
           description: '',
         }}
-        actions={[
-          { icon: <Edit size={14} />, label: 'Editar', onClick: p => handleOpenEdit(p) },
-          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: p => handleDelete(p.id) },
-        ]}
+        editable={{ onClick: p => handleOpenEdit(p) }}
+        deletable={{ onClick: p => handleDelete(p.id) }}
         pageSize={15}
       />
 

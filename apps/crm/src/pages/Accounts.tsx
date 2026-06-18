@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Input, Modal, CustomFieldsForm, Table } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
-import { Plus, Edit, Trash2, Building2, Settings2 } from 'lucide-react';
+import { Plus, Building2, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Accounts() {
@@ -191,10 +191,8 @@ export function Accounts() {
           title: 'No hay empresas ni cuentas B2B registradas',
           description: '',
         }}
-        actions={[
-          { icon: <Edit size={14} />, label: 'Editar', onClick: acc => handleOpenEdit(acc) },
-          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: acc => handleDelete(acc.account_id) },
-        ]}
+        editable={{ onClick: acc => handleOpenEdit(acc) }}
+        deletable={{ onClick: acc => handleDelete(acc.account_id) }}
         pageSize={15}
       />
 

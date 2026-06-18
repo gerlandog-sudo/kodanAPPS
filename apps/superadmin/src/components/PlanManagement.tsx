@@ -5,8 +5,6 @@ import { toast } from 'sonner';
 import {
   CreditCard,
   Plus,
-  Edit3,
-  Trash2,
   AlertCircle,
   Infinity,
 } from 'lucide-react';
@@ -239,10 +237,8 @@ export function PlanManagement() {
           title: 'No hay planes configurados',
           description: 'Crea el primer plan de suscripción',
         }}
-        actions={[
-          { icon: <Edit3 size={14} />, label: 'Editar', onClick: plan => { setEditingPlan(plan); setShowCreateModal(true); } },
-          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: handleDelete },
-        ]}
+        editable={{ onClick: plan => { setEditingPlan(plan); setShowCreateModal(true); } }}
+        deletable={{ onClick: handleDelete }}
       />
 
       <SlidePanel open={showCreateModal || !!editingPlan} onClose={() => { setShowCreateModal(false); setEditingPlan(null); }} title={editingPlan ? 'Editar Plan' : 'Nuevo Plan'}>

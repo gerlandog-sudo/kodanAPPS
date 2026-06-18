@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Input, Modal, CustomFieldsForm, Table } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
-import { Plus, Edit, Trash2, User2, Settings2 } from 'lucide-react';
+import { Plus, User2, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Contacts() {
@@ -179,10 +179,8 @@ export function Contacts() {
           title: 'No hay contactos comerciales registrados',
           description: '',
         }}
-        actions={[
-          { icon: <Edit size={14} />, label: 'Editar', onClick: c => handleOpenEdit(c) },
-          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: c => handleDelete(c.contact_id) },
-        ]}
+        editable={{ onClick: c => handleOpenEdit(c) }}
+        deletable={{ onClick: c => handleDelete(c.contact_id) }}
         pageSize={15}
       />
 

@@ -59,6 +59,28 @@ if (isset($_GET['debug_api'])) {
     $apiDir     = __DIR__ . '/..';
     $rootDir    = __DIR__ . '/../..';
 
+    // Probar conexión BD (no rompe si falla)
+    $dbStatus = 'not_tested';
+    $dbError  = null;
+    try {
+        $envPath = file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env' : __DIR__ . '/../../.env';
+        $dotenv  = parse_ini_file($envPath);
+        if ($dotenv) {
+            $dsn = "mysql:host={$dotenv['DB_HOST']};port={$dotenv['DB_PORT']};dbname={$dotenv['DB_NAME']};charset=utf8mb4";
+            $testPdo = new \PDO($dsn, $dotenv['DB_USER'], $dotenv['DB_PASS'], [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_TIMEOUT => 3,
+            ]);
+            $testPdo->query('SELECT 1');
+            $dbStatus = 'connected';
+        } else {
+            $dbStatus = 'parse_failed';
+        }
+    } catch (\Throwable $e) {
+        $dbStatus = 'failed';
+        $dbError  = $e->getMessage();
+    }
+
     echo json_encode([
         'status' => 'debug',
         'uri' => $_SERVER['REQUEST_URI'] ?? '',
@@ -74,6 +96,8 @@ if (isset($_GET['debug_api'])) {
             'parent_vendor' => file_exists(dirname($_SERVER['DOCUMENT_ROOT'] ?? '') . '/vendor/autoload.php'),
         ],
         'open_basedir' => ini_get('open_basedir') ?: '(not set)',
+        'db_status' => $dbStatus,
+        'db_error' => $dbError,
         'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? '',
         'script_name' => $_SERVER['SCRIPT_NAME'] ?? '',
         'script_filename' => $_SERVER['SCRIPT_FILENAME'] ?? '',

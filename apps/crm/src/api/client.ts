@@ -25,7 +25,56 @@ export interface StageBulkInput {
   ui_config?: Record<string, any> | null
 }
 
-export const crmApi = {
+interface CrmApi {
+  getPlanStatus: () => Promise<any>;
+  listAccounts: () => Promise<any[]>;
+  createAccount: (data: any) => Promise<unknown>;
+  updateAccount: (id: number, data: any) => Promise<unknown>;
+  deleteAccount: (id: number) => Promise<unknown>;
+  listContacts: () => Promise<any[]>;
+  createContact: (data: any) => Promise<unknown>;
+  updateContact: (id: number, data: any) => Promise<unknown>;
+  deleteContact: (id: number) => Promise<unknown>;
+  listContactsByAccount: (accountId: number) => Promise<any[]>;
+  listPipelines: () => Promise<any[]>;
+  createPipeline: (data: any) => Promise<unknown>;
+  updatePipeline: (id: number, data: any) => Promise<unknown>;
+  deletePipeline: (id: number) => Promise<unknown>;
+  listStages: (pipelineId: number) => Promise<any[]>;
+  createStage: (pipelineId: number, data: any) => Promise<unknown>;
+  updateStage: (id: number, data: any) => Promise<unknown>;
+  deleteStage: (id: number) => Promise<unknown>;
+  listProducts: () => Promise<any[]>;
+  createProduct: (data: any) => Promise<unknown>;
+  updateProduct: (id: number, data: any) => Promise<unknown>;
+  deleteProduct: (id: number) => Promise<unknown>;
+  listOpportunities: (params?: Record<string, string>) => Promise<any[]>;
+  createOpportunity: (data: any) => Promise<unknown>;
+  updateOpportunity: (id: number, data: any) => Promise<unknown>;
+  deleteOpportunity: (id: number) => Promise<unknown>;
+  getOpportunityLineItems: (id: number) => Promise<any[]>;
+  saveOpportunityLineItems: (id: number, data: any) => Promise<unknown>;
+  markAsWon: (id: number, data: { tracker_project_name: string; budgeted_hours: number }) => Promise<unknown>;
+  archiveOpportunity: (id: number) => Promise<unknown>;
+  unarchiveOpportunity: (id: number) => Promise<unknown>;
+  listTasks: () => Promise<any[]>;
+  createTask: (data: any) => Promise<unknown>;
+  updateTask: (id: number, data: any) => Promise<unknown>;
+  deleteTask: (id: number) => Promise<unknown>;
+  listChatsByOpportunity: (oppId: number) => Promise<any[]>;
+  sendMessage: (oppId: number, data: { content: string; thread_id?: number | null; attachments?: any[] }) => Promise<unknown>;
+  listCustomFields: (entity: string) => Promise<CustomFieldDef[]>;
+  createCustomField: (data: Partial<CustomFieldDef>) => Promise<unknown>;
+  updateCustomField: (id: number, data: Partial<CustomFieldDef>) => Promise<unknown>;
+  deleteCustomField: (id: number, purge?: boolean) => Promise<unknown>;
+  reorderCustomFields: (entries: { id: number; sort_order: number }[]) => Promise<unknown>;
+  bulkUpdateStages: (pipelineId: number, stages: StageBulkInput[]) => Promise<unknown>;
+  // Theme
+  getTheme: () => Promise<{ theme: 'light' | 'dark' }>;
+  updateTheme: (theme: 'light' | 'dark') => Promise<unknown>;
+}
+
+export const crmApi: CrmApi = {
   getPlanStatus: () => api.get<any>('/api/crm/plan-status'),
 
   listAccounts: () => api.get<any[]>('/api/crm/accounts'),
@@ -83,4 +132,8 @@ export const crmApi = {
 
   // Bulk Stages
   bulkUpdateStages: (pipelineId: number, stages: StageBulkInput[]) => api.put('/api/crm/pipeline-stages', { pipeline_id: pipelineId, stages }),
+
+  // Theme
+  getTheme: () => api.get<{ theme: 'light' | 'dark' }>('/api/crm/theme'),
+  updateTheme: (theme: 'light' | 'dark') => api.put('/api/crm/theme', { theme }),
 };

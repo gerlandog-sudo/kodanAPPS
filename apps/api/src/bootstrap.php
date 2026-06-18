@@ -101,6 +101,9 @@ if (isset($_GET['debug_api'])) {
         'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? '',
         'script_name' => $_SERVER['SCRIPT_NAME'] ?? '',
         'script_filename' => $_SERVER['SCRIPT_FILENAME'] ?? '',
+        'request_uri' => $_SERVER['REQUEST_URI'] ?? '',
+        'server_script' => $_SERVER['SCRIPT_NAME'] ?? '',
+        'php_self' => $_SERVER['PHP_SELF'] ?? '',
     ]);
     exit;
 }

@@ -12,16 +12,7 @@ namespace kodanAPPS\Repositories;
 final class AccountRepository extends BaseRepository
 {
     protected const TABLE = 'accounts';
-
-    /**
-     * Obtiene una cuenta por su ID
-     * 
-     * @return array<string, mixed>|null
-     */
-    public function findById(int $id): ?array
-    {
-        return $this->findOne(self::TABLE, 'account_id = :id', [':id' => $id]);
-    }
+    protected string $primaryKey = 'account_id';
 
     /**
      * Lista todas las cuentas del tenant

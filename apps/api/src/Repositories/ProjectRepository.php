@@ -19,14 +19,4 @@ class ProjectRepository extends BaseRepository
     {
         return parent::findAll($table, $columns, $where, $params, $orderBy, $limit);
     }
-
-    /**
-     * Busca un proyecto por ID con tenant scope automático.
-     *
-     * @return array<string, mixed>|null
-     */
-    public function findById(int $id): ?array
-    {
-        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
-    }
 }

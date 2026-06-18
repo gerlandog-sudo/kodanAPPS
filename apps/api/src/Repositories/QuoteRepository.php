@@ -14,16 +14,6 @@ final class QuoteRepository extends BaseRepository
     protected const TABLE = 'quotes';
 
     /**
-     * Obtiene una cotización por su ID
-     * 
-     * @return array<string, mixed>|null
-     */
-    public function findById(int $id): ?array
-    {
-        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
-    }
-
-    /**
      * Lista todas las cotizaciones del tenant, opcionalmente filtradas por oportunidad
      * 
      * @return array<int, array<string, mixed>>

@@ -14,16 +14,6 @@ final class CrmTaskRepository extends BaseRepository
     protected const TABLE = 'tasks';
 
     /**
-     * Obtiene una tarea por su ID
-     * 
-     * @return array<string, mixed>|null
-     */
-    public function findById(int $id): ?array
-    {
-        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
-    }
-
-    /**
      * Lista todas las tareas comerciales del tenant, opcionalmente filtradas por oportunidad
      * 
      * @return array<int, array<string, mixed>>

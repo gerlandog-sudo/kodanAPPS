@@ -12,16 +12,7 @@ namespace kodanAPPS\Repositories;
 final class ContactRepository extends BaseRepository
 {
     protected const TABLE = 'contacts';
-
-    /**
-     * Obtiene un contacto por su ID
-     * 
-     * @return array<string, mixed>|null
-     */
-    public function findById(int $id): ?array
-    {
-        return $this->findOne(self::TABLE, 'contact_id = :id', [':id' => $id]);
-    }
+    protected string $primaryKey = 'contact_id';
 
     /**
      * Lista todos los contactos del tenant

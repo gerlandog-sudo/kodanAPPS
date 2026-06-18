@@ -23,9 +23,25 @@ abstract class BaseRepository
 {
     protected TenantAwarePDO $pdo;
 
+    /**
+     * Nombre de la columna primary key de la tabla.
+     * Sobrescribir en subclases si difiere de 'id'.
+     */
+    protected string $primaryKey = 'id';
+
     public function __construct(TenantAwarePDO $pdo)
     {
         $this->pdo = $pdo;
+    }
+
+    /**
+     * Obtiene un registro por su primary key
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findById(int $id): ?array
+    {
+        return $this->findOne(static::TABLE, "{$this->primaryKey} = :id", [':id' => $id]);
     }
 
     /**

@@ -113,16 +113,6 @@ final class UserRepository extends BaseRepository
     }
 
     /**
-     * Busca usuario por ID
-     * 
-     * @return array<string, mixed>|null
-     */
-    public function findById(int $userId): ?array
-    {
-        return $this->findOne(self::TABLE, 'id = :id', [':id' => $userId]);
-    }
-
-    /**
      * Actualiza último login
      */
     public function updateLastLogin(int $userId): void

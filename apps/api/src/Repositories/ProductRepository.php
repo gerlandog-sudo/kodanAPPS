@@ -14,16 +14,6 @@ final class ProductRepository extends BaseRepository
     protected const TABLE = 'products';
 
     /**
-     * Obtiene un producto por su ID
-     * 
-     * @return array<string, mixed>|null
-     */
-    public function findById(int $id): ?array
-    {
-        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
-    }
-
-    /**
      * Lista todos los productos del tenant
      * 
      * @return array<int, array<string, mixed>>

@@ -22,5 +22,7 @@ export { apiClient, api, ApiError, setCurrentAppId } from './api/client'
 export { useAuth } from './hooks/useAuth'
 export type { AuthState } from './hooks/useAuth'
 export { AuthLoading } from './components/AuthLoading'
+export { DataGrid } from './components/DataGrid'
+export type { Column, Action } from './components/DataGrid'
 
 import './styles/base.css'

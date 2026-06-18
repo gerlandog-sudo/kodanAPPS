@@ -48,7 +48,10 @@ function AppContent() {
     if (loading) return;
 
     setView(authenticated ? 'app' : 'login');
-  }, [loading, authenticated, view]);
+    if (authenticated) {
+      loadUserTheme();
+    }
+  }, [loading, authenticated, view, loadUserTheme]);
 
   const handleLoginSuccess = useCallback((data: any) => {
     setAuthenticated(data);
@@ -85,7 +88,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-hidden">
       <Sidebar
         title="kodanAPPS"
         logo="/logo.png"
@@ -110,7 +113,7 @@ function AppContent() {
           userMenuExtraItems={userMenuExtraItems}
           notificationCount={5}
         />
-        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
+        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)' }}>
           <div className="mx-auto" style={{ maxWidth: '1400px' }}>
             {route === 'dashboard' && <SuperAdminDashboard />}
             {route === 'tenants' && <TenantManagement />}

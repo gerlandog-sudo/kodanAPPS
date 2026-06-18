@@ -151,7 +151,7 @@ export function RoleManagement() {
         }}
         editable={{ onClick: handleOpenEdit }}
         deletable={{ onClick: handleDelete }}
-        maxHeight="calc(100vh - 220px)"
+        maxHeight="calc(100vh - 210px)"
       />
 
       {/* Create / Edit Modal */}

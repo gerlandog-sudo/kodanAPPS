@@ -200,8 +200,8 @@ final class AuthController
      */
     public function refresh(array $input): array
     {
-        $refreshToken = $_COOKIE['refresh_token'] ?? '';
         $appId = $input['app_id'] ?? '';
+        $refreshToken = $_COOKIE["refresh_token_{$appId}"] ?? '';
 
         if ($refreshToken === '' || $appId === '') {
             throw new InvalidArgumentException(json_encode([
@@ -269,7 +269,7 @@ final class AuthController
         $jwt = $this->generateJwt($payload);
 
         $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        setcookie('access_token', $jwt, [
+        setcookie("access_token_{$appId}", $jwt, [
             'expires' => $expiresAt,
             'path' => '/',
             'domain' => $this->cookieDomain,
@@ -278,7 +278,7 @@ final class AuthController
             'samesite' => 'Lax',
         ]);
 
-        setcookie('refresh_token', $newTokenRaw, [
+        setcookie("refresh_token_{$appId}", $newTokenRaw, [
             'expires' => time() + 2592000,
             'path' => '/',
             'domain' => $this->cookieDomain,
@@ -324,7 +324,7 @@ final class AuthController
         $jwt = $this->generateJwt($payload);
 
         $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        setcookie('access_token', $jwt, [
+        setcookie("access_token_{$appId}", $jwt, [
             'expires' => $expiresAt,
             'path' => '/',
             'domain' => $this->cookieDomain,
@@ -343,8 +343,7 @@ final class AuthController
             $_SERVER['REMOTE_ADDR'] ?? null
         );
 
-        $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        setcookie('refresh_token', $refreshTokenRaw, [
+        setcookie("refresh_token_{$appId}", $refreshTokenRaw, [
             'expires' => time() + 2592000,
             'path' => '/',
             'domain' => $this->cookieDomain,
@@ -414,9 +413,16 @@ final class AuthController
      *
      * @return array<string, mixed>
      */
-    public function logout(): array
+    public function logout(array $input): array
     {
-        $refreshToken = $_COOKIE['refresh_token'] ?? '';
+        $appId = $input['app_id'] ?? '';
+        if ($appId === '') {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'app_id requerido',
+            ]));
+        }
+
+        $refreshToken = $_COOKIE["refresh_token_{$appId}"] ?? '';
         if ($refreshToken !== '') {
             $tokenHash = hash('sha256', $refreshToken);
             $storedToken = $this->refreshTokenRepo->findByHash($tokenHash);
@@ -428,7 +434,7 @@ final class AuthController
         $cookieSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         $expired = time() - 3600;
 
-        setcookie('access_token', '', [
+        setcookie("access_token_{$appId}", '', [
             'expires' => $expired,
             'path' => '/',
             'domain' => $this->cookieDomain,
@@ -437,7 +443,7 @@ final class AuthController
             'samesite' => 'Lax',
         ]);
 
-        setcookie('refresh_token', '', [
+        setcookie("refresh_token_{$appId}", '', [
             'expires' => $expired,
             'path' => '/',
             'domain' => $this->cookieDomain,

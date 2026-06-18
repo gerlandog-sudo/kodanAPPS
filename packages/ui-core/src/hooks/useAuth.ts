@@ -28,7 +28,10 @@ export function useAuth(appId: string) {
         new URL(`${API_BASE}/api/auth/validate`, window.location.origin).toString(),
         {
           credentials: 'include',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-App-ID': appId,
+          },
         }
       );
 
@@ -74,7 +77,11 @@ export function useAuth(appId: string) {
         {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-App-ID': appId,
+          },
+          body: JSON.stringify({ app_id: appId }),
         }
       );
     } catch {

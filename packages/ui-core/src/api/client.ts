@@ -26,7 +26,11 @@ export function setCurrentAppId(appId: string): void {
 // --- Force logout event ---
 export function triggerForceLogout(): void {
   sessionStorage.removeItem('csrf_token');
-  document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  if (currentAppId) {
+    document.cookie = `access_token_${currentAppId}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  } else {
+    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  }
   window.dispatchEvent(new CustomEvent('auth:force-logout'));
 }
 
@@ -46,7 +50,10 @@ async function attemptTokenRefresh(): Promise<boolean> {
         new URL(`${API_BASE}/api/auth/refresh`, window.location.origin).toString(),
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-App-ID': currentAppId,
+          },
           body: JSON.stringify({ app_id: currentAppId }),
           credentials: 'include',
         }
@@ -113,6 +120,9 @@ export async function apiClient<T = unknown>(
   const requestHeaders = new Headers(headers);
   requestHeaders.set('Content-Type', 'application/json');
   requestHeaders.set('X-Requested-With', 'XMLHttpRequest');
+  if (currentAppId) {
+    requestHeaders.set('X-App-ID', currentAppId);
+  }
 
   const method = (fetchOptions.method ?? 'GET').toUpperCase();
   const isMutable = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);

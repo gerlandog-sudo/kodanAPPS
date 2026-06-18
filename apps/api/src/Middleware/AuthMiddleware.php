@@ -38,11 +38,12 @@ final class AuthMiddleware
      * Valida JWT + CSRF y setea TenantContext
      * 
      * @return array{user_id: int, tenant_id: int, roles: array<string>, app_id: string}
-     * @throws RuntimeException 401/403
+     * @throws RuntimeException 400/401/403
      */
     public function handle(): array
     {
-        $accessToken = $_COOKIE['access_token'] ?? '';
+        $appId = $this->getAppIdFromHeader();
+        $accessToken = $_COOKIE["access_token_{$appId}"] ?? '';
         if ($accessToken === '') {
             throw new RuntimeException('UNAUTHENTICATED: Access token missing', 401);
         }
@@ -80,8 +81,8 @@ final class AuthMiddleware
             throw new RuntimeException('FORBIDDEN: Super Admin must operate from system tenant', 403);
         }
 
-        // Leer payload del JWT nuevamente para verificar roles
-        $accessToken = $_COOKIE['access_token'] ?? '';
+        $appId = $this->getAppIdFromHeader();
+        $accessToken = $_COOKIE["access_token_{$appId}"] ?? '';
         if ($accessToken === '') {
             throw new RuntimeException('UNAUTHENTICATED', 401);
         }
@@ -94,6 +95,15 @@ final class AuthMiddleware
                 throw new RuntimeException('FORBIDDEN: Super Admin privileges required', 403);
             }
         }
+    }
+
+    private function getAppIdFromHeader(): string
+    {
+        $appId = $_SERVER['HTTP_X_APP_ID'] ?? '';
+        if ($appId === '') {
+            throw new RuntimeException('MISSING_APP_ID: Header X-App-ID requerido', 400);
+        }
+        return $appId;
     }
 
     /**

@@ -120,7 +120,8 @@ return function (Router $router, array $app): void {
     });
 
     $router->post('/api/auth/logout', function () use ($app) {
-        $data = $app['controllers']['auth']->logout();
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $data = $app['controllers']['auth']->logout($input);
         header('Content-Type: application/json');
         echo json_encode($data);
     });

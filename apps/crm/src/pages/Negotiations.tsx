@@ -9,14 +9,15 @@ import {
   Plus, 
   MessageSquare, 
   Calendar, 
-  User, 
   Building, 
   Send,
   Trash2,
   ListTodo,
   Settings2,
   Archive,
-  ArchiveRestore
+  ArchiveRestore,
+  Edit,
+  Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -61,45 +62,127 @@ interface CardProps {
   opp: Opportunity;
   isDropped: boolean;
   onOpenDetail: (opp: Opportunity) => void;
+  onEdit: (e: React.MouseEvent, opp: Opportunity) => void;
+  onDelete: (e: React.MouseEvent, opp: Opportunity) => void;
+  onChat: (e: React.MouseEvent, opp: Opportunity) => void;
 }
 
-function OppCard({ opp, isDropped, onOpenDetail }: CardProps) {
+function OppCard({ opp, isDropped, onOpenDetail, onEdit, onDelete, onChat }: CardProps) {
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+  };
+
+  const initials = opp.owner_name
+    ? opp.owner_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+
   return (
     <div
-      onClick={() => onOpenDetail(opp)}
-      className={`p-4 cursor-pointer hover:scale-[1.02] active:scale-95 duration-150 flex flex-col gap-3 select-none rounded-lg border transition-all
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest('[data-action]')) {
+          onOpenDetail(opp);
+        }
+      }}
+      className={`p-3 cursor-pointer hover:scale-[1.02] active:scale-95 duration-150 flex flex-col gap-2.5 select-none rounded-lg border transition-all
         ${isDropped ? 'animate-drop-shake' : ''}`}
       style={{
         background: 'var(--sys-surface-raised)',
         borderColor: 'var(--sys-border-soft)',
       }}
     >
-      <div>
-        <h4 className="font-bold text-sm tracking-tight line-clamp-1">{opp.name}</h4>
-        <p className="text-xs font-semibold mt-1" style={{ color: 'var(--sys-primary)' }}>
-          {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(opp.value) || 0)}
-        </p>
+      {/* Top: Badge total + actions menu */}
+      <div className="flex items-start justify-between gap-2">
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tabular-nums shrink-0"
+          style={{
+            background: 'var(--sys-primary-container)',
+            color: 'var(--color-on-primary-container)',
+          }}
+        >
+          {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(parseFloat(opp.value) || 0)}
+        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            data-action="chat"
+            onClick={(e) => { e.stopPropagation(); onChat(e, opp); }}
+            className="p-1.5 rounded hover:bg-[var(--sys-surface)] transition-colors"
+            aria-label="Chat"
+            title="Comentarios"
+          >
+            <MessageSquare size={13} style={{ color: 'var(--sys-text-muted)' }} />
+          </button>
+          <button
+            data-action="edit"
+            onClick={(e) => { e.stopPropagation(); onEdit(e, opp); }}
+            className="p-1.5 rounded hover:bg-[var(--sys-surface)] transition-colors"
+            aria-label="Editar"
+            title="Editar"
+          >
+            <Edit size={13} style={{ color: 'var(--sys-text-muted)' }} />
+          </button>
+          <button
+            data-action="delete"
+            onClick={(e) => { e.stopPropagation(); onDelete(e, opp); }}
+            className="p-1.5 rounded hover:bg-red-500/10 hover:text-red-500 transition-colors"
+            aria-label="Eliminar"
+            title="Eliminar"
+          >
+            <Trash2 size={13} style={{ color: 'var(--sys-text-muted)' }} />
+          </button>
+        </div>
       </div>
 
+      {/* Name */}
+      <h4 className="font-bold text-sm tracking-tight line-clamp-1" style={{ color: 'var(--sys-text)' }}>
+        {opp.name}
+      </h4>
+
+      {/* Meta info grid */}
       <div className="flex flex-col gap-1.5 text-[11px]" style={{ color: 'var(--sys-text-muted)' }}>
+        {/* Empresa */}
         {opp.account_name && (
-          <div className="flex items-center gap-1">
-            <Building size={12} />
-            <span className="truncate">{opp.account_name}</span>
+          <div className="flex items-center gap-1.5" title={opp.account_name}>
+            <Building size={12} className="shrink-0" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }} />
+            <span className="truncate font-medium">{opp.account_name}</span>
           </div>
         )}
-        {opp.contact_name && (
-          <div className="flex items-center gap-1">
-            <User size={12} />
-            <span className="truncate">{opp.contact_name}</span>
+
+        {/* Fecha inicio / Fecha fin */}
+        <div className="flex items-center gap-1.5">
+          <Calendar size={12} className="shrink-0" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }} />
+          <span>Ini: {formatDate(opp.created_at)}</span>
+          <span className="mx-1">·</span>
+          <span>Fin: {formatDate(opp.close_date)}</span>
+        </div>
+
+        {/* Cantidad productos + Persona asignada */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Package size={12} className="shrink-0" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }} />
+            <span>{opp.line_items_count ?? 0} prod.</span>
           </div>
-        )}
-        {opp.close_date && (
-          <div className="flex items-center gap-1">
-            <Calendar size={12} />
-            <span>Cierre: {opp.close_date}</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {opp.owner_name && (
+              <span className="truncate text-[10px] max-w-[80px]" title={opp.owner_name}>
+                {opp.owner_name}
+              </span>
+            )}
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+              style={{
+                background: opp.owner_avatar ? 'transparent' : 'var(--sys-primary-container)',
+                color: opp.owner_avatar ? 'var(--sys-text)' : 'var(--color-on-primary-container)',
+              }}
+            >
+              {opp.owner_avatar ? (
+                <img src={opp.owner_avatar} alt="" className="w-6 h-6 rounded-full" />
+              ) : (
+                initials
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -474,15 +557,42 @@ export function Negotiations() {
     []
   );
 
+  const handleEditOpp = useCallback((e: React.MouseEvent, opp: Opportunity) => {
+    e.stopPropagation();
+    // TODO: Open edit modal
+    console.log('Edit:', opp);
+  }, []);
+
+  const handleDeleteOpp = useCallback(async (e: React.MouseEvent, opp: Opportunity) => {
+    e.stopPropagation();
+    if (!window.confirm(`¿Eliminar "${opp.name}"?`)) return;
+    try {
+      await crmApi.deleteOpportunity(opp.id);
+      toast.success('Negociación eliminada');
+      if (selectedPipelineId) loadPipelineData(selectedPipelineId);
+    } catch {
+      toast.error('Error al eliminar');
+    }
+  }, [selectedPipelineId]);
+
+  const handleChatOpp = useCallback((e: React.MouseEvent, opp: Opportunity) => {
+    e.stopPropagation();
+    openDetailDrawer(opp);
+    // Focus chat tab or scroll to chat
+  }, [openDetailDrawer]);
+
   const renderCard = useCallback(
     (opp: Opportunity) => (
       <OppCard
         opp={opp}
         isDropped={justDroppedId === opp.id}
         onOpenDetail={openDetailDrawer}
+        onEdit={handleEditOpp}
+        onDelete={handleDeleteOpp}
+        onChat={handleChatOpp}
       />
     ),
-    [justDroppedId]
+    [justDroppedId, handleEditOpp, handleDeleteOpp, handleChatOpp]
   );
 
   return (

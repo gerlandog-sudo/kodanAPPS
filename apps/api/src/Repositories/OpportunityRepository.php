@@ -20,13 +20,20 @@ final class OpportunityRepository extends BaseRepository
      */
     public function findById(int $id): ?array
     {
-        $sql = "SELECT o.*, ps.name AS stage_name, ps.color_hex AS stage_color, ps.is_won_stage, a.name AS account_name,
-                       CONCAT(c.first_name, ' ', c.last_name) AS contact_name
-                FROM opportunities o
-                JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
-                JOIN accounts a ON a.account_id = o.account_id
-                LEFT JOIN contacts c ON c.contact_id = o.contact_id
-                WHERE o.id = :id AND o.tenant_id = :tenant_id";
+        $sql = "SELECT o.*, 
+            ps.name AS stage_name, ps.color_hex AS stage_color, ps.is_won_stage, ps.is_lost_stage, 
+            a.name AS account_name,
+            CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
+            u.display_name AS owner_name,
+            uc.avatar_url AS owner_avatar,
+            (SELECT COUNT(*) FROM opportunity_line_items oli WHERE oli.opportunity_id = o.id) AS line_items_count
+         FROM opportunities o
+         JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
+         JOIN accounts a ON a.account_id = o.account_id
+         LEFT JOIN contacts c ON c.contact_id = o.contact_id
+         LEFT JOIN users u ON u.id = o.owner_user_id
+         LEFT JOIN user_configs uc ON uc.user_id = u.id AND uc.app_id = 'crm'
+         WHERE o.id = :id AND o.tenant_id = :tenant_id";
         $result = $this->rawSelect($sql, [':id' => $id]);
         return empty($result) ? null : $result[0];
     }
@@ -42,14 +49,23 @@ final class OpportunityRepository extends BaseRepository
     {
         $archivedFilter = $includeArchived ? '' : ' AND o.archived_at IS NULL';
 
+        $select = "SELECT o.*, 
+            ps.name AS stage_name, ps.color_hex AS stage_color, ps.is_won_stage, ps.is_lost_stage, 
+            a.name AS account_name,
+            CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
+            u.display_name AS owner_name,
+            uc.avatar_url AS owner_avatar,
+            (SELECT COUNT(*) FROM opportunity_line_items oli WHERE oli.opportunity_id = o.id) AS line_items_count
+         FROM opportunities o
+         JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
+         JOIN accounts a ON a.account_id = o.account_id
+         LEFT JOIN contacts c ON c.contact_id = o.contact_id
+         LEFT JOIN users u ON u.id = o.owner_user_id
+         LEFT JOIN user_configs uc ON uc.user_id = u.id AND uc.app_id = 'crm'";
+
         if ($pipelineId > 0) {
             return $this->rawSelect(
-                "SELECT o.*, ps.name AS stage_name, ps.color_hex AS stage_color, ps.is_won_stage, ps.is_lost_stage, a.name AS account_name,
-                        CONCAT(c.first_name, ' ', c.last_name) AS contact_name
-                 FROM opportunities o
-                 JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
-                 JOIN accounts a ON a.account_id = o.account_id
-                 LEFT JOIN contacts c ON c.contact_id = o.contact_id
+                $select . "
                  WHERE ps.pipeline_id = :pipeline_id AND o.tenant_id = :tenant_id{$archivedFilter}
                  ORDER BY ps.sort_order ASC, o.created_at DESC",
                 [':pipeline_id' => $pipelineId]
@@ -57,12 +73,7 @@ final class OpportunityRepository extends BaseRepository
         }
         
         return $this->rawSelect(
-            "SELECT o.*, ps.name AS stage_name, ps.color_hex AS stage_color, ps.is_won_stage, ps.is_lost_stage, a.name AS account_name,
-                    CONCAT(c.first_name, ' ', c.last_name) AS contact_name
-             FROM opportunities o
-             JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
-             JOIN accounts a ON a.account_id = o.account_id
-             LEFT JOIN contacts c ON c.contact_id = o.contact_id
+            $select . "
              WHERE o.tenant_id = :tenant_id{$archivedFilter}
              ORDER BY o.created_at DESC"
         );

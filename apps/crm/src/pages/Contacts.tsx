@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Input, Modal, CustomFieldsForm } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, Table } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
-import { Plus, Edit, Trash2, User2, Mail, Phone, Building2, Settings2 } from 'lucide-react';
+import { Plus, Edit, Trash2, User2, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Contacts() {
@@ -132,70 +132,59 @@ export function Contacts() {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <span className="spinner" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contacts.map(c => (
-            <Card key={c.contact_id} className="p-5 double-bevel-card flex flex-col justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--sys-tertiary) 12%, transparent)', color: 'var(--sys-tertiary)' }}>
-                      <User2 size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm tracking-tight">{c.first_name} {c.last_name}</h4>
-                      {c.account_name && (
-                        <div className="flex items-center gap-1 mt-0.5" style={{ color: 'var(--sys-text-muted)' }}>
-                          <Building2 size={11} />
-                          <span className="text-[10px] truncate max-w-[150px]">{c.account_name}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleOpenEdit(c)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" title="Editar">
-                      <Edit size={14} />
-                    </button>
-                    <button onClick={() => handleDelete(c.contact_id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+      <Table
+        data={contacts}
+        columns={[
+          {
+            key: 'contact',
+            header: 'Contacto',
+            render: c => (
+              <>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'color-mix(in srgb, var(--sys-tertiary) 12%, transparent)', color: 'var(--sys-tertiary)' }}>
+                  <User2 size={14} />
                 </div>
-
-                <div className="flex flex-col gap-1.5 text-xs mt-2" style={{ color: 'var(--sys-text-muted)' }}>
-                  <div className="flex items-center gap-1.5">
-                    <Mail size={12} />
-                    <a href={`mailto:${c.email}`} className="hover:underline" style={{ color: 'var(--sys-primary)' }}>{c.email}</a>
-                  </div>
-                  {c.phone && (
-                    <div className="flex items-center gap-1.5">
-                      <Phone size={12} />
-                      <span>Fijo: {c.phone}</span>
-                    </div>
-                  )}
-                  {c.mobile && (
-                    <div className="flex items-center gap-1.5">
-                      <Phone size={12} />
-                      <span>Móvil: {c.mobile}</span>
-                    </div>
-                  )}
+                <div>
+                  <p className="font-semibold text-sm">{c.first_name} {c.last_name}</p>
+                  {c.account_name && <p className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{c.account_name}</p>}
                 </div>
-              </div>
-            </Card>
-          ))}
-
-          {contacts.length === 0 && (
-            <div className="col-span-full flex flex-col items-center justify-center p-10 bg-slate-50 dark:background-slate-900 rounded-xl border border-dashed">
-              <User2 size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
-              <p className="text-sm italic mt-2" style={{ color: 'var(--sys-text-muted)' }}>No hay contactos comerciales registrados.</p>
-            </div>
-          )}
-        </div>
-      )}
+              </>
+            ),
+          },
+          {
+            key: 'email',
+            header: 'Email',
+            render: c => (
+              <a href={`mailto:${c.email}`} className="hover:underline text-xs font-medium" style={{ color: 'var(--sys-primary)' }}>
+                {c.email}
+              </a>
+            ),
+          },
+          {
+            key: 'phone',
+            header: 'Teléfono',
+            render: c => {
+              const parts = []
+              if (c.phone) parts.push(`Fijo: ${c.phone}`)
+              if (c.mobile) parts.push(`Móvil: ${c.mobile}`)
+              return parts.length > 0
+                ? <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{parts.join(' | ')}</span>
+                : <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)', opacity: 0.5 }}>—</span>
+            },
+          },
+        ]}
+        keyExtractor={c => c.contact_id}
+        loading={loading}
+        emptyState={{
+          icon: <User2 size={40} />,
+          title: 'No hay contactos comerciales registrados',
+          description: '',
+        }}
+        actions={[
+          { icon: <Edit size={14} />, label: 'Editar', onClick: c => handleOpenEdit(c) },
+          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: c => handleDelete(c.contact_id) },
+        ]}
+        pageSize={15}
+      />
 
       {/* Modal Creación / Edición */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedContact ? 'Editar Contacto' : 'Nuevo Contacto'}>

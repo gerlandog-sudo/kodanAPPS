@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Input, Modal, CustomFieldsForm } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, Table } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
-import { Plus, Edit, Trash2, Building2, Globe, Phone, MapPin, Settings2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Building2, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Accounts() {
@@ -124,70 +124,79 @@ export function Accounts() {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[40vh]">
-          <span className="spinner" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {accounts.map(acc => (
-            <Card key={acc.account_id} className="p-5 double-bevel-card flex flex-col justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--sys-primary) 12%, transparent)', color: 'var(--sys-primary)' }}>
-                      <Building2 size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm tracking-tight">{acc.name}</h4>
-                      {acc.legal_name && <p className="text-[10px]" style={{ color: 'var(--sys-text-muted)' }}>{acc.legal_name}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleOpenEdit(acc)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" title="Editar">
-                      <Edit size={14} />
-                    </button>
-                    <button onClick={() => handleDelete(acc.account_id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+      <Table
+        data={accounts}
+        columns={[
+          {
+            key: 'company',
+            header: 'Empresa',
+            render: acc => (
+              <>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'color-mix(in srgb, var(--sys-primary) 12%, transparent)', color: 'var(--sys-primary)' }}>
+                  <Building2 size={14} />
                 </div>
-
-                <div className="flex flex-col gap-1.5 text-xs mt-2" style={{ color: 'var(--sys-text-muted)' }}>
-                  {acc.tax_id && <p>CUIT/TAX: <span className="font-medium text-slate-700 dark:text-slate-300">{acc.tax_id}</span></p>}
-                  {acc.website && (
-                    <div className="flex items-center gap-1.5">
-                      <Globe size={12} />
-                      <a href={acc.website.startsWith('http') ? acc.website : `https://${acc.website}`} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: 'var(--sys-primary)' }}>
-                        {acc.website}
-                      </a>
-                    </div>
-                  )}
-                  {acc.phone && (
-                    <div className="flex items-center gap-1.5">
-                      <Phone size={12} />
-                      <span>{acc.phone}</span>
-                    </div>
-                  )}
-                  {acc.address && (
-                    <div className="flex items-center gap-1.5">
-                      <MapPin size={12} />
-                      <span className="truncate">{acc.address}</span>
-                    </div>
-                  )}
+                <div>
+                  <p className="font-semibold text-sm">{acc.name}</p>
+                  {acc.legal_name && <p className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{acc.legal_name}</p>}
                 </div>
-              </div>
-            </Card>
-          ))}
-
-          {accounts.length === 0 && (
-            <div className="col-span-full flex flex-col items-center justify-center p-10 bg-slate-50 dark:background-slate-900 rounded-xl border border-dashed">
-              <Building2 size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
-              <p className="text-sm italic mt-2" style={{ color: 'var(--sys-text-muted)' }}>No hay empresas ni cuentas B2B registradas.</p>
-            </div>
-          )}
-        </div>
-      )}
+              </>
+            ),
+          },
+          {
+            key: 'tax_id',
+            header: 'TAX ID',
+            render: acc =>
+              acc.tax_id
+                ? <span className="text-xs font-medium">{acc.tax_id}</span>
+                : <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)', opacity: 0.5 }}>—</span>,
+          },
+          {
+            key: 'website',
+            header: 'Web',
+            render: acc =>
+              acc.website
+                ? (
+                  <a
+                    href={acc.website.startsWith('http') ? acc.website : `https://${acc.website}`}
+                    target="_blank" rel="noreferrer"
+                    className="hover:underline text-xs font-medium"
+                    style={{ color: 'var(--sys-primary)' }}
+                  >
+                    {acc.website.replace(/^https?:\/\//, '')}
+                  </a>
+                )
+                : <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)', opacity: 0.5 }}>—</span>,
+          },
+          {
+            key: 'phone',
+            header: 'Teléfono',
+            render: acc =>
+              acc.phone
+                ? <span className="text-xs font-normal">{acc.phone}</span>
+                : <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)', opacity: 0.5 }}>—</span>,
+          },
+          {
+            key: 'address',
+            header: 'Dirección',
+            render: acc =>
+              acc.address
+                ? <span className="text-xs font-normal truncate max-w-[200px] block">{acc.address}</span>
+                : <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)', opacity: 0.5 }}>—</span>,
+          },
+        ]}
+        keyExtractor={acc => acc.account_id}
+        loading={loading}
+        emptyState={{
+          icon: <Building2 size={40} />,
+          title: 'No hay empresas ni cuentas B2B registradas',
+          description: '',
+        }}
+        actions={[
+          { icon: <Edit size={14} />, label: 'Editar', onClick: acc => handleOpenEdit(acc) },
+          { icon: <Trash2 size={14} />, label: 'Eliminar', variant: 'danger', onClick: acc => handleDelete(acc.account_id) },
+        ]}
+        pageSize={15}
+      />
 
       {/* Modal Creación / Edición */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedAcc ? 'Editar Cuenta Comercial' : 'Nueva Cuenta Comercial'}>

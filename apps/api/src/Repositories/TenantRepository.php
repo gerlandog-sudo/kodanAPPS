@@ -20,6 +20,8 @@ use InvalidArgumentException;
  */
 final class TenantRepository extends BaseRepository
 {
+    protected const TABLE = 'tenants';
+
     public function __construct(TenantAwarePDO $pdo)
     {
         parent::__construct($pdo);
@@ -118,7 +120,7 @@ final class TenantRepository extends BaseRepository
      */
     public function createTenant(string $name, int $subscriptionPlanId, ?string $logoUrl = null): int
     {
-        return $this->create('tenants', [
+        return $this->create(self::TABLE, [
             'name' => $name,
             'subscription_plan_id' => $subscriptionPlanId,
             'logo_url' => $logoUrl,
@@ -142,7 +144,7 @@ final class TenantRepository extends BaseRepository
             return false;
         }
         
-        $rows = $this->update('tenants', $data, '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
+        $rows = $this->update(self::TABLE, $data, '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         return $rows > 0;
     }
 
@@ -159,7 +161,7 @@ final class TenantRepository extends BaseRepository
      */
     public function activateTenant(int $tenantId): bool
     {
-        $rows = $this->update('tenants', [
+        $rows = $this->update(self::TABLE, [
             'is_active' => 1,
         ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         
@@ -175,12 +177,12 @@ final class TenantRepository extends BaseRepository
     public function deactivateTenant(int $tenantId): bool
     {
         // Verificar que no sea tenant de sistema
-        $tenant = $this->findOne('tenants', '/* BYPASS_TENANT_SCOPE */ tenant_id = :id', [':id' => $tenantId], 'is_system_tenant');
+        $tenant = $this->findOne(self::TABLE, '/* BYPASS_TENANT_SCOPE */ tenant_id = :id', [':id' => $tenantId], 'is_system_tenant');
         if ($tenant !== null && (int)$tenant['is_system_tenant'] === 1) {
             throw new InvalidArgumentException('Cannot deactivate system tenant');
         }
         
-        $rows = $this->update('tenants', [
+        $rows = $this->update(self::TABLE, [
             'is_active' => 0,
         ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         
@@ -192,7 +194,7 @@ final class TenantRepository extends BaseRepository
      */
     public function hasPlanChanged(int $tenantId, int $newPlanId): bool
     {
-        $current = $this->findOne('tenants', '/* BYPASS_TENANT_SCOPE */ tenant_id = :id', [':id' => $tenantId], 'subscription_plan_id');
+        $current = $this->findOne(self::TABLE, '/* BYPASS_TENANT_SCOPE */ tenant_id = :id', [':id' => $tenantId], 'subscription_plan_id');
         return $current === null || (int)$current['subscription_plan_id'] !== $newPlanId;
     }
 
@@ -203,7 +205,7 @@ final class TenantRepository extends BaseRepository
      */
     public function changePlan(int $tenantId, int $newPlanId): bool
     {
-        $rows = $this->update('tenants', [
+        $rows = $this->update(self::TABLE, [
             'subscription_plan_id' => $newPlanId,
         ], '/* BYPASS_TENANT_SCOPE */ tenant_id = :tenant_id', [':tenant_id' => $tenantId]);
         

@@ -41,9 +41,51 @@ return function (Router $router, array $app): void {
     // ============================================================
     // Health Check (público)
     // ============================================================
-    $router->get('/api/health', function () {
+    $router->get('/api/health', function () use ($app) {
+        $checks = [
+            'php_version' => PHP_VERSION,
+            'timestamp' => date('c'),
+        ];
+
+        // 1. Verificar conexión PDO
+        try {
+            $pdo = $app['pdo'];
+            $pdo->query('SELECT 1');
+            $checks['database'] = 'connected';
+        } catch (\Throwable $e) {
+            http_response_code(503);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'Database connection failed',
+                'checks' => $checks,
+            ]);
+            return;
+        }
+
+        // 2. Query simple para verificar lectura/escritura
+        try {
+            $version = $pdo->query('SELECT VERSION() AS v')->fetch(\PDO::FETCH_ASSOC);
+            $checks['db_version'] = $version['v'] ?? 'unknown';
+        } catch (\Throwable $e) {
+            http_response_code(503);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'Database query failed',
+                'checks' => $checks,
+            ]);
+            return;
+        }
+
+        // 3. Verificar que TenantContext sea inicializable
+        $checks['tenant_context'] = class_exists(\kodanAPPS\DB\TenantContext::class) ? 'available' : 'missing';
+
         header('Content-Type: application/json');
-        echo json_encode(['status' => 'ok', 'timestamp' => date('c')]);
+        echo json_encode([
+            'status' => 'ok',
+            'checks' => $checks,
+        ]);
     });
 
     // ============================================================
@@ -71,19 +113,10 @@ return function (Router $router, array $app): void {
     });
 
     $router->get('/api/auth/validate', function () use ($app) {
-        $authMiddleware = $app['auth'];
-        try {
-            $authMiddleware->handle();
-            $data = $app['controllers']['auth']->validate();
-            header('Content-Type: application/json');
-            echo json_encode($data);
-        } catch (\RuntimeException $e) {
-            $code = (int)$e->getCode();
-            if ($code === 0) $code = 401;
-            http_response_code($code);
-            header('Content-Type: application/json');
-            echo json_encode(['error' => $e->getMessage()]);
-        }
+        $app['auth']->handle();
+        $data = $app['controllers']['auth']->validate();
+        header('Content-Type: application/json');
+        echo json_encode($data);
     });
 
     $router->post('/api/auth/logout', function () use ($app) {
@@ -96,39 +129,17 @@ return function (Router $router, array $app): void {
     // Middleware: Super Admin (JWT + SuperAdmin role)
     // ============================================================
     $router->use('/api/super-admin', function (Router $router) use ($app) {
-        $authMiddleware = $app['auth'];
-        try {
-            $auth = $authMiddleware->handle();
-            $authMiddleware->requireSuperAdmin();
-            $router->setContext('auth', $auth);
-            return null; // continuar
-        } catch (\RuntimeException $e) {
-            $code = (int)$e->getCode();
-            if ($code === 0) $code = 401;
-            http_response_code($code);
-            header('Content-Type: application/json');
-            echo json_encode(['error' => $e->getMessage()]);
-            return false; // detener
-        }
+        $auth = $app['auth']->handle();
+        $app['auth']->requireSuperAdmin();
+        $router->setContext('auth', $auth);
     });
 
     // ============================================================
     // Middleware: CRM (JWT)
     // ============================================================
     $router->use('/api/crm', function (Router $router) use ($app) {
-        $authMiddleware = $app['auth'];
-        try {
-            $auth = $authMiddleware->handle();
-            $router->setContext('auth', $auth);
-            return null; // continuar
-        } catch (\RuntimeException $e) {
-            $code = (int)$e->getCode();
-            if ($code === 0) $code = 401;
-            http_response_code($code);
-            header('Content-Type: application/json');
-            echo json_encode(['error' => $e->getMessage()]);
-            return false; // detener
-        }
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
     });
 
     // ============================================================
@@ -453,19 +464,8 @@ return function (Router $router, array $app): void {
     // Middleware: Tracker (JWT)
     // ============================================================
     $router->use('/api/tracker', function (Router $router) use ($app) {
-        $authMiddleware = $app['auth'];
-        try {
-            $auth = $authMiddleware->handle();
-            $router->setContext('auth', $auth);
-            return null;
-        } catch (\RuntimeException $e) {
-            $code = (int)$e->getCode();
-            if ($code === 0) $code = 401;
-            http_response_code($code);
-            header('Content-Type: application/json');
-            echo json_encode(['error' => $e->getMessage()]);
-            return false;
-        }
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
     });
 
     // ============================================================

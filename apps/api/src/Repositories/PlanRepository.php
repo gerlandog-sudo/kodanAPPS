@@ -16,6 +16,8 @@ use InvalidArgumentException;
  */
 final class PlanRepository extends BaseRepository
 {
+    protected const TABLE = 'subscription_plans';
+
     public function __construct(TenantAwarePDO $pdo)
     {
         parent::__construct($pdo);
@@ -63,7 +65,7 @@ final class PlanRepository extends BaseRepository
      */
     public function createPlan(string $name, string $description, float $price, string $currency): int
     {
-        return parent::create('subscription_plans', [
+        return parent::create(self::TABLE, [
             'name' => $name,
             'description' => $description,
             'price' => $price,
@@ -84,7 +86,7 @@ final class PlanRepository extends BaseRepository
         }
         
         $data['updated_at'] = date('Y-m-d H:i:s');
-        $rows = $this->update('subscription_plans', $data, '/* BYPASS_TENANT_SCOPE */ id = :id', [':id' => $planId]);
+        $rows = $this->update(self::TABLE, $data, '/* BYPASS_TENANT_SCOPE */ id = :id', [':id' => $planId]);
         return $rows > 0;
     }
 
@@ -93,7 +95,7 @@ final class PlanRepository extends BaseRepository
      */
     public function deletePlan(int $planId): bool
     {
-        $rows = $this->update('subscription_plans', [
+        $rows = $this->update(self::TABLE, [
             'deleted_at' => date('Y-m-d H:i:s'),
         ], '/* BYPASS_TENANT_SCOPE */ id = :id', [':id' => $planId]);
         return $rows > 0;

@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class ContactRepository extends BaseRepository
 {
+    protected const TABLE = self::TABLE;
+
     /**
      * Obtiene un contacto por su ID
      * 
@@ -18,7 +20,7 @@ final class ContactRepository extends BaseRepository
      */
     public function findById(int $id): ?array
     {
-        return $this->findOne('contacts', 'contact_id = :id', [':id' => $id]);
+        return $this->findOne(self::TABLE, 'contact_id = :id', [':id' => $id]);
     }
 
     /**
@@ -28,7 +30,7 @@ final class ContactRepository extends BaseRepository
      */
     public function listAll(): array
     {
-        return $this->findAll('contacts', '*', '', [], 'first_name ASC, last_name ASC');
+        return $this->findAll(self::TABLE, '*', '', [], 'first_name ASC, last_name ASC');
     }
 
     /**
@@ -38,7 +40,7 @@ final class ContactRepository extends BaseRepository
      */
     public function listByAccount(int $accountId): array
     {
-        return $this->findAll('contacts', '*', 'account_id = :account_id', [':account_id' => $accountId], 'first_name ASC, last_name ASC');
+        return $this->findAll(self::TABLE, '*', 'account_id = :account_id', [':account_id' => $accountId], 'first_name ASC, last_name ASC');
     }
 
     /**
@@ -55,7 +57,7 @@ final class ContactRepository extends BaseRepository
             $data['custom_fields'] = '{}';
         }
         
-        return $this->create('contacts', $data);
+        return $this->create(self::TABLE, $data);
     }
 
     /**
@@ -69,7 +71,7 @@ final class ContactRepository extends BaseRepository
             $data['custom_fields'] = json_encode($data['custom_fields']);
         }
         
-        return $this->update('contacts', $data, 'contact_id = :id', [':id' => $id]);
+        return $this->update(self::TABLE, $data, 'contact_id = :id', [':id' => $id]);
     }
 
     /**
@@ -77,6 +79,6 @@ final class ContactRepository extends BaseRepository
      */
     public function deleteContact(int $id): int
     {
-        return $this->delete('contacts', 'contact_id = :id', [':id' => $id]);
+        return $this->delete(self::TABLE, 'contact_id = :id', [':id' => $id]);
     }
 }

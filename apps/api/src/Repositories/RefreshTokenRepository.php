@@ -15,6 +15,8 @@ use kodanAPPS\DB\TenantAwarePDO;
  */
 final class RefreshTokenRepository extends BaseRepository
 {
+    protected const TABLE = 'refresh_tokens';
+
     public function __construct(TenantAwarePDO $pdo)
     {
         parent::__construct($pdo);

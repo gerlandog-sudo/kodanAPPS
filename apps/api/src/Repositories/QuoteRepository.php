@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class QuoteRepository extends BaseRepository
 {
+    protected const TABLE = self::TABLE;
+
     /**
      * Obtiene una cotización por su ID
      * 
@@ -18,7 +20,7 @@ final class QuoteRepository extends BaseRepository
      */
     public function findById(int $id): ?array
     {
-        return $this->findOne('quotes', 'id = :id', [':id' => $id]);
+        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -29,9 +31,9 @@ final class QuoteRepository extends BaseRepository
     public function listAll(int $opportunityId = 0): array
     {
         if ($opportunityId > 0) {
-            return $this->findAll('quotes', '*', 'opportunity_id = :opp_id', [':opp_id' => $opportunityId], 'created_at DESC');
+            return $this->findAll(self::TABLE, '*', 'opportunity_id = :opp_id', [':opp_id' => $opportunityId], 'created_at DESC');
         }
-        return $this->findAll('quotes', '*', '', [], 'created_at DESC');
+        return $this->findAll(self::TABLE, '*', '', [], 'created_at DESC');
     }
 
     /**
@@ -51,7 +53,7 @@ final class QuoteRepository extends BaseRepository
             throw new \RuntimeException('Oportunidad no encontrada o acceso denegado', 403);
         }
 
-        return $this->create('quotes', $data);
+        return $this->create(self::TABLE, $data);
     }
 
     /**
@@ -61,7 +63,7 @@ final class QuoteRepository extends BaseRepository
      */
     public function updateQuote(int $id, array $data): int
     {
-        return $this->update('quotes', $data, 'id = :id', [':id' => $id]);
+        return $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -69,7 +71,7 @@ final class QuoteRepository extends BaseRepository
      */
     public function deleteQuote(int $id): int
     {
-        return $this->delete('quotes', 'id = :id', [':id' => $id]);
+        return $this->delete(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -131,7 +133,7 @@ final class QuoteRepository extends BaseRepository
             }
 
             // Actualizar total_amount de la cotización
-            $this->update('quotes', ['total_amount' => $totalAmount], 'id = :id', [':id' => $quoteId]);
+            $this->update(self::TABLE, ['total_amount' => $totalAmount], 'id = :id', [':id' => $quoteId]);
         });
     }
 }

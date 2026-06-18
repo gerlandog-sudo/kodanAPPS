@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class CrmTaskRepository extends BaseRepository
 {
+    protected const TABLE = self::TABLE;
+
     /**
      * Obtiene una tarea por su ID
      * 
@@ -18,7 +20,7 @@ final class CrmTaskRepository extends BaseRepository
      */
     public function findById(int $id): ?array
     {
-        return $this->findOne('tasks', 'id = :id', [':id' => $id]);
+        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -29,9 +31,9 @@ final class CrmTaskRepository extends BaseRepository
     public function listAll(int $opportunityId = 0): array
     {
         if ($opportunityId > 0) {
-            return $this->findAll('tasks', '*', 'opportunity_id = :opp_id', [':opp_id' => $opportunityId], 'due_date ASC');
+            return $this->findAll(self::TABLE, '*', 'opportunity_id = :opp_id', [':opp_id' => $opportunityId], 'due_date ASC');
         }
-        return $this->findAll('tasks', '*', '', [], 'due_date ASC');
+        return $this->findAll(self::TABLE, '*', '', [], 'due_date ASC');
     }
 
     /**
@@ -53,7 +55,7 @@ final class CrmTaskRepository extends BaseRepository
         }
 
         return $this->transactional(function () use ($data) {
-            $id = $this->create('tasks', $data);
+            $id = $this->create(self::TABLE, $data);
             
             // Insertar primer log de historial
             $userId = \kodanAPPS\DB\TenantContext::getUserId();
@@ -84,7 +86,7 @@ final class CrmTaskRepository extends BaseRepository
         $newStatus = $data['status'] ?? $oldStatus;
 
         return $this->transactional(function () use ($id, $data, $oldStatus, $newStatus) {
-            $affected = $this->update('tasks', $data, 'id = :id', [':id' => $id]);
+            $affected = $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
             
             if ($oldStatus !== $newStatus) {
                 $userId = \kodanAPPS\DB\TenantContext::getUserId();
@@ -105,7 +107,7 @@ final class CrmTaskRepository extends BaseRepository
      */
     public function deleteTask(int $id): int
     {
-        return $this->delete('tasks', 'id = :id', [':id' => $id]);
+        return $this->delete(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
     /**

@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class OpportunityRepository extends BaseRepository
 {
+    protected const TABLE = 'opportunities';
+
     /**
      * Obtiene una oportunidad por su ID
      * 
@@ -78,7 +80,7 @@ final class OpportunityRepository extends BaseRepository
         $data['custom_fields'] = json_encode($customFields);
         
         return $this->transactional(function () use ($data, $customFields) {
-            $id = $this->create('opportunities', $data);
+            $id = $this->create(self::TABLE, $data);
             $this->syncCustomFieldValues($id, $customFields);
             return $id;
         });
@@ -97,7 +99,7 @@ final class OpportunityRepository extends BaseRepository
         }
         
         return $this->transactional(function () use ($id, $data, $customFields) {
-            $affected = $this->update('opportunities', $data, 'id = :id', [':id' => $id]);
+            $affected = $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
             if (is_array($customFields)) {
                 $this->syncCustomFieldValues($id, $customFields);
             }
@@ -110,7 +112,7 @@ final class OpportunityRepository extends BaseRepository
      */
     public function archiveOpportunity(int $id, bool $archive): int
     {
-        return $this->update('opportunities', ['archived_at' => $archive ? date('Y-m-d H:i:s') : null], 'id = :id', [':id' => $id]);
+        return $this->update(self::TABLE, ['archived_at' => $archive ? date('Y-m-d H:i:s') : null], 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -121,7 +123,7 @@ final class OpportunityRepository extends BaseRepository
         return $this->transactional(function () use ($id) {
             // Eliminar valores elásticos asociados
             $this->delete('custom_field_values', "entity_type = 'opportunity' AND entity_id = :id", [':id' => $id]);
-            return $this->delete('opportunities', 'id = :id', [':id' => $id]);
+            return $this->delete(self::TABLE, 'id = :id', [':id' => $id]);
         });
     }
 
@@ -215,7 +217,7 @@ final class OpportunityRepository extends BaseRepository
             }
             
             // Actualizar el valor acumulado total en la oportunidad
-            $this->update('opportunities', ['value' => $totalAmount], 'id = :id', [':id' => $opportunityId]);
+            $this->update(self::TABLE, ['value' => $totalAmount], 'id = :id', [':id' => $opportunityId]);
         });
     }
 
@@ -228,7 +230,7 @@ final class OpportunityRepository extends BaseRepository
     {
         return $this->transactional(function () use ($opportunityId, $wonStageId, $projectName, $budgetHours) {
             // 1. Actualizar etapa de la oportunidad a ganada
-            $this->update('opportunities', ['pipeline_stage_id' => $wonStageId], 'id = :id', [':id' => $opportunityId]);
+            $this->update(self::TABLE, ['pipeline_stage_id' => $wonStageId], 'id = :id', [':id' => $opportunityId]);
             
             $oppResult = $this->rawSelect(
                 "/* BYPASS_TENANT_SCOPE */ SELECT account_id FROM opportunities WHERE id = ?",

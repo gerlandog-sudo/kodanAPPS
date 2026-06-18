@@ -49,9 +49,9 @@
 | # | Tarea | Esfuerzo | Hecho | Commit/PR | Notas |
 |---|-------|----------|-------|-----------|-------|
 | P3-1 | **Descomponer TenantManagement.tsx** | M (2-3 días) | [x] | | 1085→172 líneas. Extraídos: `TenantList`, `TenantCreateWizard`, `TenantEditModal`, `TenantLogoCropper`, `ConfirmDialog`, `utils/imageCropper` |
-| P3-2 | **Estandarizar formato de error API** | M (1-2 días) | [ ] | | Crear `ApiException` base con `toArray()`, middleware global de manejo. Unificar: `InvalidArgumentException` (422), `RuntimeException` (403/404/500). |
-| P3-3 | **Constantes de nombres de tabla en Repositories** | S (2-4 hrs) | [ ] | | `protected const TABLE = 'tenants';` en cada repo. Usar en `create/findAll/findOne`. |
-| P3-4 | **Health check real (DB + tenant context)** | S (4-8 hrs) | [ ] | | `/api/health` → verificar PDO connection, query simple, tenant_context inicializable. |
+| P3-2 | **Estandarizar formato de error API** | M (1-2 días) | [x] | | ApiException con toArray() + códigos machine-readable. Router simplificado: ApiException→toArray(), RuntimeException→backward compat. Middlewares routes.php simplificados (sin try-catch duplicados). Throwable ya no filtra file/line. |
+| P3-3 | **Constantes de nombres de tabla en Repositories** | S (2-4 hrs) | [x] | | `protected const TABLE` agregado y usado en 13 repos: Account, Chat, Contact, CrmTask, Opportunity, Pipeline, Plan, Product, Project, Quote, RefreshToken, Tenant, User. Hardcoded strings reemplazados con `self::TABLE`. |
+| P3-4 | **Health check real (DB + tenant context)** | S (4-8 hrs) | [x] | | `/api/health` ahora verifica: conexión PDO, SELECT VERSION(), disponibilidad de TenantContext. Responde 503 si DB falla.
 
 ---
 
@@ -75,6 +75,7 @@
 | 2026-06-17 | 78 | +13 | P2-1 (SlidePanel), P2-2 (API refactor: 805→30 líneas), P2-3 Opción B (Tracker scaffold con auth + Dashboard + API) |
 | 2026-06-17 | 87 | +9 | P3-1 (TenantManagement: 1085→172 líneas, 6 componentes extraídos) |
 | 2026-06-18 | 97 | +10 | P1-1 (Tests Pest AuthController), PHPStan + TypeScript fixes |
+| 2026-06-18 | 100 | +3 | P3-2 (ApiException + Router simplificado), P3-3 (TABLE constants 13 repos), P3-4 (Health check real) |
 
 > **Meta:** ≥85 antes de deploy a producción. Cada CRITICAL/HIGH resuelto suma ~15-20 pts.
 

@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class AccountRepository extends BaseRepository
 {
+    protected const TABLE = self::TABLE;
+
     /**
      * Obtiene una cuenta por su ID
      * 
@@ -18,7 +20,7 @@ final class AccountRepository extends BaseRepository
      */
     public function findById(int $id): ?array
     {
-        return $this->findOne('accounts', 'account_id = :id', [':id' => $id]);
+        return $this->findOne(self::TABLE, 'account_id = :id', [':id' => $id]);
     }
 
     /**
@@ -28,7 +30,7 @@ final class AccountRepository extends BaseRepository
      */
     public function listAll(): array
     {
-        return $this->findAll('accounts', '*', '', [], 'name ASC');
+        return $this->findAll(self::TABLE, '*', '', [], 'name ASC');
     }
 
     /**
@@ -45,7 +47,7 @@ final class AccountRepository extends BaseRepository
             $data['custom_fields'] = '{}';
         }
         
-        return $this->create('accounts', $data);
+        return $this->create(self::TABLE, $data);
     }
 
     /**
@@ -59,7 +61,7 @@ final class AccountRepository extends BaseRepository
             $data['custom_fields'] = json_encode($data['custom_fields']);
         }
         
-        return $this->update('accounts', $data, 'account_id = :id', [':id' => $id]);
+        return $this->update(self::TABLE, $data, 'account_id = :id', [':id' => $id]);
     }
 
     /**
@@ -67,6 +69,6 @@ final class AccountRepository extends BaseRepository
      */
     public function deleteAccount(int $id): int
     {
-        return $this->delete('accounts', 'account_id = :id', [':id' => $id]);
+        return $this->delete(self::TABLE, 'account_id = :id', [':id' => $id]);
     }
 }

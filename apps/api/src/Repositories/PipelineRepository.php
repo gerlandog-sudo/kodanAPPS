@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class PipelineRepository extends BaseRepository
 {
+    protected const TABLE = 'pipelines';
+
     /**
      * Lista todos los pipelines del tenant
      * 
@@ -18,7 +20,7 @@ final class PipelineRepository extends BaseRepository
      */
     public function listPipelines(): array
     {
-        return $this->findAll('pipelines', '*', '', [], 'id ASC');
+        return $this->findAll(self::TABLE, '*', '', [], 'id ASC');
     }
 
     /**
@@ -28,7 +30,7 @@ final class PipelineRepository extends BaseRepository
      */
     public function findPipelineById(int $id): ?array
     {
-        return $this->findOne('pipelines', 'id = :id', [':id' => $id]);
+        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -43,7 +45,7 @@ final class PipelineRepository extends BaseRepository
         if (isset($data['is_default']) && (int)$data['is_default'] === 1) {
             $this->rawExecute("UPDATE pipelines SET is_default = 0 WHERE tenant_id = :tenant_id");
         }
-        return $this->create('pipelines', $data);
+        return $this->create(self::TABLE, $data);
     }
 
     /**
@@ -56,7 +58,7 @@ final class PipelineRepository extends BaseRepository
         if (isset($data['is_default']) && (int)$data['is_default'] === 1) {
             $this->rawExecute("UPDATE pipelines SET is_default = 0 WHERE tenant_id = :tenant_id");
         }
-        return $this->update('pipelines', $data, 'id = :id', [':id' => $id]);
+        return $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -64,7 +66,7 @@ final class PipelineRepository extends BaseRepository
      */
     public function deletePipeline(int $id): int
     {
-        return $this->delete('pipelines', 'id = :id', [':id' => $id]);
+        return $this->delete(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
     /**

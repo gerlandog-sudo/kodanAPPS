@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class ProductRepository extends BaseRepository
 {
+    protected const TABLE = self::TABLE;
+
     /**
      * Obtiene un producto por su ID
      * 
@@ -18,7 +20,7 @@ final class ProductRepository extends BaseRepository
      */
     public function findById(int $id): ?array
     {
-        return $this->findOne('products', 'id = :id', [':id' => $id]);
+        return $this->findOne(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -28,7 +30,7 @@ final class ProductRepository extends BaseRepository
      */
     public function listAll(): array
     {
-        return $this->findAll('products', '*', '', [], 'name ASC');
+        return $this->findAll(self::TABLE, '*', '', [], 'name ASC');
     }
 
     /**
@@ -39,7 +41,7 @@ final class ProductRepository extends BaseRepository
      */
     public function createProduct(array $data): int
     {
-        return $this->create('products', $data);
+        return $this->create(self::TABLE, $data);
     }
 
     /**
@@ -49,7 +51,7 @@ final class ProductRepository extends BaseRepository
      */
     public function updateProduct(int $id, array $data): int
     {
-        return $this->update('products', $data, 'id = :id', [':id' => $id]);
+        return $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
     }
 
     /**
@@ -57,6 +59,6 @@ final class ProductRepository extends BaseRepository
      */
     public function deleteProduct(int $id): int
     {
-        return $this->delete('products', 'id = :id', [':id' => $id]);
+        return $this->delete(self::TABLE, 'id = :id', [':id' => $id]);
     }
 }

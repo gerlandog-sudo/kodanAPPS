@@ -11,6 +11,8 @@ namespace kodanAPPS\Repositories;
  */
 final class ChatRepository extends BaseRepository
 {
+    protected const TABLE = 'message_threads';
+
     /**
      * Obtiene o crea un hilo de mensajes para una oportunidad
      * 

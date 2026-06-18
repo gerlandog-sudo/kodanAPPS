@@ -18,6 +18,8 @@ use kodanAPPS\DB\TenantContext;
  */
 final class UserRepository extends BaseRepository
 {
+    protected const TABLE = 'users';
+
     public function __construct(TenantAwarePDO $pdo)
     {
         parent::__construct($pdo);
@@ -117,7 +119,7 @@ final class UserRepository extends BaseRepository
      */
     public function findById(int $userId): ?array
     {
-        return $this->findOne('users', 'id = :id', [':id' => $userId]);
+        return $this->findOne(self::TABLE, 'id = :id', [':id' => $userId]);
     }
 
     /**

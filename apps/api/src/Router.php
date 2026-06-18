@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace kodanAPPS;
+
+use kodanAPPS\Exceptions\ApiException;
 
 /**
  * Router simple para la API kodanAPPS
@@ -9,7 +13,7 @@ namespace kodanAPPS;
  * - Métodos GET, POST, PATCH, PUT, DELETE
  * - Parámetros dinámicos en URL ({id})
  * - Middleware por prefijo
- * - Error handling uniforme
+ * - Error handling uniforme via ApiException
  * - Contexto de request (auth, etc.)
  */
 class Router
@@ -131,6 +135,10 @@ class Router
             header('Content-Type: application/json');
             echo json_encode(['error' => 'Not found']);
 
+        } catch (ApiException $e) {
+            http_response_code($e->getCode());
+            header('Content-Type: application/json');
+            echo json_encode($e->toArray());
         } catch (\InvalidArgumentException $e) {
             http_response_code(422);
             header('Content-Type: application/json');
@@ -151,9 +159,6 @@ class Router
             header('Content-Type: application/json');
             echo json_encode([
                 'error' => 'Internal server error',
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
             ]);
         }
     }

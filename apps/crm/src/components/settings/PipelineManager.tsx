@@ -98,6 +98,7 @@ export function PipelineManager() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [stages, setStages] = useState<Stage[]>([])
   const [loading, setLoading] = useState(true)
+  const [hoveredPipelineId, setHoveredPipelineId] = useState<number | null>(null)
 
   const [showPipelineModal, setShowPipelineModal] = useState(false)
   const [editingPipeline, setEditingPipeline] = useState<Pipeline | null>(null)
@@ -236,40 +237,54 @@ export function PipelineManager() {
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}><span className="spinner" /></div>
 
   return (
-    <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
-      <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+    <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem', flex: 1, minHeight: 0, overflow: 'hidden', width: '100%' }}>
+      <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', maxHeight: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '2rem' }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>CANALES</h3>
-          <Button variant="secondary" onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}
+          <Button variant="primary" onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}
             style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <Plus size={12} /> Nuevo Canal
           </Button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {pipelines.map(p => (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.5rem 0.625rem', borderRadius: '0.625rem', cursor: 'pointer', background: selectedPipelineId === p.id ? 'var(--sys-primary-container)' : 'transparent', color: selectedPipelineId === p.id ? 'var(--color-on-primary-container)' : 'var(--sys-text)', fontWeight: selectedPipelineId === p.id ? 600 : 400, transition: 'all 150ms' }}
-              onClick={() => selectPipeline(p.id)}>
-              <Circle size={10} fill={selectedPipelineId === p.id ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)'} style={{ flexShrink: 0 }} />
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.8125rem' }}>{p.name}</span>
-              <div style={{ display: 'flex', gap: '0.125rem', opacity: 0, transition: 'opacity 150ms' }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
-                <button onClick={e => { e.stopPropagation(); setEditingPipeline(p); setPipelineName(p.name); setShowPipelineModal(true) }}
-                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Edit2 size={11} /></button>
-                <button onClick={e => { e.stopPropagation(); openReasons(p) }}
-                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Check size={11} /></button>
-                <button onClick={e => { e.stopPropagation(); setCloneName(`${p.name} (copia)`); setShowCloneModal(true) }}
-                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Copy size={11} /></button>
-                <button onClick={e => { e.stopPropagation(); handleDeletePipeline(p.id) }}
-                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-error)' }}><Trash2 size={11} /></button>
+          {pipelines.map(p => {
+            const isSelected = selectedPipelineId === p.id
+            const isHovered = hoveredPipelineId === p.id
+            return (
+              <div key={p.id} 
+                onMouseEnter={() => setHoveredPipelineId(p.id)}
+                onMouseLeave={() => setHoveredPipelineId(null)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.25rem',
+                  padding: '0.5rem 0.625rem', borderRadius: '0.625rem', cursor: 'pointer',
+                  background: isSelected 
+                    ? 'color-mix(in srgb, var(--sys-primary-container) 15%, transparent)' 
+                    : (isHovered ? 'var(--sys-surface-hover)' : 'transparent'),
+                  color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text)',
+                  fontWeight: isSelected ? 600 : 400,
+                  transition: 'all 150ms'
+                }}
+                onClick={() => selectPipeline(p.id)}>
+                <Circle size={10} fill={isSelected ? 'var(--sys-primary)' : 'var(--sys-text-muted)'} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.8125rem' }}>{p.name}</span>
+                <div style={{ display: 'flex', gap: '0.125rem', opacity: isHovered || isSelected ? 1 : 0, transition: 'opacity 150ms' }}>
+                  <button onClick={e => { e.stopPropagation(); setEditingPipeline(p); setPipelineName(p.name); setShowPipelineModal(true) }}
+                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Edit2 size={11} /></button>
+                  <button onClick={e => { e.stopPropagation(); openReasons(p) }}
+                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Check size={11} /></button>
+                  <button onClick={e => { e.stopPropagation(); setCloneName(`${p.name} (copia)`); setShowCloneModal(true) }}
+                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Copy size={11} /></button>
+                  <button onClick={e => { e.stopPropagation(); handleDeletePipeline(p.id) }}
+                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-error)' }}><Trash2 size={11} /></button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
           {pipelines.length === 0 && <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>Sin canales definidos</p>}
         </div>
       </div>
  
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)' }}>
             ETAPAS {currentPipeline ? `— ${currentPipeline.name}` : ''}
@@ -287,8 +302,8 @@ export function PipelineManager() {
         {selectedPipelineId && editingStages.length > 0 ? (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={editingStages.map((_, i) => `stage-${i}`)} strategy={verticalListSortingStrategy}>
-              <div className="table-wrapper">
-                <div className="table-container">
+              <div className="table-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                <div className="table-container" style={{ flex: 1, overflowY: 'auto' }}>
                   <table className="table">
                     <thead>
                       <tr>

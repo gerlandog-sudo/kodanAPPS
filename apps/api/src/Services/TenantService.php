@@ -99,6 +99,14 @@ final class TenantService
                 'is_active' => 1,
             ]);
 
+            foreach ($planModules as $module) {
+                $this->tenantRepo->rawExecute(
+                    "UPDATE tenant_plan_usage SET current_value = current_value + 1
+                     WHERE tenant_id = ? AND module = ? AND metric = 'users_max'",
+                    [$tenantId, $module]
+                );
+            }
+
             // ------------------------------------------------------------
             // 5. Asignar rol admin al primer usuario en apps del plan
             // ------------------------------------------------------------
@@ -223,7 +231,7 @@ final class TenantService
             "/* BYPASS_TENANT_SCOPE */ INSERT INTO tenant_plan_usage (tenant_id, module, metric, current_value)
              SELECT ?, pl.module, pl.metric, 0
              FROM plan_limits pl WHERE pl.plan_id = ?
-             ON DUPLICATE KEY UPDATE current_value = 0",
+             ON DUPLICATE KEY UPDATE current_value = current_value",
             [$tenantId, $planId]
         );
     }

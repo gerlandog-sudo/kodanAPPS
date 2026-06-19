@@ -23,7 +23,7 @@ function SortableStage({ stage, idx, editingStages, updateEditingStage, removeEd
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `stage-${idx}` })
   return (
-    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, borderLeft: `4px solid ${stage.color_hex || '#6366F1'}`, padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface-raised)' }}>
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--sys-border-soft)', background: `${stage.color_hex || '#6366F1'}0D` }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
         <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--sys-text-muted)', paddingTop: '0.25rem', display: 'flex' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>

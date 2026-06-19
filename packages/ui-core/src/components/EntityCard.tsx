@@ -196,7 +196,7 @@ export function EntityCard({
             <img src={ownerAvatar} alt={ownerName}
               style={{ width: '1.5rem', height: '1.5rem', borderRadius: '999px', objectFit: 'cover', border: '1px solid var(--sys-border-soft)', flexShrink: 0 }} />
           ) : (
-            <div style={{
+          <div className="entity-card-actions" style={{
               width: '1.5rem', height: '1.5rem', borderRadius: '999px',
               background: 'color-mix(in srgb, var(--sys-primary) 25%, transparent)',
               border: '1px solid color-mix(in srgb, var(--sys-primary) 45%, transparent)',

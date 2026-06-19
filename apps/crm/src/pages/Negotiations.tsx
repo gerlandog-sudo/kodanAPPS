@@ -553,7 +553,7 @@ export function Negotiations() {
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Top Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-3 shrink-0 pb-4 w-full sticky top-0 z-10" style={{ background: 'var(--sys-bg)' }}>
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-3 shrink-0 pb-3 w-full sticky top-0 z-10" style={{ background: 'var(--sys-bg)' }}>
         <div className="flex items-center gap-3">
           <select
             className="input select max-w-xs"

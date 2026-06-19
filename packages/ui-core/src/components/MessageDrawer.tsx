@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useTransition } from 'react';
+import React, { useState, useEffect, useRef, useTransition, useMemo } from 'react';
 import { X, Send } from 'lucide-react';
 import { api } from '../api/client';
 import type { SSEMessage } from '../hooks/useSSE';
@@ -27,6 +27,89 @@ export function MessageDrawer({
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const bodyRef = useRef<HTMLDivElement>(null);
+  const [users, setUsers] = useState<{ id: number; email: string; display_name: string }[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionStartIndex, setMentionStartIndex] = useState<number | null>(null);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Cargar lista de usuarios del tenant para menciones
+  useEffect(() => {
+    if (!isOpen) return;
+    async function fetchUsers() {
+      try {
+        const data = await api.get<{ id: number; email: string; display_name: string }[]>('/api/messages/users');
+        if (data) setUsers(data);
+      } catch (err) {
+        console.error('Error fetching users for mentions:', err);
+      }
+    }
+    fetchUsers();
+  }, [isOpen]);
+
+  const filteredSuggestions = useMemo(() => {
+    if (mentionQuery === null) return [];
+    const q = mentionQuery.toLowerCase();
+    return users.filter(
+      (u) =>
+        (u.display_name?.toLowerCase() || '').includes(q) ||
+        (u.email?.toLowerCase() || '').includes(q)
+    );
+  }, [mentionQuery, users]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
+
+    const cursor = e.target.selectionStart ?? 0;
+    const textBeforeCursor = value.slice(0, cursor);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
+
+    if (match) {
+      setMentionQuery(match[1]);
+      setMentionStartIndex(cursor - match[0].length);
+      setSelectedSuggestionIndex(0);
+    } else {
+      setMentionQuery(null);
+    }
+  };
+
+  const handleSelectSuggestion = (user: { id: number; display_name: string }) => {
+    if (mentionStartIndex === null) return;
+    const before = input.slice(0, mentionStartIndex);
+    const cursor = inputRef.current?.selectionStart ?? 0;
+    const after = input.slice(cursor);
+    const mentionText = `@[${user.display_name}](user:${user.id}) `;
+    setInput(before + mentionText + after);
+    setMentionQuery(null);
+
+    // Restaurar foco y posición del cursor
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        const newCursorPos = mentionStartIndex + mentionText.length;
+        inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (mentionQuery !== null && filteredSuggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev + 1) % filteredSuggestions.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSelectSuggestion(filteredSuggestions[selectedSuggestionIndex]);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionQuery(null);
+      }
+    }
+  };
 
   // Escuchar tecla Esc para cerrar
   useEffect(() => {
@@ -208,16 +291,35 @@ export function MessageDrawer({
           )}
         </div>
 
+        {/* Sugerencias de Mención */}
+        {mentionQuery !== null && filteredSuggestions.length > 0 && (
+          <div className="chat-mentions-dropdown">
+            {filteredSuggestions.map((u, idx) => (
+              <div
+                key={u.id}
+                className={`chat-mention-item ${idx === selectedSuggestionIndex ? 'active' : ''}`}
+                onClick={() => handleSelectSuggestion(u)}
+              >
+                <span className="mention-name">{u.display_name}</span>
+                <span className="mention-email">{u.email}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Input de Envío */}
         <div className="chat-footer">
           <form className="chat-input-form" onSubmit={handleSend}>
             <input
+              ref={inputRef}
               type="text"
               className="chat-input"
               placeholder="Escribe un mensaje... Usa @ para mencionar"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
               disabled={isPending}
+              autoComplete="off"
             />
             <button
               type="submit"

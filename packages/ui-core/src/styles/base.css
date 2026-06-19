@@ -1046,3 +1046,38 @@
   text-decoration: underline;
 }
 
+.chat-mentions-dropdown {
+  background: var(--sys-surface-raised);
+  border-top: 1px solid var(--sys-border-soft);
+  border-bottom: 1px solid var(--sys-border-soft);
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chat-mention-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.chat-mention-item:hover,
+.chat-mention-item.active {
+  background: var(--sys-surface-hover);
+}
+
+.chat-mention-item .mention-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sys-text);
+}
+
+.chat-mention-item .mention-email {
+  font-size: 0.65rem;
+  color: var(--sys-text-muted);
+}
+

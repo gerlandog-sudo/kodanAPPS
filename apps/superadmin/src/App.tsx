@@ -36,7 +36,7 @@ function AppContent() {
   const [chatOpen, setChatOpen] = useState(false);
   const { loadUserTheme, theme, toggleTheme } = useTheme();
   const { logout: authLogout, setAuthenticated, loading, authenticated, user, planStatus, planName } = useAuth('superadmin');
-  const { messages: sseMessages, unreadCount } = useSSE(authenticated ? 'superadmin' : '');
+  const { messages: sseMessages, unreadCount, refetchUnreadCount } = useSSE(authenticated ? 'superadmin' : '');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -149,6 +149,7 @@ function AppContent() {
         currentUserId={user?.id ?? 0}
         sseMessages={sseMessages}
         title="Mensajería General"
+        onMessagesRead={refetchUnreadCount}
       />
     </div>
   );

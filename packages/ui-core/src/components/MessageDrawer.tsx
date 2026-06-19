@@ -11,6 +11,7 @@ interface MessageDrawerProps {
   currentUserId: number;
   sseMessages?: SSEMessage[];
   title?: string;
+  onMessagesRead?: () => void;
 }
 
 export function MessageDrawer({
@@ -21,6 +22,7 @@ export function MessageDrawer({
   currentUserId,
   sseMessages = [],
   title,
+  onMessagesRead,
 }: MessageDrawerProps) {
   const [messages, setMessages] = useState<SSEMessage[]>([]);
   const [input, setInput] = useState('');
@@ -137,6 +139,7 @@ export function MessageDrawer({
             const lastMsgId = history[history.length - 1].id;
             const conversationId = history[history.length - 1].conversation_id;
             await api.post(`/api/conversations/${conversationId}/read`, { last_message_id: lastMsgId });
+            onMessagesRead?.();
           }
         }
       } catch (err) {
@@ -169,7 +172,11 @@ export function MessageDrawer({
         const merged = [...prev, ...newMsgs].sort((a, b) => a.id - b.id);
         // Marcar la conversación como leída con el último mensaje recibido
         const lastMsgId = merged[merged.length - 1].id;
-        api.post(`/api/conversations/${conversationId}/read`, { last_message_id: lastMsgId }).catch(() => {});
+        api.post(`/api/conversations/${conversationId}/read`, { last_message_id: lastMsgId })
+          .then(() => {
+            onMessagesRead?.();
+          })
+          .catch(() => {});
         return merged;
       });
     }

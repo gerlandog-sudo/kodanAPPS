@@ -13,7 +13,7 @@ function AppContent() {
   const [view, setView] = useState<View>('login');
   const [user, setUser] = useState<any>(null);
   const [chatOpen, setChatOpen] = useState(false);
-  const { messages: sseMessages, unreadCount } = useSSE(user ? 'tracker' : '');
+  const { messages: sseMessages, unreadCount, refetchUnreadCount } = useSSE(user ? 'tracker' : '');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -97,6 +97,7 @@ function AppContent() {
         currentUserId={user?.id ?? 0}
         sseMessages={sseMessages}
         title="Mensajería General"
+        onMessagesRead={refetchUnreadCount}
       />
     </div>
   );

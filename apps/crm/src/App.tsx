@@ -35,7 +35,7 @@ type View = 'login' | 'set-password' | 'app';
 function AppContent() {
   const { theme, toggleTheme, loadUserTheme } = useTheme();
   const { logout: authLogout, setAuthenticated, loading, authenticated, user, roles, planStatus, planName } = useAuth('crm');
-  const { messages: sseMessages, unreadCount } = useSSE(authenticated ? 'crm' : '');
+  const { messages: sseMessages, unreadCount, refetchUnreadCount } = useSSE(authenticated ? 'crm' : '');
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
   const [chatOpen, setChatOpen] = useState(false);
@@ -171,6 +171,7 @@ function AppContent() {
         currentUserId={user?.id ?? 0}
         sseMessages={sseMessages}
         title={chatEntity?.title}
+        onMessagesRead={refetchUnreadCount}
       />
     </div>
   );

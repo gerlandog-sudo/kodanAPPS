@@ -87,5 +87,16 @@ export function useSSE(appId: string) {
     };
   }, [appId]);
 
-  return { messages, unreadCount, setUnreadCount, error };
+  const refetchUnreadCount = async () => {
+    try {
+      const data = await api.get<{ unread_count: number }>('/api/messages/unread-count');
+      if (data) {
+        setUnreadCount(data.unread_count);
+      }
+    } catch (err) {
+      console.error('Error refetching unread count:', err);
+    }
+  };
+
+  return { messages, unreadCount, setUnreadCount, refetchUnreadCount, error };
 }

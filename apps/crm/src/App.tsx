@@ -97,7 +97,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen">
       <Sidebar
         title="kodanCRM"
         logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>}
@@ -111,7 +111,7 @@ function AppContent() {
         headerClassName="animate-fade-in"
         showUserSection={false}
       />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <TopBar
           title="kodanCRM"
           user={user}

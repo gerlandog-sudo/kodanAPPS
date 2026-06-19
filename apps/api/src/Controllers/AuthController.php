@@ -262,6 +262,15 @@ final class AuthController
         $stmt->execute([$tenantId, $appId]);
         $planStatus = $stmt->fetchAll();
 
+        $planStmt = $this->pdo->prepare("
+            SELECT sp.name
+            FROM tenants t
+            JOIN subscription_plans sp ON sp.id = t.subscription_plan_id
+            WHERE t.tenant_id = ?
+        ");
+        $planStmt->execute([$tenantId]);
+        $planName = $planStmt->fetchColumn();
+
         return [
             'authenticated' => true,
             'user' => [
@@ -273,6 +282,7 @@ final class AuthController
             'roles' => $roles,
             'app_id' => $appId,
             'plan_status' => $planStatus ?: [],
+            'plan_name' => $planName ?: 'Free',
         ];
     }
 

@@ -20,6 +20,7 @@ interface SidebarProps {
   logo?: string;
   logoIcon?: ReactNode;
   extraItems?: ReactNode;
+  footerItems?: ReactNode;
   version?: string;
   headerClassName?: string;
   showUserSection?: boolean;
@@ -37,6 +38,7 @@ export function Sidebar({
   logo,
   logoIcon,
   extraItems,
+  footerItems,
   version = 'v1.0.0',
   headerClassName = '',
   showUserSection = true,
@@ -62,6 +64,12 @@ export function Sidebar({
           ))}
         </div>
       </div>
+
+      {footerItems && (
+        <div className="border-t px-3 py-2" style={{ borderColor: 'var(--sys-border-soft)' }}>
+          {footerItems}
+        </div>
+      )}
 
       {showUserSection && (
         <div className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>

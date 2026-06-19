@@ -1,4 +1,4 @@
-﻿import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading } from '@kodan-apps/ui-core';
+﻿import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -34,7 +34,7 @@ type View = 'login' | 'set-password' | 'app';
 
 function AppContent() {
   const { theme, toggleTheme, loadUserTheme } = useTheme();
-  const { logout: authLogout, setAuthenticated, loading, authenticated, user, roles } = useAuth('crm');
+  const { logout: authLogout, setAuthenticated, loading, authenticated, user, roles, planStatus, planName } = useAuth('crm');
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -110,6 +110,13 @@ function AppContent() {
         onThemeToggle={toggleTheme}
         headerClassName="animate-fade-in"
         showUserSection={false}
+        footerItems={
+          <QuotaUtilization
+            planStatus={planStatus}
+            planName={planName}
+            onUpgrade={() => setRoute('settings')}
+          />
+        }
       />
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <TopBar

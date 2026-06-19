@@ -1,4 +1,4 @@
-﻿import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar } from '@kodan-apps/ui-core';
+﻿import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { FolderKanban } from 'lucide-react';
@@ -62,6 +62,7 @@ function AppContent() {
         theme={theme}
         onThemeToggle={toggleTheme}
         showUserSection={false}
+        footerItems={<QuotaUtilization />}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar

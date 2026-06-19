@@ -1,5 +1,5 @@
 ﻿import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization } from '@kodan-apps/ui-core';
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
@@ -34,7 +34,7 @@ function AppContent() {
   const [route, setRoute] = useState<Route>('dashboard');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const { loadUserTheme, theme, toggleTheme } = useTheme();
-  const { logout: authLogout, setAuthenticated, loading, authenticated, user } = useAuth('superadmin');
+  const { logout: authLogout, setAuthenticated, loading, authenticated, user, planStatus, planName } = useAuth('superadmin');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -100,6 +100,13 @@ function AppContent() {
         theme={theme}
         onThemeToggle={toggleTheme}
         showUserSection={false}
+        footerItems={
+          <QuotaUtilization
+            planStatus={planStatus}
+            planName={planName}
+            onUpgrade={() => setRoute('plans')}
+          />
+        }
       />
       {showPasswordModal && <ChangePassword onClose={() => setShowPasswordModal(false)} />}
       <div className="flex-1 flex flex-col min-w-0">

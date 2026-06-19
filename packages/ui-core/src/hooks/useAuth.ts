@@ -10,6 +10,7 @@ export interface AuthState {
   roles: string[];
   appId: string;
   planStatus: any[];
+  planName: string;
 }
 
 export function useAuth(appId: string) {
@@ -20,6 +21,7 @@ export function useAuth(appId: string) {
     roles: [],
     appId,
     planStatus: [],
+    planName: '',
   });
 
   const validate = useCallback(async () => {
@@ -48,6 +50,7 @@ export function useAuth(appId: string) {
         roles: data.roles || [],
         appId: data.app_id || appId,
         planStatus: data.plan_status || [],
+        planName: data.plan_name || '',
       });
     } catch {
       setState(prev => ({ ...prev, loading: false, authenticated: false }));
@@ -67,6 +70,7 @@ export function useAuth(appId: string) {
       roles: userData.roles || [],
       appId,
       planStatus: [],
+      planName: '',
     });
   }, [appId]);
 
@@ -95,6 +99,7 @@ export function useAuth(appId: string) {
       roles: [],
       appId,
       planStatus: [],
+      planName: '',
     });
   }, [appId]);
 

@@ -91,7 +91,7 @@ export function KanbanBoard<T>({
       onDragEnd={handleDragEnd}
     >
       <div
-        className={`flex overflow-auto flex-1 min-h-0 rounded-lg border items-start ${className}`}
+        className={`flex overflow-auto flex-1 min-h-0 rounded-lg border items-stretch ${className}`}
         style={{
           borderColor: 'var(--sys-border-soft)',
           background: 'var(--sys-surface)',

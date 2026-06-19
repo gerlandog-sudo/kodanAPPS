@@ -96,6 +96,7 @@ function AppContent() {
         entityId={0}
         currentUserId={user?.id ?? 0}
         sseMessages={sseMessages}
+        title="Mensajería General"
       />
     </div>
   );

@@ -83,7 +83,11 @@ function OppCard({ opp, isDropped, onOpenDetail, onEdit, onDelete, onChat }: Car
   )
 }
 
-export function Negotiations() {
+interface NegotiationsProps {
+  onOpenChat?: (entityType: string, entityId: number, title?: string) => void;
+}
+
+export function Negotiations({ onOpenChat }: NegotiationsProps) {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -531,10 +535,14 @@ export function Negotiations() {
   }, [oppToDelete, selectedPipelineId]);
 
   const handleChatOpp = useCallback((opp: Opportunity) => {
-    setChatOpp(opp);
-    setShowChatModal(true);
-    loadOpportunityDetails(opp.id);
-  }, []);
+    if (onOpenChat) {
+      onOpenChat('crm_opportunity', opp.id, opp.name);
+    } else {
+      setChatOpp(opp);
+      setShowChatModal(true);
+      loadOpportunityDetails(opp.id);
+    }
+  }, [onOpenChat]);
 
   const renderCard = useCallback(
     (opp: Opportunity) => (

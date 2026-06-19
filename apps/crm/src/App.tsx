@@ -39,6 +39,7 @@ function AppContent() {
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatEntity, setChatEntity] = useState<{ type: string; id: number; title?: string } | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -128,7 +129,10 @@ function AppContent() {
           onLogout={handleLogout}
           userMenuExtraItems={userMenuExtraItems}
           notificationCount={unreadCount}
-          onNotificationClick={() => setChatOpen(true)}
+          onNotificationClick={() => {
+            setChatEntity({ type: 'general', id: 0, title: 'Mensajería General' });
+            setChatOpen(true);
+          }}
         />
         <main className="flex flex-col flex-1 p-4 lg:p-6 min-w-0" style={{ background: 'var(--sys-bg)', overflow: 'hidden' }}>
           <div className="flex flex-col flex-1" style={{ overflow: 'hidden' }}>
@@ -138,7 +142,14 @@ function AppContent() {
               </div>
             }>
               {route === 'dashboard' && <Dashboard />}
-              {route === 'negotiations' && <Negotiations />}
+              {route === 'negotiations' && (
+                <Negotiations
+                  onOpenChat={(type, id, title) => {
+                    setChatEntity({ type, id, title });
+                    setChatOpen(true);
+                  }}
+                />
+              )}
               {route === 'accounts' && <Accounts />}
               {route === 'contacts' && <Contacts />}
               {route === 'products' && <Products />}
@@ -151,11 +162,15 @@ function AppContent() {
 
       <MessageDrawer
         isOpen={chatOpen}
-        onClose={() => setChatOpen(false)}
-        entityType="general"
-        entityId={0}
+        onClose={() => {
+          setChatOpen(false);
+          setChatEntity(null);
+        }}
+        entityType={chatEntity?.type ?? 'general'}
+        entityId={chatEntity?.id ?? 0}
         currentUserId={user?.id ?? 0}
         sseMessages={sseMessages}
+        title={chatEntity?.title}
       />
     </div>
   );

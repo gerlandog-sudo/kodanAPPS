@@ -14,6 +14,7 @@
   --sys-primary: #0059ba;
   --sys-primary-container: #2372df;
   --sys-on-primary: #ffffff;
+  --sys-on-primary-container: #ffffff;
   --sys-primary-hover: #004799;
   --sys-tertiary: #7c3aed;
   --sys-tertiary-container: #ddd6fe;
@@ -37,6 +38,7 @@
   --sys-primary: #acc7ff;
   --sys-primary-container: #0059ba;
   --sys-on-primary: #002f68;
+  --sys-on-primary-container: #c3d5ff;
   --sys-primary-hover: #96b8ff;
   --sys-tertiary: #f1e5ff;
   --sys-tertiary-container: #d9c4ff;

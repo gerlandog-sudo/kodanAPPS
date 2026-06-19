@@ -10,6 +10,7 @@ interface MessageDrawerProps {
   entityId: number;
   currentUserId: number;
   sseMessages?: SSEMessage[];
+  title?: string;
 }
 
 export function MessageDrawer({
@@ -19,6 +20,7 @@ export function MessageDrawer({
   entityId,
   currentUserId,
   sseMessages = [],
+  title,
 }: MessageDrawerProps) {
   const [messages, setMessages] = useState<SSEMessage[]>([]);
   const [input, setInput] = useState('');
@@ -167,7 +169,7 @@ export function MessageDrawer({
       >
         {/* Cabecera */}
         <div className="chat-header">
-          <h3 className="chat-title">Mensajería del Sistema</h3>
+          <h3 className="chat-title">{title || 'Mensajería del Sistema'}</h3>
           <button className="chat-close-btn" onClick={onClose} aria-label="Cerrar panel">
             <X size={20} />
           </button>

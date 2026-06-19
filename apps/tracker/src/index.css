@@ -19,11 +19,12 @@
   --sys-tertiary-container: #ddd6fe;
   --sys-error: #dc2626;
   --sys-error-container: #fee2e2;
+  --sys-on-primary-container: #ffffff;
   --font-montserrat: 'Montserrat', system-ui, sans-serif;
   --font-hanken: 'Montserrat', system-ui, sans-serif;
 }
 
-[data-theme="dark"] {
+.theme-dark {
   --sys-bg: #0f1117;
   --sys-surface: #1a1d27;
   --sys-surface-raised: #22263a;
@@ -35,6 +36,7 @@
   --sys-primary: #60a5fa;
   --sys-primary-container: #1e40af;
   --sys-on-primary: #ffffff;
+  --sys-on-primary-container: #ffffff;
   --sys-primary-hover: #3b82f6;
   --sys-tertiary: #a78bfa;
   --sys-tertiary-container: #4c1d95;

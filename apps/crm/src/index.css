@@ -246,3 +246,62 @@ body {
   background-color: transparent !important;
   pointer-events: none;
 }
+
+/* Responsive Pipeline Manager Layout */
+.pipeline-manager-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  font-family: var(--font-montserrat, system-ui);
+  font-size: 0.75rem;
+  height: auto;
+}
+
+.pipeline-channels-col {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: auto;
+}
+
+.pipeline-channels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.pipeline-stages-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: auto;
+}
+
+@media (min-width: 1024px) {
+  .pipeline-manager-layout {
+    flex-direction: row;
+    height: calc(100vh - 280px);
+    overflow: hidden;
+  }
+  
+  .pipeline-channels-col {
+    width: 16rem;
+    flex-shrink: 0;
+    height: 100%;
+  }
+  
+  .pipeline-channels-list {
+    flex: 1;
+    max-height: none;
+  }
+  
+  .pipeline-stages-col {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+

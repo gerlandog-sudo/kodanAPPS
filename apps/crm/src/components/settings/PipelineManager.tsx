@@ -31,7 +31,7 @@ function SortableStageRow({ stage, idx, editingStages, updateEditingStage, remov
 
   return (
     <tr ref={setNodeRef} style={style} className="table-row">
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '3rem', textAlign: 'center' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '2.5rem', textAlign: 'center' }}>
         <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--sys-text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>
         </div>
@@ -44,10 +44,10 @@ function SortableStageRow({ stage, idx, editingStages, updateEditingStage, remov
           style={{ height: '2rem', padding: '0 0.5rem', fontSize: '0.8125rem' }}
         />
       </td>
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '10rem' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '7rem' }}>
         <ColorPicker value={stage.color_hex || '#6366F1'} onChange={color => updateEditingStage(idx, 'color_hex', color)} />
       </td>
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '8rem' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '5.5rem' }}>
         <Input 
           type="number" 
           min={0} 
@@ -57,26 +57,26 @@ function SortableStageRow({ stage, idx, editingStages, updateEditingStage, remov
           style={{ height: '2rem', padding: '0 0.5rem', fontSize: '0.8125rem', width: '100%' }}
         />
       </td>
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '15rem' }}>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '12rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {[
             { key: 'is_won_stage', label: 'Ganada', color: 'var(--sys-success, #22c55e)' },
             { key: 'is_lost_stage', label: 'Perdida', color: 'var(--sys-error)' },
           ].map(({ key, label, color }) => (
-            <label key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
+            <label key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', fontSize: '0.725rem', fontWeight: 600 }}>
               <input type="radio" name={`st-${idx}`} checked={!!(stage as any)[key]}
                 onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0); updateEditingStage(idx, key as any, 1) }} />
               <span style={{ color }}>{label}</span>
             </label>
           ))}
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', fontSize: '0.725rem', fontWeight: 600 }}>
             <input type="radio" name={`st-${idx}`} checked={!stage.is_won_stage && !stage.is_lost_stage}
               onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0) }} />
             <span style={{ color: 'var(--sys-text-muted)' }}>Abierta</span>
           </label>
         </div>
       </td>
-      <td className="table-td table-td-right" style={{ verticalAlign: 'middle', width: '4rem' }}>
+      <td className="table-td table-td-right" style={{ verticalAlign: 'middle', width: '3.5rem' }}>
         <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
           <button 
             type="button" 
@@ -237,16 +237,16 @@ export function PipelineManager() {
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}><span className="spinner" /></div>
 
   return (
-    <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
-      <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '2rem' }}>
+    <div className="pipeline-manager-layout">
+      <div className="pipeline-channels-col">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '2rem', flexShrink: 0 }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>CANALES</h3>
           <Button variant="primary" onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}
             style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <Plus size={12} /> Nuevo Canal
           </Button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div className="pipeline-channels-list">
           {pipelines.map(p => {
             const isSelected = selectedPipelineId === p.id
             const isHovered = hoveredPipelineId === p.id
@@ -262,7 +262,8 @@ export function PipelineManager() {
                     : (isHovered ? 'var(--sys-surface-hover)' : 'transparent'),
                   color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text)',
                   fontWeight: isSelected ? 600 : 400,
-                  transition: 'all 150ms'
+                  transition: 'all 150ms',
+                  flexShrink: 0
                 }}
                 onClick={() => selectPipeline(p.id)}>
                 <Circle size={10} fill={isSelected ? 'var(--sys-primary)' : 'var(--sys-text-muted)'} style={{ flexShrink: 0 }} />
@@ -284,8 +285,8 @@ export function PipelineManager() {
         </div>
       </div>
  
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="pipeline-stages-col">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)' }}>
             ETAPAS {currentPipeline ? `— ${currentPipeline.name}` : ''}
           </h3>
@@ -302,17 +303,17 @@ export function PipelineManager() {
         {selectedPipelineId && editingStages.length > 0 ? (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={editingStages.map((_, i) => `stage-${i}`)} strategy={verticalListSortingStrategy}>
-              <div className="table-wrapper">
-                <div className="table-container" style={{ maxHeight: '380px', overflowY: 'auto' }}>
+              <div className="table-wrapper" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div className="table-container" style={{ flex: 1, overflow: 'auto' }}>
                   <table className="table">
                     <thead>
                       <tr>
-                        <th className="table-th" style={{ width: '3rem', textAlign: 'center' }}></th>
+                        <th className="table-th" style={{ width: '2.5rem', textAlign: 'center' }}></th>
                         <th className="table-th">Nombre de Etapa</th>
-                        <th className="table-th" style={{ width: '10rem' }}>Color</th>
-                        <th className="table-th" style={{ width: '8rem' }}>Probabilidad (%)</th>
-                        <th className="table-th" style={{ width: '15rem' }}>Tipo de Etapa</th>
-                        <th className="table-th table-th-right" style={{ width: '4rem' }}>Acciones</th>
+                        <th className="table-th" style={{ width: '7rem' }}>Color</th>
+                        <th className="table-th" style={{ width: '5.5rem' }}>Probabilidad (%)</th>
+                        <th className="table-th" style={{ width: '12rem' }}>Tipo de Etapa</th>
+                        <th className="table-th table-th-right" style={{ width: '3.5rem' }}>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -337,7 +338,7 @@ export function PipelineManager() {
         )}
  
         {selectedPipelineId && editingStages.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
             <Button variant="primary" onClick={handleSaveStages}>Guardar Etapas</Button>
           </div>
         )}

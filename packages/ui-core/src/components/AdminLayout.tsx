@@ -70,7 +70,7 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
         })}
       </div>
 
-      <div style={{ minHeight: 'calc(100vh - 220px)', display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <div style={{ minHeight: 'calc(100vh - 280px)', display: 'flex', flexDirection: 'column', width: '100%' }}>
         <div style={{ flex: 1, width: '100%' }}>
           {children}
         </div>

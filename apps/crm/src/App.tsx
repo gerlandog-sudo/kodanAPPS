@@ -122,8 +122,8 @@ function AppContent() {
           notificationCount={showNotifications ? 3 : 0}
           onNotificationClick={() => setShowNotifications(!showNotifications)}
         />
-        <main className="flex flex-col flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)' }}>
-          <div className="flex flex-col flex-1 mx-auto" style={{ maxWidth: '1400px' }}>
+        <main className="flex flex-col flex-1 p-6 lg:p-10 min-w-0" style={{ background: 'var(--sys-bg)', overflow: 'hidden' }}>
+          <div className="flex flex-col flex-1" style={{ overflow: 'hidden' }}>
             <Suspense fallback={
               <div className="flex items-center justify-center py-20">
                 <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />

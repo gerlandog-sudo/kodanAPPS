@@ -207,7 +207,7 @@ export function PipelineManager() {
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}><span className="spinner" /></div>
 
   return (
-    <div style={{ display: 'flex', gap: '1.5rem', minHeight: '60vh', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
+    <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
       <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>CANALES</h3>

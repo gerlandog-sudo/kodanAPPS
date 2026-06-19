@@ -72,6 +72,8 @@ function AppContent() {
     return (
       <SetPassword
         title="kodanTRACKER"
+        cardClassName="p-8 double-bevel-card"
+        labelClassName="text-xs font-semibold"
         logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
         onBackToLogin={() => setView('login')}
       />
@@ -84,6 +86,8 @@ function AppContent() {
         appId="tracker"
         title="kodanTRACKER"
         subtitle="Gestion de proyectos"
+        cardClassName="p-8 double-bevel-card"
+        labelClassName="text-xs font-semibold"
         logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
         onLoginSuccess={handleLoginSuccess}
         onGoToSetPassword={() => setView('set-password')}

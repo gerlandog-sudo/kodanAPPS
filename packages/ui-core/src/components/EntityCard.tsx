@@ -30,7 +30,7 @@ function getInitials(name: string) {
 
 export function EntityCard({
   title, amount, badge, accountName, startDate, closeDate,
-  lineItemsCount, ownerName, ownerAvatar, stageColor, isDropped,
+  lineItemsCount, ownerName, ownerAvatar, isDropped,
   onClick, onChat, onEdit, onDelete,
 }: EntityCardProps) {
   const hasActions = !!(onChat || onEdit || onDelete)
@@ -40,175 +40,170 @@ export function EntityCard({
       onClick={onClick}
       className={isDropped ? 'animate-drop-shake' : ''}
       style={{
-        padding: '0.875rem 0.75rem',
+        padding: '1.25rem 0.875rem',
         cursor: onClick ? 'pointer' : 'default',
-        display: 'flex', flexDirection: 'column', gap: '0.625rem',
-        borderRadius: '0.75rem',
+        display: 'flex', flexDirection: 'column', gap: '0',
+        borderRadius: '0.5rem',
         border: '1px solid var(--sys-border-soft)',
-        background: 'var(--sys-surface-raised)',
+        background: 'color-mix(in srgb, var(--sys-surface) 80%, transparent)',
         userSelect: 'none',
-        transition: 'all 200ms ease',
+        transition: 'all 300ms ease',
         position: 'relative',
-        borderLeft: `3px solid ${stageColor || 'var(--sys-border-soft)'}`,
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget
+        el.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'
         el.style.transform = 'translateY(-2px)'
-        el.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.15), 0 4px 10px -4px rgba(0,0,0,0.06)'
-        el.style.borderColor = 'var(--sys-border-hover, rgba(139,92,246,0.45))'
-        el.style.borderLeftColor = stageColor || 'var(--sys-primary)'
-        el.querySelector('.entity-card-actions')?.classList.add('entity-card-actions-visible')
+        el.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.3)'
+        el.style.background = 'var(--sys-surface)'
+        const actions = el.querySelector('.entity-card-actions') as HTMLElement
+        if (actions) actions.style.opacity = '1'
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget
+        el.style.borderColor = 'var(--sys-border-soft)'
         el.style.transform = 'translateY(0)'
         el.style.boxShadow = 'none'
-        el.style.borderColor = 'var(--sys-border-soft)'
-        el.style.borderLeftColor = stageColor || 'var(--sys-border-soft)'
-        el.querySelector('.entity-card-actions')?.classList.remove('entity-card-actions-visible')
+        el.style.background = 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
+        const actions = el.querySelector('.entity-card-actions') as HTMLElement
+        if (actions) actions.style.opacity = '0'
       }}
     >
-      {/* Top row: amount badge + actions */}
-      {(amount != null || badge || hasActions) && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', minHeight: '1.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flex: 1, minWidth: 0 }}>
-            {amount != null && (
-              <span style={{
-                fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.03em',
-                padding: '0.125rem 0.5rem', borderRadius: '0.25rem',
-                border: '1px solid var(--sys-primary-container)',
-                color: 'var(--sys-primary)', background: 'transparent',
-                fontFamily: 'monospace', whiteSpace: 'nowrap',
-                lineHeight: '1.4',
-              }}>
-                $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            )}
-            {badge}
-          </div>
-          {hasActions && (
-            <div className="entity-card-actions" style={{
-              display: 'flex', alignItems: 'center', gap: '0.125rem',
-              opacity: 0, transition: 'opacity 150ms ease',
+      {/* Línea 1: Total + badge + acciones */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', height: '1.75rem', marginBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+          {amount != null && (
+            <span style={{
+              fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em',
+              padding: '0.125rem 0.625rem', borderRadius: '0.25rem',
+              border: '1px solid color-mix(in srgb, var(--sys-primary) 30%, transparent)',
+              color: 'var(--sys-primary)',
+              background: 'color-mix(in srgb, var(--sys-primary) 5%, transparent)',
+              textTransform: 'uppercase', fontFamily: 'monospace',
+              userSelect: 'none', lineHeight: 1.4,
             }}>
-              {onChat && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); onChat() }}
-                  title="Comentarios" aria-label="Comentarios"
-                  style={{
-                    padding: '0.25rem', borderRadius: '0.375rem', border: 'none',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--sys-text-muted)', background: 'transparent',
-                    transition: 'all 120ms ease',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--sys-primary)'; e.currentTarget.style.background = 'var(--sys-primary-container)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--sys-text-muted)'; e.currentTarget.style.background = 'transparent' }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </button>
-              )}
-              {onEdit && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); onEdit() }}
-                  title="Editar" aria-label="Editar"
-                  style={{
-                    padding: '0.25rem', borderRadius: '0.375rem', border: 'none',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--sys-text-muted)', background: 'transparent',
-                    transition: 'all 120ms ease',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--sys-primary)'; e.currentTarget.style.background = 'var(--sys-primary-container)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--sys-text-muted)'; e.currentTarget.style.background = 'transparent' }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-              )}
-              {onDelete && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); onDelete() }}
-                  title="Eliminar" aria-label="Eliminar"
-                  style={{
-                    padding: '0.25rem', borderRadius: '0.375rem', border: 'none',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--sys-text-muted)', background: 'transparent',
-                    transition: 'all 120ms ease',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--sys-error)'; e.currentTarget.style.background = 'var(--sys-error-container)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--sys-text-muted)'; e.currentTarget.style.background = 'transparent' }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-              )}
-            </div>
+              $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           )}
+          {badge}
         </div>
-      )}
 
-      {/* Title */}
-      <h4 style={{
-        margin: 0, fontSize: '0.875rem', fontWeight: 700,
-        letterSpacing: '-0.01em', color: 'var(--sys-text)', lineHeight: 1.3,
-      }}>
-        {title}
-      </h4>
+        {hasActions && (
+          <div className="entity-card-actions" style={{
+            display: 'flex', gap: '0.125rem', opacity: 0, transition: 'opacity 150ms ease',
+          }}>
+            {onChat && (
+              <button type="button" onClick={(e) => { e.stopPropagation(); onChat() }}
+                title="Ver/Editar Oportunidad"
+                style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </button>
+            )}
+            {onEdit && (
+              <button type="button" onClick={(e) => { e.stopPropagation(); onEdit() }}
+                title="Ver/Editar Oportunidad"
+                style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'inherit' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+            )}
+            {onDelete && (
+              <button type="button" onClick={(e) => { e.stopPropagation(); onDelete() }}
+                style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--sys-error)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
-      {/* Account name */}
+      {/* Línea 2: Nombre */}
+      <div style={{ marginBottom: '0.5rem' }}>
+        <h4 style={{
+          margin: 0, fontSize: '1rem', fontWeight: 700, letterSpacing: '0.015em',
+          color: 'var(--sys-text)', lineHeight: 1.25, overflow: 'hidden',
+          textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          fontFamily: 'var(--font-hanken-grotesk, system-ui)',
+        }}>
+          {title}
+        </h4>
+      </div>
+
+      {/* Línea 3: Empresa */}
       {accountName && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.6875rem', color: 'var(--sys-text-muted)' }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{accountName}</span>
+        <div style={{ marginBottom: '0.625rem' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            fontSize: '12px', color: 'var(--sys-text-muted)',
+            fontFamily: 'var(--font-hanken-grotesk, system-ui)',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{accountName}</span>
+          </span>
         </div>
       )}
 
-      {/* Dates */}
-      {(startDate || closeDate) && (
-        <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.625rem', color: 'var(--sys-text-muted)' }}>
-          {startDate && (
-            <span>Inicio: <span style={{ fontWeight: 600 }}>{formatDate(startDate)}</span></span>
-          )}
-          {closeDate && (
-            <span>Cierre: <span style={{ fontWeight: 600, color: 'var(--sys-primary)' }}>{formatDate(closeDate)}</span></span>
-          )}
+      {/* Línea 4: Fecha inicio */}
+      {startDate && (
+        <div style={{ marginBottom: '0.375rem', fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)' }}>
+          Inicio: <span style={{ color: 'var(--sys-text)' }}>{formatDate(startDate)}</span>
         </div>
       )}
 
-      {/* Line items count badge */}
+      {/* Línea 5: Fecha cierre */}
+      {closeDate && (
+        <div style={{ marginBottom: '0.5rem', fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)' }}>
+          Cierre: <span style={{ color: 'var(--sys-primary)', fontWeight: 700 }}>{formatDate(closeDate)}</span>
+        </div>
+      )}
+
+      {/* Línea 6: Cant Productos */}
       {lineItemsCount != null && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.625rem', color: 'var(--sys-text-muted)' }}>
-          <span style={{ fontWeight: 500 }}>Productos:</span>
+        <div style={{ marginBottom: '1rem', fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem', userSelect: 'none' }}>
+          <span>Productos:</span>
           <button type="button" onClick={(e) => { e.stopPropagation(); onEdit?.() }}
-            title={lineItemsCount === 0 ? 'Sin productos' : `${lineItemsCount} productos`}
+            title={lineItemsCount === 0 ? 'Sin productos cotizados' : `${lineItemsCount} productos cotizados`}
             style={{
-              width: '2rem', height: '1.125rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '2.5rem', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
               borderRadius: '0.25rem', border: '1px solid var(--sys-border-soft)',
-              background: 'transparent', cursor: 'pointer',
-              fontSize: '0.625rem', fontWeight: 700, color: lineItemsCount > 0 ? 'var(--sys-text)' : 'var(--sys-text-muted)',
-              transition: 'all 120ms ease',
+              background: 'color-mix(in srgb, var(--sys-bg) 85%, transparent)',
+              cursor: 'pointer', fontFamily: 'var(--font-hanken-grotesk, system-ui)',
+              fontSize: '10px', color: 'var(--sys-text-muted)',
+              transition: 'all 150ms ease',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--sys-primary)'; e.currentTarget.style.color = 'var(--sys-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--sys-border-soft)'; e.currentTarget.style.color = lineItemsCount > 0 ? 'var(--sys-text)' : 'var(--sys-text-muted)' }}
-          >{lineItemsCount}</button>
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--sys-surface)'; e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'; e.currentTarget.style.color = 'var(--sys-primary)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'color-mix(in srgb, var(--sys-bg) 85%, transparent)'; e.currentTarget.style.borderColor = 'var(--sys-border-soft)'; e.currentTarget.style.color = 'var(--sys-text-muted)' }}
+          >
+            <span style={{ fontWeight: 700 }}>{lineItemsCount}</span>
+          </button>
         </div>
       )}
 
-      {/* Owner */}
+      {/* Línea 7: Dueño */}
       {ownerName && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: '0.375rem',
-          paddingTop: '0.5rem', marginTop: 'auto',
-          borderTop: '1px solid var(--sys-border-soft)',
+          paddingTop: '0.75rem', borderTop: '1px solid color-mix(in srgb, var(--sys-border-soft) 40%, transparent)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
         }}>
-          <div style={{
-            width: '1.375rem', height: '1.375rem', borderRadius: '999px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.5rem', fontWeight: 700, flexShrink: 0, overflow: 'hidden',
-            background: 'var(--sys-primary-container)', color: 'var(--sys-primary)',
-            transition: 'all 200ms ease',
+          {ownerAvatar ? (
+            <img src={ownerAvatar} alt={ownerName}
+              style={{ width: '1.5rem', height: '1.5rem', borderRadius: '999px', objectFit: 'cover', border: '1px solid var(--sys-border-soft)', flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: '1.5rem', height: '1.5rem', borderRadius: '999px',
+              background: 'color-mix(in srgb, var(--sys-primary) 25%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--sys-primary) 45%, transparent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '10px', fontWeight: 700, color: 'var(--sys-primary)', flexShrink: 0,
+              userSelect: 'none',
+            }}>
+              {getInitials(ownerName)}
+            </div>
+          )}
+          <span style={{
+            fontSize: '11px', fontWeight: 500, color: 'var(--sys-text-muted)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            fontFamily: 'var(--font-hanken-grotesk, system-ui)',
           }}>
-            {ownerAvatar ? (
-              <img src={ownerAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              getInitials(ownerName)
-            )}
-          </div>
-          <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--sys-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {ownerName}
           </span>
         </div>

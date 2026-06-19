@@ -87,9 +87,6 @@
   color: var(--sys-error);
 }
 
-.entity-card-actions-visible {
-  opacity: 1 !important;
-}
 
 .entity-avatar:hover {
   ring: 2px solid var(--sys-primary-container);

@@ -6,7 +6,7 @@ import { TenantManagement } from './components/TenantManagement';
 import { PlanManagement } from './components/PlanManagement';
 import { RoleManagement } from './components/RoleManagement';
 import { ChangePassword } from './components/ChangePassword';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import {
   LayoutDashboard,
   Building2,
@@ -18,8 +18,15 @@ import {
 } from 'lucide-react';
 import './index.css';
 
+const LogoAdmin3D = lazy(() => import('./components/LogoAdmin3D').then(m => ({ default: m.LogoAdmin3D })));
+
+function Logo3DPlaceholder({ size }: { size?: number }) {
+  return <div style={{ width: size ?? 48, height: size ?? 48 }} />;
+}
+
 type Route = 'dashboard' | 'tenants' | 'plans' | 'roles' | 'audit';
 type View = 'login' | 'set-password' | 'app';
+
 
 const navItems: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
@@ -82,18 +89,18 @@ function AppContent() {
   }
 
   if (view === 'set-password') {
-    return <SetPassword onBackToLogin={() => setView('login')} />;
+    return <SetPassword title="kodanAPPS" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoAdmin3D size={48} theme={theme} /></Suspense>} onBackToLogin={() => setView('login')} />;
   }
 
   if (!authenticated) {
-    return <Login appId="superadmin" title="kodanAPPS" onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
+    return <Login appId="superadmin" title="kodanAPPS" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoAdmin3D size={48} theme={theme} /></Suspense>} onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   return (
     <div className="flex min-h-screen overflow-hidden">
       <Sidebar
         title="kodanAPPS"
-        logo="/logo.png"
+        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoAdmin3D size={48} theme={theme} /></Suspense>}
         navItems={navItems}
         activeKey={route}
         onNavigate={(key) => setRoute(key as Route)}

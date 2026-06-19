@@ -174,7 +174,7 @@ export function UsersSettings() {
           <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--sys-text)', margin: 0 }}>Usuarios</h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', margin: '0.125rem 0 0 0' }}>{users.length} operadores</p>
         </div>
-        <Button variant="primary" onClick={handleOpenCreate}><UserPlus size={14} /> Añadir</Button>
+        <Button variant="primary" onClick={handleOpenCreate}><UserPlus size={14} /> Nuevo Operador</Button>
       </div>
 
       {!loading && usersLimit && usersLimit > 0 && (

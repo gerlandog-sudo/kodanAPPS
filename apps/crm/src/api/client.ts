@@ -30,28 +30,28 @@ export const crmApi = {
 
   listAccounts: () => api.get<any[]>('/api/crm/accounts'),
   createAccount: (data: any) => api.post('/api/crm/accounts', data),
-  updateAccount: (id: number, data: any) => api.put(`/api/crm/accounts/${id}`, data),
+  updateAccount: (id: number, data: any) => api.patch(`/api/crm/accounts/${id}`, data),
   deleteAccount: (id: number) => api.delete(`/api/crm/accounts/${id}`),
 
   listContacts: () => api.get<any[]>('/api/crm/contacts'),
   createContact: (data: any) => api.post('/api/crm/contacts', data),
-  updateContact: (id: number, data: any) => api.put(`/api/crm/contacts/${id}`, data),
+  updateContact: (id: number, data: any) => api.patch(`/api/crm/contacts/${id}`, data),
   deleteContact: (id: number) => api.delete(`/api/crm/contacts/${id}`),
   listContactsByAccount: (accountId: number) => api.get<any[]>(`/api/crm/contacts/account/${accountId}`),
 
   listPipelines: () => api.get<any[]>('/api/crm/pipelines'),
   createPipeline: (data: any) => api.post('/api/crm/pipelines', data),
-  updatePipeline: (id: number, data: any) => api.put(`/api/crm/pipelines/${id}`, data),
+  updatePipeline: (id: number, data: any) => api.patch(`/api/crm/pipelines/${id}`, data),
   deletePipeline: (id: number) => api.delete(`/api/crm/pipelines/${id}`),
 
   listStages: (pipelineId: number) => api.get<any[]>(`/api/crm/pipelines/${pipelineId}/stages`),
   createStage: (pipelineId: number, data: any) => api.post(`/api/crm/pipelines/${pipelineId}/stages`, data),
-  updateStage: (id: number, data: any) => api.put(`/api/crm/pipeline-stages/${id}`, data),
+  updateStage: (id: number, data: any) => api.patch(`/api/crm/pipeline-stages/${id}`, data),
   deleteStage: (id: number) => api.delete(`/api/crm/pipeline-stages/${id}`),
 
   listProducts: () => api.get<any[]>('/api/crm/products'),
   createProduct: (data: any) => api.post('/api/crm/products', data),
-  updateProduct: (id: number, data: any) => api.put(`/api/crm/products/${id}`, data),
+  updateProduct: (id: number, data: any) => api.patch(`/api/crm/products/${id}`, data),
   deleteProduct: (id: number) => api.delete(`/api/crm/products/${id}`),
 
   listOpportunities: (params?: Record<string, string>) => api.get<any[]>('/api/crm/opportunities', params),
@@ -67,7 +67,7 @@ export const crmApi = {
 
   listTasks: () => api.get<any[]>('/api/crm/tasks'),
   createTask: (data: any) => api.post('/api/crm/tasks', data),
-  updateTask: (id: number, data: any) => api.put(`/api/crm/tasks/${id}`, data),
+  updateTask: (id: number, data: any) => api.patch(`/api/crm/tasks/${id}`, data),
   deleteTask: (id: number) => api.delete(`/api/crm/tasks/${id}`),
 
   listChatsByOpportunity: (oppId: number) => api.get<any[]>(`/api/crm/opportunities/${oppId}/chat`),
@@ -77,7 +77,7 @@ export const crmApi = {
   // Custom Fields
   listCustomFields: (entity: string) => api.get<CustomFieldDef[]>('/api/crm/custom-fields', { entity }),
   createCustomField: (data: Partial<CustomFieldDef>) => api.post('/api/crm/custom-fields', data),
-  updateCustomField: (id: number, data: Partial<CustomFieldDef>) => api.put(`/api/crm/custom-fields/${id}`, data),
+  updateCustomField: (id: number, data: Partial<CustomFieldDef>) => api.patch(`/api/crm/custom-fields/${id}`, data),
   deleteCustomField: (id: number, purge?: boolean) => api.delete(`/api/crm/custom-fields/${id}${purge ? '?purge=true' : ''}`),
   reorderCustomFields: (entries: { id: number; sort_order: number }[]) => api.put('/api/crm/custom-fields/reorder', { entries }),
 

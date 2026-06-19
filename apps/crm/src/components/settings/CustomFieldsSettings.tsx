@@ -37,6 +37,8 @@ export function CustomFieldsSettings() {
   const [formType, setFormType] = useState<string>('text')
   const [formRequired, setFormRequired] = useState(false)
   const [formOptions, setFormOptions] = useState<string[]>([])
+  const [optionInput, setOptionInput] = useState('')
+  const [hoveredTab, setHoveredTab] = useState<EntityType | null>(null)
 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<() => Promise<void>>(async () => {})
@@ -53,7 +55,15 @@ export function CustomFieldsSettings() {
   useEffect(() => { loadFields() }, [entity])
   useEffect(() => { setSelectedKeys([]) }, [entity])
 
-  const resetForm = () => { setFormKey(''); setFormLabel(''); setFormType('text'); setFormRequired(false); setFormOptions([]); setEditingField(null) }
+  const resetForm = () => { 
+    setFormKey('')
+    setFormLabel('')
+    setFormType('text')
+    setFormRequired(false)
+    setFormOptions([])
+    setOptionInput('')
+    setEditingField(null)
+  }
 
   const handleOpenCreate = () => { resetForm(); setPanelOpen(true) }
 
@@ -150,15 +160,28 @@ export function CustomFieldsSettings() {
           <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--sys-text)', margin: 0 }}>Campos Personalizados</h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', margin: '0.125rem 0 0 0' }}>{fields.length} campo{fields.length !== 1 ? 's' : ''}</p>
         </div>
-        <Button variant="primary" onClick={handleOpenCreate}><Plus size={14} /> Nuevo</Button>
+        <Button variant="primary" onClick={handleOpenCreate}><Plus size={14} /> Nuevo Campo</Button>
       </div>
 
       <div style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem', borderRadius: '0.5rem', background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content', marginBottom: '1rem' }}>
         {ENTITY_TABS.map(tab => {
           const isSelected = entity === tab.key
+          const isHovered = hoveredTab === tab.key
           return (
             <button key={tab.key} onClick={() => setEntity(tab.key)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.6875rem', fontWeight: 600, cursor: 'pointer', border: 'none', background: isSelected ? 'var(--sys-primary-container)' : 'transparent', color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text-muted)' }}>
+              onMouseEnter={() => setHoveredTab(tab.key)}
+              onMouseLeave={() => setHoveredTab(null)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.375rem',
+                padding: '0.375rem 0.75rem', borderRadius: '0.375rem',
+                fontSize: '0.6875rem', fontWeight: 600, cursor: 'pointer',
+                border: 'none',
+                background: isSelected 
+                  ? 'var(--sys-primary-container)' 
+                  : (isHovered ? 'var(--sys-surface-hover)' : 'transparent'),
+                color: isSelected ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
+                transition: 'all 120ms ease',
+              }}>
               {tab.icon} {tab.label}
             </button>
           )
@@ -205,8 +228,19 @@ export function CustomFieldsSettings() {
             </div>
             {['select', 'multi_select'].includes(formType) && (
               <div><label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Opciones</label>
-                <Input placeholder="Escribe y Enter..." value={''} onChange={() => {}}
-                  onKeyDown={(e: any) => { if (e.key === 'Enter' && e.target.value.trim()) { e.preventDefault(); const v = e.target.value.trim(); if (!formOptions.includes(v)) setFormOptions(prev => [...prev, v]); e.target.value = '' } }} />
+                <Input placeholder="Escribe y Enter..." value={optionInput} onChange={e => setOptionInput(e.target.value)}
+                  onKeyDown={(e: any) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const v = optionInput.trim();
+                      if (v) {
+                        if (!formOptions.includes(v)) {
+                          setFormOptions(prev => [...prev, v]);
+                        }
+                        setOptionInput('');
+                      }
+                    }
+                  }} />
                 {formOptions.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.375rem' }}>
                     {formOptions.map((opt, i) => (

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 export interface AdminSection {
   key: string
@@ -16,6 +16,8 @@ export interface AdminLayoutProps {
 }
 
 export function AdminLayout({ sections, activeSection, onNavigate, children }: AdminLayoutProps) {
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null)
+
   return (
     <div style={{ fontFamily: 'var(--font-montserrat, system-ui)', width: '100%' }}>
       <div style={{
@@ -26,18 +28,23 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
       }}>
         {sections.map(section => {
           const isActive = section.key === activeSection
+          const isHovered = hoveredSection === section.key
           return (
             <button
               key={section.key}
               type="button"
               onClick={() => onNavigate(section.key)}
+              onMouseEnter={() => setHoveredSection(section.key)}
+              onMouseLeave={() => setHoveredSection(null)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.5rem 1rem', height: '2.25rem',
                 borderRadius: '0.375rem',
                 border: 'none',
-                background: isActive ? 'var(--sys-primary-container)' : 'transparent',
-                color: isActive ? 'var(--sys-primary)' : 'var(--sys-text-muted)',
+                background: isActive 
+                  ? 'var(--sys-primary-container)' 
+                  : (isHovered ? 'var(--sys-surface-hover)' : 'transparent'),
+                color: isActive ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
                 cursor: 'pointer',
                 fontWeight: isActive ? 600 : 500,
                 fontSize: '0.75rem',
@@ -52,7 +59,7 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
               {section.count !== undefined && (
                 <span style={{
                   fontSize: '0.625rem', fontWeight: 700, marginLeft: '0.125rem',
-                  color: isActive ? 'var(--sys-primary)' : 'var(--sys-text-muted)',
+                  color: isActive ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
                   fontFamily: 'monospace',
                 }}>
                   {section.count}

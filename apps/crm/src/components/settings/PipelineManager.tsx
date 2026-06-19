@@ -16,51 +16,80 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-function SortableStage({ stage, idx, editingStages, updateEditingStage, removeEditingStage }: {
+function SortableStageRow({ stage, idx, editingStages, updateEditingStage, removeEditingStage }: {
   stage: StageBulkInput; idx: number; editingStages: StageBulkInput[]
   updateEditingStage: (idx: number, field: keyof StageBulkInput, value: any) => void
   removeEditingStage: (idx: number) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `stage-${idx}` })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    background: isDragging ? 'var(--sys-surface-hover)' : undefined,
+  }
+
   return (
-    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--sys-border-soft)', background: `${stage.color_hex || '#6366F1'}0D` }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-        <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--sys-text-muted)', paddingTop: '0.25rem', display: 'flex' }}>
+    <tr ref={setNodeRef} style={style} className="table-row">
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '3rem', textAlign: 'center' }}>
+        <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--sys-text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>
         </div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>NOMBRE</label>
-            <Input value={stage.name || ''} onChange={e => updateEditingStage(idx, 'name', e.target.value)} placeholder="Ej: Propuesta" /></div>
-          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>COLOR</label>
-            <ColorPicker value={stage.color_hex || '#6366F1'} onChange={color => updateEditingStage(idx, 'color_hex', color)} /></div>
-          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>PROB (%)</label>
-            <Input type="number" min={0} max={100} value={stage.probability ?? 0} onChange={e => updateEditingStage(idx, 'probability', Math.min(100, Math.max(0, Number(e.target.value))))} /></div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingTop: '0.375rem' }}>
-            {[
-              { key: 'is_won_stage', label: 'Ganada', color: 'var(--sys-success, #22c55e)' },
-              { key: 'is_lost_stage', label: 'Perdida', color: 'var(--sys-error)' },
-            ].map(({ key, label, color }) => (
-              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>
-                <input type="radio" name={`st-${idx}`} checked={!!(stage as any)[key]}
-                  onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0); updateEditingStage(idx, key as any, 1) }} />
-                <span style={{ color }}>{label}</span>
-              </label>
-            ))}
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>
-              <input type="radio" name={`st-${idx}`} checked={!stage.is_won_stage && !stage.is_lost_stage}
-                onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0) }} />
-              Abierta
+      </td>
+      <td className="table-td" style={{ verticalAlign: 'middle' }}>
+        <Input 
+          value={stage.name || ''} 
+          onChange={e => updateEditingStage(idx, 'name', e.target.value)} 
+          placeholder="Ej: Propuesta" 
+          style={{ height: '2rem', padding: '0 0.5rem', fontSize: '0.8125rem' }}
+        />
+      </td>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '10rem' }}>
+        <ColorPicker value={stage.color_hex || '#6366F1'} onChange={color => updateEditingStage(idx, 'color_hex', color)} />
+      </td>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '8rem' }}>
+        <Input 
+          type="number" 
+          min={0} 
+          max={100} 
+          value={stage.probability ?? 0} 
+          onChange={e => updateEditingStage(idx, 'probability', Math.min(100, Math.max(0, Number(e.target.value))))} 
+          style={{ height: '2rem', padding: '0 0.5rem', fontSize: '0.8125rem', width: '100%' }}
+        />
+      </td>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '15rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          {[
+            { key: 'is_won_stage', label: 'Ganada', color: 'var(--sys-success, #22c55e)' },
+            { key: 'is_lost_stage', label: 'Perdida', color: 'var(--sys-error)' },
+          ].map(({ key, label, color }) => (
+            <label key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
+              <input type="radio" name={`st-${idx}`} checked={!!(stage as any)[key]}
+                onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0); updateEditingStage(idx, key as any, 1) }} />
+              <span style={{ color }}>{label}</span>
             </label>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-            <button onClick={() => removeEditingStage(idx)} disabled={editingStages.length <= 1}
-              style={{ padding: '0.25rem', color: 'var(--sys-error)', cursor: 'pointer', background: 'none', border: 'none' }}>
-              <Trash2 size={14} />
-            </button>
-          </div>
+          ))}
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
+            <input type="radio" name={`st-${idx}`} checked={!stage.is_won_stage && !stage.is_lost_stage}
+              onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0) }} />
+            <span style={{ color: 'var(--sys-text-muted)' }}>Abierta</span>
+          </label>
         </div>
-      </div>
-    </div>
+      </td>
+      <td className="table-td table-td-right" style={{ verticalAlign: 'middle', width: '4rem' }}>
+        <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+          <button 
+            type="button" 
+            onClick={() => removeEditingStage(idx)} 
+            disabled={editingStages.length <= 1}
+            className="table-action-btn table-action-btn-danger"
+            style={{ opacity: editingStages.length <= 1 ? 0.3 : 1, cursor: editingStages.length <= 1 ? 'not-allowed' : 'pointer' }}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </td>
+    </tr>
   )
 }
 
@@ -209,12 +238,12 @@ export function PipelineManager() {
   return (
     <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
       <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>CANALES</h3>
-          <button onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}
-            style={{ padding: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-primary)' }}>
-            <Plus size={16} />
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '2rem' }}>
+          <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>CANALES</h3>
+          <Button variant="secondary" onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}
+            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <Plus size={12} /> Nuevo Canal
+          </Button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           {pipelines.map(p => (
@@ -239,35 +268,59 @@ export function PipelineManager() {
           {pipelines.length === 0 && <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>Sin canales definidos</p>}
         </div>
       </div>
-
+ 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)' }}>
             ETAPAS {currentPipeline ? `— ${currentPipeline.name}` : ''}
           </h3>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Button variant="secondary" onClick={() => { if (selectedPipelineId) setShowTemplateModal(true) }} disabled={!selectedPipelineId}><Layout size={14} /> Plantilla</Button>
-            <Button variant="secondary" onClick={addEditingStage}><Plus size={14} /> Agregar</Button>
+            <Button variant="secondary" onClick={() => { if (selectedPipelineId) setShowTemplateModal(true) }} disabled={!selectedPipelineId}>
+              <Layout size={14} /> Aplicar Plantilla
+            </Button>
+            <Button variant="primary" onClick={addEditingStage} disabled={!selectedPipelineId}>
+              <Plus size={14} /> Nueva Etapa
+            </Button>
           </div>
         </div>
-
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={editingStages.map((_, i) => `stage-${i}`)} strategy={verticalListSortingStrategy}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {editingStages.map((stage, idx) => (
-                <SortableStage key={`stage-${idx}`} stage={stage} idx={idx} editingStages={editingStages}
-                  updateEditingStage={updateEditingStage} removeEditingStage={removeEditingStage} />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {editingStages.length === 0 && (
+ 
+        {selectedPipelineId && editingStages.length > 0 ? (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={editingStages.map((_, i) => `stage-${i}`)} strategy={verticalListSortingStrategy}>
+              <div className="table-wrapper">
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th className="table-th" style={{ width: '3rem', textAlign: 'center' }}></th>
+                        <th className="table-th">Nombre de Etapa</th>
+                        <th className="table-th" style={{ width: '10rem' }}>Color</th>
+                        <th className="table-th" style={{ width: '8rem' }}>Probabilidad (%)</th>
+                        <th className="table-th" style={{ width: '15rem' }}>Tipo de Etapa</th>
+                        <th className="table-th table-th-right" style={{ width: '4rem' }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editingStages.map((stage, idx) => (
+                        <SortableStageRow key={`stage-${idx}`} stage={stage} idx={idx} editingStages={editingStages}
+                          updateEditingStage={updateEditingStage} removeEditingStage={removeEditingStage} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : selectedPipelineId ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2.5rem', border: '1px dashed var(--sys-border-soft)', borderRadius: '0.75rem' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>No hay etapas. Agrega la primera.</p>
           </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2.5rem', border: '1px dashed var(--sys-border-soft)', borderRadius: '0.75rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>Selecciona un canal para gestionar sus etapas.</p>
+          </div>
         )}
-
+ 
         {selectedPipelineId && editingStages.length > 0 && (
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button variant="primary" onClick={handleSaveStages}>Guardar Etapas</Button>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
@@ -140,8 +140,8 @@ export function Negotiations() {
     contact_id: '',
     pipeline_stage_id: '',
   });
-  const [chatFocused, setChatFocused] = useState(false);
-  const chatSectionRef = useRef<HTMLDivElement>(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatOpp, setChatOpp] = useState<Opportunity | null>(null);
 
   useEffect(() => {
     loadPipelines();
@@ -366,11 +366,12 @@ export function Negotiations() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedOpp) return;
+    const targetOpp = selectedOpp || chatOpp;
+    if (!newMessage.trim() || !targetOpp) return;
     try {
-      await crmApi.sendMessage(selectedOpp.id, { content: newMessage });
+      await crmApi.sendMessage(targetOpp.id, { content: newMessage });
       setNewMessage('');
-      loadOpportunityDetails(selectedOpp.id);
+      loadOpportunityDetails(targetOpp.id);
     } catch {
       toast.error('Error al enviar mensaje.');
     }
@@ -510,15 +511,6 @@ export function Negotiations() {
     }
   };
 
-  useEffect(() => {
-    if (chatFocused && showDetailModal && chatSectionRef.current) {
-      setTimeout(() => {
-        chatSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 150);
-      setChatFocused(false);
-    }
-  }, [chatFocused, showDetailModal]);
-
   const handleDeleteOpp = useCallback((opp: Opportunity) => {
     setOppToDelete(opp);
     setDeleteConfirmOpen(true);
@@ -539,9 +531,10 @@ export function Negotiations() {
   }, [oppToDelete, selectedPipelineId]);
 
   const handleChatOpp = useCallback((opp: Opportunity) => {
-    setChatFocused(true);
-    openDetailDrawer(opp);
-  }, [openDetailDrawer]);
+    setChatOpp(opp);
+    setShowChatModal(true);
+    loadOpportunityDetails(opp.id);
+  }, []);
 
   const renderCard = useCallback(
     (opp: Opportunity) => (
@@ -832,6 +825,54 @@ export function Negotiations() {
         </form>
       </Modal>
 
+      {/* Modal - Chat de Negociación */}
+      {chatOpp && (
+        <Modal open={showChatModal} onClose={() => { setShowChatModal(false); setChatOpp(null); }} title={`Mensajes - ${chatOpp.name}`}>
+          <div className="flex flex-col gap-4 mt-2">
+            <div
+              className="flex-1 min-h-[300px] max-h-[400px] overflow-y-auto flex flex-col gap-3 p-2 rounded-lg"
+              style={{ background: 'var(--sys-surface)' }}
+            >
+              {chats.map((c, i) => (
+                <div key={i} className="flex flex-col gap-0.5 text-xs">
+                  <span className="font-bold">{c.user_name || 'Miembro Equipo'}</span>
+                  <div className="p-2 rounded-lg mt-0.5" style={{ background: 'var(--sys-surface-raised)' }}>
+                    {c.content}
+                  </div>
+                  <span className="text-[9px] self-end mt-0.5" style={{ color: 'var(--sys-text-muted)' }}>
+                    {c.created_at}
+                  </span>
+                </div>
+              ))}
+              {chats.length === 0 && (
+                <div className="flex flex-col items-center justify-center flex-1 py-10">
+                  <MessageSquare size={24} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
+                  <p className="text-xs italic mt-2" style={{ color: 'var(--sys-text-muted)' }}>
+                    Sin comentarios comerciales aún.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <Input
+                placeholder="Escribe un comentario comercial..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="text-xs flex-1"
+              />
+              <button
+                type="submit"
+                className="p-2 rounded-lg btn-primary flex items-center justify-center text-white"
+                style={{ background: 'var(--sys-primary)' }}
+              >
+                <Send size={14} />
+              </button>
+            </form>
+          </div>
+        </Modal>
+      )}
+
       {/* Detail Drawer (como Modal grande) */}
       {selectedOpp && (
         <Modal open={showDetailModal} onClose={() => setShowDetailModal(false)} title={selectedOpp.name}>
@@ -1052,7 +1093,6 @@ export function Negotiations() {
 
             {/* Panel Derecho: Chat Colaborativo */}
             <div
-              ref={chatSectionRef}
               className="w-full lg:w-80 flex flex-col gap-4 border-t lg:border-t-0 lg:border-l pt-6 lg:pt-0 lg:pl-6"
               style={{ borderColor: 'var(--sys-border-soft)' }}
             >

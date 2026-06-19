@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, Table } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, Table, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { Plus, Building2, Settings2 } from 'lucide-react';
@@ -11,6 +11,8 @@ export function Accounts() {
   
   // Modals
   const [showModal, setShowModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [accountIdToDelete, setAccountIdToDelete] = useState<number | null>(null);
   const [selectedAcc, setSelectedAcc] = useState<any | null>(null);
   const [modalTab, setModalTab] = useState<'general' | 'custom-fields'>('general');
 
@@ -105,14 +107,22 @@ export function Accounts() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Está seguro de eliminar esta cuenta? Esto no eliminará las negociaciones asociadas, pero se desvincularán.')) return;
+  const handleDeleteClick = (id: number) => {
+    setAccountIdToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (accountIdToDelete === null) return;
     try {
-      await crmApi.deleteAccount(id);
+      await crmApi.deleteAccount(accountIdToDelete);
       toast.success('Cuenta comercial eliminada.');
       loadAccounts();
     } catch {
       toast.error('Error al eliminar la cuenta.');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setAccountIdToDelete(null);
     }
   };
 
@@ -192,7 +202,7 @@ export function Accounts() {
           description: '',
         }}
         editable={{ onClick: acc => handleOpenEdit(acc) }}
-        deletable={{ onClick: acc => handleDelete(acc.account_id) }}
+        deletable={{ onClick: acc => handleDeleteClick(acc.account_id) }}
         pageSize={15}
       />
 
@@ -290,6 +300,17 @@ export function Accounts() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Eliminar cuenta"
+        message="¿Está seguro de eliminar esta cuenta? Esto no eliminará las negociaciones asociadas, pero se desvincularán."
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

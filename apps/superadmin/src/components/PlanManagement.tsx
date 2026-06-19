@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import { Button, Table, SlidePanel } from '@kodan-apps/ui-core';
+import { Button, Table, SlidePanel, ConfirmDialog } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
 import {
   CreditCard,
@@ -44,6 +44,8 @@ export function PlanManagement() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState<{
@@ -164,14 +166,22 @@ export function PlanManagement() {
     }
   };
 
-  const handleDelete = async (plan: Plan) => {
-    if (!confirm(`¿Eliminar plan "${plan.name}"? Esta acción es irreversible.`)) return;
+  const handleDeleteClick = (plan: Plan) => {
+    setPlanToDelete(plan);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!planToDelete) return;
     try {
-      await superAdminApi.deletePlan(plan.id);
+      await superAdminApi.deletePlan(planToDelete.id);
       toast.success('Plan eliminado');
       await loadPlans();
     } catch (err: any) {
       toast.error(err.message || 'Error eliminando plan');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setPlanToDelete(null);
     }
   };
 
@@ -238,7 +248,7 @@ export function PlanManagement() {
           description: 'Crea el primer plan de suscripción',
         }}
         editable={{ onClick: plan => { setEditingPlan(plan); setShowCreateModal(true); } }}
-        deletable={{ onClick: handleDelete }}
+        deletable={{ onClick: handleDeleteClick }}
       />
 
       <SlidePanel open={showCreateModal || !!editingPlan} onClose={() => { setShowCreateModal(false); setEditingPlan(null); }} title={editingPlan ? 'Editar Plan' : 'Nuevo Plan'}>
@@ -318,6 +328,17 @@ export function PlanManagement() {
           </div>
         </form>
       </SlidePanel>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Eliminar plan"
+        message={planToDelete ? `¿Eliminar plan "${planToDelete.name}"? Esta acción es irreversible.` : ''}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

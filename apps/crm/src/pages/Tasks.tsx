@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Input, Modal } from '@kodan-apps/ui-core';
+import { Card, Button, Input, Modal, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import { Plus, Edit, Trash2, Calendar, ListTodo, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,6 +11,8 @@ export function Tasks() {
 
   // Modals
   const [showModal, setShowModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [taskIdToDelete, setTaskIdToDelete] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   // Form State
@@ -108,14 +110,22 @@ export function Tasks() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Está seguro de eliminar esta tarea?')) return;
+  const handleDeleteClick = (id: number) => {
+    setTaskIdToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (taskIdToDelete === null) return;
     try {
-      await crmApi.deleteTask(id);
+      await crmApi.deleteTask(taskIdToDelete);
       toast.success('Tarea eliminada de la agenda.');
       loadData();
     } catch {
       toast.error('Error al eliminar tarea.');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setTaskIdToDelete(null);
     }
   };
 
@@ -162,7 +172,7 @@ export function Tasks() {
                       <button onClick={() => handleOpenEdit(t)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" title="Editar">
                         <Edit size={14} />
                       </button>
-                      <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar">
+                      <button onClick={() => handleDeleteClick(t.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -268,6 +278,17 @@ export function Tasks() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Eliminar tarea"
+        message="¿Está seguro de eliminar esta tarea?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, Table } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, Table, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import { Plus, Tag, PackageOpen } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,6 +10,8 @@ export function Products() {
   
   // Modals
   const [showModal, setShowModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [productIdToDelete, setProductIdToDelete] = useState<number | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
   // Form State
@@ -94,14 +96,22 @@ export function Products() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Está seguro de eliminar este producto del catálogo?')) return;
+  const handleDeleteClick = (id: number) => {
+    setProductIdToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (productIdToDelete === null) return;
     try {
-      await crmApi.deleteProduct(id);
+      await crmApi.deleteProduct(productIdToDelete);
       toast.success('Producto eliminado del catálogo.');
       loadProducts();
     } catch {
       toast.error('Error al eliminar producto.');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setProductIdToDelete(null);
     }
   };
 
@@ -170,7 +180,7 @@ export function Products() {
           description: '',
         }}
         editable={{ onClick: p => handleOpenEdit(p) }}
-        deletable={{ onClick: p => handleDelete(p.id) }}
+        deletable={{ onClick: p => handleDeleteClick(p.id) }}
         pageSize={15}
       />
 
@@ -239,6 +249,17 @@ export function Products() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Eliminar producto"
+        message="¿Está seguro de eliminar este producto del catálogo?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

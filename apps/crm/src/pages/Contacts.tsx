@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, Table } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, Table, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { Plus, User2, Settings2 } from 'lucide-react';
@@ -12,6 +12,8 @@ export function Contacts() {
   
   // Modals
   const [showModal, setShowModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [contactIdToDelete, setContactIdToDelete] = useState<number | null>(null);
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
   const [modalTab, setModalTab] = useState<'general' | 'custom-fields'>('general');
 
@@ -113,14 +115,22 @@ export function Contacts() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Está seguro de eliminar este contacto?')) return;
+  const handleDeleteClick = (id: number) => {
+    setContactIdToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (contactIdToDelete === null) return;
     try {
-      await crmApi.deleteContact(id);
+      await crmApi.deleteContact(contactIdToDelete);
       toast.success('Contacto eliminado.');
       loadContactsAndAccounts();
     } catch {
       toast.error('Error al eliminar contacto.');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setContactIdToDelete(null);
     }
   };
 
@@ -180,7 +190,7 @@ export function Contacts() {
           description: '',
         }}
         editable={{ onClick: c => handleOpenEdit(c) }}
-        deletable={{ onClick: c => handleDelete(c.contact_id) }}
+        deletable={{ onClick: c => handleDeleteClick(c.contact_id) }}
         pageSize={15}
       />
 
@@ -287,6 +297,17 @@ export function Contacts() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Eliminar contacto"
+        message="¿Está seguro de eliminar este contacto?"
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import { Button, Table } from '@kodan-apps/ui-core';
+import { Button, Table, ConfirmDialog } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import {
@@ -26,6 +26,8 @@ export function RoleManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ app_id: 'crm', name: '', description: '' });
   const [error, setError] = useState('');
@@ -80,14 +82,22 @@ export function RoleManagement() {
     } finally { setSubmitting(false); }
   };
 
-  const handleDelete = async (role: Role) => {
-    if (!confirm(`Eliminar el rol "${role.name}" de ${role.app_id}?`)) return;
+  const handleDeleteClick = (role: Role) => {
+    setRoleToDelete(role);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!roleToDelete) return;
     try {
-      await superAdminApi.deleteRole(role.id);
+      await superAdminApi.deleteRole(roleToDelete.id);
       toast.success('Rol eliminado');
       await loadRoles();
     } catch (err: any) {
       toast.error(err.message || 'Error eliminando rol');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setRoleToDelete(null);
     }
   };
 
@@ -150,7 +160,7 @@ export function RoleManagement() {
           description: '',
         }}
         editable={{ onClick: handleOpenEdit }}
-        deletable={{ onClick: handleDelete }}
+        deletable={{ onClick: handleDeleteClick }}
         maxHeight="calc(100vh - 210px)"
       />
 
@@ -214,6 +224,17 @@ export function RoleManagement() {
           </motion.div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Eliminar rol"
+        message={roleToDelete ? `¿Eliminar el rol "${roleToDelete.name}" de ${roleToDelete.app_id}?` : ''}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

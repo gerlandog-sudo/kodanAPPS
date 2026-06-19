@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, EntityCard } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
@@ -92,6 +92,8 @@ export function Negotiations() {
   // Modals / Drawers
   const [showAddOppModal, setShowAddOppModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [oppToDelete, setOppToDelete] = useState<Opportunity | null>(null);
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const [showWonModal, setShowWonModal] = useState(false);
   const [wonOppId, setWonOppId] = useState<number | null>(null);
@@ -517,16 +519,24 @@ export function Negotiations() {
     }
   }, [chatFocused, showDetailModal]);
 
-  const handleDeleteOpp = useCallback(async (opp: Opportunity) => {
-    if (!window.confirm(`¿Eliminar "${opp.name}"?`)) return;
+  const handleDeleteOpp = useCallback((opp: Opportunity) => {
+    setOppToDelete(opp);
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  const handleConfirmDeleteOpp = useCallback(async () => {
+    if (!oppToDelete) return;
     try {
-      await crmApi.deleteOpportunity(opp.id);
+      await crmApi.deleteOpportunity(oppToDelete.id);
       toast.success('Negociación eliminada');
       if (selectedPipelineId) loadPipelineData(selectedPipelineId);
     } catch {
       toast.error('Error al eliminar');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setOppToDelete(null);
     }
-  }, [selectedPipelineId]);
+  }, [oppToDelete, selectedPipelineId]);
 
   const handleChatOpp = useCallback((opp: Opportunity) => {
     setChatFocused(true);
@@ -1094,6 +1104,17 @@ export function Negotiations() {
           </div>
         </Modal>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Eliminar negociación"
+        message={oppToDelete ? `¿Eliminar "${oppToDelete.name}"?` : ''}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleConfirmDeleteOpp}
+      />
     </div>
   );
 }

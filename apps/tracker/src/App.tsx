@@ -5,6 +5,11 @@ import { FolderKanban } from 'lucide-react';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const LogoTRACKER3D = lazy(() => import('./components/LogoTRACKER3D').then(m => ({ default: m.LogoTRACKER3D })));
+
+function Logo3DPlaceholder({ size }: { size?: number }) {
+  return <div className="shrink-0 animate-pulse bg-slate-200 dark:bg-slate-800 rounded-full" style={{ width: size ?? 48, height: size ?? 48 }} />;
+}
 
 type View = 'login' | 'set-password' | 'app';
 
@@ -44,18 +49,33 @@ function AppContent() {
   ];
 
   if (view === 'login') {
-    return <Login appId="tracker" title="kodanTRACKER" subtitle="Gestion de proyectos" onLoginSuccess={handleLoginSuccess} onGoToSetPassword={() => setView('set-password')} />;
+    return (
+      <Login
+        appId="tracker"
+        title="kodanTRACKER"
+        subtitle="Gestion de proyectos"
+        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
+        onLoginSuccess={handleLoginSuccess}
+        onGoToSetPassword={() => setView('set-password')}
+      />
+    );
   }
 
   if (view === 'set-password') {
-    return <SetPassword title="kodanTRACKER" onBackToLogin={() => setView('login')} />;
+    return (
+      <SetPassword
+        title="kodanTRACKER"
+        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
+        onBackToLogin={() => setView('login')}
+      />
+    );
   }
 
   return (
     <div className="flex min-h-screen">
       <Sidebar
         title="kodanTRACKER"
-        logo="/logo.png"
+        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
         navItems={navItems}
         activeKey="dashboard"
         onNavigate={() => {}}

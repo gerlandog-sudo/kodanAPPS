@@ -17,16 +17,16 @@ export interface AdminLayoutProps {
 
 export function AdminLayout({ sections, activeSection, onNavigate, children }: AdminLayoutProps) {
   return (
-    <div style={{ display: 'flex', minHeight: '72vh', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.8125rem' }}>
-      <nav aria-label="Secciones de configuración"
-        style={{
-          width: '13rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.125rem',
-          paddingRight: '1.5rem', borderRight: '1px solid var(--sys-border-soft)',
-        }}
-      >
-        <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--sys-text-muted)', padding: '0 0.75rem 0.75rem', marginTop: '0.25rem' }}>
-          Ajustes
-        </span>
+    <div style={{
+      maxWidth: '1000px', margin: 0,
+      fontFamily: 'var(--font-montserrat, system-ui)',
+    }}>
+      <div style={{
+        display: 'flex', gap: '0.125rem', marginBottom: '1.5rem',
+        background: 'var(--sys-surface)', padding: '0.25rem',
+        borderRadius: '0.5rem', border: '1px solid var(--sys-border-soft)',
+        width: 'fit-content',
+      }}>
         {sections.map(section => {
           const isActive = section.key === activeSection
           return (
@@ -35,28 +35,26 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
               type="button"
               onClick={() => onNavigate(section.key)}
               style={{
-                display: 'flex', alignItems: 'center', gap: '0.625rem',
-                padding: '0.5rem 0.75rem', height: '2.5rem',
-                borderRadius: '0.5rem',
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                padding: '0.5rem 1rem', height: '2.25rem',
+                borderRadius: '0.375rem',
                 border: 'none',
-                borderLeft: isActive ? '2px solid var(--sys-primary)' : '2px solid transparent',
                 background: isActive ? 'var(--sys-primary-container)' : 'transparent',
-                color: isActive ? 'var(--sys-primary)' : 'var(--sys-text)',
-                cursor: 'pointer', textAlign: 'left', width: '100%',
-                fontWeight: isActive ? 600 : 400,
-                fontSize: '0.8125rem',
-                transition: 'all 150ms ease',
+                color: isActive ? 'var(--sys-primary)' : 'var(--sys-text-muted)',
+                cursor: 'pointer',
+                fontWeight: isActive ? 600 : 500,
+                fontSize: '0.75rem',
+                transition: 'all 120ms ease',
+                whiteSpace: 'nowrap',
               }}
             >
-              <span style={{ display: 'flex', flexShrink: 0, opacity: isActive ? 1 : 0.55 }}>
+              <span style={{ display: 'flex', opacity: isActive ? 1 : 0.6 }}>
                 {section.icon}
               </span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {section.label}
-              </span>
+              {section.label}
               {section.count !== undefined && (
                 <span style={{
-                  fontSize: '0.6875rem', fontWeight: 700,
+                  fontSize: '0.625rem', fontWeight: 700, marginLeft: '0.125rem',
                   color: isActive ? 'var(--sys-primary)' : 'var(--sys-text-muted)',
                   fontFamily: 'monospace',
                 }}>
@@ -66,9 +64,9 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
             </button>
           )
         })}
-      </nav>
+      </div>
 
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', paddingLeft: '1.5rem' }}>
+      <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         {children}
       </div>
     </div>

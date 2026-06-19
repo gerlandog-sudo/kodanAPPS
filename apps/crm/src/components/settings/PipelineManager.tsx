@@ -23,12 +23,12 @@ function SortableStage({ stage, idx, editingStages, updateEditingStage, removeEd
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `stage-${idx}` })
   return (
-    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--sys-border-soft)', background: `${stage.color_hex || '#6366F1'}0D` }}>
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--sys-border-soft)', background: `${stage.color_hex || '#6366F1'}0D` }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
         <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--sys-text-muted)', paddingTop: '0.25rem', display: 'flex' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>
         </div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem' }}>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>NOMBRE</label>
             <Input value={stage.name || ''} onChange={e => updateEditingStage(idx, 'name', e.target.value)} placeholder="Ej: Propuesta" /></div>
           <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>COLOR</label>
@@ -208,7 +208,7 @@ export function PipelineManager() {
 
   return (
     <div style={{ display: 'flex', gap: '1.5rem', minHeight: '60vh', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
-      <div style={{ width: '18rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>CANALES</h3>
           <button onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}

@@ -517,6 +517,47 @@ final class SuperAdminController
     }
 
     /**
+     * Recuenta contadores de tenant_plan_usage desde datos reales
+     * 
+     * @return array{success: bool, results: array<string, int>}
+     */
+    public function recountUsage(): array
+    {
+        $results = [];
+
+        $results['users_max'] = $this->tenantRepo->rawExecute(
+            "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage u
+             JOIN (SELECT tenant_id, COUNT(*) AS cnt FROM users WHERE is_active = 1 GROUP BY tenant_id) actual
+             ON u.tenant_id = actual.tenant_id
+             SET u.current_value = actual.cnt
+             WHERE u.metric = 'users_max'"
+        );
+
+        $results['negotiations_max'] = $this->tenantRepo->rawExecute(
+            "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage u
+             JOIN (SELECT tenant_id, COUNT(*) AS cnt FROM opportunities WHERE deleted_at IS NULL GROUP BY tenant_id) actual
+             ON u.tenant_id = actual.tenant_id
+             SET u.current_value = actual.cnt
+             WHERE u.metric = 'negotiations_max'"
+        );
+
+        $tables = $this->tenantRepo->rawSelect("SHOW TABLES LIKE 'crm_tasks'");
+        if (count($tables) > 0) {
+            $results['tasks_max'] = $this->tenantRepo->rawExecute(
+                "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage u
+                 JOIN (SELECT tenant_id, COUNT(*) AS cnt FROM crm_tasks WHERE deleted_at IS NULL AND is_completed = 0 GROUP BY tenant_id) actual
+                 ON u.tenant_id = actual.tenant_id
+                 SET u.current_value = actual.cnt
+                 WHERE u.metric = 'tasks_max'"
+            );
+        }
+
+        $this->auditLog('USAGE_RECALCULATED', $results);
+
+        return ['success' => true, 'results' => $results];
+    }
+
+    /**
      * Escribe en audit_logs (tenant_id=0 para Super Admin)
      * 
      * @param array<string, mixed> $details

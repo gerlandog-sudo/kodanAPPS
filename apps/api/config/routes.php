@@ -243,6 +243,11 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['superAdmin']->changePassword($input));
     });
 
+    $router->post('/api/super-admin/recount-usage', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->recountUsage());
+    });
+
     $router->get('/api/super-admin/roles', function () use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['superAdmin']->listRoles());

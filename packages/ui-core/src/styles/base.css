@@ -87,6 +87,10 @@
   color: var(--sys-error);
 }
 
+.entity-card-actions-visible {
+  opacity: 1 !important;
+}
+
 .entity-avatar:hover {
   ring: 2px solid var(--sys-primary-container);
   box-shadow: 0 0 0 2px var(--sys-primary-container);

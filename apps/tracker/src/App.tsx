@@ -1,7 +1,6 @@
-import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization, useSSE, MessageDrawer } from '@kodan-apps/ui-core';
-import type { NavItem } from '@kodan-apps/ui-core';
-import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
-import { FolderKanban } from 'lucide-react';
+import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization, useSSE, MessageDrawer, useAuth, AuthLoading } from '@kodan-apps/ui-core';
+import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
+import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -15,10 +14,21 @@ type View = 'login' | 'set-password' | 'app';
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme();
-  const [view, setView] = useState<View>('login');
-  const [user, setUser] = useState<any>(null);
+  const [view, setView] = useState<View | 'initial'>('initial');
   const [chatOpen, setChatOpen] = useState(false);
-  const { messages: sseMessages, unreadCount, refetchUnreadCount } = useSSE(user ? 'tracker' : '');
+  
+  // Utiliza el hook useAuth unificado con el appId de tracker
+  const {
+    logout: authLogout,
+    setAuthenticated,
+    loading,
+    authenticated,
+    user,
+    planStatus,
+    planName,
+  } = useAuth('tracker');
+
+  const { messages: sseMessages, unreadCount, refetchUnreadCount } = useSSE(authenticated ? 'tracker' : '');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -27,16 +37,22 @@ function AppContent() {
     }
   }, []);
 
+  useEffect(() => {
+    if (view !== 'initial') return;
+    if (loading) return;
+
+    setView(authenticated ? 'app' : 'login');
+  }, [loading, authenticated, view]);
+
   const handleLoginSuccess = useCallback((userData: any) => {
-    setUser(userData);
+    setAuthenticated(userData);
     setView('app');
-  }, []);
+  }, [setAuthenticated]);
 
   const handleLogout = useCallback(() => {
-    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    setUser(null);
+    authLogout();
     setView('login');
-  }, []);
+  }, [authLogout]);
 
   useEffect(() => {
     const onForceLogout = () => handleLogout();
@@ -44,21 +60,12 @@ function AppContent() {
     return () => window.removeEventListener('auth:force-logout', onForceLogout);
   }, [handleLogout]);
 
-  const navItems: NavItem[] = [
-    { key: 'dashboard', label: 'Proyectos', icon: <FolderKanban size={18} /> },
-  ];
+  // Sidebar sin opciones por ahora
+  const navItems: NavItem[] = [];
+  const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [], []);
 
-  if (view === 'login') {
-    return (
-      <Login
-        appId="tracker"
-        title="kodanTRACKER"
-        subtitle="Gestion de proyectos"
-        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
-        onLoginSuccess={handleLoginSuccess}
-        onGoToSetPassword={() => setView('set-password')}
-      />
-    );
+  if (view === 'initial' || loading) {
+    return <AuthLoading />;
   }
 
   if (view === 'set-password') {
@@ -67,6 +74,19 @@ function AppContent() {
         title="kodanTRACKER"
         logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
         onBackToLogin={() => setView('login')}
+      />
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <Login
+        appId="tracker"
+        title="kodanTRACKER"
+        subtitle="Gestion de proyectos"
+        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
+        onLoginSuccess={handleLoginSuccess}
+        onGoToSetPassword={() => setView('set-password')}
       />
     );
   }
@@ -84,7 +104,12 @@ function AppContent() {
         theme={theme}
         onThemeToggle={toggleTheme}
         showUserSection={false}
-        footerItems={<QuotaUtilization />}
+        footerItems={
+          <QuotaUtilization
+            planStatus={planStatus}
+            planName={planName}
+          />
+        }
       />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar
@@ -93,6 +118,7 @@ function AppContent() {
           theme={theme}
           onThemeToggle={toggleTheme}
           onLogout={handleLogout}
+          userMenuExtraItems={userMenuExtraItems}
           notificationCount={unreadCount}
           onNotificationClick={() => setChatOpen(true)}
         />

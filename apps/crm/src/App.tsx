@@ -23,9 +23,9 @@ const Products = lazy(() => import('./pages/Products').then(m => ({ default: m.P
 const Tasks = lazy(() => import('./pages/Tasks').then(m => ({ default: m.Tasks })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 
-const Logo3D = lazy(() => import('./components/Logo3D').then(m => ({ default: m.Logo3D })));
+const LogoCRM3D = lazy(() => import('./components/LogoCRM3D').then(m => ({ default: m.LogoCRM3D })));
 
-function Logo3DPlaceholder({ size }: { size?: number }) {
+function LogoCRM3DPlaceholder({ size }: { size?: number }) {
   return <div style={{ width: size ?? 48, height: size ?? 48 }} />;
 }
 
@@ -91,18 +91,18 @@ function AppContent() {
   }
 
   if (view === 'set-password') {
-    return <SetPassword title="kodanCRM" emailPlaceholder="name@company.com" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onBackToLogin={() => setView('login')} />;
+    return <SetPassword title="kodanCRM" emailPlaceholder="name@company.com" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<LogoCRM3DPlaceholder size={48} />}><LogoCRM3D size={48} theme={theme} /></Suspense>} onBackToLogin={() => setView('login')} />;
   }
 
   if (!authenticated) {
-    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>} onLoginSuccess={(data) => { setAuthenticated(data); setView('app'); loadUserTheme(); }} onGoToSetPassword={() => setView('set-password')} />;
+    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<LogoCRM3DPlaceholder size={48} />}><LogoCRM3D size={48} theme={theme} /></Suspense>} onLoginSuccess={(data) => { setAuthenticated(data); setView('app'); loadUserTheme(); }} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   return (
     <div className="flex h-screen">
       <Sidebar
         title="kodanCRM"
-        logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><Logo3D size={48} theme={theme} /></Suspense>}
+        logoIcon={<Suspense fallback={<LogoCRM3DPlaceholder size={48} />}><LogoCRM3D size={48} theme={theme} /></Suspense>}
         navItems={navItems}
         activeKey={route}
         onNavigate={(key) => setRoute(key as Route)}

@@ -46,10 +46,8 @@ export function Sidebar({
   return (
     <nav className="flex flex-col w-64 flex-shrink-0 h-screen sticky top-0 overflow-y-auto" style={{ background: 'var(--sys-surface-raised)', borderRight: '1px solid var(--sys-border-soft)' }}>
       <div className="flex flex-col flex-1">
-        <div className={`flex items-center justify-center gap-2.5 py-6 px-4 border-b ${headerClassName}`} style={{ borderColor: 'var(--sys-border-soft)' }}>
-          <div className="flex items-center justify-center shrink-0" style={{ width: 48, height: 48 }}>
-            {logoIcon || (logo && <img src={logo} alt="kodan" className="h-8 w-auto" />)}
-          </div>
+        <div className={`flex items-center justify-center gap-2.5 px-4 border-b ${headerClassName}`} style={{ borderColor: 'var(--sys-border-soft)', height: 80, minHeight: 80 }}>
+          {logoIcon || (logo && <img src={logo} alt="kodan" className="h-8 w-auto" />)}
           <span className="text-base font-bold tracking-tight" style={{ color: 'var(--sys-text)', fontFamily: 'var(--font-hanken)' }}>{title}</span>
         </div>
         <div className="flex flex-col gap-1 px-3 py-6 flex-1">

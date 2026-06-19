@@ -2,12 +2,12 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
 
-interface Logo3DProps {
+interface LogoCRM3DProps {
   size?: number;
   theme?: 'light' | 'dark';
 }
 
-export function Logo3D({ size = 48, theme }: Logo3DProps) {
+export function LogoCRM3D({ size = 48, theme }: LogoCRM3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const isHovered = useRef(false);
 

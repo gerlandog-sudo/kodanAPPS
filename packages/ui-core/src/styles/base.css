@@ -87,6 +87,15 @@
   color: var(--sys-error);
 }
 
+.entity-card-actions {
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.group:hover .entity-card-actions {
+  opacity: 1;
+}
+
 
 .entity-avatar:hover {
   ring: 2px solid var(--sys-primary-container);

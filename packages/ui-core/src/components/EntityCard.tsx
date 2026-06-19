@@ -38,7 +38,7 @@ export function EntityCard({
   return (
     <div
       onClick={onClick}
-      className={isDropped ? 'animate-drop-shake' : ''}
+      className={`group ${isDropped ? 'animate-drop-shake' : ''}`}
       style={{
         padding: '1.25rem 0.875rem',
         cursor: onClick ? 'pointer' : 'default',
@@ -56,8 +56,6 @@ export function EntityCard({
         el.style.transform = 'translateY(-2px)'
         el.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.3)'
         el.style.background = 'var(--sys-surface)'
-        const actions = el.querySelector('.entity-card-actions') as HTMLElement
-        if (actions) actions.style.opacity = '1'
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget
@@ -65,8 +63,6 @@ export function EntityCard({
         el.style.transform = 'translateY(0)'
         el.style.boxShadow = 'none'
         el.style.background = 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
-        const actions = el.querySelector('.entity-card-actions') as HTMLElement
-        if (actions) actions.style.opacity = '0'
       }}
     >
       {/* Línea 1: Total + badge + acciones */}
@@ -89,9 +85,8 @@ export function EntityCard({
         </div>
 
         {hasActions && (
-          <div style={{
+          <div className="entity-card-actions" style={{
             display: 'flex', alignItems: 'center', gap: '0.375rem',
-            opacity: 0, transition: 'opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1)',
           }}>
             {onChat && (
               <button type="button" onClick={(e) => { e.stopPropagation(); onChat() }}

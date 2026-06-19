@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Button, Input, SlidePanel, Toggle, EntityCard, ConfirmDialog, Table, useAuth } from '@kodan-apps/ui-core'
+import { Button, Input, SlidePanel, Toggle, ConfirmDialog, Table, useAuth } from '@kodan-apps/ui-core'
 import type { TableColumn } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import type { TenantUser, CrmRole } from '../../types/admin'
@@ -223,10 +223,31 @@ export function UsersSettings() {
             <div>
               <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Rol *</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginTop: '0.5rem' }}>
-                {roles.map(r => (
-                  <EntityCard key={r.id} icon={getRoleIcon(r.name)} title={r.name} description={r.description}
-                    selected={formRoleId === r.id} onSelect={() => setFormRoleId(r.id)} />
-                ))}
+                {roles.map(r => {
+                  const isSelected = formRoleId === r.id
+                  return (
+                    <button key={r.id} type="button" onClick={() => setFormRoleId(r.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.75rem',
+                        borderRadius: '0.5rem', border: '1px solid', cursor: 'pointer', textAlign: 'left', width: '100%',
+                        background: isSelected ? 'var(--sys-surface-hover)' : 'transparent',
+                        borderColor: isSelected ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
+                        transition: 'all 200ms ease',
+                      }}
+                    >
+                      <span style={{
+                        padding: '0.25rem', borderRadius: '0.375rem', display: 'flex', flexShrink: 0,
+                        color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text-muted)',
+                        background: isSelected ? 'var(--sys-surface-raised)' : 'transparent',
+                        border: '1px solid', borderColor: isSelected ? 'var(--sys-primary-soft)' : 'var(--sys-border-soft)',
+                      }}>{getRoleIcon(r.name)}</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text)' }}>{r.name}</div>
+                        {r.description && <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.5625rem', color: 'var(--sys-text-muted)', lineHeight: 1.4 }}>{r.description}</p>}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
             {editingUser && currentUser && currentUser.id !== editingUser.id && (

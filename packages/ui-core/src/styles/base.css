@@ -69,6 +69,32 @@
   transform: scale(0.97);
 }
 
+.entity-action-btn:hover {
+  background: var(--sys-surface);
+}
+
+.entity-action-btn-danger:hover {
+  background: var(--sys-error-container);
+  color: var(--sys-error);
+}
+
+.entity-avatar:hover {
+  ring: 2px solid var(--sys-primary-container);
+  box-shadow: 0 0 0 2px var(--sys-primary-container);
+}
+
+@keyframes drop-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+.animate-drop-shake {
+  animation: drop-shake 400ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

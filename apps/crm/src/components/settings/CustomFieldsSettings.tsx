@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Button, Input, SlidePanel, Toggle, EntityCard, ConfirmDialog, Table } from '@kodan-apps/ui-core'
+import { Button, Input, SlidePanel, Toggle, ConfirmDialog, Table } from '@kodan-apps/ui-core'
 import type { TableColumn } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import type { CustomFieldDef } from '../../api/client'
@@ -220,10 +220,33 @@ export function CustomFieldsSettings() {
             <div>
               <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Tipo *</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem', marginTop: '0.5rem' }}>
-                {FIELD_TYPE_OPTIONS.filter(o => !editingField || o.value === editingField.field_type).map(o => (
-                  <EntityCard key={o.value} icon={o.icon} title={o.label} description={o.desc}
-                    selected={formType === o.value} onSelect={() => setFormType(o.value)} disabled={!!editingField && editingField.field_type !== o.value} />
-                ))}
+                {FIELD_TYPE_OPTIONS.filter(o => !editingField || o.value === editingField.field_type).map(o => {
+                  const isSelected = formType === o.value
+                  const isDisabled = !!editingField && editingField.field_type !== o.value
+                  return (
+                    <button key={o.value} type="button" onClick={() => !isDisabled && setFormType(o.value)} disabled={isDisabled}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.75rem',
+                        borderRadius: '0.5rem', border: '1px solid', cursor: isDisabled ? 'not-allowed' : 'pointer',
+                        textAlign: 'left', width: '100%', opacity: isDisabled ? 0.5 : 1,
+                        background: isSelected ? 'var(--sys-surface-hover)' : 'transparent',
+                        borderColor: isSelected ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
+                        transition: 'all 200ms ease',
+                      }}
+                    >
+                      <span style={{
+                        padding: '0.25rem', borderRadius: '0.375rem', display: 'flex', flexShrink: 0,
+                        color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text-muted)',
+                        background: isSelected ? 'var(--sys-surface-raised)' : 'transparent',
+                        border: '1px solid', borderColor: isSelected ? 'var(--sys-primary-soft)' : 'var(--sys-border-soft)',
+                      }}>{o.icon}</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text)' }}>{o.label}</div>
+                        {o.desc && <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.5625rem', color: 'var(--sys-text-muted)', lineHeight: 1.4 }}>{o.desc}</p>}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             </div>
             {['select', 'multi_select'].includes(formType) && (

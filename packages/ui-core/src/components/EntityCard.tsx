@@ -76,75 +76,21 @@ export function EntityCard({
           : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
       }}
     >
-      {/* Línea 1: Total + badge + acciones */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', height: '1.75rem', marginBottom: '0.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-          {amount != null && (
-            <span style={{
-              fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em',
-              padding: '0.125rem 0.625rem', borderRadius: '0.25rem',
-              border: '1px solid color-mix(in srgb, var(--sys-primary) 30%, transparent)',
-              color: 'var(--sys-primary)',
-              background: 'color-mix(in srgb, var(--sys-primary) 5%, transparent)',
-              textTransform: 'uppercase', fontFamily: 'monospace',
-              userSelect: 'none', lineHeight: 1.4,
-            }}>
-              $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          )}
-          {badge}
-        </div>
-
-        {hasActions && (
-          <div className="entity-card-actions" style={{
-            display: 'flex', alignItems: 'center', gap: '0.375rem',
+      {/* Línea 1: Total + badge alineado a la derecha */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.375rem', height: '1.75rem', marginBottom: '0.5rem' }}>
+        {badge}
+        {amount != null && (
+          <span style={{
+            fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em',
+            padding: '0.125rem 0.625rem', borderRadius: '0.25rem',
+            border: '1px solid color-mix(in srgb, var(--sys-primary) 30%, transparent)',
+            color: 'var(--sys-primary)',
+            background: 'color-mix(in srgb, var(--sys-primary) 5%, transparent)',
+            textTransform: 'uppercase', fontFamily: 'monospace',
+            userSelect: 'none', lineHeight: 1.4,
           }}>
-            {onChat && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); onChat() }}
-                title="Abrir Mensajería de Oportunidad"
-                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
-                onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
-                onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              </button>
-            )}
-            {onCheck && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); onCheck() }}
-                title="Motivos de Ganada/Perdida"
-                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
-                onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
-                onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </button>
-            )}
-            {onClone && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); onClone() }}
-                title="Clonar Canal"
-                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
-                onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
-                onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              </button>
-            )}
-            {onEdit && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); onEdit() }}
-                title="Ver/Editar"
-                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
-                onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
-                onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-            )}
-            {onDelete && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); onDelete() }}
-                title="Eliminar"
-                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
-                onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-error)'; b.style.background = 'color-mix(in srgb, var(--sys-error) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-error) 30%, transparent)' }}
-                onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
-            )}
-          </div>
+            $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
         )}
       </div>
 
@@ -220,7 +166,7 @@ export function EntityCard({
             <img src={ownerAvatar} alt={ownerName}
               style={{ width: '1.5rem', height: '1.5rem', borderRadius: '999px', objectFit: 'cover', border: '1px solid var(--sys-border-soft)', flexShrink: 0 }} />
           ) : (
-          <div className="entity-card-actions" style={{
+          <div style={{
               width: '1.5rem', height: '1.5rem', borderRadius: '999px',
               background: 'color-mix(in srgb, var(--sys-primary) 25%, transparent)',
               border: '1px solid color-mix(in srgb, var(--sys-primary) 45%, transparent)',
@@ -238,6 +184,61 @@ export function EntityCard({
           }}>
             {ownerName}
           </span>
+        </div>
+      )}
+
+      {/* Línea 8: Acciones (chat, edit, delete) */}
+      {hasActions && (
+        <div className="entity-card-actions" style={{
+          display: 'flex', alignItems: 'center', gap: '0.375rem',
+          paddingTop: '0.75rem', borderTop: '1px solid color-mix(in srgb, var(--sys-border-soft) 40%, transparent)',
+          marginTop: '0.5rem', justifyContent: 'flex-end',
+        }}>
+          {onChat && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onChat() }}
+              title="Abrir Mensajería de Oportunidad"
+              style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          )}
+          {onCheck && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onCheck() }}
+              title="Motivos de Ganada/Perdida"
+              style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+          )}
+          {onClone && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onClone() }}
+              title="Clonar Canal"
+              style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          )}
+          {onEdit && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onEdit() }}
+              title="Ver/Editar"
+              style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          )}
+          {onDelete && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onDelete() }}
+              title="Eliminar"
+              style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-error)'; b.style.background = 'color-mix(in srgb, var(--sys-error) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-error) 30%, transparent)' }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          )}
         </div>
       )}
     </div>

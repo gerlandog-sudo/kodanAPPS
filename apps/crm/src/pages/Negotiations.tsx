@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Button, Input, Modal, CustomFieldsForm, EntityCard } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
@@ -128,6 +128,18 @@ export function Negotiations() {
   const [lineQty, setLineQty] = useState('1');
   const [linePrice, setLinePrice] = useState('0');
   const [showArchived, setShowArchived] = useState(false);
+  const [showEditOppModal, setShowEditOppModal] = useState(false);
+  const [editingOppId, setEditingOppId] = useState<number | null>(null);
+  const [editOppForm, setEditOppForm] = useState({
+    name: '',
+    value: '0',
+    close_date: '',
+    account_id: '',
+    contact_id: '',
+    pipeline_stage_id: '',
+  });
+  const [chatFocused, setChatFocused] = useState(false);
+  const chatSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadPipelines();
@@ -453,9 +465,57 @@ export function Negotiations() {
   );
 
   const handleEditOpp = useCallback((opp: Opportunity) => {
-    // TODO: Open edit modal
-    console.log('Edit:', opp);
+    setEditOppForm({
+      name: opp.name,
+      value: String(parseFloat(opp.value) || 0),
+      close_date: opp.close_date || '',
+      account_id: String(opp.account_id ?? ''),
+      contact_id: String(opp.contact_id ?? ''),
+      pipeline_stage_id: String(opp.pipeline_stage_id),
+    });
+    setEditingOppId(opp.id);
+    setShowEditOppModal(true);
   }, []);
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOppId) return;
+    try {
+      await crmApi.updateOpportunity(editingOppId, {
+        name: editOppForm.name,
+        value: parseFloat(editOppForm.value) || 0,
+        close_date: editOppForm.close_date || null,
+        account_id: editOppForm.account_id ? parseInt(editOppForm.account_id, 10) : null,
+        contact_id: editOppForm.contact_id ? parseInt(editOppForm.contact_id, 10) : null,
+        pipeline_stage_id: editOppForm.pipeline_stage_id
+          ? parseInt(editOppForm.pipeline_stage_id, 10)
+          : stages[0]?.id,
+      });
+      toast.success('Negociación actualizada con éxito.');
+      setShowEditOppModal(false);
+      setEditingOppId(null);
+      setEditOppForm({
+        name: '',
+        value: '0',
+        close_date: '',
+        account_id: '',
+        contact_id: '',
+        pipeline_stage_id: '',
+      });
+      if (selectedPipelineId) loadPipelineData(selectedPipelineId);
+    } catch (err: any) {
+      toast.error(err?.message || 'Error al actualizar la negociación.');
+    }
+  };
+
+  useEffect(() => {
+    if (chatFocused && showDetailModal && chatSectionRef.current) {
+      setTimeout(() => {
+        chatSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 150);
+      setChatFocused(false);
+    }
+  }, [chatFocused, showDetailModal]);
 
   const handleDeleteOpp = useCallback(async (opp: Opportunity) => {
     if (!window.confirm(`¿Eliminar "${opp.name}"?`)) return;
@@ -469,6 +529,7 @@ export function Negotiations() {
   }, [selectedPipelineId]);
 
   const handleChatOpp = useCallback((opp: Opportunity) => {
+    setChatFocused(true);
     openDetailDrawer(opp);
   }, [openDetailDrawer]);
 
@@ -649,6 +710,113 @@ export function Negotiations() {
             </Button>
             <Button variant="primary" type="submit" className="btn-primary">
               Crear Negociación
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal - Editar Oportunidad */}
+      <Modal open={showEditOppModal} onClose={() => setShowEditOppModal(false)} title="Editar Negociación">
+        <form onSubmit={handleEditSubmit} className="flex flex-col gap-4 mt-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+              NOMBRE DE LA NEGOCIACIÓN
+            </label>
+            <Input
+              value={editOppForm.name}
+              onChange={(e) => setEditOppForm((prev) => ({ ...prev, name: e.target.value }))}
+              placeholder="Ej: Licencias Enterprise KODAN"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                VALOR ESTIMADO (ARS)
+              </label>
+              <Input
+                type="number"
+                value={editOppForm.value}
+                onChange={(e) => setEditOppForm((prev) => ({ ...prev, value: e.target.value }))}
+                placeholder="0.00"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                FECHA CIERRE PROYECTADA
+              </label>
+              <Input
+                type="date"
+                value={editOppForm.close_date}
+                onChange={(e) => setEditOppForm((prev) => ({ ...prev, close_date: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+              CUENTA B2B
+            </label>
+            <select
+              className="input select"
+              value={editOppForm.account_id}
+              onChange={(e) => setEditOppForm((prev) => ({ ...prev, account_id: e.target.value }))}
+            >
+              <option value="">Selecciona una cuenta corporativa</option>
+              {accounts.map((a) => (
+                <option key={a.account_id} value={a.account_id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+              CONTACTO
+            </label>
+            <select
+              className="input select"
+              value={editOppForm.contact_id}
+              onChange={(e) => setEditOppForm((prev) => ({ ...prev, contact_id: e.target.value }))}
+            >
+              <option value="">Selecciona un contacto corporativo</option>
+              {contacts.map((c) => (
+                <option key={c.contact_id} value={c.contact_id}>
+                  {c.first_name} {c.last_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+              ETAPA
+            </label>
+            <select
+              className="input select"
+              value={editOppForm.pipeline_stage_id}
+              onChange={(e) => setEditOppForm((prev) => ({ ...prev, pipeline_stage_id: e.target.value }))}
+            >
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div
+            className="flex justify-end gap-3 mt-4 pt-3"
+            style={{ borderTop: '1px solid var(--sys-border-soft)' }}
+          >
+            <Button variant="secondary" type="button" onClick={() => setShowEditOppModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" type="submit" className="btn-primary">
+              Guardar Cambios
             </Button>
           </div>
         </form>
@@ -874,6 +1042,7 @@ export function Negotiations() {
 
             {/* Panel Derecho: Chat Colaborativo */}
             <div
+              ref={chatSectionRef}
               className="w-full lg:w-80 flex flex-col gap-4 border-t lg:border-t-0 lg:border-l pt-6 lg:pt-0 lg:pl-6"
               style={{ borderColor: 'var(--sys-border-soft)' }}
             >

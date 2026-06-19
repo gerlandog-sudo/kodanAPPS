@@ -13,8 +13,11 @@ export interface EntityCardProps {
   ownerAvatar?: string | null
   stageColor?: string
   isDropped?: boolean
+  selected?: boolean
   onClick?: () => void
   onChat?: () => void
+  onCheck?: () => void
+  onClone?: () => void
   onEdit?: () => void
   onDelete?: () => void
 }
@@ -30,10 +33,10 @@ function getInitials(name: string) {
 
 export function EntityCard({
   title, amount, badge, accountName, startDate, closeDate,
-  lineItemsCount, ownerName, ownerAvatar, isDropped,
-  onClick, onChat, onEdit, onDelete,
+  lineItemsCount, ownerName, ownerAvatar, isDropped, selected,
+  onClick, onChat, onCheck, onClone, onEdit, onDelete,
 }: EntityCardProps) {
-  const hasActions = !!(onChat || onEdit || onDelete)
+  const hasActions = !!(onChat || onEdit || onDelete || onCheck || onClone)
 
   return (
     <div
@@ -44,25 +47,33 @@ export function EntityCard({
         cursor: onClick ? 'pointer' : 'default',
         display: 'flex', flexDirection: 'column', gap: '0',
         borderRadius: '0.5rem',
-        border: '1px solid var(--sys-border-soft)',
-        background: 'color-mix(in srgb, var(--sys-surface) 80%, transparent)',
+        border: selected ? '2px solid var(--sys-primary)' : '1px solid var(--sys-border-soft)',
+        background: selected 
+          ? 'color-mix(in srgb, var(--sys-primary-container) 10%, var(--sys-surface-raised))'
+          : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)',
         userSelect: 'none',
         transition: 'all 300ms ease',
         position: 'relative',
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget
-        el.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'
+        if (!selected) {
+          el.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'
+          el.style.background = 'var(--sys-surface)'
+        } else {
+          el.style.borderColor = 'var(--sys-primary)'
+        }
         el.style.transform = 'translateY(-2px)'
         el.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.3)'
-        el.style.background = 'var(--sys-surface)'
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget
-        el.style.borderColor = 'var(--sys-border-soft)'
+        el.style.borderColor = selected ? 'var(--sys-primary)' : 'var(--sys-border-soft)'
         el.style.transform = 'translateY(0)'
         el.style.boxShadow = 'none'
-        el.style.background = 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
+        el.style.background = selected 
+          ? 'color-mix(in srgb, var(--sys-primary-container) 10%, var(--sys-surface-raised))'
+          : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
       }}
     >
       {/* Línea 1: Total + badge + acciones */}
@@ -97,9 +108,27 @@ export function EntityCard({
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </button>
             )}
+            {onCheck && (
+              <button type="button" onClick={(e) => { e.stopPropagation(); onCheck() }}
+                title="Motivos de Ganada/Perdida"
+                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+                onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
+                onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            )}
+            {onClone && (
+              <button type="button" onClick={(e) => { e.stopPropagation(); onClone() }}
+                title="Clonar Canal"
+                style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+                onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
+                onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            )}
             {onEdit && (
               <button type="button" onClick={(e) => { e.stopPropagation(); onEdit() }}
-                title="Ver/Editar Oportunidad"
+                title="Ver/Editar"
                 style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
                 onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
                 onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>

@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Button, Input, ColorPicker, Modal } from '@kodan-apps/ui-core'
+import { Button, Input, ColorPicker, Modal, EntityCard } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import type { StageBulkInput } from '../../api/client'
 import type { Pipeline, Stage } from '../../types/admin'
 import { STAGE_PRESET_LIST } from '../../utils/stageColorPresets'
 import { STAGE_TEMPLATES } from './stageTemplates'
 import { usePipelineSync } from '../../hooks/usePipelineSync'
-import { Plus, Edit2, Trash2, Circle, Copy, Layout, X, Check } from 'lucide-react'
+import { Plus, Trash2, Layout, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
@@ -98,7 +98,6 @@ export function PipelineManager() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [stages, setStages] = useState<Stage[]>([])
   const [loading, setLoading] = useState(true)
-  const [hoveredPipelineId, setHoveredPipelineId] = useState<number | null>(null)
 
   const [showPipelineModal, setShowPipelineModal] = useState(false)
   const [editingPipeline, setEditingPipeline] = useState<Pipeline | null>(null)
@@ -249,36 +248,17 @@ export function PipelineManager() {
         <div className="pipeline-channels-list">
           {pipelines.map(p => {
             const isSelected = selectedPipelineId === p.id
-            const isHovered = hoveredPipelineId === p.id
             return (
-              <div key={p.id} 
-                onMouseEnter={() => setHoveredPipelineId(p.id)}
-                onMouseLeave={() => setHoveredPipelineId(null)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.25rem',
-                  padding: '0.5rem 0.625rem', borderRadius: '0.625rem', cursor: 'pointer',
-                  background: isSelected 
-                    ? 'color-mix(in srgb, var(--sys-primary-container) 15%, transparent)' 
-                    : (isHovered ? 'var(--sys-surface-hover)' : 'transparent'),
-                  color: isSelected ? 'var(--sys-primary)' : 'var(--sys-text)',
-                  fontWeight: isSelected ? 600 : 400,
-                  transition: 'all 150ms',
-                  flexShrink: 0
-                }}
-                onClick={() => selectPipeline(p.id)}>
-                <Circle size={10} fill={isSelected ? 'var(--sys-primary)' : 'var(--sys-text-muted)'} style={{ flexShrink: 0 }} />
-                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.8125rem' }}>{p.name}</span>
-                <div style={{ display: 'flex', gap: '0.125rem', opacity: isHovered || isSelected ? 1 : 0, transition: 'opacity 150ms' }}>
-                  <button onClick={e => { e.stopPropagation(); setEditingPipeline(p); setPipelineName(p.name); setShowPipelineModal(true) }}
-                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Edit2 size={11} /></button>
-                  <button onClick={e => { e.stopPropagation(); openReasons(p) }}
-                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Check size={11} /></button>
-                  <button onClick={e => { e.stopPropagation(); setCloneName(`${p.name} (copia)`); setShowCloneModal(true) }}
-                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Copy size={11} /></button>
-                  <button onClick={e => { e.stopPropagation(); handleDeletePipeline(p.id) }}
-                    style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-error)' }}><Trash2 size={11} /></button>
-                </div>
-              </div>
+              <EntityCard
+                key={p.id}
+                title={p.name}
+                selected={isSelected}
+                onClick={() => selectPipeline(p.id)}
+                onEdit={() => { setEditingPipeline(p); setPipelineName(p.name); setShowPipelineModal(true) }}
+                onCheck={() => openReasons(p)}
+                onClone={() => { setCloneName(`${p.name} (copia)`); setShowCloneModal(true) }}
+                onDelete={() => handleDeletePipeline(p.id)}
+              />
             )
           })}
           {pipelines.length === 0 && <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>Sin canales definidos</p>}

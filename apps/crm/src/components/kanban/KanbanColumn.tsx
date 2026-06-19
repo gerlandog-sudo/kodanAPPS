@@ -25,7 +25,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`bg-transparent px-3 py-4 flex flex-col min-w-[260px] w-[260px] flex-shrink-0 h-full transition-colors duration-200 ${
+      className={`bg-transparent px-3 py-4 flex flex-col min-w-[260px] w-[260px] flex-shrink-0 transition-colors duration-200 ${
         isOver ? 'drag-over-column' : ''
       }`}
     >
@@ -62,8 +62,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
 
       <div
-        className="flex-1 overflow-y-auto overflow-x-hidden px-1 py-3 min-h-0 flex flex-col gap-3"
-        style={{ scrollbarGutter: 'stable' }}
+        className="flex-1 min-h-0 flex flex-col gap-3 px-1 py-3"
       >
         {children}
       </div>

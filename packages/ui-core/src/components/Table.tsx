@@ -369,6 +369,7 @@ export function Table<T>({
                       checked={allSelected}
                       onChange={toggleAll}
                       style={{ cursor: 'pointer' }}
+                      aria-label="Seleccionar todas las filas"
                     />
                   </label>
                 </th>
@@ -378,6 +379,11 @@ export function Table<T>({
                   key={col.key}
                   className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}${col.sortable ? ' table-th-sortable' : ''}`}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                  {...(col.sortable ? {
+                    'aria-sort': sortKey === col.key ? (sortDir === 'asc' ? 'ascending' as const : 'descending' as const) : 'none' as const,
+                    'tabIndex': 0 as const,
+                    'onKeyDown': (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(col.key) } },
+                  } : {})}
                 >
                   <span className="table-th-content">
                     {col.header}
@@ -420,20 +426,38 @@ export function Table<T>({
               </tr>
             )}
           </thead>
-          <tbody>
+          <tbody role="rowgroup">
             {sortedData.map((item, idx) => {
               const key = keyExtractor(item)
               const isSelected = selectedKeys.includes(key)
+              const rowIdx = idx
               return (
                 <tr
                   key={key}
                   className={`table-row table-row-anim${onRowClick ? ' table-row-clickable' : ''}${selectable && isSelected ? ' table-row-selected' : ''}`}
                   style={{ '--i': idx } as React.CSSProperties}
                   data-visible={visible}
+                  tabIndex={0}
+                  role="row"
+                  aria-selected={selectable ? isSelected : undefined}
                   onClick={onRowClick ? () => onRowClick(item) : undefined}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && onRowClick) { e.preventDefault(); onRowClick(item) }
+                    if (e.key === ' ' && selectable && onSelectionChange) { e.preventDefault(); toggleOne(key) }
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault()
+                      const next = e.currentTarget.parentElement?.children[rowIdx + 1] as HTMLElement | undefined
+                      next?.focus()
+                    }
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault()
+                      const prev = e.currentTarget.parentElement?.children[rowIdx - 1] as HTMLElement | undefined
+                      prev?.focus()
+                    }
+                  }}
                 >
                   {selectable && (
-                    <td className="table-td" style={{ textAlign: 'center' }}>
+                    <td className="table-td" style={{ textAlign: 'center' }} role="gridcell">
                       <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
@@ -441,23 +465,25 @@ export function Table<T>({
                           onChange={() => toggleOne(key)}
                           onClick={e => e.stopPropagation()}
                           style={{ cursor: 'pointer' }}
+                          aria-label={`Seleccionar fila ${rowIdx + 1}`}
                         />
                       </label>
                     </td>
                   )}
                   {columns.map(col => (
-                    <td key={col.key} className="table-td">
+                    <td key={col.key} className="table-td" role="gridcell">
                       <div className="table-cell">{col.render(item)}</div>
                     </td>
                   ))}
                   {combinedActions.length > 0 && (
-                    <td className="table-td table-td-right">
+                    <td className="table-td table-td-right" role="gridcell">
                       <div className="table-actions">
                         {combinedActions.map((action, ai) => (
                           <button
                             key={ai}
                             className={`table-action-btn${action.variant === 'danger' ? ' table-action-btn-danger' : ''}`}
                             title={action.label}
+                            aria-label={action.label}
                             onClick={e => { e.stopPropagation(); action.onClick(item) }}
                           >
                             {action.icon}

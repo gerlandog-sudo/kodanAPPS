@@ -26,6 +26,7 @@ export function Breadcrumb({ items, separator = <ChevronRight size={12} /> }: Br
             )}
             {isLast || !item.onClick ? (
               <span
+                aria-current={isLast ? 'page' : undefined}
                 style={{
                   fontSize: '0.6875rem',
                   fontWeight: isLast ? 600 : 400,

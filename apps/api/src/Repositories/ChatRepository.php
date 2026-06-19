@@ -226,6 +226,7 @@ final class ChatRepository extends BaseRepository
              FROM conversation_participants cp
              JOIN messages m ON m.conversation_id = cp.conversation_id
              WHERE cp.user_id = ? 
+               AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
                AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)",
             [$userId]
         );

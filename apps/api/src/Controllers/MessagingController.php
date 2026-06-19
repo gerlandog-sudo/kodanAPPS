@@ -89,6 +89,9 @@ final class MessagingController
         // Asegurar que el emisor sea registrado como participante activo del chat
         $this->chatRepo->addParticipant($conversationId, $userId);
 
+        // Actualizar el puntero del último mensaje leído por el emisor de inmediato
+        $this->chatRepo->updateLastRead($conversationId, $userId, $messageId);
+
         // Parsear y procesar menciones en segundo plano
         $this->mentionsParser->processMentions($content, $conversationId, $messageId);
 
@@ -236,6 +239,7 @@ final class MessagingController
                         FROM conversation_participants cp
                         JOIN messages m ON m.conversation_id = cp.conversation_id
                         WHERE cp.user_id = ?
+                          AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
                           AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
                     ");
                     $unreadStmt->execute([$userId]);

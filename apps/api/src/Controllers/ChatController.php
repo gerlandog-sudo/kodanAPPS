@@ -74,6 +74,9 @@ final class ChatController
         // Asegurar que el remitente sea participante activo
         $this->chatRepo->addParticipant($conversationId, $userId);
 
+        // Actualizar el puntero del último mensaje leído por el emisor de inmediato
+        $this->chatRepo->updateLastRead($conversationId, $userId, $messageId);
+
         // Procesar menciones si vienen en la entrada
         if (isset($input['mentions']) && is_array($input['mentions'])) {
             $this->chatRepo->saveMentions($messageId, array_map('intval', $input['mentions']));

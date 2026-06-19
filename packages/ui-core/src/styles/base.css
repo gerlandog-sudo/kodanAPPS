@@ -537,6 +537,14 @@
   cursor: pointer;
 }
 
+.table-row-selected {
+  background: var(--sys-primary-container);
+}
+
+.table-row-selected:hover {
+  background: var(--sys-surface-hover);
+}
+
 .table-td {
   padding: 1rem 1.25rem;
   font-family: Montserrat, system-ui, -apple-system, sans-serif;

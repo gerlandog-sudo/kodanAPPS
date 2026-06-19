@@ -2,138 +2,59 @@ import { useEffect, useState, useCallback } from 'react'
 import { Button, Input, ColorPicker, Modal } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import type { StageBulkInput } from '../../api/client'
+import type { Pipeline, Stage } from '../../types/admin'
 import { STAGE_PRESET_LIST } from '../../utils/stageColorPresets'
-import { Plus, Edit2, Trash2, Circle, GripVertical } from 'lucide-react'
+import { STAGE_TEMPLATES } from './stageTemplates'
+import { usePipelineSync } from '../../hooks/usePipelineSync'
+import { Plus, Edit2, Trash2, Circle, Copy, Layout, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core'
 import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
+  SortableContext, useSortable, verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-interface Pipeline {
-  id: number
-  name: string
-  is_default: number
-}
-
-interface Stage {
-  id: number
-  name: string
-  color_hex: string
-  sort_order: number
-  is_won_stage: number
-  is_lost_stage: number
-  probability: number
-  pipeline_id: number
-}
-
 function SortableStage({ stage, idx, editingStages, updateEditingStage, removeEditingStage }: {
-  stage: StageBulkInput
-  idx: number
-  editingStages: StageBulkInput[]
+  stage: StageBulkInput; idx: number; editingStages: StageBulkInput[]
   updateEditingStage: (idx: number, field: keyof StageBulkInput, value: any) => void
   removeEditingStage: (idx: number) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `stage-${idx}` })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-    borderLeft: `4px solid ${stage.color_hex || '#6366F1'}`,
-  }
-
   return (
-    <div ref={setNodeRef} style={style} className="card p-4">
-      <div className="flex items-start gap-3">
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1, borderLeft: `4px solid ${stage.color_hex || '#6366F1'}`, padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface-raised)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
         <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--sys-text-muted)', paddingTop: '0.25rem', display: 'flex' }}>
-          <GripVertical size={16} />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>
         </div>
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NOMBRE</label>
-            <Input
-              value={stage.name || ''}
-              onChange={e => updateEditingStage(idx, 'name', e.target.value)}
-              placeholder="Ej: Propuesta Enviada"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>COLOR</label>
-            <ColorPicker
-              value={stage.color_hex || '#6366F1'}
-              onChange={color => updateEditingStage(idx, 'color_hex', color)}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>PROBABILIDAD (%)</label>
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={stage.probability ?? 0}
-              onChange={e => updateEditingStage(idx, 'probability', Math.min(100, Math.max(0, Number(e.target.value))))}
-            />
-          </div>
-          <div className="flex flex-col gap-3 pt-1">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name={`stage-type-${idx}`}
-                checked={!!stage.is_won_stage}
-                onChange={() => {
-                  updateEditingStage(idx, 'is_won_stage', 1)
-                  updateEditingStage(idx, 'is_lost_stage', 0)
-                }}
-                className="rounded"
-              />
-              <span className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>Ganada</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name={`stage-type-${idx}`}
-                checked={!!stage.is_lost_stage}
-                onChange={() => {
-                  updateEditingStage(idx, 'is_lost_stage', 1)
-                  updateEditingStage(idx, 'is_won_stage', 0)
-                }}
-                className="rounded"
-              />
-              <span className="text-xs font-semibold" style={{ color: 'var(--sys-error)' }}>Perdida</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name={`stage-type-${idx}`}
-                checked={!stage.is_won_stage && !stage.is_lost_stage}
-                onChange={() => {
-                  updateEditingStage(idx, 'is_won_stage', 0)
-                  updateEditingStage(idx, 'is_lost_stage', 0)
-                }}
-                className="rounded"
-              />
-              <span className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>Abierta</span>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem' }}>
+          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>NOMBRE</label>
+            <Input value={stage.name || ''} onChange={e => updateEditingStage(idx, 'name', e.target.value)} placeholder="Ej: Propuesta" /></div>
+          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>COLOR</label>
+            <ColorPicker value={stage.color_hex || '#6366F1'} onChange={color => updateEditingStage(idx, 'color_hex', color)} /></div>
+          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>PROB (%)</label>
+            <Input type="number" min={0} max={100} value={stage.probability ?? 0} onChange={e => updateEditingStage(idx, 'probability', Math.min(100, Math.max(0, Number(e.target.value))))} /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingTop: '0.375rem' }}>
+            {[
+              { key: 'is_won_stage', label: 'Ganada', color: 'var(--sys-success, #22c55e)' },
+              { key: 'is_lost_stage', label: 'Perdida', color: 'var(--sys-error)' },
+            ].map(({ key, label, color }) => (
+              <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>
+                <input type="radio" name={`st-${idx}`} checked={!!(stage as any)[key]}
+                  onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0); updateEditingStage(idx, key as any, 1) }} />
+                <span style={{ color }}>{label}</span>
+              </label>
+            ))}
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>
+              <input type="radio" name={`st-${idx}`} checked={!stage.is_won_stage && !stage.is_lost_stage}
+                onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0) }} />
+              Abierta
             </label>
           </div>
-          <div className="flex items-end justify-end gap-1 pb-1">
-            <button
-              onClick={() => removeEditingStage(idx)}
-              className="btn btn-ghost"
-              style={{ padding: '0.25rem', color: 'var(--sys-error)' }}
-              disabled={editingStages.length <= 1}
-              title="Eliminar etapa"
-            >
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+            <button onClick={() => removeEditingStage(idx)} disabled={editingStages.length <= 1}
+              style={{ padding: '0.25rem', color: 'var(--sys-error)', cursor: 'pointer', background: 'none', border: 'none' }}>
               <Trash2 size={14} />
             </button>
           </div>
@@ -144,14 +65,24 @@ function SortableStage({ stage, idx, editingStages, updateEditingStage, removeEd
 }
 
 export function PipelineManager() {
+  const { selectedPipelineId, selectPipeline } = usePipelineSync()
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [stages, setStages] = useState<Stage[]>([])
-  const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   const [showPipelineModal, setShowPipelineModal] = useState(false)
   const [editingPipeline, setEditingPipeline] = useState<Pipeline | null>(null)
   const [pipelineName, setPipelineName] = useState('')
+
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [showCloneModal, setShowCloneModal] = useState(false)
+  const [cloneName, setCloneName] = useState('')
+
+  const [showReasonsModal, setShowReasonsModal] = useState(false)
+  const [wonReasons, setWonReasons] = useState<string[]>([])
+  const [lostReasons, setLostReasons] = useState<string[]>([])
+  const [newReason, setNewReason] = useState('')
+  const [reasonType, setReasonType] = useState<'won' | 'lost'>('won')
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -159,225 +90,257 @@ export function PipelineManager() {
     try {
       const data = await crmApi.listPipelines()
       setPipelines(data)
-      if (!selectedPipelineId && data.length > 0) {
-        setSelectedPipelineId(data[0].id)
-      }
-    } catch {
-      toast.error('Error al cargar pipelines')
-    } finally {
-      setLoading(false)
-    }
+      if (!selectedPipelineId && data.length > 0) selectPipeline(data[0].id)
+    } catch { toast.error('Error al cargar pipelines') }
+    finally { setLoading(false) }
   }, [selectedPipelineId])
 
   const loadStages = useCallback(async (pipelineId: number) => {
-    try {
-      const data = await crmApi.listStages(pipelineId)
-      setStages(data.sort((a: Stage, b: Stage) => a.sort_order - b.sort_order))
-    } catch {
-      toast.error('Error al cargar etapas')
-    }
+    try { setStages((await crmApi.listStages(pipelineId)).sort((a: Stage, b: Stage) => a.sort_order - b.sort_order)) }
+    catch { toast.error('Error al cargar etapas') }
   }, [])
 
   useEffect(() => { loadPipelines() }, [])
   useEffect(() => { if (selectedPipelineId) loadStages(selectedPipelineId) }, [selectedPipelineId])
 
+  const currentPipeline = pipelines.find(p => p.id === selectedPipelineId)
+
   const handleSavePipeline = async () => {
-    if (!pipelineName.trim()) return toast.error('El nombre del pipeline es requerido')
+    if (!pipelineName.trim()) return toast.error('El nombre es requerido')
     try {
-      if (editingPipeline) {
-        await crmApi.updatePipeline(editingPipeline.id, { name: pipelineName })
-        toast.success('Pipeline actualizado')
-      } else {
-        await crmApi.createPipeline({ name: pipelineName })
-        toast.success('Pipeline creado')
-      }
-      setShowPipelineModal(false)
-      setEditingPipeline(null)
-      setPipelineName('')
-      loadPipelines()
-    } catch { toast.error('Error al guardar pipeline') }
+      if (editingPipeline) { await crmApi.updatePipeline(editingPipeline.id, { name: pipelineName }); toast.success('Pipeline actualizado') }
+      else { await crmApi.createPipeline({ name: pipelineName }); toast.success('Pipeline creado') }
+      setShowPipelineModal(false); setEditingPipeline(null); setPipelineName(''); loadPipelines()
+    } catch { toast.error('Error al guardar') }
   }
 
   const handleDeletePipeline = async (id: number) => {
-    if (!confirm('¿Eliminar pipeline? Las oportunidades se reasignarán.')) return
-    try {
-      await crmApi.deletePipeline(id)
-      toast.success('Pipeline eliminado')
-      if (selectedPipelineId === id) setSelectedPipelineId(null)
-      loadPipelines()
-    } catch { toast.error('Error al eliminar pipeline') }
-  }
-
-  const handleOpenPipelineEdit = (p: Pipeline) => {
-    setEditingPipeline(p)
-    setPipelineName(p.name)
-    setShowPipelineModal(true)
+    try { await crmApi.deletePipeline(id); toast.success('Pipeline eliminado'); if (selectedPipelineId === id) selectPipeline(0); loadPipelines() }
+    catch { toast.error('Error al eliminar') }
   }
 
   const [editingStages, setEditingStages] = useState<StageBulkInput[]>([])
-
   useEffect(() => {
     setEditingStages(stages.map(s => ({
-      id: s.id,
-      name: s.name,
-      color_hex: s.color_hex,
-      sort_order: s.sort_order,
-      probability: s.probability,
-      is_won_stage: s.is_won_stage,
-      is_lost_stage: s.is_lost_stage,
+      id: s.id, name: s.name, color_hex: s.color_hex, sort_order: s.sort_order,
+      probability: s.probability, is_won_stage: s.is_won_stage, is_lost_stage: s.is_lost_stage,
       ui_config: { preset: s.color_hex },
     })))
   }, [stages])
 
-  const updateEditingStage = (index: number, field: keyof StageBulkInput, value: any) => {
+  const updateEditingStage = (index: number, field: keyof StageBulkInput, value: any) =>
     setEditingStages(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s))
-  }
 
   const addEditingStage = () => {
-    const nextOrder = editingStages.length > 0
-      ? Math.max(...editingStages.map(s => s.sort_order || 0)) + 10
-      : 10
-    setEditingStages(prev => [...prev, {
-      name: '',
-      color_hex: STAGE_PRESET_LIST[nextOrder % STAGE_PRESET_LIST.length],
-      sort_order: nextOrder,
-      probability: 0,
-      is_won_stage: 0,
-      is_lost_stage: 0,
-      ui_config: null,
-    }])
+    const nextOrder = editingStages.length > 0 ? Math.max(...editingStages.map(s => s.sort_order || 0)) + 10 : 10
+    setEditingStages(prev => [...prev, { name: '', color_hex: STAGE_PRESET_LIST[nextOrder % STAGE_PRESET_LIST.length], sort_order: nextOrder, probability: 0, is_won_stage: 0, is_lost_stage: 0, ui_config: null }])
   }
 
-  const removeEditingStage = (index: number) => {
-    if (editingStages.length <= 1) return
-    setEditingStages(prev => prev.filter((_, i) => i !== index))
-  }
+  const removeEditingStage = (index: number) => { if (editingStages.length > 1) setEditingStages(prev => prev.filter((_, i) => i !== index)) }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
-
     const oldIdx = parseInt(String(active.id).replace('stage-', ''), 10)
     const newIdx = parseInt(String(over.id).replace('stage-', ''), 10)
     if (isNaN(oldIdx) || isNaN(newIdx)) return
-
-    const updated = [...editingStages];
-    [updated[oldIdx], updated[newIdx]] = [updated[newIdx], updated[oldIdx]]
-    updated.forEach((s, i) => { s.sort_order = (i + 1) * 10 })
-    setEditingStages(updated)
+    const updated = [...editingStages]; [updated[oldIdx], updated[newIdx]] = [updated[newIdx], updated[oldIdx]]
+    updated.forEach((s, i) => { s.sort_order = (i + 1) * 10 }); setEditingStages(updated)
   }
 
   const handleSaveStages = async () => {
     if (!selectedPipelineId) return
-    for (const s of editingStages) {
-      if (!s.name?.trim()) return toast.error('Todas las etapas deben tener nombre')
-    }
-    const wonCount = editingStages.filter(s => s.is_won_stage).length
-    const lostCount = editingStages.filter(s => s.is_lost_stage).length
-    if (wonCount !== 1) return toast.error('Debe haber exactamente 1 etapa Ganada')
-    if (lostCount !== 1) return toast.error('Debe haber exactamente 1 etapa Perdida')
+    for (const s of editingStages) { if (!s.name?.trim()) return toast.error('Todas las etapas deben tener nombre') }
+    if (editingStages.filter(s => s.is_won_stage).length !== 1) return toast.error('Debe haber exactamente 1 etapa Ganada')
+    if (editingStages.filter(s => s.is_lost_stage).length !== 1) return toast.error('Debe haber exactamente 1 etapa Perdida')
+    try { await crmApi.bulkUpdateStages(selectedPipelineId, editingStages); toast.success('Etapas guardadas'); loadStages(selectedPipelineId) }
+    catch (err: any) { toast.error(err?.message || 'Error al guardar') }
+  }
 
+  const applyTemplate = async (templateKey: string) => {
+    if (!selectedPipelineId) return
+    const template = STAGE_TEMPLATES[templateKey]
+    if (!template) return
     try {
-      await crmApi.bulkUpdateStages(selectedPipelineId, editingStages)
-      toast.success('Etapas guardadas exitosamente')
-      loadStages(selectedPipelineId)
-    } catch (err: any) {
-      toast.error(err?.message || 'Error al guardar etapas')
-    }
+      await crmApi.bulkUpdateStages(selectedPipelineId, template.stages.map((s, i) => ({ ...s, sort_order: (i + 1) * 10 })))
+      toast.success(`Plantilla "${template.label}" aplicada`); setShowTemplateModal(false); loadStages(selectedPipelineId)
+    } catch { toast.error('Error al aplicar plantilla') }
   }
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-[40vh]"><span className="spinner" /></div>
+  const clonePipeline = async () => {
+    if (!selectedPipelineId || !cloneName.trim()) return toast.error('El nombre es requerido')
+    try {
+      const sourceStages = await crmApi.listStages(selectedPipelineId)
+      const newPipeline: any = await crmApi.createPipeline({ name: cloneName.trim() })
+      await crmApi.bulkUpdateStages(newPipeline.id, sourceStages.map((s: any) => ({
+        name: s.name, color_hex: s.color_hex, probability: s.probability,
+        is_won_stage: s.is_won_stage, is_lost_stage: s.is_lost_stage, sort_order: s.sort_order,
+      })))
+      toast.success('Pipeline clonado'); setShowCloneModal(false); setCloneName(''); loadPipelines(); selectPipeline(newPipeline.id)
+    } catch { toast.error('Error al clonar') }
   }
+
+  const openReasons = (pipeline: Pipeline) => {
+    const config = (pipeline as any).ui_config || {}
+    setWonReasons(config.won_reasons || [])
+    setLostReasons(config.lost_reasons || [])
+    setNewReason('')
+    setReasonType('won')
+    setShowReasonsModal(true)
+  }
+
+  const saveReasons = async () => {
+    if (!selectedPipelineId) return
+    try {
+      await crmApi.updatePipeline(selectedPipelineId, { ui_config: { won_reasons: wonReasons, lost_reasons: lostReasons } })
+      toast.success('Motivos guardados'); setShowReasonsModal(false); loadPipelines()
+    } catch { toast.error('Error al guardar motivos') }
+  }
+
+  const addReason = () => {
+    if (!newReason.trim()) return
+    if (reasonType === 'won') setWonReasons(prev => [...prev, newReason.trim()])
+    else setLostReasons(prev => [...prev, newReason.trim()])
+    setNewReason('')
+  }
+
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}><span className="spinner" /></div>
 
   return (
-    <div className="flex gap-6" style={{ minHeight: '60vh' }}>
-      <div className="w-72 flex-shrink-0 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--sys-text-muted)' }}>CANALES</h3>
-          <button onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }} className="btn btn-ghost" style={{ padding: '0.25rem' }} title="Nuevo pipeline">
+    <div style={{ display: 'flex', gap: '1.5rem', minHeight: '60vh', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
+      <div style={{ width: '18rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>CANALES</h3>
+          <button onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}
+            style={{ padding: '0.25rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-primary)' }}>
             <Plus size={16} />
           </button>
         </div>
-        <div className="flex flex-col gap-1">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           {pipelines.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setSelectedPipelineId(p.id)}
-              className="sidebar-link"
-              style={{
-                background: selectedPipelineId === p.id ? 'var(--sys-primary-container)' : 'transparent',
-                color: selectedPipelineId === p.id ? 'var(--color-on-primary-container)' : 'var(--sys-text)',
-                fontWeight: selectedPipelineId === p.id ? 600 : 400,
-              }}
-            >
-              <Circle size={12} fill={selectedPipelineId === p.id ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)'} style={{ flexShrink: 0 }} />
-              <span className="flex-1 text-left truncate">{p.name}</span>
-              <button onClick={(e) => { e.stopPropagation(); handleOpenPipelineEdit(p) }} className="p-1 hover:opacity-70"><Edit2 size={12} /></button>
-              <button onClick={(e) => { e.stopPropagation(); handleDeletePipeline(p.id) }} className="p-1 hover:opacity-70" style={{ color: 'var(--sys-error)' }}><Trash2 size={12} /></button>
-            </button>
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.5rem 0.625rem', borderRadius: '0.625rem', cursor: 'pointer', background: selectedPipelineId === p.id ? 'var(--sys-primary-container)' : 'transparent', color: selectedPipelineId === p.id ? 'var(--color-on-primary-container)' : 'var(--sys-text)', fontWeight: selectedPipelineId === p.id ? 600 : 400, transition: 'all 150ms' }}
+              onClick={() => selectPipeline(p.id)}>
+              <Circle size={10} fill={selectedPipelineId === p.id ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)'} style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.8125rem' }}>{p.name}</span>
+              <div style={{ display: 'flex', gap: '0.125rem', opacity: 0, transition: 'opacity 150ms' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
+                <button onClick={e => { e.stopPropagation(); setEditingPipeline(p); setPipelineName(p.name); setShowPipelineModal(true) }}
+                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Edit2 size={11} /></button>
+                <button onClick={e => { e.stopPropagation(); openReasons(p) }}
+                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Check size={11} /></button>
+                <button onClick={e => { e.stopPropagation(); setCloneName(`${p.name} (copia)`); setShowCloneModal(true) }}
+                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}><Copy size={11} /></button>
+                <button onClick={e => { e.stopPropagation(); handleDeletePipeline(p.id) }}
+                  style={{ padding: '0.125rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-error)' }}><Trash2 size={11} /></button>
+              </div>
+            </div>
           ))}
-          {pipelines.length === 0 && (
-            <p className="text-xs italic" style={{ color: 'var(--sys-text-muted)' }}>Sin canales definidos</p>
-          )}
+          {pipelines.length === 0 && <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>Sin canales definidos</p>}
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-            ETAPAS {selectedPipelineId ? `— ${pipelines.find(p => p.id === selectedPipelineId)?.name || ''}` : ''}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)' }}>
+            ETAPAS {currentPipeline ? `— ${currentPipeline.name}` : ''}
           </h3>
-          <Button variant="secondary" onClick={addEditingStage} style={{ fontSize: '0.8125rem' }}>
-            <Plus size={14} /> Agregar Etapa
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button variant="secondary" onClick={() => { if (selectedPipelineId) setShowTemplateModal(true) }} disabled={!selectedPipelineId}><Layout size={14} /> Plantilla</Button>
+            <Button variant="secondary" onClick={addEditingStage}><Plus size={14} /> Agregar</Button>
+          </div>
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={editingStages.map((_, i) => `stage-${i}`)} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {editingStages.map((stage, idx) => (
-                <SortableStage
-                  key={`stage-${idx}`}
-                  stage={stage}
-                  idx={idx}
-                  editingStages={editingStages}
-                  updateEditingStage={updateEditingStage}
-                  removeEditingStage={removeEditingStage}
-                />
+                <SortableStage key={`stage-${idx}`} stage={stage} idx={idx} editingStages={editingStages}
+                  updateEditingStage={updateEditingStage} removeEditingStage={removeEditingStage} />
               ))}
             </div>
           </SortableContext>
         </DndContext>
 
         {editingStages.length === 0 && (
-          <div className="flex flex-col items-center justify-center p-10 border border-dashed rounded-xl" style={{ borderColor: 'var(--sys-border-soft)' }}>
-            <p className="text-sm italic" style={{ color: 'var(--sys-text-muted)' }}>No hay etapas. Agrega la primera.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2.5rem', border: '1px dashed var(--sys-border-soft)', borderRadius: '0.75rem' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>No hay etapas. Agrega la primera.</p>
           </div>
         )}
 
         {selectedPipelineId && editingStages.length > 0 && (
-          <div className="flex justify-end pt-2">
-            <Button variant="primary" className="btn-primary" onClick={handleSaveStages}>
-              Guardar Etapas
-            </Button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button variant="primary" onClick={handleSaveStages}>Guardar Etapas</Button>
           </div>
         )}
       </div>
 
       <Modal open={showPipelineModal} onClose={() => setShowPipelineModal(false)} title={editingPipeline ? 'Editar Canal' : 'Nuevo Canal'}>
-        <form onSubmit={e => { e.preventDefault(); handleSavePipeline() }} className="flex flex-col gap-4 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NOMBRE DEL CANAL *</label>
-            <Input value={pipelineName} onChange={e => setPipelineName(e.target.value)} placeholder="Ej: Ventas Directas" required />
-          </div>
-          <div className="flex justify-end gap-3 pt-3" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+        <form onSubmit={e => { e.preventDefault(); handleSavePipeline() }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>NOMBRE DEL CANAL *</label>
+            <Input value={pipelineName} onChange={e => setPipelineName(e.target.value)} placeholder="Ej: Ventas Directas" required /></div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--sys-border-soft)', paddingTop: '0.75rem' }}>
             <Button variant="secondary" type="button" onClick={() => setShowPipelineModal(false)}>Cancelar</Button>
-            <Button variant="primary" type="submit" className="btn-primary">
-              {editingPipeline ? 'Actualizar' : 'Crear Canal'}
-            </Button>
+            <Button variant="primary" type="submit">{editingPipeline ? 'Actualizar' : 'Crear Canal'}</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={showTemplateModal} onClose={() => setShowTemplateModal(false)} title="Plantillas de Etapas">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+          {Object.entries(STAGE_TEMPLATES).map(([key, template]) => (
+            <button key={key} type="button" onClick={() => applyTemplate(key)}
+              style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)', cursor: 'pointer', textAlign: 'left' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--sys-text)' }}>{template.label}</span>
+              <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                {template.stages.map((s, i) => (
+                  <span key={i} style={{ padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontSize: '0.625rem', fontWeight: 600, background: s.color_hex + '20', color: s.color_hex }}>{s.name}</span>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
+      </Modal>
+
+      <Modal open={showCloneModal} onClose={() => setShowCloneModal(false)} title="Clonar Pipeline">
+        <form onSubmit={e => { e.preventDefault(); clonePipeline() }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+          <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>NOMBRE DEL NUEVO CANAL *</label>
+            <Input value={cloneName} onChange={e => setCloneName(e.target.value)} placeholder="Nombre" required /></div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--sys-border-soft)', paddingTop: '0.75rem' }}>
+            <Button variant="secondary" type="button" onClick={() => setShowCloneModal(false)}>Cancelar</Button>
+            <Button variant="primary" type="submit">Clonar</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={showReasonsModal} onClose={() => setShowReasonsModal(false)} title="Motivos de Ganada/Perdida">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: '350px' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={() => setReasonType('won')} style={{ flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: `1px solid ${reasonType === 'won' ? 'var(--sys-primary)' : 'var(--sys-border-soft)'}`, background: reasonType === 'won' ? 'var(--sys-surface-hover)' : 'transparent', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem', color: 'var(--sys-text)' }}>Ganada</button>
+            <button onClick={() => setReasonType('lost')} style={{ flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: `1px solid ${reasonType === 'lost' ? 'var(--sys-error)' : 'var(--sys-border-soft)'}`, background: reasonType === 'lost' ? 'var(--sys-surface-hover)' : 'transparent', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem', color: 'var(--sys-text)' }}>Perdida</button>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>MOTIVOS</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <Input value={newReason} onChange={e => setNewReason(e.target.value)} placeholder="Nuevo motivo..."
+                onKeyDown={(e: any) => { if (e.key === 'Enter') { e.preventDefault(); addReason() } }} />
+              <button onClick={addReason} style={{ padding: '0.375rem 0.75rem', borderRadius: '0.5rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface-raised)', cursor: 'pointer' }}><Plus size={14} /></button>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginTop: '0.5rem' }}>
+              {(reasonType === 'won' ? wonReasons : lostReasons).map((r, i) => (
+                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.125rem 0.5rem', borderRadius: '999px', fontSize: '0.6875rem', fontWeight: 600, background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)' }}>
+                  {r}
+                  <button onClick={() => { reasonType === 'won' ? setWonReasons(prev => prev.filter((_, j) => j !== i)) : setLostReasons(prev => prev.filter((_, j) => j !== i)) }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-error)', padding: 0, display: 'flex' }}><X size={10} /></button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--sys-border-soft)', paddingTop: '0.75rem' }}>
+            <Button variant="secondary" type="button" onClick={() => setShowReasonsModal(false)}>Cancelar</Button>
+            <Button variant="primary" type="button" onClick={saveReasons}>Guardar</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

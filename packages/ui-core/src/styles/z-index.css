@@ -1,0 +1,10 @@
+:root {
+  --z-base: 0;
+  --z-dropdown: 100;        /* MultiSelect, Select, DatePicker */
+  --z-tooltip: 200;         /* Tooltips, Popovers */
+  --z-modal-backdrop: 300;  /* Modal overlay */
+  --z-modal: 310;           /* Modal content */
+  --z-slidepanel: 400;      /* SlidePanel sidebar */
+  --z-slidepanel-backdrop: 390;
+  --z-toast: 500;           /* Toaster */
+}

@@ -1,50 +1,33 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Button, Input, SlidePanel, Toggle, useAuth } from '@kodan-apps/ui-core'
+import { Button, Input, SlidePanel, Toggle, EntityCard, ConfirmDialog, useAuth } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
-import { 
-  Users, UserPlus, Edit2, Trash2, Shield, X, RefreshCw, Key, 
-  Briefcase, TrendingUp, User, Eye, CheckCircle2 
-} from 'lucide-react'
+import type { TenantUser, CrmRole } from '../../types/admin'
+import { UserPlus, RefreshCw, Shield, Briefcase, TrendingUp, Eye, User, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-
-interface TenantUser {
-  id: number
-  email: string
-  display_name: string
-  is_active: number
-  created_at: string
-  role_id: number | null
-  role_name: string | null
-  role_description: string | null
-}
-
-interface CrmRole {
-  id: number
-  name: string
-  description: string
-}
 
 export function UsersSettings() {
   const { user: currentUser } = useAuth('crm')
   const [users, setUsers] = useState<TenantUser[]>([])
   const [roles, setRoles] = useState<CrmRole[]>([])
   const [loading, setLoading] = useState(true)
-
-  // Límites del Plan
   const [usersLimit, setUsersLimit] = useState<number | null>(null)
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
 
-  // SlidePanel State
   const [panelOpen, setPanelOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null)
 
-  // Form State
   const [formName, setFormName] = useState('')
   const [formEmail, setFormEmail] = useState('')
   const [formPassword, setFormPassword] = useState('')
   const [formRoleId, setFormRoleId] = useState<number>(0)
   const [formActive, setFormActive] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {})
+  const [confirmMsg, setConfirmMsg] = useState('')
+  const [confirmLoading, setConfirmLoading] = useState(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -56,30 +39,16 @@ export function UsersSettings() {
       ])
       setUsers(usersData)
       setRoles(rolesData)
-      
       const userLimitMetric = planStatus.find((m: any) => m.metric === 'users_max')
-      if (userLimitMetric) {
-        setUsersLimit(userLimitMetric.limit_value)
-      }
-
-      if (rolesData.length > 0 && formRoleId === 0) {
-        setFormRoleId(rolesData[0].id)
-      }
-    } catch {
-      toast.error('Error al cargar la información de usuarios')
-    } finally {
-      setLoading(false)
-    }
+      if (userLimitMetric) setUsersLimit(userLimitMetric.limit_value)
+      if (rolesData.length > 0 && formRoleId === 0) setFormRoleId(rolesData[0].id)
+    } catch { toast.error('Error al cargar usuarios') }
+    finally { setLoading(false) }
   }, [formRoleId])
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
-  const activeUsersCount = useMemo(() => {
-    return users.filter(u => u.is_active === 1).length
-  }, [users])
-
+  const activeUsersCount = useMemo(() => users.filter(u => u.is_active === 1).length, [users])
   const usagePercent = useMemo(() => {
     if (!usersLimit || usersLimit === 0) return 0
     return Math.min(100, (activeUsersCount / usersLimit) * 100)
@@ -89,18 +58,13 @@ export function UsersSettings() {
     setFormName('')
     setFormEmail('')
     setFormPassword('')
-    if (roles.length > 0) {
-      setFormRoleId(roles[0].id)
-    }
+    if (roles.length > 0) setFormRoleId(roles[0].id)
     setFormActive(true)
     setEditingUser(null)
     setShowPassword(false)
   }
 
-  const handleOpenCreate = () => {
-    resetForm()
-    setPanelOpen(true)
-  }
+  const handleOpenCreate = () => { resetForm(); setPanelOpen(true) }
 
   const handleOpenEdit = (u: TenantUser) => {
     setEditingUser(u)
@@ -118,47 +82,33 @@ export function UsersSettings() {
     if (!formEmail.trim()) return toast.error('El correo electrónico es requerido')
     if (!editingUser && !formPassword) return toast.error('La contraseña es requerida para nuevos usuarios')
     if (!editingUser && formPassword.length < 8) return toast.error('La contraseña debe tener al menos 8 caracteres')
-    if (formRoleId === 0) return toast.error('Debe seleccionar un rol para el usuario')
-
+    if (formRoleId === 0) return toast.error('Debe seleccionar un rol')
     try {
-      const payload: any = {
-        display_name: formName.trim(),
-        email: formEmail.trim(),
-        role_id: formRoleId,
-        is_active: formActive ? 1 : 0,
-      }
-
-      if (!editingUser) {
-        payload.password = formPassword
-        await crmApi.createTenantUser(payload)
-        toast.success('Usuario creado con éxito')
-      } else {
-        await crmApi.updateTenantUser(editingUser.id, payload)
-        toast.success('Usuario actualizado con éxito')
-      }
-      setPanelOpen(false)
-      resetForm()
-      loadData()
-    } catch (err: any) {
-      toast.error(err?.message || 'Error al guardar el usuario')
-    }
+      const payload: any = { display_name: formName.trim(), email: formEmail.trim(), role_id: formRoleId, is_active: formActive ? 1 : 0 }
+      if (!editingUser) { payload.password = formPassword; await crmApi.createTenantUser(payload); toast.success('Usuario creado') }
+      else { await crmApi.updateTenantUser(editingUser.id, payload); toast.success('Usuario actualizado') }
+      setPanelOpen(false); resetForm(); loadData()
+    } catch (err: any) { toast.error(err?.message || 'Error al guardar') }
   }
 
-  const handleDelete = async (u: TenantUser) => {
-    if (currentUser && currentUser.id === u.id) {
-      return toast.error('No puedes dar de baja a tu propio usuario administrador')
-    }
-    
-    const confirmed = confirm(`¿Estás seguro de que deseas dar de baja a "${u.display_name || u.email}"? Perderá el acceso de forma inmediata.`)
-    if (!confirmed) return
+  const openConfirm = (msg: string, action: () => Promise<void>) => {
+    setConfirmMsg(msg)
+    setConfirmAction(() => action)
+    setConfirmOpen(true)
+  }
 
-    try {
-      await crmApi.deleteTenantUser(u.id)
-      toast.success('Usuario dado de baja correctamente')
-      loadData()
-    } catch (err: any) {
-      toast.error(err?.message || 'Error al eliminar el usuario')
-    }
+  const handleConfirm = async () => {
+    setConfirmLoading(true)
+    try { await confirmAction(); setConfirmOpen(false) }
+    catch { toast.error('Error al ejecutar la acción') }
+    finally { setConfirmLoading(false) }
+  }
+
+  const handleDelete = (u: TenantUser) => {
+    if (currentUser && currentUser.id === u.id) return toast.error('No puedes darte de baja a ti mismo')
+    openConfirm(`¿Dar de baja a "${u.display_name || u.email}"? Perderá el acceso de forma inmediata.`, async () => {
+      await crmApi.deleteTenantUser(u.id); toast.success('Usuario dado de baja'); loadData()
+    })
   }
 
   const getRoleIcon = (roleName: string) => {
@@ -170,290 +120,176 @@ export function UsersSettings() {
     return <User size={16} />
   }
 
-  const getRoleBadgeStyle = (roleName: string) => {
-    const name = roleName.toLowerCase()
-    if (name.includes('admin')) {
-      return 'bg-[var(--sys-primary-container)]/10 text-[var(--sys-primary)] border-[var(--sys-primary-soft)]/30'
-    }
-    if (name.includes('commercial')) {
-      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-    }
-    if (name.includes('pm')) {
-      return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
-    }
-    return 'bg-[var(--sys-border-soft)] text-[var(--sys-text-muted)] border-transparent'
-  }
-
   return (
-    <div className="flex flex-col gap-6 font-sans text-xs w-full">
-      
-      {/* Barra superior de Licencias y Capacidad (Premium Tier) */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem', width: '100%' }}>
       {!loading && (
-        <div className="p-4 rounded-xl bg-[var(--sys-surface)] border border-[var(--sys-border-soft)] flex flex-col gap-2 w-full">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--sys-text-muted)] flex items-center gap-1.5 select-none">
-              <CheckCircle2 size={12} className="text-emerald-500" /> Capacidad de Licencias en CRM
+        <div style={{ padding: '1rem', borderRadius: '0.75rem', background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <CheckCircle2 size={12} style={{ color: 'var(--sys-success, #22c55e)' }} /> Capacidad de Licencias
             </span>
-            <span className="font-mono text-[10px] font-extrabold text-[var(--sys-text)]">
-              {usersLimit && usersLimit > 0 
-                ? `${activeUsersCount} de ${usersLimit} Utilizadas` 
-                : `${activeUsersCount} Utilizadas (Ilimitado)`
-              }
+            <span style={{ fontFamily: 'monospace', fontSize: '0.625rem', fontWeight: 800, color: 'var(--sys-text)' }}>
+              {usersLimit && usersLimit > 0 ? `${activeUsersCount} de ${usersLimit} utilizadas` : `${activeUsersCount} utilizadas (Ilimitado)`}
             </span>
           </div>
           {usersLimit && usersLimit > 0 && (
-            <div className="w-full bg-[var(--sys-border-soft)] rounded-full h-1 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-[var(--sys-primary)] to-[var(--sys-primary-hover)] h-1 rounded-full transition-all duration-500 ease-out" 
-                style={{ width: `${usagePercent}%` }}
-              />
+            <div style={{ width: '100%', background: 'var(--sys-border-soft)', borderRadius: '999px', height: '0.25rem', overflow: 'hidden' }}>
+              <div style={{ width: `${usagePercent}%`, height: '0.25rem', borderRadius: '999px', background: 'linear-gradient(to right, var(--sys-primary), var(--sys-primary-hover))', transition: 'width 500ms ease-out' }} />
             </div>
           )}
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--sys-border-soft)] pb-4 w-full">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h3 className="text-sm font-bold tracking-wider uppercase text-[var(--sys-text)] m-0">
-            Miembros y Roles
-          </h3>
-          <p className="text-[11px]" style={{ color: 'var(--sys-text-muted)', marginTop: '2px' }}>
-            Operadores con acceso al entorno de relaciones del CRM
-          </p>
+          <h3 style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--sys-text)', margin: 0 }}>Miembros y Roles</h3>
+          <p style={{ fontSize: '0.6875rem', color: 'var(--sys-text-muted)', margin: '0.125rem 0 0 0' }}>Operadores con acceso al CRM</p>
         </div>
-        <Button variant="primary" className="btn-primary flex items-center gap-1.5" style={{ padding: '0.4rem 0.8rem', fontSize: '11px' }} onClick={handleOpenCreate}>
-          <UserPlus size={13} /> Añadir Operador
-        </Button>
+        <Button variant="primary" onClick={handleOpenCreate}><UserPlus size={14} /> Añadir Operador</Button>
       </div>
 
-      {/* Lista de usuarios (Tabla de Contraste Extremo) */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[30vh] py-12 text-center w-full">
-          <RefreshCw className="w-6 h-6 text-[var(--sys-primary)] animate-spin mb-2" />
-          <span className="text-[10px] font-sans uppercase tracking-wider text-gray-500">
-            Consultando Base de Datos...
-          </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 0', color: 'var(--sys-text-muted)' }}>
+          <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginBottom: '0.5rem' }} />
+          <span style={{ fontSize: '0.625rem', textTransform: 'uppercase' }}>Cargando...</span>
         </div>
       ) : (
-        <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse">
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="border-b border-[var(--sys-border-soft)]">
-                <th className="py-3 px-4 text-[9px] font-bold uppercase tracking-widest text-[var(--sys-text-muted)] select-none">Nombre y Correo</th>
-                <th className="py-3 px-4 text-[9px] font-bold uppercase tracking-widest text-[var(--sys-text-muted)] select-none">Rol CRM</th>
-                <th className="py-3 px-4 text-[9px] font-bold uppercase tracking-widest text-[var(--sys-text-muted)] select-none text-center">Estado</th>
-                <th className="py-3 px-4 text-[9px] font-bold uppercase tracking-widest text-[var(--sys-text-muted)] select-none text-right">Acciones</th>
+              <tr style={{ borderBottom: '1px solid var(--sys-border-soft)' }}>
+                <th style={{ width: '2.5rem', padding: '0.5rem' }}>
+                  <input type="checkbox"
+                    checked={users.length > 0 && selectedIds.length === users.length}
+                    onChange={() => selectedIds.length === users.length ? setSelectedIds([]) : setSelectedIds(users.map(u => u.id))}
+                  />
+                </th>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.5625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--sys-text-muted)', textAlign: 'left' }}>Nombre y Correo</th>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.5625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--sys-text-muted)', textAlign: 'left' }}>Rol CRM</th>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.5625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--sys-text-muted)', textAlign: 'center' }}>Estado</th>
+                <th style={{ padding: '0.75rem 1rem', fontSize: '0.5625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--sys-text-muted)', textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--sys-border-soft)]/30">
+            <tbody style={{ borderCollapse: 'collapse' }}>
+              {selectedIds.length > 0 && (
+                <tr>
+                  <td colSpan={5} style={{ padding: '0.5rem 1rem', background: 'var(--sys-primary-container)', borderRadius: '0.5rem', border: '1px solid var(--sys-primary-soft)' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.75rem', marginRight: '0.75rem' }}>{selectedIds.length} seleccionado(s)</span>
+                    <button onClick={() => { Promise.all(selectedIds.map(id => crmApi.updateTenantUser(id, { is_active: 1 }))).then(() => { toast.success('Activados'); setSelectedIds([]); loadData() }) }}
+                      style={{ marginRight: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.6875rem', cursor: 'pointer', background: 'var(--sys-surface-raised)', border: '1px solid var(--sys-border-soft)', borderRadius: '0.375rem' }}>
+                      Activar
+                    </button>
+                    <button onClick={() => { Promise.all(selectedIds.map(id => crmApi.updateTenantUser(id, { is_active: 0 }))).then(() => { toast.success('Desactivados'); setSelectedIds([]); loadData() }) }}
+                      style={{ marginRight: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.6875rem', cursor: 'pointer', background: 'var(--sys-surface-raised)', border: '1px solid var(--sys-border-soft)', borderRadius: '0.375rem' }}>
+                      Desactivar
+                    </button>
+                    <button onClick={() => openConfirm(`¿Eliminar ${selectedIds.length} usuario(s)?`, async () => {
+                      await Promise.all(selectedIds.map(id => crmApi.deleteTenantUser(id)))
+                      toast.success('Eliminados'); setSelectedIds([]); loadData()
+                    })}
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.6875rem', cursor: 'pointer', background: 'var(--sys-error)', color: '#fff', border: 'none', borderRadius: '0.375rem' }}>
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              )}
               {users.map((u) => {
                 const isSelf = currentUser && currentUser.id === u.id
                 return (
-                  <tr key={u.id} className="group hover:bg-[var(--sys-surface-hover)]/20 transition-colors">
-                    
-                    {/* Nombre e Email */}
-                    <td className="py-3 px-4 min-w-[200px]">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full border border-[var(--sys-border-soft)] bg-[var(--sys-surface)] flex items-center justify-center shrink-0">
-                          <span className="font-extrabold text-[10px] text-[var(--sys-primary)]">
-                            {(u.display_name || u.email).substring(0, 2).toUpperCase()}
-                          </span>
+                  <tr key={u.id} style={{ borderBottom: '1px solid var(--sys-border-soft)', transition: 'background 200ms' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--sys-surface-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                      <input type="checkbox" checked={selectedIds.includes(u.id)}
+                        onChange={() => setSelectedIds(prev => prev.includes(u.id) ? prev.filter(k => k !== u.id) : [...prev, u.id])} />
+                    </td>
+                    <td style={{ padding: '0.75rem 1rem', minWidth: '200px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ width: '2rem', height: '2rem', borderRadius: '999px', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.625rem', color: 'var(--sys-primary)' }}>{(u.display_name || u.email).substring(0, 2).toUpperCase()}</span>
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-[var(--sys-text)] truncate">{u.display_name}</span>
-                            {isSelf && (
-                              <span className="bg-[var(--sys-primary-container)]/10 text-[var(--sys-primary)] border border-[var(--sys-primary-soft)]/20 px-1 py-0.2 rounded text-[7px] font-extrabold uppercase shrink-0">
-                                tú
-                              </span>
-                            )}
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text)' }}>{u.display_name}</span>
+                            {isSelf && <span style={{ fontSize: '0.4375rem', fontWeight: 800, textTransform: 'uppercase', background: 'var(--sys-primary-container)', color: 'var(--sys-primary)', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>tú</span>}
                           </div>
-                          <span className="text-[10px] font-mono text-[var(--sys-text-muted)] block mt-0.5 truncate select-all">{u.email}</span>
+                          <span style={{ fontSize: '0.625rem', fontFamily: 'monospace', color: 'var(--sys-text-muted)', marginTop: '0.125rem', display: 'block' }}>{u.email}</span>
                         </div>
                       </div>
                     </td>
-
-                    {/* Rol */}
-                    <td className="py-3 px-4 vertical-middle">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border uppercase tracking-wider ${getRoleBadgeStyle(u.role_name || '')}`}>
-                        {getRoleIcon(u.role_name || '')}
-                        {u.role_name}
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.125rem 0.5rem', borderRadius: '999px', fontSize: '0.5625rem', fontWeight: 800, textTransform: 'uppercase', border: '1px solid var(--sys-primary-soft)', color: 'var(--sys-primary)' }}>
+                        {getRoleIcon(u.role_name || '')} {u.role_name}
                       </span>
                     </td>
-
-                    {/* Estado con Pulso Animado */}
-                    <td className="py-3 px-4 text-center vertical-middle">
-                      <div className="flex items-center justify-center">
-                        {u.is_active === 1 ? (
-                          <span className="relative flex h-2 w-2" title="Activo">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
-                        ) : (
-                          <span className="relative flex h-2 w-2" title="Inactivo">
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500/60"></span>
-                          </span>
-                        )}
-                      </div>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                      {u.is_active === 1 ? (
+                        <span style={{ position: 'relative', display: 'inline-flex', width: '0.5rem', height: '0.5rem' }}>
+                          <span style={{ position: 'absolute', inset: 0, borderRadius: '999px', background: '#22c55e', opacity: 0.75, animation: 'ping 1.5s infinite' }} />
+                          <span style={{ position: 'relative', width: '0.5rem', height: '0.5rem', borderRadius: '999px', background: '#22c55e' }} />
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', width: '0.5rem', height: '0.5rem', borderRadius: '999px', background: 'var(--sys-error)', opacity: 0.6 }} />
+                      )}
                     </td>
-
-                    {/* Acciones con Opacidad */}
-                    <td className="py-3 px-4 text-right vertical-middle">
-                      <div className="inline-flex items-center gap-1.5 md:opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                        <button
-                          onClick={() => handleOpenEdit(u)}
-                          className="p-1.5 rounded-md hover:bg-[var(--sys-surface)] text-[var(--sys-text-muted)] hover:text-[var(--sys-text)] transition-colors cursor-pointer"
-                          title="Editar"
-                        >
-                          <Edit2 size={13} />
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+                        <button onClick={() => handleOpenEdit(u)}
+                          style={{ padding: '0.375rem', borderRadius: '0.375rem', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--sys-text-muted)' }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button
-                          onClick={() => handleDelete(u)}
-                          disabled={!!isSelf}
-                          className="p-1.5 rounded-md hover:bg-[var(--sys-surface)] text-[var(--sys-text-muted)] hover:text-[var(--sys-error)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                          title={isSelf ? 'No se permite la auto-baja' : 'Dar de Baja'}
-                        >
-                          <Trash2 size={13} />
+                        <button onClick={() => handleDelete(u)} disabled={isSelf}
+                          style={{ padding: '0.375rem', borderRadius: '0.375rem', border: 'none', background: 'transparent', cursor: isSelf ? 'not-allowed' : 'pointer', color: 'var(--sys-error)', opacity: isSelf ? 0.3 : 1 }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                       </div>
                     </td>
-
                   </tr>
                 )
               })}
             </tbody>
           </table>
-
-          {users.length === 0 && (
-            <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-2xl text-center mt-4 w-full" style={{ borderColor: 'var(--sys-border-soft)' }}>
-              <Users className="w-8 h-8 text-[var(--sys-text-muted)] mx-auto mb-3" />
-              <p className="text-xs italic" style={{ color: 'var(--sys-text-muted)' }}>
-                No hay operadores registrados en este inquilino.
-              </p>
-            </div>
-          )}
         </div>
       )}
 
-      {/* SlidePanel Portalizado en document.body (Resuelve superposiciones y distorsión del DOM) */}
+      <ConfirmDialog open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Confirmar acción" message={confirmMsg}
+        confirmLabel="Confirmar" cancelLabel="Cancelar" variant="danger" onConfirm={handleConfirm} loading={confirmLoading} />
+
       {panelOpen && createPortal(
-        <SlidePanel
-          open={panelOpen}
-          onClose={() => setPanelOpen(false)}
-          title={editingUser ? 'Editar Operador' : 'Nuevo Operador de CRM'}
-        >
-          <form onSubmit={handleSave} className="flex flex-col gap-4">
-            
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-                Nombre Completo *
-              </label>
-              <Input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Ej: Juan Pérez"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-                Correo Electrónico *
-              </label>
-              <Input
-                type="email"
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                placeholder="juan.perez@empresa.com"
-                disabled={!!editingUser}
-                required
-              />
-            </div>
-
+        <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editingUser ? 'Editar Operador' : 'Nuevo Operador'}>
+          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div><label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Nombre Completo *</label>
+              <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Ej: Juan Pérez" /></div>
+            <div><label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Correo Electrónico *</label>
+              <Input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="juan@empresa.com" disabled={!!editingUser} /></div>
             {!editingUser && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-                  Contraseña Inicial *
-                </label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formPassword}
-                    onChange={(e) => setFormPassword(e.target.value)}
-                    placeholder="Mínimo 8 caracteres"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--sys-text-muted)] hover:text-[var(--sys-text)]"
-                  >
-                    {showPassword ? <X size={13} /> : <Key size={13} />}
+              <div><label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Contraseña Inicial *</label>
+                <div style={{ position: 'relative' }}>
+                  <Input type={showPassword ? 'text' : 'password'} value={formPassword} onChange={e => setFormPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: '0.625rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-text-muted)' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
-                </div>
-              </div>
+                </div></div>
             )}
-
-            {/* Tarjetas Interactivas de Selección de Rol (Card Selectors) */}
-            <div className="flex flex-col gap-1.5 pt-1">
-              <label className="text-xs font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
-                Seleccionar Rol del Operador *
-              </label>
-              <div className="grid grid-cols-1 gap-2 mt-1">
-                {roles.map((r) => {
-                  const isSelected = formRoleId === r.id
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setFormRoleId(r.id)}
-                      className="w-full flex items-start gap-3 p-3 rounded-xl border text-left cursor-pointer transition-all duration-200 focus:outline-none"
-                      style={{
-                        background: isSelected ? 'var(--sys-surface-hover)' : 'transparent',
-                        borderColor: isSelected ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
-                      }}
-                    >
-                      <div className={`p-2 rounded-lg border shrink-0 transition-transform ${isSelected ? 'text-[var(--sys-primary)] bg-[var(--sys-surface-raised)] border-[var(--sys-primary-soft)]/30 scale-105' : 'text-[var(--sys-text-muted)] border-[var(--sys-border-soft)]'}`}>
-                        {getRoleIcon(r.name)}
-                      </div>
-                      <div className="min-w-0">
-                        <span className={`text-xs font-extrabold uppercase tracking-wide block ${isSelected ? 'text-[var(--sys-primary)]' : 'text-[var(--sys-text)]'}`}>
-                          {r.name}
-                        </span>
-                        <span className="text-[9px] text-[var(--sys-text-muted)] block mt-0.5 leading-relaxed">
-                          {r.description}
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
+            <div>
+              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Rol *</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {roles.map(r => (
+                  <EntityCard key={r.id} icon={getRoleIcon(r.name)} title={r.name} description={r.description}
+                    selected={formRoleId === r.id} onSelect={() => setFormRoleId(r.id)} />
+                ))}
               </div>
             </div>
-
             {editingUser && currentUser && currentUser.id !== editingUser.id && (
-              <div className="flex flex-col gap-1 pt-2 border-t border-[var(--sys-border-soft)]/50 mt-2">
-                <Toggle
-                  checked={formActive}
-                  onChange={(e) => setFormActive(e.target.checked)}
-                  label="Usuario Activo"
-                />
-                <p className="text-[9px]" style={{ color: 'var(--sys-text-muted)', marginTop: '2px' }}>
-                  Si se desactiva, se revocarán todos los permisos de acceso al CRM de forma inmediata.
-                </p>
+              <div style={{ borderTop: '1px solid var(--sys-border-soft)', paddingTop: '0.75rem' }}>
+                <Toggle checked={formActive} onChange={e => setFormActive(e.target.checked)} label="Usuario Activo" />
+                <p style={{ fontSize: '0.5625rem', color: 'var(--sys-text-muted)', margin: '0.125rem 0 0 0' }}>Si se desactiva, se revocarán todos los permisos de acceso al CRM.</p>
               </div>
             )}
-
-            <div
-              className="flex justify-end gap-3 pt-4"
-              style={{ borderTop: '1px solid var(--sys-border-soft)' }}
-            >
-              <Button variant="secondary" type="button" onClick={() => setPanelOpen(false)}>
-                Cancelar
-              </Button>
-              <Button variant="primary" type="submit" className="btn-primary">
-                {editingUser ? 'Guardar Cambios' : 'Añadir Operador'}
-              </Button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--sys-border-soft)', paddingTop: '1rem' }}>
+              <Button variant="secondary" type="button" onClick={() => setPanelOpen(false)}>Cancelar</Button>
+              <Button variant="primary" type="submit">{editingUser ? 'Guardar Cambios' : 'Añadir Operador'}</Button>
             </div>
           </form>
         </SlidePanel>,

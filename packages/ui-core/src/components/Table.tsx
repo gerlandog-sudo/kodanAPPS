@@ -1,11 +1,19 @@
-import { type ReactNode, useState, useRef, useEffect, useMemo } from 'react'
-import { Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
+import { type ReactNode, useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { Edit, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react'
 
 export interface TableAction<T> {
   icon: ReactNode
   label: string
   onClick: (item: T) => void
   variant?: 'default' | 'danger'
+}
+
+export interface BulkAction<T> {
+  label: string
+  icon: ReactNode
+  onClick: (selectedItems: T[]) => void
+  variant?: 'default' | 'danger'
+  disabled?: (selectedItems: T[]) => boolean
 }
 
 export interface TableColumn<T> {
@@ -15,6 +23,7 @@ export interface TableColumn<T> {
   align?: 'left' | 'right' | 'center'
   width?: string
   sortable?: boolean
+  filterKey?: string
 }
 
 interface TableProps<T> {
@@ -34,6 +43,13 @@ interface TableProps<T> {
   maxHeight?: string
   onRowClick?: (item: T) => void
   onSort?: (key: string, direction: 'asc' | 'desc') => void
+  selectable?: boolean
+  selectedKeys?: (string | number)[]
+  onSelectionChange?: (keys: (string | number)[]) => void
+  bulkActions?: BulkAction<T>[]
+  filterable?: boolean
+  filters?: Record<string, string>
+  onFilterChange?: (filters: Record<string, string>) => void
 }
 
 function SkeletonBar({ width }: { width: string }) {
@@ -130,6 +146,13 @@ export function Table<T>({
   maxHeight,
   onRowClick,
   onSort: _onSort,
+  selectable = false,
+  selectedKeys = [],
+  onSelectionChange,
+  bulkActions,
+  filterable = false,
+  filters = {},
+  onFilterChange,
 }: TableProps<T>) {
   const onSort = _onSort
   const [internalPage, setInternalPage] = useState(0)
@@ -199,6 +222,36 @@ export function Table<T>({
     }
   }
 
+  const allKeys = useMemo(() => sortedData.map(item => keyExtractor(item)), [sortedData, keyExtractor])
+  const allSelected = selectable && allKeys.length > 0 && allKeys.every(k => selectedKeys.includes(k))
+
+  const toggleAll = useCallback(() => {
+    if (!onSelectionChange) return
+    if (allSelected) {
+      onSelectionChange([])
+    } else {
+      onSelectionChange(allKeys)
+    }
+  }, [allSelected, allKeys, onSelectionChange])
+
+  const toggleOne = useCallback((key: string | number) => {
+    if (!onSelectionChange) return
+    const next = selectedKeys.includes(key)
+      ? selectedKeys.filter(k => k !== key)
+      : [...selectedKeys, key]
+    onSelectionChange(next)
+  }, [selectedKeys, onSelectionChange])
+
+  const handleFilterChange = (filterKey: string, value: string) => {
+    if (!onFilterChange) return
+    onFilterChange({ ...filters, [filterKey]: value })
+  }
+
+  const selectedItems = useMemo(() => {
+    if (!selectable || selectedKeys.length === 0) return []
+    return sortedData.filter(item => selectedKeys.includes(keyExtractor(item)))
+  }, [sortedData, selectedKeys, selectable, keyExtractor])
+
   if (loading) {
     return (
       <div className="table-wrapper">
@@ -206,6 +259,7 @@ export function Table<T>({
           <table className="table">
             <thead>
               <tr>
+                {selectable && <th className="table-th" style={{ width: '2.5rem' }} />}
                 {columns.map(col => (
                   <th key={col.key} className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}${col.sortable ? ' table-th-sortable' : ''}`}>
                     <span className="table-th-content">{col.header}</span>
@@ -217,6 +271,7 @@ export function Table<T>({
             <tbody>
               {Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={i} className="table-row">
+                  {selectable && <td className="table-td"><SkeletonBar width="1rem" /></td>}
                   {columns.map(col => (
                     <td key={col.key} className="table-td">
                       <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
@@ -250,12 +305,74 @@ export function Table<T>({
     )
   }
 
+  const hasFilterableColumns = filterable && columns.some(c => c.filterKey)
+
   return (
     <div className="table-wrapper" ref={tableRef}>
+      {selectable && selectedItems.length > 0 && bulkActions && bulkActions.length > 0 && (
+        <div
+          className="table-bulk-bar"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.5rem 1rem',
+            marginBottom: '0.5rem',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--sys-primary-container)',
+            border: '1px solid var(--sys-primary-soft)',
+            fontSize: '0.8125rem',
+            color: 'var(--color-on-primary-container)',
+          }}
+        >
+          <span style={{ fontWeight: 600, fontSize: '0.75rem' }}>
+            {selectedItems.length} seleccionado{selectedItems.length !== 1 ? 's' : ''}
+          </span>
+          <div style={{ display: 'flex', gap: '0.375rem', marginLeft: 'auto' }}>
+            {bulkActions.map((action, i) => {
+              const disabled = action.disabled ? action.disabled(selectedItems) : false
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => action.onClick(selectedItems)}
+                  className={`btn btn-${action.variant === 'danger' ? 'danger' : 'secondary'}`}
+                  style={{
+                    padding: '0.25rem 0.625rem',
+                    fontSize: '0.75rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.375rem',
+                    opacity: disabled ? 0.5 : 1,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {action.icon}
+                  {action.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="table-container" style={maxHeight ? { maxHeight } : undefined}>
         <table className="table">
           <thead>
             <tr>
+              {selectable && (
+                <th className="table-th" style={{ width: '2.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </label>
+                </th>
+              )}
               {columns.map(col => (
                 <th
                   key={col.key}
@@ -272,39 +389,86 @@ export function Table<T>({
               ))}
               {combinedActions.length > 0 && <th className="table-th table-th-right">Acciones</th>}
             </tr>
+            {hasFilterableColumns && (
+              <tr>
+                {selectable && <th className="table-th" style={{ width: '2.5rem' }} />}
+                {columns.map(col => (
+                  <th key={`filter-${col.key}`} className="table-th">
+                    {col.filterKey ? (
+                      <div style={{ position: 'relative' }}>
+                        <Search size={12} style={{ position: 'absolute', left: '0.375rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--sys-text-muted)' }} />
+                        <input
+                          className="input"
+                          value={filters?.[col.filterKey] || ''}
+                          onChange={e => handleFilterChange(col.filterKey!, e.target.value)}
+                          placeholder={`Filtrar ${col.header.toLowerCase()}...`}
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            padding: '0.25rem 0.375rem 0.25rem 1.5rem',
+                            fontSize: '0.6875rem',
+                            width: '100%',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <span />
+                    )}
+                  </th>
+                ))}
+                {combinedActions.length > 0 && <th className="table-th" />}
+              </tr>
+            )}
           </thead>
           <tbody>
-            {sortedData.map((item, idx) => (
-              <tr
-                key={keyExtractor(item)}
-                className={`table-row table-row-anim${onRowClick ? ' table-row-clickable' : ''}`}
-                style={{ '--i': idx } as React.CSSProperties}
-                data-visible={visible}
-                onClick={onRowClick ? () => onRowClick(item) : undefined}
-              >
-                {columns.map(col => (
-                  <td key={col.key} className="table-td">
-                    <div className="table-cell">{col.render(item)}</div>
-                  </td>
-                ))}
-                {combinedActions.length > 0 && (
-                  <td className="table-td table-td-right">
-                    <div className="table-actions">
-                      {combinedActions.map((action, ai) => (
-                        <button
-                          key={ai}
-                          className={`table-action-btn${action.variant === 'danger' ? ' table-action-btn-danger' : ''}`}
-                          title={action.label}
-                          onClick={e => { e.stopPropagation(); action.onClick(item) }}
-                        >
-                          {action.icon}
-                        </button>
-                      ))}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
+            {sortedData.map((item, idx) => {
+              const key = keyExtractor(item)
+              const isSelected = selectedKeys.includes(key)
+              return (
+                <tr
+                  key={key}
+                  className={`table-row table-row-anim${onRowClick ? ' table-row-clickable' : ''}${selectable && isSelected ? ' table-row-selected' : ''}`}
+                  style={{ '--i': idx } as React.CSSProperties}
+                  data-visible={visible}
+                  onClick={onRowClick ? () => onRowClick(item) : undefined}
+                >
+                  {selectable && (
+                    <td className="table-td" style={{ textAlign: 'center' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleOne(key)}
+                          onClick={e => e.stopPropagation()}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </label>
+                    </td>
+                  )}
+                  {columns.map(col => (
+                    <td key={col.key} className="table-td">
+                      <div className="table-cell">{col.render(item)}</div>
+                    </td>
+                  ))}
+                  {combinedActions.length > 0 && (
+                    <td className="table-td table-td-right">
+                      <div className="table-actions">
+                        {combinedActions.map((action, ai) => (
+                          <button
+                            key={ai}
+                            className={`table-action-btn${action.variant === 'danger' ? ' table-action-btn-danger' : ''}`}
+                            title={action.label}
+                            onClick={e => { e.stopPropagation(); action.onClick(item) }}
+                          >
+                            {action.icon}
+                          </button>
+                        ))}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

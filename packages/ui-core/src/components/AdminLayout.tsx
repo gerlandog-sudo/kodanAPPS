@@ -17,10 +17,7 @@ export interface AdminLayoutProps {
 
 export function AdminLayout({ sections, activeSection, onNavigate, children }: AdminLayoutProps) {
   return (
-    <div style={{
-      maxWidth: '1000px', margin: 0,
-      fontFamily: 'var(--font-montserrat, system-ui)',
-    }}>
+    <div style={{ fontFamily: 'var(--font-montserrat, system-ui)' }}>
       <div style={{
         display: 'flex', gap: '0.125rem', marginBottom: '1.5rem',
         background: 'var(--sys-surface)', padding: '0.25rem',
@@ -66,7 +63,7 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
         })}
       </div>
 
-      <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minHeight: 'calc(100vh - 220px)', display: 'flex', flexDirection: 'column' }}>
         {children}
       </div>
     </div>

@@ -123,7 +123,12 @@ class Router
                 if (preg_match($route['regex'], $path, $matches)) {
                     $params = [];
                     foreach ($route['params'] as $i => $name) {
-                        $params[$name] = (int)$matches[$i + 1];
+                        $val = $matches[$i + 1];
+                        if ($name === 'id' || str_ends_with(strtolower($name), 'id')) {
+                            $params[$name] = (int)$val;
+                        } else {
+                            $params[$name] = $val;
+                        }
                     }
                     ($route['handler'])($params, $this);
                     return;
@@ -177,8 +182,12 @@ class Router
     {
         $params = [];
         $regex = preg_replace_callback('/\{(\w+)\}/', function ($m) use (&$params) {
-            $params[] = $m[1];
-            return '(\d+)';
+            $name = $m[1];
+            $params[] = $name;
+            if ($name === 'id' || str_ends_with(strtolower($name), 'id')) {
+                return '(\d+)';
+            }
+            return '([^/]+)';
         }, $path);
 
         $this->routes[] = [

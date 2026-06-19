@@ -26,11 +26,16 @@ final class ChatController
      */
     public function getMessages(int $opportunityId): array
     {
-        // Obtener mensajes de la oportunidad
-        $messages = $this->chatRepo->getMessages($opportunityId);
+        $userId = TenantContext::getUserId();
+        // Obtener o crear la conversación polimórfica para la oportunidad
+        $conv = $this->chatRepo->getOrCreateConversation('crm_opportunity', $opportunityId);
+        $conversationId = (int)$conv['id'];
+
+        // Obtener mensajes de la conversación
+        $messages = $this->chatRepo->getMessages($conversationId);
 
         // Marcar menciones de este usuario en este hilo como leídas
-        $this->chatRepo->markMentionsAsRead($opportunityId);
+        $this->chatRepo->markMentionsAsRead($conversationId, $userId);
 
         return $messages;
     }
@@ -54,11 +59,20 @@ final class ChatController
 
         $userId = TenantContext::getUserId();
 
+        // Obtener o crear la conversación polimórfica para la oportunidad
+        $conv = $this->chatRepo->getOrCreateConversation('crm_opportunity', $opportunityId);
+        $conversationId = (int)$conv['id'];
+
         $messageId = $this->chatRepo->createMessage([
-            'opportunity_id' => $opportunityId,
-            'user_id' => $userId,
-            'body' => $body
+            'conversation_id' => $conversationId,
+            'sender_id' => $userId,
+            'content' => $body,
+            'is_system' => 0,
+            'system_metadata' => null
         ]);
+
+        // Asegurar que el remitente sea participante activo
+        $this->chatRepo->addParticipant($conversationId, $userId);
 
         // Procesar menciones si vienen en la entrada
         if (isset($input['mentions']) && is_array($input['mentions'])) {
@@ -80,7 +94,8 @@ final class ChatController
      */
     public function getUnreadMentionsCount(): array
     {
-        $count = $this->chatRepo->getUnreadMentionsCount();
+        $userId = TenantContext::getUserId();
+        $count = $this->chatRepo->getUnreadMentionsCount($userId);
         return [
             'unread_count' => $count
         ];

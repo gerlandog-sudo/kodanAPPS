@@ -99,9 +99,9 @@ final class AuthMiddleware
 
     private function getAppIdFromHeader(): string
     {
-        $appId = $_SERVER['HTTP_X_APP_ID'] ?? '';
+        $appId = $_SERVER['HTTP_X_APP_ID'] ?? ($_GET['app_id'] ?? '');
         if ($appId === '') {
-            throw new RuntimeException('MISSING_APP_ID: Header X-App-ID requerido', 400);
+            throw new RuntimeException('MISSING_APP_ID: Header X-App-ID requerido o parámetro app_id faltante', 400);
         }
         return $appId;
     }

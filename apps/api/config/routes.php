@@ -548,4 +548,76 @@ return function (Router $router, array $app): void {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['tracker']->getProject($p['id']));
     });
+
+    // ============================================================
+    // Middleware & Routes: Unified Messaging System
+    // ============================================================
+    $router->use('/api/messages', function (Router $router) use ($app) {
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
+    });
+
+    $router->use('/api/chats', function (Router $router) use ($app) {
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
+    });
+
+    $router->use('/api/conversations', function (Router $router) use ($app) {
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
+    });
+
+    // Endpoints: SSE Stream & Unread Notification Count
+    $router->get('/api/messages/stream', function () use ($app) {
+        $dbConfig = [
+            'host' => $app['dotenv']['DB_HOST'] ?? 'localhost',
+            'port' => (int)($app['dotenv']['DB_PORT'] ?? 3306),
+            'dbname' => $app['dotenv']['DB_NAME'] ?? 'admkoda_BBDD_APPS',
+            'user' => $app['dotenv']['DB_USER'] ?? 'kodan_apps',
+            'pass' => $app['dotenv']['DB_PASS'] ?? '',
+            'charset' => 'utf8mb4',
+        ];
+        $app['controllers']['messaging']->stream($dbConfig);
+    });
+
+    $router->get('/api/messages/unread-count', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['messaging']->getUnreadCount());
+    });
+
+    // Endpoints: Chats & Conversations Actions
+    $router->post('/api/conversations/{id}/read', function (array $p) use ($app) {
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['messaging']->markAsRead((int)$p['id'], $input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'message' => 'Validation error',
+                'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
+            ]);
+        }
+    });
+
+    $router->get('/api/chats/{entity_type}/{entity_id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['messaging']->getMessagesByEntity($p['entity_type'], (int)$p['entity_id']));
+    });
+
+    $router->post('/api/chats/{entity_type}/{entity_id}', function (array $p) use ($app) {
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['messaging']->sendMessageByEntity($p['entity_type'], (int)$p['entity_id'], $input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'message' => 'Validation error',
+                'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
+            ]);
+        }
+    });
 };

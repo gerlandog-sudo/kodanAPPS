@@ -1,4 +1,4 @@
-﻿import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -35,9 +35,10 @@ type View = 'login' | 'set-password' | 'app';
 function AppContent() {
   const { theme, toggleTheme, loadUserTheme } = useTheme();
   const { logout: authLogout, setAuthenticated, loading, authenticated, user, roles, planStatus, planName } = useAuth('crm');
+  const { messages: sseMessages, unreadCount } = useSSE(authenticated ? 'crm' : '');
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -126,8 +127,8 @@ function AppContent() {
           onThemeToggle={toggleTheme}
           onLogout={handleLogout}
           userMenuExtraItems={userMenuExtraItems}
-          notificationCount={showNotifications ? 3 : 0}
-          onNotificationClick={() => setShowNotifications(!showNotifications)}
+          notificationCount={unreadCount}
+          onNotificationClick={() => setChatOpen(true)}
         />
         <main className="flex flex-col flex-1 p-4 lg:p-6 min-w-0" style={{ background: 'var(--sys-bg)', overflow: 'hidden' }}>
           <div className="flex flex-col flex-1" style={{ overflow: 'hidden' }}>
@@ -147,6 +148,15 @@ function AppContent() {
           </div>
         </main>
       </div>
+
+      <MessageDrawer
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        entityType="general"
+        entityId={0}
+        currentUserId={user?.id ?? 0}
+        sseMessages={sseMessages}
+      />
     </div>
   );
 }

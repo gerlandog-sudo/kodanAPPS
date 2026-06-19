@@ -1,4 +1,4 @@
-﻿import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization } from '@kodan-apps/ui-core';
+import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization, useSSE, MessageDrawer } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { FolderKanban } from 'lucide-react';
@@ -12,6 +12,8 @@ function AppContent() {
   const { theme, toggleTheme } = useTheme();
   const [view, setView] = useState<View>('login');
   const [user, setUser] = useState<any>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const { messages: sseMessages, unreadCount } = useSSE(user ? 'tracker' : '');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -71,7 +73,8 @@ function AppContent() {
           theme={theme}
           onThemeToggle={toggleTheme}
           onLogout={handleLogout}
-          notificationCount={1}
+          notificationCount={unreadCount}
+          onNotificationClick={() => setChatOpen(true)}
         />
         <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
           <div className="mx-auto" style={{ maxWidth: '1400px' }}>
@@ -85,6 +88,15 @@ function AppContent() {
           </div>
         </main>
       </div>
+
+      <MessageDrawer
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        entityType="general"
+        entityId={0}
+        currentUserId={user?.id ?? 0}
+        sseMessages={sseMessages}
+      />
     </div>
   );
 }

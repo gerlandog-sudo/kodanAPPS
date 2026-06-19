@@ -4,71 +4,116 @@ declare(strict_types=1);
 
 namespace kodanAPPS\Repositories;
 
+use kodanAPPS\DB\TenantContext;
+use RuntimeException;
+
 /**
- * ChatRepository - Gestión de hilos de chat, mensajes y menciones en oportunidades
+ * ChatRepository - Gestión transversal y polimórfica de conversaciones, participantes y mensajes.
  * 
- * @extends BaseRepository<array{id: int, tenant_id: int, opportunity_id: int|null, subject: string|null, created_at: string}>
+ * @extends BaseRepository<array<string, mixed>>
  */
 final class ChatRepository extends BaseRepository
 {
-    protected const TABLE = 'message_threads';
+    protected const TABLE = 'conversations';
 
     /**
-     * Obtiene o crea un hilo de mensajes para una oportunidad
+     * Busca una conversación existente para una entidad sin crearla.
      * 
-     * @return array<string, mixed>
+     * @return array<string, mixed>|null
      */
-    public function getOrCreateThread(int $opportunityId): array
+    public function findConversationByEntity(string $entityType, int $entityId): ?array
     {
-        // Validar propiedad de la oportunidad
-        $opp = $this->findOne('opportunities', 'id = :id', [':id' => $opportunityId]);
-        if ($opp === null) {
-            throw new \RuntimeException('Oportunidad no encontrada o acceso denegado', 403);
-        }
-
-        $thread = $this->findOne('message_threads', 'opportunity_id = :opp_id', [':opp_id' => $opportunityId]);
-        
-        if ($thread === null) {
-            $tenantId = \kodanAPPS\DB\TenantContext::getTenantId();
-            $threadId = $this->create('message_threads', [
-                'tenant_id' => $tenantId,
-                'opportunity_id' => $opportunityId,
-                'subject' => "Chat Oportunidad #{$opportunityId}"
-            ]);
-            
-            $thread = $this->findOne('message_threads', 'id = :id', [':id' => $threadId]);
-        }
-
-        if ($thread === null) {
-            throw new \RuntimeException('Error al crear o recuperar el hilo de chat.', 500);
-        }
-
-        return $thread;
+        $tenantId = TenantContext::getTenantId();
+        return $this->findOne(
+            'conversations', 
+            'tenant_id = :tenant_id AND entity_type = :entity_type AND entity_id = :entity_id', 
+            [
+                ':tenant_id' => $tenantId,
+                ':entity_type' => $entityType,
+                ':entity_id' => $entityId
+            ]
+        );
     }
 
     /**
-     * Obtiene los mensajes de un hilo con sus archivos adjuntos y remitente
+     * Obtiene o crea una conversación polimórfica vinculada a una entidad específica de cualquier app.
      * 
+     * @param string $entityType Tipo de entidad (ej: 'crm_opportunity', 'tracker_task')
+     * @param int $entityId ID de la entidad
+     * @return array<string, mixed>
+     */
+    public function getOrCreateConversation(string $entityType, int $entityId): array
+    {
+        $tenantId = TenantContext::getTenantId();
+
+        // Buscar conversación existente por entidad y tenant
+        $conv = $this->findOne(
+            'conversations', 
+            'tenant_id = :tenant_id AND entity_type = :entity_type AND entity_id = :entity_id', 
+            [
+                ':tenant_id' => $tenantId,
+                ':entity_type' => $entityType,
+                ':entity_id' => $entityId
+            ]
+        );
+        
+        if ($conv === null) {
+            // Insertar con protección únicauk_tenant_entity capturando duplicados concurrentes
+            try {
+                $convId = $this->create('conversations', [
+                    'tenant_id' => $tenantId,
+                    'type' => 'entity',
+                    'entity_type' => $entityType,
+                    'entity_id' => $entityId
+                ]);
+                
+                $conv = $this->findOne('conversations', 'id = :id', [':id' => $convId]);
+            } catch (\PDOException $e) {
+                // Si falla por llave duplicada (SQLSTATE 23000), recuperar el registro que ganó la condición de carrera
+                if ($e->getCode() === '23000') {
+                    $conv = $this->findOne(
+                        'conversations', 
+                        'tenant_id = :tenant_id AND entity_type = :entity_type AND entity_id = :entity_id', 
+                        [
+                            ':tenant_id' => $tenantId,
+                            ':entity_type' => $entityType,
+                            ':entity_id' => $entityId
+                        ]
+                    );
+                } else {
+                    throw $e;
+                }
+            }
+        }
+
+        if ($conv === null) {
+            throw new RuntimeException('Error al crear o recuperar la conversación.', 500);
+        }
+
+        return $conv;
+    }
+
+    /**
+     * Obtiene los mensajes de una conversación con sus archivos adjuntos y remitente.
+     * 
+     * @param int $conversationId ID de la conversación
      * @return array<int, array<string, mixed>>
      */
-    public function getMessages(int $opportunityId): array
+    public function getMessages(int $conversationId): array
     {
-        $thread = $this->getOrCreateThread($opportunityId);
-        $threadId = isset($thread['id']) && is_scalar($thread['id']) ? (int)$thread['id'] : 0;
-
         $messages = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
              SELECT m.*, u.display_name AS sender_name, u.email AS sender_email
              FROM messages m
-             JOIN users u ON u.id = m.user_id
-             WHERE m.thread_id = ?
+             LEFT JOIN users u ON u.id = m.sender_id
+             WHERE m.conversation_id = ?
              ORDER BY m.created_at ASC",
-            [$threadId]
+            [$conversationId]
         );
 
         // Incorporar archivos adjuntos a cada mensaje
         foreach ($messages as &$message) {
-            $messageId = isset($message['id']) && is_scalar($message['id']) ? (int)$message['id'] : 0;
+            $messageId = (int)$message['id'];
             $message['attachments'] = $this->rawSelect(
                 "/* BYPASS_TENANT_SCOPE */ SELECT * FROM message_attachments WHERE message_id = ?",
                 [$messageId]
@@ -79,31 +124,67 @@ final class ChatRepository extends BaseRepository
     }
 
     /**
-     * Envía un nuevo mensaje al hilo de chat de la oportunidad
+     * Envía un nuevo mensaje al hilo de chat de la conversación.
      * 
-     * @param array{opportunity_id: int, user_id: int, body: string} $data
+     * @param array{conversation_id: int, sender_id: int|null, content: string, is_system?: int, system_metadata?: string|null} $data
      * @return int ID del mensaje creado
      */
     public function createMessage(array $data): int
     {
-        $opportunityId = (int)$data['opportunity_id'];
-        $thread = $this->getOrCreateThread($opportunityId);
-        
-        $tenantId = \kodanAPPS\DB\TenantContext::getTenantId();
-        
-        $threadId = isset($thread['id']) && is_scalar($thread['id']) ? (int)$thread['id'] : 0;
+        $tenantId = TenantContext::getTenantId();
 
         return $this->create('messages', [
             'tenant_id' => $tenantId,
-            'thread_id' => $threadId,
-            'opportunity_id' => $opportunityId,
-            'user_id' => (int)$data['user_id'],
-            'body' => $data['body']
+            'conversation_id' => (int)$data['conversation_id'],
+            'sender_id' => $data['sender_id'],
+            'is_system' => $data['is_system'] ?? 0,
+            'content' => $data['content'],
+            'system_metadata' => $data['system_metadata'] ?? null
         ]);
     }
 
     /**
-     * Guarda un archivo adjunto vinculado a un mensaje
+     * Agrega un participante a una conversación.
+     */
+    public function addParticipant(int $conversationId, int $userId): void
+    {
+        $this->rawExecute(
+            "/* BYPASS_TENANT_SCOPE */
+             INSERT IGNORE INTO conversation_participants (conversation_id, user_id, joined_at)
+             VALUES (?, ?, NOW())",
+            [$conversationId, $userId]
+        );
+    }
+
+    /**
+     * Elimina un participante de una conversación (Opt-out).
+     */
+    public function removeParticipant(int $conversationId, int $userId): void
+    {
+        $this->rawExecute(
+            "/* BYPASS_TENANT_SCOPE */
+             DELETE FROM conversation_participants 
+             WHERE conversation_id = ? AND user_id = ?",
+            [$conversationId, $userId]
+        );
+    }
+
+    /**
+     * Actualiza el puntero del último mensaje leído por el usuario.
+     */
+    public function updateLastRead(int $conversationId, int $userId, int $messageId): void
+    {
+        $this->rawExecute(
+            "/* BYPASS_TENANT_SCOPE */
+             UPDATE conversation_participants
+             SET last_read_message_id = ?
+             WHERE conversation_id = ? AND user_id = ?",
+            [$messageId, $conversationId, $userId]
+        );
+    }
+
+    /**
+     * Guarda un archivo adjunto vinculado a un mensaje.
      */
     public function saveAttachment(int $messageId, string $fileName, string $filePath, int $fileSize): int
     {
@@ -117,7 +198,7 @@ final class ChatRepository extends BaseRepository
     }
 
     /**
-     * Guarda menciones a usuarios dentro de un mensaje
+     * Guarda menciones a usuarios dentro de un mensaje.
      * 
      * @param array<int, int> $userIds
      */
@@ -135,18 +216,17 @@ final class ChatRepository extends BaseRepository
     }
 
     /**
-     * Devuelve la cantidad de menciones sin leer para el usuario autenticado
+     * Devuelve la cantidad global de mensajes no leídos del usuario para el Topbar.
      */
-    public function getUnreadMentionsCount(): int
+    public function getUnreadCount(int $userId): int
     {
-        $userId = \kodanAPPS\DB\TenantContext::getUserId();
-        
         $results = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
-             SELECT COUNT(1) AS qty
-             FROM message_mentions mm
-             JOIN messages m ON m.id = mm.message_id
-             WHERE mm.user_id = ? AND mm.is_read = 0",
+             SELECT COUNT(m.id) AS qty
+             FROM conversation_participants cp
+             JOIN messages m ON m.conversation_id = cp.conversation_id
+             WHERE cp.user_id = ? 
+               AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)",
             [$userId]
         );
 
@@ -155,19 +235,37 @@ final class ChatRepository extends BaseRepository
     }
 
     /**
-     * Marca todas las menciones del usuario en un hilo específico como leídas
+     * Marca todas las menciones del usuario en un hilo específico como leídas.
      */
-    public function markMentionsAsRead(int $opportunityId): void
+    public function markMentionsAsRead(int $conversationId, int $userId): void
     {
-        $userId = \kodanAPPS\DB\TenantContext::getUserId();
-        
         $this->rawExecute(
             "/* BYPASS_TENANT_SCOPE */
              UPDATE message_mentions mm
              JOIN messages m ON m.id = mm.message_id
              SET mm.is_read = 1
-             WHERE mm.user_id = ? AND m.opportunity_id = ?",
-            [$userId, $opportunityId]
+             WHERE mm.user_id = ? AND m.conversation_id = ?",
+            [$userId, $conversationId]
         );
+    }
+
+    /**
+     * Devuelve la cantidad de menciones sin leer del usuario para compatibilidad.
+     */
+    public function getUnreadMentionsCount(int $userId): int
+    {
+        $tenantId = TenantContext::getTenantId();
+        $results = $this->rawSelect(
+            "/* BYPASS_TENANT_SCOPE */
+             SELECT COUNT(mm.message_id) AS qty
+             FROM message_mentions mm
+             JOIN messages m ON m.id = mm.message_id
+             JOIN conversations c ON c.id = m.conversation_id
+             WHERE mm.user_id = ? AND mm.is_read = 0 AND c.tenant_id = ?",
+            [$userId, $tenantId]
+        );
+
+        $qty = $results[0]['qty'] ?? 0;
+        return is_numeric($qty) ? (int)$qty : 0;
     }
 }

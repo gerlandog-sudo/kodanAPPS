@@ -1,5 +1,5 @@
-﻿import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization } from '@kodan-apps/ui-core';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer } from '@kodan-apps/ui-core';
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
@@ -33,8 +33,10 @@ function AppContent() {
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const { loadUserTheme, theme, toggleTheme } = useTheme();
   const { logout: authLogout, setAuthenticated, loading, authenticated, user, planStatus, planName } = useAuth('superadmin');
+  const { messages: sseMessages, unreadCount } = useSSE(authenticated ? 'superadmin' : '');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -118,7 +120,8 @@ function AppContent() {
           onLogout={handleLogout}
           onChangePassword={() => setShowPasswordModal(true)}
           userMenuExtraItems={userMenuExtraItems}
-          notificationCount={5}
+          notificationCount={unreadCount}
+          onNotificationClick={() => setChatOpen(true)}
         />
         <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)' }}>
           <div className="mx-auto" style={{ maxWidth: '1400px' }}>
@@ -137,6 +140,15 @@ function AppContent() {
           </div>
         </main>
       </div>
+
+      <MessageDrawer
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        entityType="general"
+        entityId={0}
+        currentUserId={user?.id ?? 0}
+        sseMessages={sseMessages}
+      />
     </div>
   );
 }

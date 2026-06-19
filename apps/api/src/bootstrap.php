@@ -48,6 +48,9 @@ use kodanAPPS\Controllers\TrackerController;
 use kodanAPPS\Controllers\TenantUserController;
 use kodanAPPS\Services\TenantService;
 use kodanAPPS\Services\CustomFieldService;
+use kodanAPPS\Services\EntityOwnerSyncService;
+use kodanAPPS\Services\MentionsParser;
+use kodanAPPS\Controllers\MessagingController;
 
 // ------------------------------------------------------------
 // Debug endpoint (antes de cualquier init)
@@ -187,6 +190,8 @@ $projectRepo = new ProjectRepository($pdo);
 // ------------------------------------------------------------
 $tenantService = new TenantService($tenantRepo, $userRepo);
 $customFieldService = new CustomFieldService($pdo);
+$mentionsParser = new MentionsParser($chatRepo);
+$entityOwnerSyncService = new EntityOwnerSyncService($chatRepo);
 
 // ------------------------------------------------------------
 // Configuración sensible
@@ -218,6 +223,7 @@ $taskController = new CrmTaskController($taskRepo);
 $chatController = new ChatController($chatRepo);
 $trackerController = new TrackerController($projectRepo);
 $tenantUserController = new TenantUserController($userRepo, $pdo);
+$messagingController = new MessagingController($chatRepo, $mentionsParser);
 
 return [
     'pdo' => $pdo,
@@ -243,6 +249,8 @@ return [
     'services' => [
         'tenant' => $tenantService,
         'customField' => $customFieldService,
+        'mentionsParser' => $mentionsParser,
+        'entityOwnerSync' => $entityOwnerSyncService,
     ],
     'auth' => $authMiddleware,
     'controllers' => [
@@ -260,5 +268,6 @@ return [
         'chat' => $chatController,
         'tracker' => $trackerController,
         'tenantUser' => $tenantUserController,
+        'messaging' => $messagingController,
         ],
 ];

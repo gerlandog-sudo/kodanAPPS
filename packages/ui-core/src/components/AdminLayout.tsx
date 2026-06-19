@@ -19,13 +19,12 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
   const [hoveredSection, setHoveredSection] = useState<string | null>(null)
 
   return (
-    <div style={{ fontFamily: 'var(--font-montserrat, system-ui)', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+    <div style={{ fontFamily: 'var(--font-montserrat, system-ui)', width: '100%' }}>
       <div style={{
         display: 'flex', gap: '0.125rem', marginBottom: '1.5rem',
         background: 'var(--sys-surface)', padding: '0.25rem',
         borderRadius: '0.5rem', border: '1px solid var(--sys-border-soft)',
         width: 'fit-content',
-        flexShrink: 0,
       }}>
         {sections.map(section => {
           const isActive = section.key === activeSection
@@ -71,8 +70,8 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
         })}
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', minHeight: 0, overflow: 'hidden' }}>
-        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ minHeight: 'calc(100vh - 220px)', display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <div style={{ flex: 1, width: '100%' }}>
           {children}
         </div>
       </div>

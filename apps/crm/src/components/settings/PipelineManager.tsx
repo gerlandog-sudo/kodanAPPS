@@ -237,8 +237,8 @@ export function PipelineManager() {
   if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}><span className="spinner" /></div>
 
   return (
-    <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem', flex: 1, minHeight: 0, overflow: 'hidden', width: '100%' }}>
-      <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', maxHeight: '100%' }}>
+    <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-montserrat, system-ui)', fontSize: '0.75rem' }}>
+      <div style={{ width: '16rem', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '2rem' }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>CANALES</h3>
           <Button variant="primary" onClick={() => { setEditingPipeline(null); setPipelineName(''); setShowPipelineModal(true) }}
@@ -284,7 +284,7 @@ export function PipelineManager() {
         </div>
       </div>
  
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sys-text-muted)' }}>
             ETAPAS {currentPipeline ? `— ${currentPipeline.name}` : ''}
@@ -302,8 +302,8 @@ export function PipelineManager() {
         {selectedPipelineId && editingStages.length > 0 ? (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={editingStages.map((_, i) => `stage-${i}`)} strategy={verticalListSortingStrategy}>
-              <div className="table-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-                <div className="table-container" style={{ flex: 1, overflowY: 'auto' }}>
+              <div className="table-wrapper">
+                <div className="table-container" style={{ maxHeight: '380px', overflowY: 'auto' }}>
                   <table className="table">
                     <thead>
                       <tr>

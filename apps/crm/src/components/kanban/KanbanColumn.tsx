@@ -25,11 +25,11 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`bg-transparent px-3 pt-3 pb-2 flex flex-col min-w-[260px] w-[260px] flex-shrink-0 transition-colors duration-200 ${
+      className={`bg-transparent px-3 pb-2 flex flex-col min-w-[260px] w-[260px] flex-shrink-0 transition-colors duration-200 ${
         isOver ? 'drag-over-column' : ''
       }`}
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between pb-2 border-b mb-3 select-none gap-2 pt-0.5"
+      <div className="sticky top-0 z-10 flex items-center justify-between pb-2 border-b select-none gap-2 pt-3 -mx-3 px-3"
         style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface)' }}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -62,7 +62,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
 
       <div
-        className="flex-1 min-h-0 flex flex-col gap-3 px-1 py-3"
+        className="flex-1 min-h-0 flex flex-col gap-3 px-1 pt-3 pb-1"
       >
         {children}
       </div>

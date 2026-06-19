@@ -69,8 +69,17 @@
   transform: scale(0.97);
 }
 
+.entity-action-btn {
+  background: transparent;
+}
+
 .entity-action-btn:hover {
   background: var(--sys-surface);
+}
+
+.entity-action-btn-danger {
+  background: transparent;
+  color: var(--sys-text-muted);
 }
 
 .entity-action-btn-danger:hover {

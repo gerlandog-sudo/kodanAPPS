@@ -104,12 +104,12 @@ export function EntityCard({
                 {icon}
               </div>
             )}
-            {(amount != null) && (
+              {(amount != null) && (
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '0.25rem 0.5rem',
-                borderRadius: '0.5rem',
+                borderRadius: 'var(--radius-sm)',
                 fontSize: '0.625rem',
                 fontWeight: 700,
                 fontVariantNumeric: 'tabular-nums',
@@ -138,9 +138,7 @@ export function EntityCard({
                     padding: '0.375rem',
                     borderRadius: '0.375rem',
                     border: 'none',
-                    background: 'transparent',
                     cursor: 'pointer',
-                    color: 'var(--sys-text-muted)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -161,9 +159,7 @@ export function EntityCard({
                     padding: '0.375rem',
                     borderRadius: '0.375rem',
                     border: 'none',
-                    background: 'transparent',
                     cursor: 'pointer',
-                    color: 'var(--sys-text-muted)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -184,9 +180,7 @@ export function EntityCard({
                     padding: '0.375rem',
                     borderRadius: '0.375rem',
                     border: 'none',
-                    background: 'transparent',
                     cursor: 'pointer',
-                    color: 'var(--sys-text-muted)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -242,46 +236,46 @@ export function EntityCard({
         </div>
       )}
 
-      {/* Line items + Owner row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', fontSize: '0.6875rem', color: 'var(--sys-text-muted)' }}>
-        {lineItemsCount != null ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', minWidth: 0 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}><path d="M16.5 9.4 7.55 4.24a1 1 0 0 0-1.1 0L2.4 6.6"/><polyline points="21 16 8 22 3 19.5 3 8.5 8 5.5 16 9.5 21 6.5 21 16 16 19.5 16 9.5"/><line x1="16" y1="19.5" x2="16" y2="9.5"/><line x1="21" y1="6.5" x2="21" y2="16"/></svg>
-            <span style={{ fontWeight: 500 }}>{lineItemsCount} {lineItemsCount === 1 ? 'producto' : 'productos'}</span>
+      {/* Line items */}
+      {lineItemsCount != null && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.6875rem', color: 'var(--sys-text-muted)' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}><path d="M16.5 9.4 7.55 4.24a1 1 0 0 0-1.1 0L2.4 6.6"/><polyline points="21 16 8 22 3 19.5 3 8.5 8 5.5 16 9.5 21 6.5 21 16 16 19.5 16 9.5"/><line x1="16" y1="19.5" x2="16" y2="9.5"/><line x1="21" y1="6.5" x2="21" y2="16"/></svg>
+          <span style={{ fontWeight: 500 }}>{lineItemsCount} {lineItemsCount === 1 ? 'producto' : 'productos'}</span>
+        </div>
+      )}
+
+      {/* Owner */}
+      {ownerName && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.6875rem', color: 'var(--sys-text-muted)' }}>
+          <div
+            style={{
+              width: '1.375rem',
+              height: '1.375rem',
+              borderRadius: '999px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.5rem',
+              fontWeight: 700,
+              flexShrink: 0,
+              overflow: 'hidden',
+              transition,
+            }}
+            className="entity-avatar"
+          >
+            {ownerAvatar ? (
+              <img src={ownerAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ background: 'var(--sys-primary-container)', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-on-primary-container)' }}>
+                {getInitials(ownerName)}
+              </span>
+            )}
           </div>
-        ) : <div />}
-        {ownerName && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0, minWidth: 0, maxWidth: '60%' }}>
-            <div
-              style={{
-                width: '1.375rem',
-                height: '1.375rem',
-                borderRadius: '999px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.5rem',
-                fontWeight: 700,
-                flexShrink: 0,
-                overflow: 'hidden',
-                transition,
-              }}
-              className="entity-avatar"
-            >
-              {ownerAvatar ? (
-                <img src={ownerAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <span style={{ background: 'var(--sys-primary-container)', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-on-primary-container)' }}>
-                  {getInitials(ownerName)}
-                </span>
-              )}
-            </div>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }} title={ownerName}>
-              {ownerName}
-            </span>
-          </div>
-        )}
-      </div>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }} title={ownerName}>
+            {ownerName}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

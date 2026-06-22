@@ -253,7 +253,7 @@ export function MessageDrawer({
         onClick={onClose}
       />
       <div
-        className={`fixed top-0 right-0 h-full w-[420px] max-w-screen z-[1000] bg-surface border-l border-border-soft shadow-2xl flex flex-col translate-x-full transition-transform duration-350 ease-out will-change-transform ${isOpen ? '!translate-x-0' : ''}`}
+        className={`fixed top-0 right-0 h-full w-[420px] max-w-[100vw] z-[1000] bg-surface border-l border-border-soft shadow-2xl flex flex-col transition-transform duration-300 ease-out will-change-transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         role="dialog"
         aria-label="Panel de mensajería"
       >

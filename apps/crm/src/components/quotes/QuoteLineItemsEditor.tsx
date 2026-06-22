@@ -97,15 +97,15 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
   if (readOnly) {
     return (
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead>
             <tr className="text-left font-semibold uppercase tracking-wider" style={{ color: 'var(--sys-text-muted)' }}>
-              <th className="pb-2 pr-2">Producto</th>
-              <th className="pb-2 pr-2 text-right">Cant.</th>
-              <th className="pb-2 pr-2 text-right">P. Unit.</th>
-              <th className="pb-2 pr-2 text-right">Dto. %</th>
-              <th className="pb-2 pr-2 text-right">IVA %</th>
-              <th className="pb-2 pr-2 text-right">Subtotal</th>
+              <th className="pb-2 pr-3 min-w-[240px]">Producto</th>
+              <th className="pb-2 pr-3 text-right w-[90px]">Cant.</th>
+              <th className="pb-2 pr-3 text-right w-[130px]">P. Unit.</th>
+              <th className="pb-2 pr-3 text-right w-[80px]">Dto. %</th>
+              <th className="pb-2 pr-3 text-right w-[80px]">IVA %</th>
+              <th className="pb-2 pr-3 text-right w-[130px]">Subtotal</th>
             </tr>
           </thead>
           <tbody>
@@ -138,16 +138,16 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
   return (
     <div className="flex flex-col gap-3">
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead>
             <tr className="text-left font-semibold uppercase tracking-wider" style={{ color: 'var(--sys-text-muted)' }}>
-              <th className="pb-2 pr-2 min-w-[180px]">Producto</th>
-              <th className="pb-2 pr-2 text-right w-[70px]">Cant.</th>
-              <th className="pb-2 pr-2 text-right w-[110px]">P. Unit.</th>
-              <th className="pb-2 pr-2 text-right w-[60px]">Dto. %</th>
-              <th className="pb-2 pr-2 text-right w-[60px]">IVA %</th>
-              <th className="pb-2 pr-2 text-right w-[100px]">Subtotal</th>
-              <th className="pb-2 w-8" />
+              <th className="pb-2 pr-3 min-w-[240px]">Producto</th>
+              <th className="pb-2 pr-3 text-right w-[90px]">Cant.</th>
+              <th className="pb-2 pr-3 text-right w-[130px]">P. Unit.</th>
+              <th className="pb-2 pr-3 text-right w-[80px]">Dto. %</th>
+              <th className="pb-2 pr-3 text-right w-[80px]">IVA %</th>
+              <th className="pb-2 pr-3 text-right w-[130px]">Subtotal</th>
+              <th className="pb-2 w-10" />
             </tr>
           </thead>
           <tbody>
@@ -161,7 +161,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
             )}
             {items.map((item, i) => (
               <tr key={i} className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
-                <td className="py-1.5 pr-2">
+                <td className="py-2 pr-3">
                   <select
                     className="input select text-xs w-full"
                     value={item.product_id}
@@ -177,7 +177,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                     ))}
                   </select>
                 </td>
-                <td className="py-1.5 pr-2">
+                <td className="py-2 pr-3">
                   <Input
                     type="number"
                     step="0.01"
@@ -187,7 +187,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                     className="w-full text-right"
                   />
                 </td>
-                <td className="py-1.5 pr-2">
+                <td className="py-2 pr-3">
                   <Input
                     type="number"
                     step="0.01"
@@ -197,7 +197,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                     className="w-full text-right"
                   />
                 </td>
-                <td className="py-1.5 pr-2">
+                <td className="py-2 pr-3">
                   <Input
                     type="number"
                     step="0.01"
@@ -208,7 +208,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                     className="w-full text-right"
                   />
                 </td>
-                <td className="py-1.5 pr-2">
+                <td className="py-2 pr-3">
                   <Input
                     type="number"
                     step="0.01"
@@ -219,10 +219,10 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                     className="w-full text-right"
                   />
                 </td>
-                <td className="py-1.5 pr-2 text-right font-semibold">
+                <td className="py-2 pr-3 text-right font-semibold">
                   {formatCurrency(lineTotal(item))}
                 </td>
-                <td className="py-1.5">
+                <td className="py-2">
                   <button
                     type="button"
                     className="p-1 rounded transition-colors hover:bg-red-100 dark:hover:bg-red-900/30"
@@ -239,16 +239,16 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
         </table>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-2">
         <Button variant="ghost" type="button" onClick={handleAdd} className="text-xs gap-1">
-          <Plus size={14} /> Agregar línea
+          <Plus size={16} /> Agregar línea
         </Button>
 
-        <div className="flex flex-col items-end gap-0.5 text-xs">
+        <div className="flex flex-col items-end gap-1 text-sm">
           <span style={{ color: 'var(--sys-text-muted)' }}>
             Subtotal: <strong style={{ color: 'var(--sys-text)' }}>{formatCurrency(totals.subtotal)}</strong>
           </span>
-          <span className="text-sm font-bold">
+          <span className="text-base font-bold">
             Total: <strong>{formatCurrency(totals.total)}</strong>
           </span>
         </div>

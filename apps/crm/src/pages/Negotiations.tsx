@@ -5,6 +5,8 @@ import type { CustomFieldDef } from '../api/client';
 import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
 import { KanbanBoard } from '../components/kanban/KanbanBoard';
 import type { ColumnDef } from '../components/kanban/KanbanBoard';
+import { QuoteStatusBadge } from '../components/quotes/QuoteStatusBadge';
+import { QuoteEditorModal } from '../components/quotes/QuoteEditorModal';
 import { 
   Plus,
   Send,
@@ -148,6 +150,11 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
   });
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatOpp, setChatOpp] = useState<Opportunity | null>(null);
+
+  // Quote state inside detail drawer
+  const [oppQuotes, setOppQuotes] = useState<any[]>([]);
+  const [quoteEditorOpen, setQuoteEditorOpen] = useState(false);
+  const [editingQuote, setEditingQuote] = useState<any | null>(null);
 
   useEffect(() => {
     loadPipelines();
@@ -313,7 +320,7 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
           ? parseInt(oppForm.pipeline_stage_id, 10)
           : stages[0]?.id,
       };
-      await crmApi.createOpportunity(payload);
+      const created: any = await crmApi.createOpportunity(payload);
       toast.success('Oportunidad creada con éxito.');
       setShowAddOppModal(false);
       setOppForm({
@@ -325,6 +332,12 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
         pipeline_stage_id: '',
       });
       if (selectedPipelineId) loadPipelineData(selectedPipelineId);
+
+      // Auto-open detail drawer as step 2: crear cotización
+      if (created && created.id) {
+        const newOpp: Opportunity = { ...created, line_items_count: 0 };
+        openDetailDrawer(newOpp);
+      }
     } catch (err: any) {
       toast.error(err?.message || 'Error al crear la oportunidad.');
     }
@@ -336,6 +349,16 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
     setCustomFields(opp.custom_fields || {});
     loadOpportunityDetails(opp.id);
     loadOppCustomFields();
+    loadOppQuotes(opp.id);
+  };
+
+  const loadOppQuotes = async (oppId: number) => {
+    try {
+      const data = await crmApi.listQuotes({ opportunity_id: oppId });
+      setOppQuotes(data);
+    } catch {
+      setOppQuotes([]);
+    }
   };
 
   const handleSaveCustomFields = async () => {
@@ -368,6 +391,21 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
     try {
       setFieldDefs(await crmApi.listCustomFields('opportunity'));
     } catch { /* ignore */ }
+  };
+
+  const handleCreateQuote = () => {
+    setEditingQuote(null);
+    setQuoteEditorOpen(true);
+  };
+
+  const handleEditQuote = (quote: any) => {
+    setEditingQuote(quote);
+    setQuoteEditorOpen(true);
+  };
+
+  const handleQuoteSaved = () => {
+    if (selectedOpp) loadOppQuotes(selectedOpp.id);
+    if (selectedPipelineId) loadPipelineData(selectedPipelineId);
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -988,24 +1026,66 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
                 </div>
               </div>
 
-              {/* Generar Cotización */}
+              {/* Cotización integrada */}
               <div className="border-t pt-4" style={{ borderColor: 'var(--sys-border-soft)' }}>
-                <Button
-                  variant="primary"
-                  className="btn-primary text-xs gap-1"
-                  onClick={() => {
-                    if (onNavigate && selectedOpp) {
-                      sessionStorage.setItem('preselectOpportunityId', String(selectedOpp.id))
-                      onNavigate('quotes')
-                    }
-                  }}
-                >
-                  <FileText size={14} />
-                  Generar Cotización
-                </Button>
-                <p className="text-[0.6rem] mt-1" style={{ color: 'var(--sys-text-muted)' }}>
-                  Crear una cotización desde los productos vinculados a esta oportunidad
-                </p>
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText size={16} style={{ color: 'var(--sys-primary)' }} />
+                  <h3 className="text-sm font-semibold tracking-wider uppercase" style={{ color: 'var(--sys-text-muted)' }}>
+                    Cotización
+                  </h3>
+                </div>
+
+                {oppQuotes.length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-6 rounded-lg" style={{ background: 'var(--sys-surface)' }}>
+                    <FileText size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
+                    <p className="text-xs italic" style={{ color: 'var(--sys-text-muted)' }}>
+                      Esta negociación aún no tiene cotización
+                    </p>
+                    <Button variant="primary" className="btn-primary text-xs gap-1" onClick={handleCreateQuote}>
+                      <Plus size={14} />
+                      Crear Cotización
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {oppQuotes.map((q: any) => (
+                      <div
+                        key={q.id}
+                        className="flex items-center justify-between p-3 rounded-lg text-xs"
+                        style={{ background: 'var(--sys-surface)' }}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{q.quote_number}</span>
+                            <QuoteStatusBadge status={q.status} size="sm" />
+                          </div>
+                          <span style={{ color: 'var(--sys-text-muted)' }}>
+                            Total: {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
+                              parseFloat(q.total_amount) || 0
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" className="text-xs" onClick={() => handleEditQuote(q)}>
+                            Editar
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            className="text-xs"
+                            onClick={() => {
+                              if (onNavigate) {
+                                sessionStorage.setItem('preselectOpportunityId', String(selectedOpp?.id))
+                                onNavigate('quotes')
+                              }
+                            }}
+                          >
+                            Ver Detalle
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Campos Personalizados */}
@@ -1175,6 +1255,18 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
           </div>
         </Modal>
       )}
+
+      {/* Quote Editor Modal integrado */}
+      <QuoteEditorModal
+        open={quoteEditorOpen}
+        onClose={() => {
+          setQuoteEditorOpen(false);
+          setEditingQuote(null);
+        }}
+        onSaved={handleQuoteSaved}
+        editQuote={editingQuote}
+        preselectedOpportunityId={selectedOpp?.id ?? null}
+      />
 
       <ConfirmDialog
         open={deleteConfirmOpen}

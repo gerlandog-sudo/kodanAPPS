@@ -75,18 +75,55 @@ final class NotificationController
     }
 
     /**
+     * GET /api/crm/notifications/config
+     * 
+     * @return array{stalled_deal_days: int}
+     */
+    public function getConfig(): array
+    {
+        $days = (int)$this->notificationRepo->getAppConfig('stalled_deal_days', '15');
+        return [
+            'stalled_deal_days' => $days
+        ];
+    }
+
+    /**
+     * POST /api/crm/notifications/config
+     * 
+     * @param array{stalled_deal_days: int} $input
+     * @return array{success: bool, message: string}
+     */
+    public function saveConfig(array $input): array
+    {
+        $days = isset($input['stalled_deal_days']) ? (int)$input['stalled_deal_days'] : 15;
+        if ($days <= 0) {
+            $days = 15;
+        }
+
+        $this->notificationRepo->setAppConfig('stalled_deal_days', (string)$days);
+
+        return [
+            'success' => true,
+            'message' => 'Configuración de alertas guardada exitosamente.'
+        ];
+    }
+
+    /**
      * Ejecuta las reglas de negocio para detectar oportunidades estancadas y fechas vencidas
      */
     private function syncSmartNotifications(int $userId): void
     {
+        // Obtener el límite de días configurado (por defecto 15)
+        $days = (int)$this->notificationRepo->getAppConfig('stalled_deal_days', '15');
+
         // 1. Eliminar alertas que ya no aplican o fueron resueltas
-        $this->notificationRepo->removeStaleAlerts($userId);
+        $this->notificationRepo->removeStaleAlerts($userId, $days);
 
         // 2. Obtener oportunidades activas del usuario
         $opportunities = $this->notificationRepo->getActiveOpportunitiesForUser($userId);
 
         $today = new \DateTime();
-        $stalledThreshold = (new \DateTime())->modify('-15 days');
+        $stalledThreshold = (new \DateTime())->modify("-{$days} days");
 
         foreach ($opportunities as $opp) {
             $oppId = (int)$opp['id'];
@@ -108,18 +145,18 @@ final class NotificationController
                 }
             }
 
-            // Regla B: Negociación estancada (sin cambios en 15 días)
+            // Regla B: Negociación estancada (sin cambios en X días)
             if (!empty($opp['updated_at'])) {
                 $updatedAt = new \DateTime($opp['updated_at']);
                 if ($updatedAt < $stalledThreshold) {
-                    $days = $updatedAt->diff($today)->days;
+                    $actualDays = $updatedAt->diff($today)->days;
                     $this->notificationRepo->upsertNotification([
                         'user_id' => $userId,
                         'type' => 'stalled_deal',
                         'entity_type' => 'crm_opportunity',
                         'entity_id' => $oppId,
                         'title' => 'Negociación estancada',
-                        'message' => "La negociación \"{$title}\" no ha registrado actividad durante los últimos {$days} días.",
+                        'message' => "La negociación \"{$title}\" no ha registrado actividad durante los últimos {$actualDays} días.",
                         'is_read' => 0
                     ]);
                 }

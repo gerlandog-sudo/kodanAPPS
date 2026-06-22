@@ -41,6 +41,7 @@ interface Opportunity {
   owner_name?: string;
   owner_avatar?: string | null;
   line_items_count?: number;
+  quote_total?: number;
 }
 
 interface Stage {
@@ -75,6 +76,7 @@ function OppCard({ opp, isDropped, onEdit, onDelete, onChat }: CardProps) {
       startDate={opp.created_at}
       closeDate={opp.close_date}
       lineItemsCount={opp.line_items_count ?? 0}
+      quoteTotal={opp.quote_total}
       ownerName={opp.owner_name}
       ownerAvatar={opp.owner_avatar}
       isDropped={isDropped}

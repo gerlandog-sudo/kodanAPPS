@@ -26,7 +26,8 @@ final class OpportunityRepository extends BaseRepository
             CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
             u.display_name AS owner_name,
             uc.avatar_url AS owner_avatar,
-            (SELECT COUNT(*) FROM opportunity_line_items oli WHERE oli.opportunity_id = o.id) AS line_items_count
+            (SELECT COUNT(*) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
+            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total
          FROM opportunities o
          JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
          JOIN accounts a ON a.account_id = o.account_id
@@ -55,7 +56,8 @@ final class OpportunityRepository extends BaseRepository
             CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
             u.display_name AS owner_name,
             uc.avatar_url AS owner_avatar,
-            (SELECT COUNT(*) FROM opportunity_line_items oli WHERE oli.opportunity_id = o.id) AS line_items_count
+            (SELECT COUNT(*) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
+            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total
          FROM opportunities o
          JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
          JOIN accounts a ON a.account_id = o.account_id

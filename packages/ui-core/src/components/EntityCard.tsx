@@ -9,6 +9,7 @@ export interface EntityCardProps {
   startDate?: string
   closeDate?: string
   lineItemsCount?: number
+  quoteTotal?: number
   ownerName?: string
   ownerAvatar?: string | null
   stageColor?: string
@@ -33,7 +34,7 @@ function getInitials(name: string) {
 
 export function EntityCard({
   title, amount, badge, accountName, startDate, closeDate,
-  lineItemsCount, ownerName, ownerAvatar, isDropped, selected,
+  lineItemsCount, quoteTotal, ownerName, ownerAvatar, isDropped, selected,
   onClick, onChat, onCheck, onClone, onEdit, onDelete,
 }: EntityCardProps) {
   const hasActions = !!(onChat || onEdit || onDelete || onCheck || onClone)
@@ -76,21 +77,26 @@ export function EntityCard({
           : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
       }}
     >
-      {/* Línea 1: Total + badge alineado a la derecha */}
+      {/* Línea 1: Valor Estimado + badge alineado a la derecha */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.375rem', height: '1.75rem', marginBottom: '0.5rem' }}>
         {badge}
         {amount != null && (
-          <span style={{
-            fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em',
-            padding: '0.125rem 0.625rem', borderRadius: '0.25rem',
-            border: '1px solid color-mix(in srgb, var(--sys-primary) 30%, transparent)',
-            color: 'var(--sys-primary)',
-            background: 'color-mix(in srgb, var(--sys-primary) 5%, transparent)',
-            textTransform: 'uppercase', fontFamily: 'monospace',
-            userSelect: 'none', lineHeight: 1.4,
-          }}>
-            $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
+          <>
+            <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em', color: 'var(--sys-text-muted)', textTransform: 'uppercase', marginRight: '0.125rem' }}>
+              Valor Estimado
+            </span>
+            <span style={{
+              fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em',
+              padding: '0.125rem 0.625rem', borderRadius: '0.25rem',
+              border: '1px solid color-mix(in srgb, var(--sys-primary) 30%, transparent)',
+              color: 'var(--sys-primary)',
+              background: 'color-mix(in srgb, var(--sys-primary) 5%, transparent)',
+              textTransform: 'uppercase', fontFamily: 'monospace',
+              userSelect: 'none', lineHeight: 1.4,
+            }}>
+              $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </>
         )}
       </div>
 
@@ -134,25 +140,37 @@ export function EntityCard({
         </div>
       )}
 
-      {/* Línea 6: Cant Productos */}
-      {lineItemsCount != null && (
-        <div style={{ marginBottom: '1rem', fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem', userSelect: 'none' }}>
-          <span>Productos:</span>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onEdit?.() }}
-            title={lineItemsCount === 0 ? 'Sin productos cotizados' : `${lineItemsCount} productos cotizados`}
-            style={{
-              width: '2.5rem', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
-              borderRadius: '0.25rem', border: '1px solid var(--sys-border-soft)',
-              background: 'color-mix(in srgb, var(--sys-bg) 85%, transparent)',
-              cursor: 'pointer', fontFamily: 'var(--font-hanken-grotesk, system-ui)',
-              fontSize: '10px', color: 'var(--sys-text-muted)',
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--sys-surface)'; e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'; e.currentTarget.style.color = 'var(--sys-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'color-mix(in srgb, var(--sys-bg) 85%, transparent)'; e.currentTarget.style.borderColor = 'var(--sys-border-soft)'; e.currentTarget.style.color = 'var(--sys-text-muted)' }}
-          >
-            <span style={{ fontWeight: 700 }}>{lineItemsCount}</span>
-          </button>
+      {/* Línea 6: Cant Productos + Total Cotización (alineado a la derecha) */}
+      {(lineItemsCount != null || quoteTotal != null) && (
+        <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem', userSelect: 'none' }}>
+          {lineItemsCount != null && (
+            <div style={{ fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <span>Productos:</span>
+              <button type="button" onClick={(e) => { e.stopPropagation(); onEdit?.() }}
+                title={lineItemsCount === 0 ? 'Sin productos cotizados' : `${lineItemsCount} productos cotizados`}
+                style={{
+                  width: '2.5rem', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem',
+                  borderRadius: '0.25rem', border: '1px solid var(--sys-border-soft)',
+                  background: 'color-mix(in srgb, var(--sys-bg) 85%, transparent)',
+                  cursor: 'pointer', fontFamily: 'var(--font-hanken-grotesk, system-ui)',
+                  fontSize: '10px', color: 'var(--sys-text-muted)',
+                  transition: 'all 150ms ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--sys-surface)'; e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'; e.currentTarget.style.color = 'var(--sys-primary)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'color-mix(in srgb, var(--sys-bg) 85%, transparent)'; e.currentTarget.style.borderColor = 'var(--sys-border-soft)'; e.currentTarget.style.color = 'var(--sys-text-muted)' }}
+              >
+                <span style={{ fontWeight: 700 }}>{lineItemsCount}</span>
+              </button>
+            </div>
+          )}
+          {quoteTotal != null && quoteTotal > 0 && (
+            <div style={{ fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <span>Valor Cotización:</span>
+              <span style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '11px', color: 'var(--sys-primary)' }}>
+                $ {quoteTotal.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

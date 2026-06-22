@@ -158,10 +158,10 @@ function AppContent() {
     const items: NavItem[] = [
       { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
       { key: 'negotiations', label: 'Negociaciones', icon: <Briefcase size={18} /> },
+      { key: 'quotes', label: 'Cotizaciones', icon: <FileText size={18} /> },
       { key: 'accounts', label: 'Cuentas B2B', icon: <Building2 size={18} /> },
       { key: 'contacts', label: 'Contactos', icon: <Users size={18} /> },
       { key: 'products', label: 'Catalogo', icon: <Tag size={18} /> },
-      { key: 'quotes', label: 'Cotizaciones', icon: <FileText size={18} /> },
       { key: 'tasks', label: 'Agenda', icon: <ListTodo size={18} /> },
     ]
     return items

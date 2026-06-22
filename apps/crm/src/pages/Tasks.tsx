@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Card, Button, Input, Modal, ConfirmDialog } from '@kodan-apps/ui-core';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, Button, Input, Modal, ConfirmDialog, Select } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import { Plus, Edit, Trash2, Calendar, ListTodo, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,6 +23,19 @@ export function Tasks() {
     status: 'pending',
     description: '',
   });
+
+  const opportunitySelectOptions = useMemo(() => {
+    return opportunities.map((o) => ({
+      value: o.id,
+      label: o.name,
+      description: o.value ? `Valor: ${formatCurrency(o.value)}` : undefined,
+    }));
+  }, [opportunities]);
+
+  const statusSelectOptions = [
+    { value: 'pending', label: 'Pendiente' },
+    { value: 'completed', label: 'Completada' },
+  ];
 
   useEffect(() => {
     loadData();
@@ -237,29 +250,24 @@ export function Tasks() {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>ESTADO</label>
-              <select 
-                className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer" 
-                value={form.status} 
-                onChange={(e) => setForm(prev => ({ ...prev, status: e.target.value }))}
-              >
-                <option value="pending">Pendiente</option>
-                <option value="completed">Completada</option>
-              </select>
+              <Select
+                options={statusSelectOptions}
+                value={form.status}
+                onChange={(val) => setForm(prev => ({ ...prev, status: String(val) }))}
+                placeholder="Seleccionar estado..."
+              />
             </div>
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NEGOCIACIÓN VINCULADA</label>
-            <select 
-              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer" 
-              value={form.opportunity_id} 
-              onChange={(e) => setForm(prev => ({ ...prev, opportunity_id: e.target.value }))}
-            >
-              <option value="">Selecciona la negociación relacionada</option>
-              {opportunities.map(o => (
-                <option key={o.id} value={o.id}>{o.name} ({formatCurrency(o.value)})</option>
-              ))}
-            </select>
+            <Select
+              options={opportunitySelectOptions}
+              value={form.opportunity_id}
+              onChange={(val) => setForm(prev => ({ ...prev, opportunity_id: String(val) }))}
+              placeholder="Selecciona la negociación relacionada"
+              searchable={true}
+            />
           </div>
 
           <div className="flex flex-col gap-1">

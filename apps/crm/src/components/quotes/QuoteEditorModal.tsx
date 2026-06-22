@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Button, Modal, Input } from '@kodan-apps/ui-core'
+import { useEffect, useState, useMemo } from 'react'
+import { Button, Modal, Input, Select } from '@kodan-apps/ui-core'
 import { toast } from 'sonner'
 import { crmApi } from '../../api/client'
 import { QuoteLineItemsEditor } from './QuoteLineItemsEditor'
@@ -22,6 +22,21 @@ export function QuoteEditorModal({ open, onClose, onSaved, editQuote, preselecte
   const [opportunityId, setOpportunityId] = useState<number>(0)
   const [status, setStatus] = useState<QuoteStatus>('draft')
   const [items, setItems] = useState<QuoteLineItem[]>([])
+
+  const opportunitySelectOptions = useMemo(() => {
+    return opportunities.map((opp) => ({
+      value: opp.id,
+      label: opp.title || opp.name,
+      description: opp.account_name ? `Cuenta: ${opp.account_name}` : `Cuenta #${opp.account_id}`,
+    }))
+  }, [opportunities])
+
+  const statusSelectOptions = [
+    { value: 'draft', label: 'Borrador' },
+    { value: 'sent', label: 'Enviada' },
+    { value: 'accepted', label: 'Aceptada' },
+    { value: 'rejected', label: 'Rechazada' },
+  ]
 
   // Load opportunities for dropdown
   useEffect(() => {
@@ -112,7 +127,7 @@ export function QuoteEditorModal({ open, onClose, onSaved, editQuote, preselecte
   const selectedOpportunity = opportunities.find((o) => o.id === opportunityId)
 
   return (
-    <Modal open={open} onClose={onClose} title={editQuote ? 'Editar Cotización' : 'Nueva Cotización'} className="modal-wide">
+    <Modal open={open} onClose={onClose} title={editQuote ? 'Editar Cotización' : 'Nueva Cotización'} className="max-w-5xl">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
         {/* Quote Number */}
         <div className="flex flex-col gap-1">
@@ -128,21 +143,14 @@ export function QuoteEditorModal({ open, onClose, onSaved, editQuote, preselecte
         {/* Opportunity */}
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>OPORTUNIDAD *</label>
-          <select
-            className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
-            value={opportunityId}
-            onChange={(e) => setOpportunityId(parseInt(e.target.value, 10))}
+          <Select
+            options={opportunitySelectOptions}
+            value={opportunityId || ''}
+            onChange={(val) => setOpportunityId(Number(val))}
             disabled={loadingOpps || !!preselectedOpportunityId}
-            required
-          >
-            <option value={0}>Seleccionar oportunidad...</option>
-            {loadingOpps && <option disabled>Cargando...</option>}
-            {opportunities.map((opp) => (
-              <option key={opp.id} value={opp.id}>
-                {opp.title || opp.name} — {opp.account_name || `Cuenta #${opp.account_id}`}
-              </option>
-            ))}
-          </select>
+            searchable={true}
+            placeholder={loadingOpps ? 'Cargando...' : 'Seleccionar oportunidad...'}
+          />
           {selectedOpportunity && selectedOpportunity.items && (
             <span className="text-[0.6rem] mt-0.5" style={{ color: 'var(--sys-text-muted)' }}>
               {selectedOpportunity.items.length} ítem(s) en la oportunidad
@@ -154,16 +162,12 @@ export function QuoteEditorModal({ open, onClose, onSaved, editQuote, preselecte
         {editQuote && (
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>ESTADO</label>
-            <select
-              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
+            <Select
+              options={statusSelectOptions}
               value={status}
-              onChange={(e) => setStatus(e.target.value as QuoteStatus)}
-            >
-              <option value="draft">Borrador</option>
-              <option value="sent">Enviada</option>
-              <option value="accepted">Aceptada</option>
-              <option value="rejected">Rechazada</option>
-            </select>
+              onChange={(val) => setStatus(val as QuoteStatus)}
+              placeholder="Seleccionar estado..."
+            />
           </div>
         )}
 

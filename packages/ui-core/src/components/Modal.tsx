@@ -9,12 +9,15 @@ interface ModalProps {
   className?: string
 }
 
-export function Modal({ open, onClose, children, title, className }: ModalProps) {
+export function Modal({ open, onClose, children, title, className = '' }: ModalProps) {
   if (!open) return null
+
+  const hasWidth = className.includes('max-w-') || className.includes('modal-wide')
+  const widthClass = hasWidth ? '' : 'max-w-md'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className={`bg-surface rounded-lg border border-border-soft w-full max-w-md p-6 ${className || ''}`} onClick={e => e.stopPropagation()}>
+      <div className={`bg-surface rounded-lg border border-border-soft w-full p-6 ${widthClass} ${className}`} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           {title && (
             <h3 className="m-0 text-lg font-semibold" style={{ fontFamily: 'var(--font-montserrat)' }}>

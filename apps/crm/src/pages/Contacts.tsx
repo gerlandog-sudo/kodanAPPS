@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, Table, ConfirmDialog } from '@kodan-apps/ui-core';
+import { useEffect, useState, useMemo } from 'react';
+import { Button, Input, Modal, CustomFieldsForm, Table, ConfirmDialog, Select } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { Plus, User2, Settings2 } from 'lucide-react';
@@ -30,6 +30,10 @@ export function Contacts() {
     mobile: '',
     account_id: '',
   });
+
+  const accountSelectOptions = useMemo(() => {
+    return accounts.map((a) => ({ value: a.account_id, label: a.name }));
+  }, [accounts]);
 
   useEffect(() => {
     loadContactsAndAccounts();
@@ -262,16 +266,13 @@ export function Contacts() {
 
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>EMPRESA / CUENTA ASOCIADA</label>
-              <select 
-                className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer" 
-                value={form.account_id} 
-                onChange={(e) => setForm(prev => ({ ...prev, account_id: e.target.value }))}
-              >
-                <option value="">Selecciona la cuenta corporativa</option>
-                {accounts.map(a => (
-                  <option key={a.account_id} value={a.account_id}>{a.name}</option>
-                ))}
-              </select>
+              <Select
+                options={accountSelectOptions}
+                value={form.account_id}
+                onChange={(val) => setForm(prev => ({ ...prev, account_id: String(val) }))}
+                placeholder="Selecciona la cuenta corporativa"
+                searchable={true}
+              />
             </div>
 
             <div className="flex justify-end gap-3 mt-4 pt-3" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>

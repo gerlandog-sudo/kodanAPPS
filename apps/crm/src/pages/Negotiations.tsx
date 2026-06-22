@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
@@ -350,6 +350,22 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
     } catch { /* ignore */ }
   };
 
+  const pipelineSelectOptions = useMemo(() => {
+    return pipelines.map(p => ({ value: p.id, label: p.name }));
+  }, [pipelines]);
+
+  const accountSelectOptions = useMemo(() => {
+    return accounts.map(a => ({ value: a.account_id, label: a.name }));
+  }, [accounts]);
+
+  const contactSelectOptions = useMemo(() => {
+    return contacts.map(c => ({ value: c.contact_id, label: `${c.first_name} ${c.last_name}` }));
+  }, [contacts]);
+
+  const stageSelectOptions = useMemo(() => {
+    return stages.map(s => ({ value: s.id, label: s.name }));
+  }, [stages]);
+
   // Render extra content in column header (total value)
   const renderColumnExtra = useCallback(
     (_stage: string, items: Opportunity[]) => {
@@ -464,17 +480,13 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       {/* Top Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-end gap-3 shrink-0 pb-3 w-full sticky top-0 z-10" style={{ background: 'var(--sys-bg)' }}>
         <div className="flex items-center gap-3">
-          <select
-            className="w-full max-w-xs bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
+          <Select
+            options={pipelineSelectOptions}
             value={selectedPipelineId || ''}
-            onChange={(e) => setSelectedPipelineId(parseInt(e.target.value, 10))}
-          >
-            {pipelines.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedPipelineId(Number(val))}
+            className="w-full max-w-xs"
+            placeholder="Seleccionar Pipeline..."
+          />
           <button
             onClick={() => setShowArchived(!showArchived)}
             className="bg-transparent border border-border-soft rounded-lg px-3 py-2 cursor-pointer inline-flex items-center justify-center transition-colors"
@@ -539,7 +551,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           setModalTab('general');
         }} 
         title={editingOppId ? 'Editar Negociación' : 'Nueva Negociación'} 
-        className="modal-wide"
+        className="max-w-5xl"
       >
         <div className="flex gap-1 p-1 rounded-lg mb-4 mt-2" style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content' }}>
           <button onClick={() => setModalTab('general')} className="bg-transparent border-none px-4 py-2 rounded-lg cursor-pointer text-xs font-semibold transition-colors" style={{ background: modalTab === 'general' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'general' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)' }}>
@@ -593,51 +605,36 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                 <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                   CUENTA B2B
                 </label>
-                <select
-                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
+                <Select
+                  options={accountSelectOptions}
                   value={oppFormData.account_id}
-                  onChange={(e) => setOppFormData((prev) => ({ ...prev, account_id: e.target.value }))}
-                >
-                  <option value="">Selecciona una cuenta corporativa</option>
-                  {accounts.map((a) => (
-                    <option key={a.account_id} value={a.account_id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setOppFormData((prev) => ({ ...prev, account_id: String(val) }))}
+                  placeholder="Selecciona una cuenta corporativa"
+                  searchable={true}
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                   CONTACTO
                 </label>
-                <select
-                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
+                <Select
+                  options={contactSelectOptions}
                   value={oppFormData.contact_id}
-                  onChange={(e) => setOppFormData((prev) => ({ ...prev, contact_id: e.target.value }))}
-                >
-                  <option value="">Selecciona un contacto corporativo</option>
-                  {contacts.map((c) => (
-                    <option key={c.contact_id} value={c.contact_id}>
-                      {c.first_name} {c.last_name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setOppFormData((prev) => ({ ...prev, contact_id: String(val) }))}
+                  placeholder="Selecciona un contacto corporativo"
+                  searchable={true}
+                />
               </div>
               <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
                 <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                   ETAPA
                 </label>
-                <select
-                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
+                <Select
+                  options={stageSelectOptions}
                   value={oppFormData.pipeline_stage_id}
-                  onChange={(e) => setOppFormData((prev) => ({ ...prev, pipeline_stage_id: e.target.value }))}
-                >
-                  {stages.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setOppFormData((prev) => ({ ...prev, pipeline_stage_id: String(val) }))}
+                  placeholder="Selecciona una etapa"
+                />
               </div>
             </div>
 

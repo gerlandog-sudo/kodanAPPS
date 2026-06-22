@@ -77,14 +77,16 @@ export function EntityCard({
           : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
       }}
     >
-      {/* Línea 1: Valor Estimado + badge alineado a la derecha */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.375rem', height: '1.75rem', marginBottom: '0.5rem' }}>
-        {badge}
+      {/* Línea 1: Estimado (izq) + badge (der) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '1.75rem', marginBottom: '0.5rem' }}>
         {amount != null && (
-          <>
-            <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em', color: 'var(--sys-text-muted)', textTransform: 'uppercase', marginRight: '0.125rem' }}>
-              Estimado
-            </span>
+          <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em', color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>
+            Estimado
+          </span>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginLeft: 'auto' }}>
+          {badge}
+          {amount != null && (
             <span style={{
               fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em',
               padding: '0.125rem 0.625rem', borderRadius: '0.25rem',
@@ -96,8 +98,8 @@ export function EntityCard({
             }}>
               $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Línea 2: Nombre */}

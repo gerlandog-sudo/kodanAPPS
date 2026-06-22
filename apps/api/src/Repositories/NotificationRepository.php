@@ -184,7 +184,7 @@ final class NotificationRepository extends BaseRepository
                                AND o.`archived_at` IS NULL 
                                AND s.`is_won_stage` = 0 
                                AND s.`is_lost_stage` = 0 
-                               AND o.`updated_at` >= DATE_SUB(NOW(), INTERVAL :days DAY)
+                               AND o.`updated_at` < DATE_SUB(NOW(), INTERVAL :days DAY)
                          )";
         $this->rawExecute($sqlStalled, [':user_id' => $userId, ':days' => $days]);
     }

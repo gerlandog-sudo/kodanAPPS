@@ -69,8 +69,9 @@ final class QuoteRepository extends BaseRepository
     {
         // Validar que la oportunidad pertenece al tenant antes de crear
         $opp = $this->rawSelect(
-            "SELECT 1 FROM opportunities WHERE id = ? AND tenant_id = :tenant_id LIMIT 1",
-            [(int)$data['opportunity_id']]
+            "/* BYPASS_TENANT_SCOPE */
+             SELECT 1 FROM opportunities WHERE id = ? AND tenant_id = ? LIMIT 1",
+            [(int)$data['opportunity_id'], \kodanAPPS\DB\TenantContext::getTenantId()]
         );
         if (empty($opp)) {
             throw new \RuntimeException('Oportunidad no encontrada o acceso denegado', 403);

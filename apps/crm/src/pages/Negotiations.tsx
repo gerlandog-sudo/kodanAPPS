@@ -61,13 +61,12 @@ interface Pipeline {
 interface CardProps {
   opp: Opportunity;
   isDropped: boolean;
-  onOpenDetail: (opp: Opportunity) => void;
   onEdit: (opp: Opportunity) => void;
   onDelete: (opp: Opportunity) => void;
   onChat: (opp: Opportunity) => void;
 }
 
-function OppCard({ opp, isDropped, onOpenDetail, onEdit, onDelete, onChat }: CardProps) {
+function OppCard({ opp, isDropped, onEdit, onDelete, onChat }: CardProps) {
   return (
     <EntityCard
       title={opp.name}
@@ -79,7 +78,6 @@ function OppCard({ opp, isDropped, onOpenDetail, onEdit, onDelete, onChat }: Car
       ownerName={opp.owner_name}
       ownerAvatar={opp.owner_avatar}
       isDropped={isDropped}
-      onClick={() => onOpenDetail(opp)}
       onChat={() => onChat(opp)}
       onEdit={() => onEdit(opp)}
       onDelete={() => onDelete(opp)}
@@ -156,6 +154,9 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
 
   // Quote state
   const [oppQuotes, setOppQuotes] = useState<any[]>([]);
+
+  // Create modal line items
+  const [createFormItems, setCreateFormItems] = useState<QuoteLineItem[]>([]);
 
   // Quote state inside edit modal
   const [editOppLineItems, setEditOppLineItems] = useState<QuoteLineItem[]>([]);
@@ -337,6 +338,24 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           : stages[0]?.id,
       };
       const created: any = await crmApi.createOpportunity(payload);
+
+      // Guardar cotización si hay ítems
+      if (createFormItems.length > 0 && created && created.id) {
+        const quotePayload = {
+          quote_number: `Q-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
+          opportunity_id: created.id,
+          status: 'draft' as QuoteStatus,
+          items: createFormItems.map((it) => ({
+            product_id: it.product_id,
+            quantity: Number(it.quantity),
+            unit_price: Number(it.unit_price),
+            discount_percentage: Number(it.discount_percentage),
+            tax_percentage: Number(it.tax_percentage),
+          })),
+        };
+        await crmApi.createQuote(quotePayload);
+      }
+
       toast.success('Oportunidad creada con éxito.');
       setShowAddOppModal(false);
       setOppForm({
@@ -347,6 +366,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         contact_id: '',
         pipeline_stage_id: '',
       });
+      setCreateFormItems([]);
       if (selectedPipelineId) loadPipelineData(selectedPipelineId);
 
       // Segundo paso: abrir modal de editar con cotización
@@ -648,13 +668,12 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       <OppCard
         opp={opp}
         isDropped={justDroppedId === opp.id}
-        onOpenDetail={openDetailDrawer}
         onEdit={handleEditOpp}
         onDelete={handleDeleteOpp}
         onChat={handleChatOpp}
       />
     ),
-    [justDroppedId, openDetailDrawer, handleEditOpp, handleDeleteOpp, handleChatOpp]
+    [justDroppedId, handleEditOpp, handleDeleteOpp, handleChatOpp]
   );
 
   return (
@@ -719,22 +738,22 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         />
       )}
 
-      {/* Modal - Nueva Oportunidad */}
-      <Modal open={showAddOppModal} onClose={() => setShowAddOppModal(false)} title="Nueva Negociación">
-        <form onSubmit={handleAddOppSubmit} className="flex flex-col gap-4 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              NOMBRE DE LA NEGOCIACIÓN
-            </label>
-            <Input
-              value={oppForm.name}
-              onChange={(e) => setOppForm((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Ej: Licencias Enterprise KODAN"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+      {/* Modal - Nueva Oportunidad (unificado con editor de cotización) */}
+      <Modal open={showAddOppModal} onClose={() => { setShowAddOppModal(false); setCreateFormItems([]); }} title="Nueva Negociación" className="modal-wide">
+        <form onSubmit={handleAddOppSubmit} className="flex flex-col gap-4 mt-2 max-h-[80vh] overflow-y-auto pr-2">
+          {/* ── Datos básicos ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                NOMBRE DE LA NEGOCIACIÓN
+              </label>
+              <Input
+                value={oppForm.name}
+                onChange={(e) => setOppForm((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Ej: Licencias Enterprise KODAN"
+                required
+              />
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                 VALOR ESTIMADO (ARS)
@@ -743,7 +762,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                 type="number"
                 value={oppForm.value}
                 onChange={(e) => setOppForm((prev) => ({ ...prev, value: e.target.value }))}
-                placeholder="0.00"
+                placeholder="0"
                 required
               />
             </div>
@@ -757,66 +776,82 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                 onChange={(e) => setOppForm((prev) => ({ ...prev, close_date: e.target.value }))}
               />
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                CUENTA B2B
+              </label>
+              <select
+                className="input select"
+                value={oppForm.account_id}
+                onChange={(e) => setOppForm((prev) => ({ ...prev, account_id: e.target.value }))}
+              >
+                <option value="">Selecciona una cuenta corporativa</option>
+                {accounts.map((a) => (
+                  <option key={a.account_id} value={a.account_id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                CONTACTO
+              </label>
+              <select
+                className="input select"
+                value={oppForm.contact_id}
+                onChange={(e) => setOppForm((prev) => ({ ...prev, contact_id: e.target.value }))}
+              >
+                <option value="">Selecciona un contacto corporativo</option>
+                {contacts.map((c) => (
+                  <option key={c.contact_id} value={c.contact_id}>
+                    {c.first_name} {c.last_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                ETAPA INICIAL
+              </label>
+              <select
+                className="input select"
+                value={oppForm.pipeline_stage_id}
+                onChange={(e) => setOppForm((prev) => ({ ...prev, pipeline_stage_id: e.target.value }))}
+              >
+                {stages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              CUENTA B2B
-            </label>
-            <select
-              className="input select"
-              value={oppForm.account_id}
-              onChange={(e) => setOppForm((prev) => ({ ...prev, account_id: e.target.value }))}
-            >
-              <option value="">Selecciona una cuenta corporativa</option>
-              {accounts.map((a) => (
-                <option key={a.account_id} value={a.account_id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
+          {/* ── Separador ── */}
+          <hr style={{ borderColor: 'var(--sys-border-soft)' }} />
+
+          {/* ── Cotización integrada ── */}
+          <div>
+            <h3 className="text-sm font-semibold tracking-wider uppercase mb-3" style={{ color: 'var(--sys-text-muted)' }}>
+              <FileText size={15} className="inline mr-1.5" style={{ color: 'var(--sys-primary)' }} />
+              Cotización
+            </h3>
+
+            <div className="flex flex-col gap-1 mb-4">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                PRODUCTOS / SERVICIOS
+              </label>
+              <QuoteLineItemsEditor items={createFormItems} onChange={setCreateFormItems} />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              CONTACTO
-            </label>
-            <select
-              className="input select"
-              value={oppForm.contact_id}
-              onChange={(e) => setOppForm((prev) => ({ ...prev, contact_id: e.target.value }))}
-            >
-              <option value="">Selecciona un contacto corporativo</option>
-              {contacts.map((c) => (
-                <option key={c.contact_id} value={c.contact_id}>
-                  {c.first_name} {c.last_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              ETAPA INICIAL
-            </label>
-            <select
-              className="input select"
-              value={oppForm.pipeline_stage_id}
-              onChange={(e) => setOppForm((prev) => ({ ...prev, pipeline_stage_id: e.target.value }))}
-            >
-              {stages.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
+          {/* ── Acciones ── */}
           <div
-            className="flex justify-end gap-3 mt-4 pt-3"
-            style={{ borderTop: '1px solid var(--sys-border-soft)' }}
+            className="flex justify-end gap-3 mt-2 pt-3 sticky bottom-0"
+            style={{ borderTop: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)' }}
           >
-            <Button variant="secondary" type="button" onClick={() => setShowAddOppModal(false)}>
+            <Button variant="secondary" type="button" onClick={() => { setShowAddOppModal(false); setCreateFormItems([]); }}>
               Cancelar
             </Button>
             <Button variant="primary" type="submit" className="btn-primary">

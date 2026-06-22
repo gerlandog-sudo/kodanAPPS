@@ -608,6 +608,10 @@
   text-align: right;
 }
 
+.table-td-center {
+  text-align: center;
+}
+
 .table-cell {
   display: flex;
   align-items: center;

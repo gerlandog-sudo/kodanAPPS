@@ -21,7 +21,7 @@ final class OpportunityRepository extends BaseRepository
     public function findById(int $id): ?array
     {
         $sql = "SELECT o.*, 
-            ps.name AS stage_name, ps.color_hex AS stage_color, ps.is_won_stage, ps.is_lost_stage, 
+            ps.name AS stage_name, ps.color_hex AS stage_color, ps.probability AS stage_probability, ps.is_won_stage, ps.is_lost_stage, 
             a.name AS account_name,
             CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
             u.display_name AS owner_name,
@@ -51,7 +51,7 @@ final class OpportunityRepository extends BaseRepository
         $archivedFilter = $includeArchived ? '' : ' AND o.archived_at IS NULL';
 
         $select = "SELECT o.*, 
-            ps.name AS stage_name, ps.color_hex AS stage_color, ps.is_won_stage, ps.is_lost_stage, 
+            ps.name AS stage_name, ps.color_hex AS stage_color, ps.probability AS stage_probability, ps.is_won_stage, ps.is_lost_stage, 
             a.name AS account_name,
             CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
             u.display_name AS owner_name,

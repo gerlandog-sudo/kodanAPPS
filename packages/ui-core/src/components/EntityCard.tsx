@@ -96,7 +96,7 @@ export function EntityCard({
               textTransform: 'uppercase', fontFamily: 'monospace',
               userSelect: 'none', lineHeight: 1.4,
             }}>
-              $ {amount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              $ {Number(amount).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           )}
         </div>
@@ -169,7 +169,7 @@ export function EntityCard({
             <div style={{ fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <span>Valor Cotización:</span>
               <span style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '11px', color: 'var(--sys-primary)' }}>
-                $ {quoteTotal.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $ {Number(quoteTotal).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           )}

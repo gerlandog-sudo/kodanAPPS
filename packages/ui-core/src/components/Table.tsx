@@ -273,8 +273,10 @@ export function Table<T>({
                 <tr key={i} className="table-row">
                   {selectable && <td className="table-td"><SkeletonBar width="1rem" /></td>}
                   {columns.map(col => (
-                    <td key={col.key} className="table-td">
-                      <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
+                    <td key={col.key} className={`table-td${col.align === 'right' ? ' table-td-right' : col.align === 'center' ? ' table-td-center' : ''}`}>
+                      <div style={col.align === 'right' ? { display: 'flex', justifyContent: 'flex-end' } : col.align === 'center' ? { display: 'flex', justifyContent: 'center' } : undefined}>
+                        <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
+                      </div>
                     </td>
                   ))}
                   {combinedActions.length > 0 && (
@@ -471,8 +473,8 @@ export function Table<T>({
                     </td>
                   )}
                   {columns.map(col => (
-                    <td key={col.key} className="table-td" role="gridcell">
-                      <div className="table-cell">{col.render(item)}</div>
+                    <td key={col.key} className={`table-td${col.align === 'right' ? ' table-td-right' : col.align === 'center' ? ' table-td-center' : ''}`} role="gridcell">
+                      <div className="table-cell" style={col.align === 'right' ? { justifyContent: 'flex-end' } : col.align === 'center' ? { justifyContent: 'center' } : undefined}>{col.render(item)}</div>
                     </td>
                   ))}
                   {combinedActions.length > 0 && (

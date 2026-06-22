@@ -6,7 +6,8 @@ import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
 import { KanbanBoard } from '../components/kanban/KanbanBoard';
 import type { ColumnDef } from '../components/kanban/KanbanBoard';
 import { QuoteStatusBadge } from '../components/quotes/QuoteStatusBadge';
-import { QuoteEditorModal } from '../components/quotes/QuoteEditorModal';
+import { QuoteLineItemsEditor } from '../components/quotes/QuoteLineItemsEditor';
+import type { QuoteLineItem, QuoteStatus } from '../types/admin';
 import { 
   Plus,
   Send,
@@ -93,7 +94,7 @@ interface NegotiationsProps {
   onClearAutoOpen?: () => void;
 }
 
-export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAutoOpen }: NegotiationsProps) {
+export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: NegotiationsProps) {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -153,10 +154,12 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatOpp, setChatOpp] = useState<Opportunity | null>(null);
 
-  // Quote state inside detail drawer
+  // Quote state
   const [oppQuotes, setOppQuotes] = useState<any[]>([]);
-  const [quoteEditorOpen, setQuoteEditorOpen] = useState(false);
-  const [editingQuote, setEditingQuote] = useState<any | null>(null);
+
+  // Quote state inside edit modal
+  const [editOppLineItems, setEditOppLineItems] = useState<QuoteLineItem[]>([]);
+  const [editOppQuoteId, setEditOppQuoteId] = useState<number | null>(null);
 
   useEffect(() => {
     loadPipelines();
@@ -406,21 +409,6 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
     } catch { /* ignore */ }
   };
 
-  const handleCreateQuote = () => {
-    setEditingQuote(null);
-    setQuoteEditorOpen(true);
-  };
-
-  const handleEditQuote = (quote: any) => {
-    setEditingQuote(quote);
-    setQuoteEditorOpen(true);
-  };
-
-  const handleQuoteSaved = () => {
-    if (selectedOpp) loadOppQuotes(selectedOpp.id);
-    if (selectedPipelineId) loadPipelineData(selectedPipelineId);
-  };
-
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetOpp = selectedOpp || chatOpp;
@@ -524,7 +512,7 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
     []
   );
 
-  const handleEditOpp = useCallback((opp: Opportunity) => {
+  const handleEditOpp = useCallback(async (opp: Opportunity) => {
     setEditOppForm({
       name: opp.name,
       value: String(parseFloat(opp.value) || 0),
@@ -535,6 +523,36 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
     });
     setEditingOppId(opp.id);
     setShowEditOppModal(true);
+
+    // Cargar cotización existente (si tiene)
+    try {
+      const quotes = await crmApi.listQuotes({ opportunity_id: opp.id });
+      if (quotes.length > 0) {
+        const q = quotes[0];
+        // Cargar line items si el quote tiene ID
+        if (q.id) {
+          const items = await crmApi.getQuoteLineItems(q.id);
+          setEditOppLineItems(items.map((it: any) => ({
+            product_id: it.product_id,
+            quantity: it.quantity,
+            unit_price: it.unit_price,
+            discount_percentage: Number(it.discount_percentage) || 0,
+            tax_percentage: Number(it.tax_percentage) || 21,
+            product_name: it.product_name,
+            product_sku: it.product_sku,
+          })));
+        } else {
+          setEditOppLineItems([]);
+        }
+        setEditOppQuoteId(q.id);
+      } else {
+        setEditOppLineItems([]);
+        setEditOppQuoteId(null);
+      }
+    } catch {
+      setEditOppLineItems([]);
+      setEditOppQuoteId(null);
+    }
   }, []);
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -551,7 +569,33 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
           ? parseInt(editOppForm.pipeline_stage_id, 10)
           : stages[0]?.id,
       });
-      toast.success('Negociación actualizada con éxito.');
+
+      // Guardar cotización si hay ítems
+      if (editOppLineItems.length > 0) {
+        const quotePayload = {
+          quote_number: `Q-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
+          opportunity_id: editingOppId,
+          status: 'draft' as QuoteStatus,
+          items: editOppLineItems.map((it) => ({
+            product_id: it.product_id,
+            quantity: Number(it.quantity),
+            unit_price: Number(it.unit_price),
+            discount_percentage: Number(it.discount_percentage),
+            tax_percentage: Number(it.tax_percentage),
+          })),
+        };
+
+        if (editOppQuoteId) {
+          await crmApi.updateQuote(editOppQuoteId, quotePayload);
+        } else {
+          await crmApi.createQuote(quotePayload);
+        }
+      } else if (editOppQuoteId) {
+        // Si no hay ítems pero existía una cotización, la eliminamos
+        await crmApi.deleteQuote(editOppQuoteId);
+      }
+
+      toast.success('Negociación y cotización guardadas con éxito.');
       setShowEditOppModal(false);
       setEditingOppId(null);
       setEditOppForm({
@@ -562,6 +606,8 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
         contact_id: '',
         pipeline_stage_id: '',
       });
+      setEditOppLineItems([]);
+      setEditOppQuoteId(null);
       if (selectedPipelineId) loadPipelineData(selectedPipelineId);
     } catch (err: any) {
       toast.error(err?.message || 'Error al actualizar la negociación.');
@@ -780,22 +826,22 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
         </form>
       </Modal>
 
-      {/* Modal - Editar Oportunidad */}
-      <Modal open={showEditOppModal} onClose={() => setShowEditOppModal(false)} title="Editar Negociación">
-        <form onSubmit={handleEditSubmit} className="flex flex-col gap-4 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              NOMBRE DE LA NEGOCIACIÓN
-            </label>
-            <Input
-              value={editOppForm.name}
-              onChange={(e) => setEditOppForm((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Ej: Licencias Enterprise KODAN"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+      {/* Modal - Editar Oportunidad (incluye productos + cotización) */}
+      <Modal open={showEditOppModal} onClose={() => setShowEditOppModal(false)} title="Editar Negociación" className="modal-wide">
+        <form onSubmit={handleEditSubmit} className="flex flex-col gap-4 mt-2 max-h-[80vh] overflow-y-auto pr-2">
+          {/* ── Datos básicos ── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                NOMBRE DE LA NEGOCIACIÓN
+              </label>
+              <Input
+                value={editOppForm.name}
+                onChange={(e) => setEditOppForm((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Ej: Licencias Enterprise KODAN"
+                required
+              />
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                 VALOR ESTIMADO (ARS)
@@ -818,64 +864,80 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
                 onChange={(e) => setEditOppForm((prev) => ({ ...prev, close_date: e.target.value }))}
               />
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                CUENTA B2B
+              </label>
+              <select
+                className="input select"
+                value={editOppForm.account_id}
+                onChange={(e) => setEditOppForm((prev) => ({ ...prev, account_id: e.target.value }))}
+              >
+                <option value="">Selecciona una cuenta corporativa</option>
+                {accounts.map((a) => (
+                  <option key={a.account_id} value={a.account_id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                CONTACTO
+              </label>
+              <select
+                className="input select"
+                value={editOppForm.contact_id}
+                onChange={(e) => setEditOppForm((prev) => ({ ...prev, contact_id: e.target.value }))}
+              >
+                <option value="">Selecciona un contacto corporativo</option>
+                {contacts.map((c) => (
+                  <option key={c.contact_id} value={c.contact_id}>
+                    {c.first_name} {c.last_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                ETAPA
+              </label>
+              <select
+                className="input select"
+                value={editOppForm.pipeline_stage_id}
+                onChange={(e) => setEditOppForm((prev) => ({ ...prev, pipeline_stage_id: e.target.value }))}
+              >
+                {stages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              CUENTA B2B
-            </label>
-            <select
-              className="input select"
-              value={editOppForm.account_id}
-              onChange={(e) => setEditOppForm((prev) => ({ ...prev, account_id: e.target.value }))}
-            >
-              <option value="">Selecciona una cuenta corporativa</option>
-              {accounts.map((a) => (
-                <option key={a.account_id} value={a.account_id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
+          {/* ── Separador ── */}
+          <hr style={{ borderColor: 'var(--sys-border-soft)' }} />
+
+          {/* ── Cotización integrada ── */}
+          <div>
+            <h3 className="text-sm font-semibold tracking-wider uppercase mb-3" style={{ color: 'var(--sys-text-muted)' }}>
+              <FileText size={15} className="inline mr-1.5" style={{ color: 'var(--sys-primary)' }} />
+              Cotización
+            </h3>
+
+            <div className="flex flex-col gap-1 mb-4">
+              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                PRODUCTOS / SERVICIOS
+              </label>
+              <QuoteLineItemsEditor items={editOppLineItems} onChange={setEditOppLineItems} />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              CONTACTO
-            </label>
-            <select
-              className="input select"
-              value={editOppForm.contact_id}
-              onChange={(e) => setEditOppForm((prev) => ({ ...prev, contact_id: e.target.value }))}
-            >
-              <option value="">Selecciona un contacto corporativo</option>
-              {contacts.map((c) => (
-                <option key={c.contact_id} value={c.contact_id}>
-                  {c.first_name} {c.last_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
-              ETAPA
-            </label>
-            <select
-              className="input select"
-              value={editOppForm.pipeline_stage_id}
-              onChange={(e) => setEditOppForm((prev) => ({ ...prev, pipeline_stage_id: e.target.value }))}
-            >
-              {stages.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
+          {/* ── Acciones ── */}
           <div
-            className="flex justify-end gap-3 mt-4 pt-3"
-            style={{ borderTop: '1px solid var(--sys-border-soft)' }}
+            className="flex justify-end gap-3 mt-2 pt-3 sticky bottom-0"
+            style={{ borderTop: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)' }}
           >
             <Button variant="secondary" type="button" onClick={() => setShowEditOppModal(false)}>
               Cancelar
@@ -1039,7 +1101,7 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
                 </div>
               </div>
 
-              {/* Cotización integrada */}
+              {/* Cotización integrada (solo vista, edición en modal de editar) */}
               <div className="border-t pt-4" style={{ borderColor: 'var(--sys-border-soft)' }}>
                 <div className="flex items-center gap-2 mb-3">
                   <FileText size={16} style={{ color: 'var(--sys-primary)' }} />
@@ -1054,7 +1116,7 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
                     <p className="text-xs italic" style={{ color: 'var(--sys-text-muted)' }}>
                       Esta negociación aún no tiene cotización
                     </p>
-                    <Button variant="primary" className="btn-primary text-xs gap-1" onClick={handleCreateQuote}>
+                    <Button variant="primary" className="btn-primary text-xs gap-1" onClick={() => selectedOpp && handleEditOpp(selectedOpp)}>
                       <Plus size={14} />
                       Crear Cotización
                     </Button>
@@ -1078,23 +1140,9 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
                             )}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" className="text-xs" onClick={() => handleEditQuote(q)}>
-                            Editar
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            className="text-xs"
-                            onClick={() => {
-                              if (onNavigate) {
-                                sessionStorage.setItem('preselectOpportunityId', String(selectedOpp?.id))
-                                onNavigate('quotes')
-                              }
-                            }}
-                          >
-                            Ver Detalle
-                          </Button>
-                        </div>
+                        <Button variant="ghost" className="text-xs" onClick={() => selectedOpp && handleEditOpp(selectedOpp)}>
+                          Editar Cotización
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -1268,18 +1316,6 @@ export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAut
           </div>
         </Modal>
       )}
-
-      {/* Quote Editor Modal integrado */}
-      <QuoteEditorModal
-        open={quoteEditorOpen}
-        onClose={() => {
-          setQuoteEditorOpen(false);
-          setEditingQuote(null);
-        }}
-        onSaved={handleQuoteSaved}
-        editQuote={editingQuote}
-        preselectedOpportunityId={selectedOpp?.id ?? null}
-      />
 
       <ConfirmDialog
         open={deleteConfirmOpen}

@@ -296,6 +296,17 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['notification']->clearAll());
     });
 
+    $router->get('/api/crm/notifications/config', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['notification']->getConfig());
+    });
+
+    $router->post('/api/crm/notifications/config', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['notification']->saveConfig($input));
+    });
+
     // Theme
     $router->get('/api/crm/theme', function () use ($app) {
         header('Content-Type: application/json');

@@ -105,6 +105,8 @@ export const crmApi = {
   listNotifications: () => api.get<any[]>('/api/crm/notifications'),
   markNotificationsRead: (ids?: number[]) => api.post('/api/crm/notifications/mark-read', { ids }),
   clearNotifications: () => api.post('/api/crm/notifications/clear', {}),
+  getNotificationsConfig: () => api.get<{ stalled_deal_days: number }>('/api/crm/notifications/config'),
+  saveNotificationsConfig: (data: { stalled_deal_days: number }) => api.post('/api/crm/notifications/config', data),
 
   // Theme
   getTheme: () => api.get<{ theme: 'light' | 'dark' }>('/api/crm/theme'),

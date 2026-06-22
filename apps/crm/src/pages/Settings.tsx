@@ -4,13 +4,14 @@ import type { AdminSection } from '@kodan-apps/ui-core'
 import { PipelineManager } from '../components/settings/PipelineManager'
 import { CustomFieldsSettings } from '../components/settings/CustomFieldsSettings'
 import { UsersSettings } from '../components/settings/UsersSettings'
-import { GitBranch, Settings2, Users } from 'lucide-react'
+import { NotificationsSettings } from '../components/settings/NotificationsSettings'
+import { GitBranch, Settings2, Users, BellRing } from 'lucide-react'
 
-type SettingsPanel = 'users' | 'pipelines' | 'custom-fields'
+type SettingsPanel = 'users' | 'pipelines' | 'custom-fields' | 'notifications'
 
 function getSectionFromHash(): SettingsPanel | null {
   const hash = window.location.hash.replace('#', '')
-  if (hash === 'users' || hash === 'pipelines' || hash === 'custom-fields') return hash
+  if (hash === 'users' || hash === 'pipelines' || hash === 'custom-fields' || hash === 'notifications') return hash
   return null
 }
 
@@ -37,6 +38,7 @@ export function Settings() {
     { key: 'users', label: 'Usuarios', icon: <Users size={16} />, href: '#users' },
     { key: 'pipelines', label: 'Canales', icon: <GitBranch size={16} />, href: '#pipelines' },
     { key: 'custom-fields', label: 'Campos', icon: <Settings2 size={16} />, href: '#custom-fields' },
+    { key: 'notifications', label: 'Alertas', icon: <BellRing size={16} />, href: '#notifications' },
   ]
 
   return (
@@ -44,6 +46,7 @@ export function Settings() {
       {activePanel === 'pipelines' && <PipelineManager />}
       {activePanel === 'custom-fields' && <CustomFieldsSettings />}
       {activePanel === 'users' && <UsersSettings />}
+      {activePanel === 'notifications' && <NotificationsSettings />}
     </AdminLayout>
   )
 }

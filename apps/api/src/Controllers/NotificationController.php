@@ -90,7 +90,7 @@ final class NotificationController
     /**
      * POST /api/crm/notifications/config
      * 
-     * @param array{stalled_deal_days: int} $input
+     * @param array{stalled_deal_days?: int} $input
      * @return array{success: bool, message: string}
      */
     public function saveConfig(array $input): array

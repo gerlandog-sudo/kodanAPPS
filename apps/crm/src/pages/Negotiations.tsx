@@ -59,10 +59,9 @@ interface CardProps {
   onEdit: (opp: Opportunity) => void;
   onDelete: (opp: Opportunity) => void;
   onChat: (opp: Opportunity) => void;
-  onClick: (opp: Opportunity) => void;
 }
 
-function OppCard({ opp, isDropped, onEdit, onDelete, onChat, onClick }: CardProps) {
+function OppCard({ opp, isDropped, onEdit, onDelete, onChat }: CardProps) {
   return (
     <EntityCard
       title={opp.name}
@@ -75,7 +74,6 @@ function OppCard({ opp, isDropped, onEdit, onDelete, onChat, onClick }: CardProp
       ownerName={opp.owner_name}
       ownerAvatar={opp.owner_avatar}
       isDropped={isDropped}
-      onClick={() => onClick(opp)}
       onChat={() => onChat(opp)}
       onEdit={() => onEdit(opp)}
       onDelete={() => onDelete(opp)}
@@ -445,7 +443,6 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         onEdit={handleEditOpp}
         onDelete={handleDeleteOpp}
         onChat={handleChatOpp}
-        onClick={handleEditOpp}
       />
     ),
     [justDroppedId, handleEditOpp, handleDeleteOpp, handleChatOpp]

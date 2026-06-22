@@ -68,7 +68,7 @@ export function TenantEditModal({ tenant, plans, open, saving, onSave, onClose }
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Nombre</label>
                 <input
                   type="text"
-                  className="input"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Nombre del tenant"
@@ -77,7 +77,7 @@ export function TenantEditModal({ tenant, plans, open, saving, onSave, onClose }
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Plan de Suscripción</label>
                 <select
-                  className="input select"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
                   value={planId}
                   onChange={e => setPlanId(parseInt(e.target.value))}
                 >

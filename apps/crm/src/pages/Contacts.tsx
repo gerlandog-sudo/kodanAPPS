@@ -263,7 +263,7 @@ export function Contacts() {
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>EMPRESA / CUENTA ASOCIADA</label>
               <select 
-                className="input select" 
+                className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer" 
                 value={form.account_id} 
                 onChange={(e) => setForm(prev => ({ ...prev, account_id: e.target.value }))}
               >

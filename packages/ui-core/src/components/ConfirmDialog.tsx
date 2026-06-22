@@ -43,11 +43,11 @@ export function ConfirmDialog({
 
   return (
     <Modal open={open} onClose={loading ? () => {} : onClose} title={title}>
-      <div onKeyDown={handleKeyDown} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--sys-text)', lineHeight: 1.5 }}>
+      <div onKeyDown={handleKeyDown} className="flex flex-col gap-6">
+        <p className="m-0 text-sm text-text leading-relaxed">
           {message}
         </p>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+        <div className="flex justify-end gap-3">
           <Button variant="secondary" type="button" onClick={onClose} disabled={loading}>
             {cancelLabel}
           </Button>
@@ -56,17 +56,9 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="btn btn-primary"
+            className="px-4 py-2 rounded-lg font-semibold text-xs border-none text-white disabled:opacity-60 disabled:cursor-not-allowed transition-opacity active:scale-[0.95]"
             style={{
-              padding: '0.5rem 1rem',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
-              fontSize: '0.8125rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1,
-              border: 'none',
               background: btnVariant === 'danger' ? 'var(--sys-error)' : 'var(--sys-primary)',
-              color: '#fff',
             }}
           >
             {loading ? 'Procesando...' : confirmLabel}

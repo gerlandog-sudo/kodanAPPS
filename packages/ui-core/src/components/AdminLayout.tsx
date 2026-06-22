@@ -20,12 +20,7 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
 
   return (
     <div style={{ fontFamily: 'var(--font-montserrat, system-ui)', width: '100%' }}>
-      <div style={{
-        display: 'flex', gap: '0.125rem', marginBottom: '1.5rem',
-        background: 'var(--sys-surface)', padding: '0.25rem',
-        borderRadius: '0.5rem', border: '1px solid var(--sys-border-soft)',
-        width: 'fit-content',
-      }}>
+      <div className="flex gap-0.5 mb-6 p-1 rounded-lg border border-border-soft bg-surface w-fit">
         {sections.map(section => {
           const isActive = section.key === activeSection
           const isHovered = hoveredSection === section.key
@@ -36,20 +31,13 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
               onClick={() => onNavigate(section.key)}
               onMouseEnter={() => setHoveredSection(section.key)}
               onMouseLeave={() => setHoveredSection(null)}
+              className="flex items-center gap-2 px-4 h-9 rounded-md border-none cursor-pointer text-xs whitespace-nowrap transition-all duration-100"
               style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.5rem 1rem', height: '2.25rem',
-                borderRadius: '0.375rem',
-                border: 'none',
                 background: isActive 
                   ? 'var(--sys-primary-container)' 
                   : (isHovered ? 'var(--sys-surface-hover)' : 'transparent'),
                 color: isActive ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
-                cursor: 'pointer',
                 fontWeight: isActive ? 600 : 500,
-                fontSize: '0.75rem',
-                transition: 'all 120ms ease',
-                whiteSpace: 'nowrap',
               }}
             >
               <span style={{ display: 'flex', opacity: isActive ? 1 : 0.6 }}>
@@ -57,11 +45,7 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
               </span>
               {section.label}
               {section.count !== undefined && (
-                <span style={{
-                  fontSize: '0.625rem', fontWeight: 700, marginLeft: '0.125rem',
-                  color: isActive ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
-                  fontFamily: 'monospace',
-                }}>
+                <span className="text-[10px] font-bold ml-0.5" style={{ fontFamily: 'monospace', color: isActive ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)' }}>
                   {section.count}
                 </span>
               )}
@@ -70,8 +54,8 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
         })}
       </div>
 
-      <div style={{ minHeight: 'calc(100vh - 280px)', display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <div style={{ flex: 1, width: '100%' }}>
+      <div className="flex flex-col w-full" style={{ minHeight: 'calc(100vh - 280px)' }}>
+        <div className="flex-1 w-full">
           {children}
         </div>
       </div>

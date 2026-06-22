@@ -7,7 +7,7 @@ interface ToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'
 export function Toggle({ label, className = '', id, ...props }: ToggleProps) {
   const toggleId = id || `toggle-${Math.random().toString(36).slice(2, 8)}`
   return (
-    <label htmlFor={toggleId} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+    <label htmlFor={toggleId} className="inline-flex items-center gap-2 cursor-pointer">
       <input id={toggleId} type="checkbox" className={`sr-only ${className}`} {...props} />
       <span
         className="toggle-track"
@@ -37,7 +37,7 @@ export function Toggle({ label, className = '', id, ...props }: ToggleProps) {
           }}
         />
       </span>
-      {label && <span style={{ fontSize: '0.875rem', color: 'var(--sys-text)' }}>{label}</span>}
+      {label && <span className="text-sm text-text">{label}</span>}
     </label>
   )
 }

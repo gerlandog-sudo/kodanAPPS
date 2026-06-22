@@ -53,7 +53,7 @@ export function NotificationsSettings() {
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl animate-fade-in">
-      <div className="double-bevel-card p-6 flex flex-col gap-6">
+      <div className="p-6 flex flex-col gap-6 bg-surface border border-border-soft rounded-2xl shadow-sm">
         <div className="flex items-center gap-3 pb-4 border-b" style={{ borderColor: 'var(--sys-border-soft)' }}>
           <div className="size-10 rounded-lg flex items-center justify-center bg-[var(--sys-primary-container)] text-[var(--color-on-primary-container)]">
             <BellRing size={20} />

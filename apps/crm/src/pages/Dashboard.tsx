@@ -289,7 +289,10 @@ export function Dashboard() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="spinner text-primary" style={{ width: '2rem', height: '2rem' }} />
+          <svg className="animate-spin text-primary" style={{ width: '2rem', height: '2rem' }} viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
           <p className="text-sm" style={{ color: 'var(--sys-text-muted)' }}>Cargando analíticas comerciales...</p>
         </div>
       </div>
@@ -340,8 +343,8 @@ export function Dashboard() {
                 <span className="text-[10px] text-muted" style={{ color: 'var(--sys-text-muted)' }}>Tendencia 30d</span>
                 <button
                   onClick={() => handleOpenDrillDown('pipeline')}
-                  className="btn btn-secondary"
-                  style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+                  className="bg-surface-raised border border-border-soft rounded px-2.5 py-1 text-xs text-text-muted font-medium cursor-pointer hover:bg-surface-hover transition-colors"
+                  style={{ borderRadius: 'var(--radius-sm)' }}
                 >
                   Ver Detalle
                 </button>
@@ -380,8 +383,8 @@ export function Dashboard() {
                 <span className="text-[10px] text-muted" style={{ color: 'var(--sys-text-muted)' }}>Volumen Comercial</span>
                 <button
                   onClick={() => handleOpenDrillDown('active')}
-                  className="btn btn-secondary"
-                  style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+                  className="bg-surface-raised border border-border-soft rounded px-2.5 py-1 text-xs text-text-muted font-medium cursor-pointer hover:bg-surface-hover transition-colors"
+                  style={{ borderRadius: 'var(--radius-sm)' }}
                 >
                   Ver Detalle
                 </button>
@@ -420,8 +423,8 @@ export function Dashboard() {
                 <span className="text-[10px] text-muted" style={{ color: 'var(--sys-text-muted)' }}>Proyectos ganados</span>
                 <button
                   onClick={() => handleOpenDrillDown('won')}
-                  className="btn btn-secondary"
-                  style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+                  className="bg-surface-raised border border-border-soft rounded px-2.5 py-1 text-xs text-text-muted font-medium cursor-pointer hover:bg-surface-hover transition-colors"
+                  style={{ borderRadius: 'var(--radius-sm)' }}
                 >
                   Ver Detalle
                 </button>
@@ -460,8 +463,8 @@ export function Dashboard() {
                 <span className="text-[10px] text-muted" style={{ color: 'var(--sys-text-muted)' }}>Crecimiento Cuentas</span>
                 <button
                   onClick={() => handleOpenDrillDown('accounts')}
-                  className="btn btn-secondary"
-                  style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+                  className="bg-surface-raised border border-border-soft rounded px-2.5 py-1 text-xs text-text-muted font-medium cursor-pointer hover:bg-surface-hover transition-colors"
+                  style={{ borderRadius: 'var(--radius-sm)' }}
                 >
                   Ver Detalle
                 </button>

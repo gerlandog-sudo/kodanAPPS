@@ -20,7 +20,7 @@ export function Card({ children, variant, className = '', front, back, ...props 
   }
 
   return (
-    <div className={`card ${className}`} {...props}>
+    <div className={`bg-surface-raised border border-border-soft rounded-lg ${className}`} {...props}>
       {children}
     </div>
   )

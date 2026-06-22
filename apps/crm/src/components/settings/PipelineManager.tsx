@@ -82,7 +82,7 @@ function SortableStageRow({ stage, idx, editingStages, updateEditingStage, remov
             type="button" 
             onClick={() => removeEditingStage(idx)} 
             disabled={editingStages.length <= 1}
-            className="table-action-btn table-action-btn-danger"
+            className="p-1.5 rounded-lg bg-transparent border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
             style={{ opacity: editingStages.length <= 1 ? 0.3 : 1, cursor: editingStages.length <= 1 ? 'not-allowed' : 'pointer' }}
           >
             <Trash2 size={14} />
@@ -233,7 +233,7 @@ export function PipelineManager() {
     setNewReason('')
   }
 
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}><span className="spinner" /></div>
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}><svg className="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg></div>
 
   return (
     <div className="pipeline-manager-layout">

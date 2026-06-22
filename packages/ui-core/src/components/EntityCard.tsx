@@ -209,7 +209,7 @@ export function EntityCard({
 
       {/* Línea 8: Acciones (chat, edit, delete) */}
       {hasActions && (
-        <div className="entity-card-actions" style={{
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{
           display: 'flex', alignItems: 'center', gap: '0.375rem',
           paddingTop: '0.75rem', borderTop: '1px solid color-mix(in srgb, var(--sys-border-soft) 40%, transparent)',
           marginTop: '0.5rem', justifyContent: 'flex-end',

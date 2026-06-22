@@ -264,20 +264,20 @@ export function PlanManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Nombre *</label>
-                <input type="text" className="input" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Ej: Premium Plus" />
+                <input type="text" className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Ej: Premium Plus" />
                 {errors.name && <p className="text-xs" style={{ color: 'var(--sys-error)' }}>{errors.name}</p>}
                 <label className="text-xs font-medium mt-3" style={{ color: 'var(--sys-text-muted)' }}>Descripción</label>
-                <textarea className="input" rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción del plan..." />
+                <textarea className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors" rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción del plan..." />
               </div>
               <div className="flex flex-row gap-4 items-start">
                 <div className="flex-1 flex flex-col gap-1.5">
                   <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Precio *</label>
-                  <input type="number" step="0.01" min="0" className="input" value={formData.price} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} placeholder="49.00" />
+                  <input type="number" step="0.01" min="0" className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors" value={formData.price} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} placeholder="49.00" />
                   {errors.price && <p className="text-xs" style={{ color: 'var(--sys-error)' }}>{errors.price}</p>}
                 </div>
                 <div className="flex-1 flex flex-col gap-1.5">
                   <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Moneda *</label>
-                  <input type="text" className="input" value={formData.currency} onChange={e => setFormData({ ...formData, currency: e.target.value.toUpperCase() })} placeholder="USD" maxLength={3} />
+                  <input type="text" className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors" value={formData.currency} onChange={e => setFormData({ ...formData, currency: e.target.value.toUpperCase() })} placeholder="USD" maxLength={3} />
                   {errors.currency && <p className="text-xs" style={{ color: 'var(--sys-error)' }}>{errors.currency}</p>}
                 </div>
               </div>
@@ -301,7 +301,7 @@ export function PlanManagement() {
                               type="number"
                               min="0"
                               step="1"
-                              className="input pr-7 text-sm w-full"
+                              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 pr-7 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                               value={formData.limits[idx]?.value ?? 0}
                               onChange={e => handleLimitChange(idx, parseInt(e.target.value) || 0)}
                               placeholder="0"

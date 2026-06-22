@@ -188,7 +188,7 @@ export function RoleManagement() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>App</label>
                 <select
-                  className="input select"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
                   value={form.app_id}
                   onChange={e => setForm(p => ({ ...p, app_id: e.target.value }))}
                 >
@@ -200,7 +200,7 @@ export function RoleManagement() {
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Nombre del Rol</label>
                 <input
                   type="text"
-                  className="input"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                   value={form.name}
                   onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                   placeholder="Ej: supervisor"
@@ -211,7 +211,7 @@ export function RoleManagement() {
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Descripción</label>
                 <input
                   type="text"
-                  className="input"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                   value={form.description}
                   onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                   placeholder="Opcional"

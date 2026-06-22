@@ -173,8 +173,7 @@ export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, op
             <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)' }} />
             <input
               type="number"
-              className="input"
-              style={{ paddingLeft: '2.5rem' }}
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 pl-10 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               value={hours}
               onChange={(e) => setHours(e.target.value)}
               placeholder="0.00"
@@ -193,7 +192,10 @@ export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, op
           <Button variant="primary" type="submit" disabled={loading} className="btn-primary">
             {loading ? (
               <span className="flex items-center gap-2">
-                <span className="spinner" />
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
                 Guardando...
               </span>
             ) : (

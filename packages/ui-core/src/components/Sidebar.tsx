@@ -43,19 +43,21 @@ export function Sidebar({
   headerClassName = '',
   showUserSection = true,
 }: SidebarProps) {
+  const linkBase = 'flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium text-text-muted bg-transparent border-none cursor-pointer text-left hover:text-text hover:bg-surface-hover transition-all'
+  const linkActive = 'text-primary bg-primary-container/15'
   return (
-    <nav className="flex flex-col w-64 flex-shrink-0 h-screen sticky top-0 overflow-y-auto" style={{ background: 'var(--sys-surface-raised)', borderRight: '1px solid var(--sys-border-soft)' }}>
+    <nav className="flex flex-col w-64 flex-shrink-0 h-screen sticky top-0 overflow-y-auto bg-surface-raised border-r border-border-soft">
       <div className="flex flex-col flex-1">
-        <div className={`flex items-center justify-center gap-2.5 px-4 border-b ${headerClassName}`} style={{ borderColor: 'var(--sys-border-soft)', height: 80, minHeight: 80 }}>
+        <div className={`flex items-center justify-center gap-2.5 px-4 border-b border-border-soft ${headerClassName}`} style={{ height: 80, minHeight: 80 }}>
           {logoIcon || (logo && <img src={logo} alt="kodan" className="h-8 w-auto" />)}
-          <span className="text-base font-bold tracking-tight" style={{ color: 'var(--sys-text)', fontFamily: 'var(--font-hanken)' }}>{title}</span>
+          <span className="text-base font-bold tracking-tight text-text">{title}</span>
         </div>
         <div className="flex flex-col gap-1 px-3 py-6 flex-1">
           {navItems.map(item => (
             <button
               key={item.key}
               onClick={() => onNavigate(item.key)}
-              className={`sidebar-link ${activeKey === item.key ? 'active' : ''}`}
+              className={`${linkBase} ${activeKey === item.key ? linkActive : ''}`}
             >
               {item.icon}
               <span>{item.label}</span>
@@ -66,35 +68,35 @@ export function Sidebar({
       </div>
 
       {footerItems && (
-        <div className="border-t px-3 py-2" style={{ borderColor: 'var(--sys-border-soft)' }}>
+        <div className="border-t border-border-soft px-3 py-2">
           {footerItems}
         </div>
       )}
 
       {showUserSection && (
-        <div className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
+        <div className="border-t border-border-soft">
           {user && (
-            <div className="px-4 py-3 flex items-center gap-3 border-b" style={{ borderColor: 'var(--sys-border-soft)' }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: 'var(--sys-primary-container)', color: 'var(--color-on-primary-container)' }}>
+            <div className="px-4 py-3 flex items-center gap-3 border-b border-border-soft">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold bg-primary-container text-on-primary-container">
                 {user.display_name?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: 'var(--sys-text)' }}>{user.display_name}</p>
-                <p className="text-xs truncate" style={{ color: 'var(--sys-text-muted)' }}>{user.email}</p>
+                <p className="text-sm font-medium truncate text-text">{user.display_name}</p>
+                <p className="text-xs truncate text-text-muted">{user.email}</p>
               </div>
             </div>
           )}
           <div className="p-3 flex flex-col gap-1">
             {extraItems}
-            <button onClick={onThemeToggle} className="sidebar-link">
+            <button onClick={onThemeToggle} className={`${linkBase} ${theme === 'dark' ? linkActive : ''}`}>
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
             </button>
-            <button onClick={onLogout} className="sidebar-link">
+            <button onClick={onLogout} className={linkBase}>
               <LogOut size={18} />
               <span>Cerrar Sesion</span>
             </button>
-            <div className="text-[10px] text-center pt-2" style={{ color: 'var(--sys-text-muted)' }}>
+            <div className="text-[10px] text-center pt-2 text-text-muted">
               {title} {version}
             </div>
           </div>

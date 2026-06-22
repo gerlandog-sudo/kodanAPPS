@@ -1,6 +1,7 @@
 import { Input as UiInput } from './Input'
 import { MultiSelect } from './MultiSelect'
 import { Toggle } from './Toggle'
+import { Select } from './Select'
 
 interface FieldDefinition {
   id: number
@@ -73,17 +74,12 @@ export function CustomFieldsForm({ definitions, values, onChange }: CustomFields
             return (
               <div key={def.id}>
                 {label}
-                <select
-                  className="input"
+                <Select
+                  options={opts}
                   value={val ?? ''}
-                  onChange={e => onChange(def.field_key, e.target.value)}
-                  style={{ appearance: 'auto', cursor: 'pointer' }}
-                >
-                  <option value="">Seleccionar...</option>
-                  {opts.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
+                  onChange={v => onChange(def.field_key, v)}
+                  placeholder="Seleccionar..."
+                />
               </div>
             )
           }

@@ -150,7 +150,7 @@ export function QuoteDetailPanel({ open, quoteId, onClose, onUpdated, onEdit }: 
                   disabled={statusLoading !== null}
                   className="gap-1"
                 >
-                  {statusLoading === 'sent' ? <span className="spinner" /> : <Send size={14} />}
+                  {statusLoading === 'sent' ? <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> : <Send size={14} />}
                   Marcar como Enviada
                 </Button>
                 <Button
@@ -171,7 +171,7 @@ export function QuoteDetailPanel({ open, quoteId, onClose, onUpdated, onEdit }: 
                   disabled={statusLoading !== null}
                   className="gap-1"
                 >
-                  {statusLoading === 'accepted' ? <span className="spinner" /> : <CheckCircle size={14} />}
+                  {statusLoading === 'accepted' ? <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> : <CheckCircle size={14} />}
                   Marcar como Aceptada
                 </Button>
                 <Button
@@ -180,7 +180,7 @@ export function QuoteDetailPanel({ open, quoteId, onClose, onUpdated, onEdit }: 
                   disabled={statusLoading !== null}
                   className="gap-1"
                 >
-                  {statusLoading === 'rejected' ? <span className="spinner" /> : <XCircle size={14} />}
+                  {statusLoading === 'rejected' ? <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> : <XCircle size={14} />}
                   Marcar como Rechazada
                 </Button>
               </div>

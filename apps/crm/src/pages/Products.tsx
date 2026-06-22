@@ -221,7 +221,7 @@ export function Products() {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>DESCRIPCIÓN COMERCIAL</label>
             <textarea 
-              className="input text-xs" 
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors" 
               rows={3}
               value={form.description} 
               onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))} 
@@ -232,7 +232,7 @@ export function Products() {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>ESTADO</label>
             <select 
-              className="input select" 
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer" 
               value={form.is_active} 
               onChange={(e) => setForm(prev => ({ ...prev, is_active: e.target.value }))}
             >

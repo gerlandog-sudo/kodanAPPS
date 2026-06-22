@@ -465,7 +465,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       <div className="flex flex-col md:flex-row md:items-center justify-end gap-3 shrink-0 pb-3 w-full sticky top-0 z-10" style={{ background: 'var(--sys-bg)' }}>
         <div className="flex items-center gap-3">
           <select
-            className="input select max-w-xs"
+            className="w-full max-w-xs bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
             value={selectedPipelineId || ''}
             onChange={(e) => setSelectedPipelineId(parseInt(e.target.value, 10))}
           >
@@ -477,7 +477,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           </select>
           <button
             onClick={() => setShowArchived(!showArchived)}
-            className="btn"
+            className="bg-transparent border border-border-soft rounded-lg px-3 py-2 cursor-pointer inline-flex items-center justify-center transition-colors"
             style={{
               background: showArchived ? 'var(--sys-primary-container)' : 'transparent',
               color: showArchived ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
@@ -542,11 +542,11 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         className="modal-wide"
       >
         <div className="flex gap-1 p-1 rounded-lg mb-4 mt-2" style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content' }}>
-          <button onClick={() => setModalTab('general')} className="btn" style={{ background: modalTab === 'general' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'general' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', fontWeight: modalTab === 'general' ? 600 : 500, fontSize: '0.8125rem' }}>
+          <button onClick={() => setModalTab('general')} className="bg-transparent border-none px-4 py-2 rounded-lg cursor-pointer text-xs font-semibold transition-colors" style={{ background: modalTab === 'general' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'general' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)' }}>
             General
           </button>
           {fieldDefs.length > 0 && (
-            <button onClick={() => setModalTab('custom-fields')} className="btn" style={{ background: modalTab === 'custom-fields' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'custom-fields' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', fontWeight: modalTab === 'custom-fields' ? 600 : 500, fontSize: '0.8125rem' }}>
+            <button onClick={() => setModalTab('custom-fields')} className="bg-transparent border-none px-4 py-2 rounded-lg cursor-pointer text-xs font-semibold transition-colors" style={{ background: modalTab === 'custom-fields' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'custom-fields' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)' }}>
               Campos Personalizados
             </button>
           )}
@@ -594,7 +594,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   CUENTA B2B
                 </label>
                 <select
-                  className="input select"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
                   value={oppFormData.account_id}
                   onChange={(e) => setOppFormData((prev) => ({ ...prev, account_id: e.target.value }))}
                 >
@@ -611,7 +611,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   CONTACTO
                 </label>
                 <select
-                  className="input select"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
                   value={oppFormData.contact_id}
                   onChange={(e) => setOppFormData((prev) => ({ ...prev, contact_id: e.target.value }))}
                 >
@@ -628,7 +628,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   ETAPA
                 </label>
                 <select
-                  className="input select"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
                   value={oppFormData.pipeline_stage_id}
                   onChange={(e) => setOppFormData((prev) => ({ ...prev, pipeline_stage_id: e.target.value }))}
                 >
@@ -680,7 +680,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                       if (selectedPipelineId) loadPipelineData(selectedPipelineId, showArchived)
                     } catch { toast.error('Error al archivar/restaurar') }
                   }}
-                  className="btn gap-1.5 text-xs font-semibold py-1.5 px-3 flex items-center"
+                  className="bg-transparent gap-1.5 text-xs font-semibold py-1.5 px-3 flex items-center rounded-lg cursor-pointer transition-colors"
                   style={{
                     color: 'var(--sys-text-muted)',
                     border: '1px solid var(--sys-border-soft)',

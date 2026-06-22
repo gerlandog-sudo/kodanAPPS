@@ -66,13 +66,13 @@ export function QuotePrintView({ quoteId }: QuotePrintViewProps) {
       {/* Print controls — hidden on print */}
       <div className="no-print flex justify-center gap-4 p-4" style={{ background: 'var(--sys-bg-card)', borderBottom: '1px solid var(--sys-border-soft)' }}>
         <button
-          className="btn btn-primary"
+          className="bg-primary text-on-primary border-none px-5 py-2.5 rounded-lg font-semibold text-sm cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-[0.95] transition-all"
           onClick={() => window.print()}
         >
           Imprimir / Guardar PDF
         </button>
         <button
-          className="btn btn-secondary"
+          className="bg-surface-raised text-text-muted border border-border-soft px-5 py-2.5 rounded-lg font-semibold text-sm cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-surface-hover transition-all"
           onClick={() => window.close()}
         >
           Cerrar

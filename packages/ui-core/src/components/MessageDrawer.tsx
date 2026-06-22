@@ -249,33 +249,33 @@ export function MessageDrawer({
   return (
     <>
       <div
-        className={`chat-drawer-overlay ${isOpen ? 'open' : ''}`}
+        className={`fixed inset-0 z-[999] bg-black/30 opacity-0 pointer-events-none transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : ''}`}
         onClick={onClose}
       />
       <div
-        className={`chat-drawer ${isOpen ? 'open' : ''}`}
+        className={`fixed top-0 right-0 h-full w-[420px] max-w-screen z-[1000] bg-surface border-l border-border-soft shadow-2xl flex flex-col translate-x-full transition-transform duration-350 ease-out will-change-transform ${isOpen ? '!translate-x-0' : ''}`}
         role="dialog"
         aria-label="Panel de mensajería"
       >
         {/* Cabecera */}
-        <div className="chat-header">
-          <h3 className="chat-title">{title || 'Mensajería del Sistema'}</h3>
-          <button className="chat-close-btn" onClick={onClose} aria-label="Cerrar panel">
+        <div className="flex justify-between items-center px-6 py-5 bg-surface border-b border-border-soft">
+          <h3 className="text-lg font-semibold text-text m-0 tracking-tight">{title || 'Mensajería del Sistema'}</h3>
+          <button className="bg-transparent border-none text-text-muted cursor-pointer p-1 rounded hover:text-text hover:bg-surface-hover transition-colors" onClick={onClose} aria-label="Cerrar panel">
             <X size={20} />
           </button>
         </div>
 
         {/* Cuerpo del Chat */}
-        <div className="chat-body" ref={bodyRef}>
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 scroll-smooth" ref={bodyRef}>
           {loading && messages.length === 0 ? (
-            <div className="chat-system-message">Cargando conversación...</div>
+            <div className="self-center bg-surface-hover border border-border-soft px-3 py-1.5 rounded-full text-xs text-text-muted text-center max-w-[85%]">Cargando conversación...</div>
           ) : messages.length === 0 ? (
-            <div className="chat-system-message">No hay mensajes. Comienza la conversación.</div>
+            <div className="self-center bg-surface-hover border border-border-soft px-3 py-1.5 rounded-full text-xs text-text-muted text-center max-w-[85%]">No hay mensajes. Comienza la conversación.</div>
           ) : (
             messages.map((msg) => {
               if (msg.is_system) {
                 return (
-                  <div key={msg.id} className="chat-system-message">
+                  <div key={msg.id} className="self-center bg-surface-hover border border-border-soft px-3 py-1.5 rounded-full text-xs text-text-muted text-center max-w-[85%]">
                     {msg.content}
                   </div>
                 );
@@ -285,12 +285,12 @@ export function MessageDrawer({
               return (
                 <div
                   key={msg.id}
-                  className={`chat-bubble-container ${isMe ? 'me' : 'others'}`}
+                  className={`flex flex-col max-w-[80%] ${isMe ? 'self-end' : 'self-start'}`}
                 >
-                  {!isMe && <span className="chat-bubble-sender">{msg.sender_name ?? msg.sender_email}</span>}
-                  <div className="chat-bubble">
+                  {!isMe && <span className="text-[11px] text-text-muted mb-1 ml-0.5 font-medium">{msg.sender_name ?? msg.sender_email}</span>}
+                  <div className={`chat-bubble ${isMe ? 'me' : 'others'}`}>
                     {renderMessageContent(msg.content)}
-                    <span className="chat-bubble-time">{formatTime(msg.created_at)}</span>
+                    <span className="block text-[10px] text-text-muted/70 text-right mt-1">{formatTime(msg.created_at)}</span>
                   </div>
                 </div>
               );
@@ -300,27 +300,27 @@ export function MessageDrawer({
 
         {/* Sugerencias de Mención */}
         {mentionQuery !== null && filteredSuggestions.length > 0 && (
-          <div className="chat-mentions-dropdown">
+          <div className="bg-surface-raised border-t border-b border-border-soft max-h-40 overflow-y-auto flex flex-col shadow-md">
             {filteredSuggestions.map((u, idx) => (
               <div
                 key={u.id}
-                className={`chat-mention-item ${idx === selectedSuggestionIndex ? 'active' : ''}`}
+                className={`flex flex-col px-5 py-2 cursor-pointer hover:bg-surface-hover ${idx === selectedSuggestionIndex ? 'bg-surface-hover' : ''}`}
                 onClick={() => handleSelectSuggestion(u)}
               >
-                <span className="mention-name">{u.display_name}</span>
-                <span className="mention-email">{u.email}</span>
+                <span className="text-[13px] font-semibold text-text">{u.display_name}</span>
+                <span className="text-[10px] text-text-muted">{u.email}</span>
               </div>
             ))}
           </div>
         )}
 
         {/* Input de Envío */}
-        <div className="chat-footer">
-          <form className="chat-input-form" onSubmit={handleSend}>
+        <div className="px-6 py-4 bg-surface border-t border-border-soft">
+          <form className="flex gap-3 items-center" onSubmit={handleSend}>
             <input
               ref={inputRef}
               type="text"
-              className="chat-input"
+              className="flex-1 bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               placeholder="Escribe un mensaje... Usa @ para mencionar"
               value={input}
               onChange={handleInputChange}
@@ -330,7 +330,7 @@ export function MessageDrawer({
             />
             <button
               type="submit"
-              className="chat-send-btn"
+              className="bg-primary-container text-on-primary-container border-none px-5 py-2.5 rounded-lg font-semibold text-sm cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-primary hover:text-on-primary active:scale-[0.95] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               disabled={isPending || !input.trim()}
             >
               <Send size={16} />

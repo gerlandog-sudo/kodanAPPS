@@ -32,7 +32,7 @@ export function DateTimeLive() {
   const timePart = timeFormatter.format(now);
 
   return (
-    <time className="datetime-live" dateTime={now.toISOString()} title={datePart}>
+    <time className="text-sm text-text-muted font-medium" dateTime={now.toISOString()} title={datePart}>
       {datePart} &bull; {timePart}
     </time>
   );

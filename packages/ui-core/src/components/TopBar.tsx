@@ -29,18 +29,18 @@ export function TopBar({
   children,
 }: TopBarProps) {
   return (
-    <header className="topbar">
-      <div className="topbar-section">
+    <header className="sticky top-0 z-40 flex items-center justify-between h-16 px-6 bg-glass backdrop-blur-2xl border-b border-glass-border">
+      <div className="flex items-center gap-4">
         <DateTimeLive />
       </div>
 
       {(title || children) && (
-        <div className="topbar-section" style={{ flex: 1, justifyContent: 'center' }}>
+        <div className="flex items-center gap-4 flex-1 justify-center">
           {children}
         </div>
       )}
 
-      <div className="topbar-section">
+      <div className="flex items-center gap-4">
         <NotificationBell
           count={notificationCount}
           onClick={onNotificationClick}

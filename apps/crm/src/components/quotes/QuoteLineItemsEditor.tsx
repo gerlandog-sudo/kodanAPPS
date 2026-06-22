@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Button, Input } from '@kodan-apps/ui-core'
+import { useEffect, useState, useMemo } from 'react'
+import { Button, Input, Select } from '@kodan-apps/ui-core'
 import { Plus, Trash2, AlertCircle } from 'lucide-react'
 import { crmApi } from '../../api/client'
 import type { QuoteLineItem } from '../../types/admin'
@@ -28,6 +28,14 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
       // silently fail, show empty
     }).finally(() => setProductsLoading(false))
   }, [])
+
+  const productSelectOptions = useMemo(() => {
+    return products.map((p) => ({
+      value: p.id,
+      label: p.name,
+      description: p.sku ? `SKU: ${p.sku} | P. Unit: $${p.price}` : `P. Unit: $${p.price}`,
+    }))
+  }, [products])
 
   const getProductPrice = (productId: number): number => {
     const p = products.find((x) => x.id === productId)
@@ -162,20 +170,14 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
             {items.map((item, i) => (
               <tr key={i} className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
                 <td className="py-2 pr-3">
-                  <select
-                    className="input select text-xs w-full"
+                  <Select
+                    options={productSelectOptions}
                     value={item.product_id}
-                    onChange={(e) => handleChange(i, 'product_id', parseInt(e.target.value, 10))}
+                    onChange={(val) => handleChange(i, 'product_id', Number(val))}
                     disabled={productsLoading}
-                  >
-                    {productsLoading && <option>Cargando...</option>}
-                    {!productsLoading && products.length === 0 && <option value="">Sin productos</option>}
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}{p.sku ? ` (${p.sku})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    searchable={true}
+                    placeholder={productsLoading ? 'Cargando...' : 'Seleccionar producto...'}
+                  />
                 </td>
                 <td className="py-2 pr-3">
                   <Input
@@ -190,7 +192,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                 <td className="py-2 pr-3">
                   <Input
                     type="number"
-                    step="0.01"
+                    step="1.00"
                     min="0"
                     icon={<span className="text-xs font-semibold select-none" style={{ color: 'var(--sys-text-muted)' }}>$</span>}
                     value={item.unit_price}

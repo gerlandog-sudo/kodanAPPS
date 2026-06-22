@@ -85,14 +85,16 @@ function PaginationBar({
     pages.push(totalPages - 1)
   }
 
+  const btnBase = 'inline-flex items-center justify-center w-8 h-8 rounded-md border border-transparent bg-transparent cursor-pointer text-text-muted hover:bg-surface hover:border-border-soft hover:text-text disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200'
+
   return (
-    <div className="table-pagination">
-      <span className="table-pagination-info">
+    <div className="flex items-center justify-between px-4 py-3.5 gap-4">
+      <span className="text-xs font-medium text-text-muted whitespace-nowrap">
         Mostrando {start}–{end} de {totalRecords}
       </span>
-      <div className="table-pagination-controls">
+      <div className="flex items-center gap-0.5">
         <button
-          className="table-pagination-btn"
+          className={btnBase}
           disabled={page === 0}
           onClick={() => onPageChange(page - 1)}
         >
@@ -103,11 +105,11 @@ function PaginationBar({
 
         {pages.map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`e${i}`} className="table-pagination-ellipsis">...</span>
+            <span key={`e${i}`} className="inline-flex items-center justify-center min-w-6 h-8 text-xs text-text-muted/50">...</span>
           ) : (
             <button
               key={p}
-              className={`table-pagination-page${p === page ? ' active' : ''}`}
+              className={`inline-flex items-center justify-center min-w-8 h-8 px-1.5 rounded-md border border-transparent bg-transparent cursor-pointer text-[13px] font-medium text-text-muted hover:bg-surface hover:border-border-soft hover:text-text transition-all duration-200 ${p === page ? 'bg-primary-container border-primary-container text-on-primary font-semibold' : ''}`}
               onClick={() => onPageChange(p)}
             >
               {p + 1}
@@ -116,7 +118,7 @@ function PaginationBar({
         )}
 
         <button
-          className="table-pagination-btn"
+          className={btnBase}
           disabled={page >= totalPages - 1}
           onClick={() => onPageChange(page + 1)}
         >
@@ -252,35 +254,38 @@ export function Table<T>({
     return sortedData.filter(item => selectedKeys.includes(keyExtractor(item)))
   }, [sortedData, selectedKeys, selectable, keyExtractor])
 
+  const thBase = 'sticky top-0 z-[2] text-left px-5 py-4 text-[11px] font-bold tracking-wide uppercase text-text-muted bg-surface-raised border-b border-border-soft whitespace-nowrap'
+  const tdBase = 'px-5 py-4 text-[13px] text-text border-b border-border-soft align-middle'
+
   if (loading) {
     return (
-      <div className="table-wrapper">
-        <div className="table-container" style={maxHeight ? { maxHeight } : undefined}>
-          <table className="table">
+      <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden">
+        <div className="overflow-x-auto overflow-y-auto" style={maxHeight ? { maxHeight } : undefined}>
+          <table className="w-full border-collapse">
             <thead>
               <tr>
-                {selectable && <th className="table-th" style={{ width: '2.5rem' }} />}
+                {selectable && <th className={thBase} style={{ width: '2.5rem' }} />}
                 {columns.map(col => (
-                  <th key={col.key} className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}${col.sortable ? ' table-th-sortable' : ''}`}>
-                    <span className="table-th-content">{col.header}</span>
+                  <th key={col.key} className={`${thBase} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''} ${col.sortable ? 'cursor-pointer select-none hover:text-text' : ''}`}>
+                    <span className="inline-flex items-center gap-1">{col.header}</span>
                   </th>
                 ))}
-                {combinedActions.length > 0 && <th className="table-th table-th-right">Acciones</th>}
+                {combinedActions.length > 0 && <th className={`${thBase} text-right`}>Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {Array.from({ length: skeletonRows }).map((_, i) => (
-                <tr key={i} className="table-row">
-                  {selectable && <td className="table-td"><SkeletonBar width="1rem" /></td>}
+                <tr key={i} className="hover:bg-surface transition-colors duration-350">
+                  {selectable && <td className={tdBase}><SkeletonBar width="1rem" /></td>}
                   {columns.map(col => (
-                    <td key={col.key} className={`table-td${col.align === 'right' ? ' table-td-right' : col.align === 'center' ? ' table-td-center' : ''}`}>
+                    <td key={col.key} className={`${tdBase} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`}>
                       <div style={col.align === 'right' ? { display: 'flex', justifyContent: 'flex-end' } : col.align === 'center' ? { display: 'flex', justifyContent: 'center' } : undefined}>
                         <SkeletonBar width={col.width || (i % 2 === 0 ? '70%' : '50%')} />
                       </div>
                     </td>
                   ))}
                   {combinedActions.length > 0 && (
-                    <td className="table-td table-td-right">
+                    <td className={`${tdBase} text-right`}>
                       <SkeletonBar width="60px" />
                     </td>
                   )}
@@ -295,12 +300,12 @@ export function Table<T>({
 
   if (data.length === 0) {
     return (
-      <div className="table-wrapper">
-        <div className="table-empty">
+      <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden">
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center text-text-muted/35">
           {emptyState.icon}
-          <p className="table-empty-title">{emptyState.title}</p>
+          <p className="mt-3 text-sm font-semibold text-text-muted">{emptyState.title}</p>
           {emptyState.description && (
-            <p className="table-empty-desc">{emptyState.description}</p>
+            <p className="mt-1 text-xs opacity-70">{emptyState.description}</p>
           )}
         </div>
       </div>
@@ -308,47 +313,31 @@ export function Table<T>({
   }
 
   const hasFilterableColumns = filterable && columns.some(c => c.filterKey)
+  const actionBtn = 'inline-flex items-center justify-center w-8 h-8 rounded-md border border-transparent bg-transparent cursor-pointer text-text-muted hover:bg-surface hover:border-border-soft hover:text-text active:scale-[0.92] transition-all duration-350'
 
   return (
-    <div className="table-wrapper" ref={tableRef}>
+    <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden" ref={tableRef}>
       {selectable && selectedItems.length > 0 && bulkActions && bulkActions.length > 0 && (
         <div
-          className="table-bulk-bar"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.5rem 1rem',
-            marginBottom: '0.5rem',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--sys-primary-container)',
-            border: '1px solid var(--sys-primary-soft)',
-            fontSize: '0.8125rem',
-            color: 'var(--color-on-primary-container)',
-          }}
+          className="flex items-center gap-3 px-4 py-2 mb-2 rounded-md bg-primary-container border text-[13px] text-on-primary-container"
+          style={{ borderColor: 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
         >
-          <span style={{ fontWeight: 600, fontSize: '0.75rem' }}>
+          <span className="font-semibold text-xs">
             {selectedItems.length} seleccionado{selectedItems.length !== 1 ? 's' : ''}
           </span>
-          <div style={{ display: 'flex', gap: '0.375rem', marginLeft: 'auto' }}>
+          <div className="flex gap-1.5 ml-auto">
             {bulkActions.map((action, i) => {
               const disabled = action.disabled ? action.disabled(selectedItems) : false
+              const btnVariant = action.variant === 'danger'
+                ? 'bg-error-container text-on-error-container hover:bg-error hover:text-on-error'
+                : 'bg-surface text-text border border-border-soft hover:bg-surface-hover'
               return (
                 <button
                   key={i}
                   type="button"
                   disabled={disabled}
                   onClick={() => action.onClick(selectedItems)}
-                  className={`btn btn-${action.variant === 'danger' ? 'danger' : 'secondary'}`}
-                  style={{
-                    padding: '0.25rem 0.625rem',
-                    fontSize: '0.75rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                    opacity: disabled ? 0.5 : 1,
-                    cursor: disabled ? 'not-allowed' : 'pointer',
-                  }}
+                  className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs leading-5 whitespace-nowrap cursor-pointer border-none active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${btnVariant}`}
                 >
                   {action.icon}
                   {action.label}
@@ -359,18 +348,18 @@ export function Table<T>({
         </div>
       )}
 
-      <div className="table-container" style={maxHeight ? { maxHeight } : undefined}>
-        <table className="table">
+      <div className="overflow-x-auto overflow-y-auto" style={maxHeight ? { maxHeight } : undefined}>
+        <table className="w-full border-collapse">
           <thead>
             <tr>
               {selectable && (
-                <th className="table-th" style={{ width: '2.5rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <th className={thBase} style={{ width: '2.5rem' }}>
+                  <label className="flex items-center justify-center cursor-pointer">
                     <input
                       type="checkbox"
                       checked={allSelected}
                       onChange={toggleAll}
-                      style={{ cursor: 'pointer' }}
+                      className="cursor-pointer"
                       aria-label="Seleccionar todas las filas"
                     />
                   </label>
@@ -379,7 +368,7 @@ export function Table<T>({
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`table-th${col.align === 'right' ? ' table-th-right' : col.align === 'center' ? ' table-th-center' : ''}${col.sortable ? ' table-th-sortable' : ''}`}
+                  className={`${thBase} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''} ${col.sortable ? 'cursor-pointer select-none hover:text-text' : ''}`}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
                   {...(col.sortable ? {
                     'aria-sort': sortKey === col.key ? (sortDir === 'asc' ? 'ascending' as const : 'descending' as const) : 'none' as const,
@@ -387,7 +376,7 @@ export function Table<T>({
                     'onKeyDown': (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(col.key) } },
                   } : {})}
                 >
-                  <span className="table-th-content">
+                  <span className="inline-flex items-center gap-1">
                     {col.header}
                     {col.sortable && sortKey === col.key && (
                       sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
@@ -395,28 +384,23 @@ export function Table<T>({
                   </span>
                 </th>
               ))}
-              {combinedActions.length > 0 && <th className="table-th table-th-right">Acciones</th>}
+              {combinedActions.length > 0 && <th className={`${thBase} text-right`}>Acciones</th>}
             </tr>
             {hasFilterableColumns && (
               <tr>
-                {selectable && <th className="table-th" style={{ width: '2.5rem' }} />}
+                {selectable && <th className={thBase} style={{ width: '2.5rem' }} />}
                 {columns.map(col => (
-                  <th key={`filter-${col.key}`} className="table-th">
+                  <th key={`filter-${col.key}`} className={thBase}>
                     {col.filterKey ? (
-                      <div style={{ position: 'relative' }}>
-                        <Search size={12} style={{ position: 'absolute', left: '0.375rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--sys-text-muted)' }} />
+                      <div className="relative">
+                        <Search size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2 text-text-muted" />
                         <input
-                          className="input"
+                          className="w-full px-1.5 py-1 pl-6 rounded-md border border-border-soft bg-surface-raised text-text text-[11px] placeholder:text-text-muted/60 focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25"
                           value={filters?.[col.filterKey] || ''}
                           onChange={e => handleFilterChange(col.filterKey!, e.target.value)}
                           placeholder={`Filtrar ${col.header.toLowerCase()}...`}
                           onClick={e => e.stopPropagation()}
-                          style={{
-                            padding: '0.25rem 0.375rem 0.25rem 1.5rem',
-                            fontSize: '0.6875rem',
-                            width: '100%',
-                            boxSizing: 'border-box',
-                          }}
+                          style={{ boxSizing: 'border-box' }}
                         />
                       </div>
                     ) : (
@@ -424,7 +408,7 @@ export function Table<T>({
                     )}
                   </th>
                 ))}
-                {combinedActions.length > 0 && <th className="table-th" />}
+                {combinedActions.length > 0 && <th className={thBase} />}
               </tr>
             )}
           </thead>
@@ -436,7 +420,7 @@ export function Table<T>({
               return (
                 <tr
                   key={key}
-                  className={`table-row table-row-anim${onRowClick ? ' table-row-clickable' : ''}${selectable && isSelected ? ' table-row-selected' : ''}`}
+                  className={`hover:bg-surface transition-colors duration-350 table-row-anim${onRowClick ? ' cursor-pointer' : ''}${selectable && isSelected ? ' bg-primary-container hover:bg-surface-hover' : ''}`}
                   style={{ '--i': idx } as React.CSSProperties}
                   data-visible={visible}
                   tabIndex={0}
@@ -459,31 +443,31 @@ export function Table<T>({
                   }}
                 >
                   {selectable && (
-                    <td className="table-td" style={{ textAlign: 'center' }} role="gridcell">
-                      <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <td className={`${tdBase} text-center`} role="gridcell">
+                      <label className="inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleOne(key)}
                           onClick={e => e.stopPropagation()}
-                          style={{ cursor: 'pointer' }}
+                          className="cursor-pointer"
                           aria-label={`Seleccionar fila ${rowIdx + 1}`}
                         />
                       </label>
                     </td>
                   )}
                   {columns.map(col => (
-                    <td key={col.key} className={`table-td${col.align === 'right' ? ' table-td-right' : col.align === 'center' ? ' table-td-center' : ''}`} role="gridcell">
-                      <div className="table-cell" style={col.align === 'right' ? { justifyContent: 'flex-end' } : col.align === 'center' ? { justifyContent: 'center' } : undefined}>{col.render(item)}</div>
+                    <td key={col.key} className={`${tdBase} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : ''}`} role="gridcell">
+                      <div className="flex items-center gap-2" style={col.align === 'right' ? { justifyContent: 'flex-end' } : col.align === 'center' ? { justifyContent: 'center' } : undefined}>{col.render(item)}</div>
                     </td>
                   ))}
                   {combinedActions.length > 0 && (
-                    <td className="table-td table-td-right" role="gridcell">
-                      <div className="table-actions">
+                    <td className={`${tdBase} text-right`} role="gridcell">
+                      <div className="flex items-center justify-end gap-0.5">
                         {combinedActions.map((action, ai) => (
                           <button
                             key={ai}
-                            className={`table-action-btn${action.variant === 'danger' ? ' table-action-btn-danger' : ''}`}
+                            className={`${actionBtn} ${action.variant === 'danger' ? 'text-error hover:bg-error-container hover:border-error/20 active:scale-[0.92]' : ''}`}
                             title={action.label}
                             aria-label={action.label}
                             onClick={e => { e.stopPropagation(); action.onClick(item) }}

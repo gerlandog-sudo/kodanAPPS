@@ -124,8 +124,7 @@ export function Quotes() {
           <div className="relative w-full max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)' }} />
             <input
-              className="input"
-              style={{ paddingLeft: '2.2rem' }}
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 pl-9 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
               placeholder="Buscar cotización..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}

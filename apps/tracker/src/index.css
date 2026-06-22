@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "../../../packages/ui-core/src/styles/base.css";
-@source "../../../packages/ui-core/src/**/*.{ts,tsx}";
 
 :root {
   --sys-bg: #f8fafc;
@@ -24,6 +22,8 @@
   --sys-success-bg: #bbf7d0;
   --sys-glass: rgba(248, 250, 252, 0.7);
   --sys-glass-border: rgba(15, 23, 42, 0.08);
+  --sys-on-error: #ffffff;
+  --sys-on-error-container: #dc2626;
 }
 
 .theme-dark {
@@ -48,10 +48,14 @@
   --sys-success-bg: #62e2d1;
   --sys-glass: rgba(11, 19, 38, 0.75);
   --sys-glass-border: rgba(218, 226, 253, 0.08);
+  --sys-on-error: #690005;
+  --sys-on-error-container: #ffdad6;
 }
 
 @theme {
-  --color-surface: #f8fafc;
+  --color-surface: var(--sys-surface);
+  --color-surface-raised: var(--sys-surface-raised);
+  --color-surface-hover: var(--sys-surface-hover);
   --color-surface-dim: #cbd5e1;
   --color-surface-bright: #f8fafc;
   --color-surface-container-lowest: #ffffff;
@@ -63,10 +67,13 @@
   --color-on-surface-variant: #475569;
   --color-outline: #64748b;
   --color-outline-variant: #cbd5e1;
-  --color-primary: #0059ba;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #2372df;
-  --color-on-primary-container: #fefcff;
+  --color-text: var(--sys-text);
+  --color-text-muted: var(--sys-text-muted);
+  --color-border-soft: var(--sys-border-soft);
+  --color-primary: var(--sys-primary);
+  --color-on-primary: var(--sys-on-primary);
+  --color-primary-container: var(--sys-primary-container);
+  --color-on-primary-container: var(--sys-on-primary-container);
   --color-secondary: #475569;
   --color-on-secondary: #ffffff;
   --color-secondary-container: #cbd5e1;
@@ -75,13 +82,15 @@
   --color-on-tertiary: #ffffff;
   --color-tertiary-container: #ddd6fe;
   --color-on-tertiary-container: #7c3aed;
-  --color-error: #dc2626;
-  --color-on-error: #ffffff;
-  --color-error-container: #fee2e2;
-  --color-on-error-container: #dc2626;
-  --color-background: #f8fafc;
+  --color-error: var(--sys-error);
+  --color-on-error: var(--sys-on-error);
+  --color-error-container: var(--sys-error-container);
+  --color-on-error-container: var(--sys-on-error-container);
+  --color-background: var(--sys-bg);
   --color-on-background: #0f172a;
   --color-surface-variant: #e2e8f0;
+  --color-glass: var(--sys-glass);
+  --color-glass-border: var(--sys-glass-border);
 
   --color-dark-surface: #0b1326;
   --color-dark-surface-dim: #0b1326;

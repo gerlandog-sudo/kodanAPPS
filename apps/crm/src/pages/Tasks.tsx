@@ -139,7 +139,10 @@ export function Tasks() {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <span className="spinner" />
+          <svg className="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -147,7 +150,7 @@ export function Tasks() {
             const isOverdue = t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed';
 
             return (
-              <Card key={t.id} className="p-5 double-bevel-card flex flex-col justify-between gap-4">
+              <Card key={t.id} className="p-5 flex flex-col justify-between gap-4 bg-surface border border-border-soft rounded-2xl shadow-sm">
                 <div className="flex flex-col gap-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -235,7 +238,7 @@ export function Tasks() {
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>ESTADO</label>
               <select 
-                className="input select" 
+                className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer" 
                 value={form.status} 
                 onChange={(e) => setForm(prev => ({ ...prev, status: e.target.value }))}
               >
@@ -248,7 +251,7 @@ export function Tasks() {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NEGOCIACIÓN VINCULADA</label>
             <select 
-              className="input select" 
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer" 
               value={form.opportunity_id} 
               onChange={(e) => setForm(prev => ({ ...prev, opportunity_id: e.target.value }))}
             >
@@ -262,7 +265,7 @@ export function Tasks() {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NOTAS / DESCRIPCIÓN</label>
             <textarea 
-              className="input text-xs" 
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors" 
               rows={3}
               value={form.description} 
               onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))} 

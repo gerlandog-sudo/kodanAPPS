@@ -60,22 +60,22 @@ export function Login({
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4" style={{ background: 'var(--sys-bg)' }}>
+    <div className="flex items-center justify-center min-h-screen px-4 bg-bg">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-10">
           <div className="flex items-center gap-3">
             {logoIcon || <img src={logo} alt="kodan" className="h-8 w-auto" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />}
-            <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--sys-text)', fontFamily: 'var(--font-hanken)' }}>{title}</span>
+            <span className="text-xl font-bold tracking-tight text-text">{title}</span>
           </div>
           {subtitle && (
-            <p className="text-xs text-center mt-2" style={{ color: 'var(--sys-text-muted)' }}>{subtitle}</p>
+            <p className="text-xs text-center mt-2 text-text-muted">{subtitle}</p>
           )}
         </div>
 
         <Card className={cardClassName}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="flex flex-col gap-1.5">
-              <label className={labelClassName} style={{ color: 'var(--sys-text-muted)', fontFamily: 'var(--font-hanken)' }} htmlFor="email">
+              <label className={`${labelClassName} text-text-muted`} htmlFor="email">
                 CORREO ELECTRÓNICO
               </label>
               <Input
@@ -91,16 +91,16 @@ export function Login({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className={labelClassName} style={{ color: 'var(--sys-text-muted)', fontFamily: 'var(--font-hanken)' }} htmlFor="password">
+              <label className={`${labelClassName} text-text-muted`} htmlFor="password">
                 CONTRASEÑA
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)' }} />
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  className="input"
+                  className="w-full px-4 py-3 rounded-md border border-border-soft bg-surface-raised text-text text-sm placeholder:text-text-muted/60 focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -109,8 +109,7 @@ export function Login({
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--sys-text-muted)' }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
                 >
@@ -122,7 +121,7 @@ export function Login({
             <Button variant="primary" type="submit" className="w-full mt-1" disabled={loading}>
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <span className="spinner" />
+                  <span className="inline-block w-4 h-4 border-2 border-current border-r-transparent rounded-full animate-spin" />
                   Iniciando...
                 </span>
               ) : (
@@ -134,11 +133,10 @@ export function Login({
             </Button>
           </form>
 
-          <div className="mt-6 text-center pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+          <div className="mt-6 text-center pt-4 border-t border-border-soft">
             <button
               type="button"
-              className="text-xs font-medium inline-flex items-center gap-1"
-              style={{ color: 'var(--sys-text-muted)' }}
+              className="text-xs font-medium inline-flex items-center gap-1 text-text-muted hover:text-text transition-colors"
               onClick={onGoToSetPassword}
             >
               Establecer o recuperar contraseña

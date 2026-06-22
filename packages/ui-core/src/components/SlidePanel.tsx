@@ -26,58 +26,32 @@ export function SlidePanel({ open, onClose, title, children, width = '32rem' }: 
     <>
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 50,
-          background: 'rgba(0,0,0,0.4)',
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? 'auto' : 'none',
-          transition: 'opacity 200ms ease',
-        }}
+        className="fixed inset-0 z-50 bg-black/40 transition-opacity duration-200"
+        style={{ opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none' }}
       />
       <div
+        className="fixed top-0 right-0 bottom-0 z-51 bg-surface border-l border-border-soft flex flex-col transition-transform duration-250 ease-out"
         style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
           width,
           maxWidth: '100vw',
-          zIndex: 51,
-          background: 'var(--sys-surface)',
-          borderLeft: '1px solid var(--sys-border-soft)',
           boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-          display: 'flex',
-          flexDirection: 'column',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '1rem 1.5rem',
-            borderBottom: '1px solid var(--sys-border-soft)',
-            flexShrink: 0,
-          }}
-        >
-          <h3 style={{ margin: 0, fontFamily: 'var(--font-montserrat)', fontWeight: 600, fontSize: '1rem' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft shrink-0">
+          <h3 className="m-0 font-semibold text-base" style={{ fontFamily: 'var(--font-montserrat)' }}>
             {title}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-ghost"
-            style={{ padding: '0.25rem', lineHeight: 1 }}
+            className="bg-transparent border-none text-text-muted cursor-pointer p-1 leading-none rounded hover:text-text hover:bg-surface-hover transition-colors"
             aria-label="Cerrar"
           >
             <X size={18} />
           </button>
         </div>
-        <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem' }}>
+        <div className="flex-1 overflow-auto p-6">
           {children}
         </div>
       </div>

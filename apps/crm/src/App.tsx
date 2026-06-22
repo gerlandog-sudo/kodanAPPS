@@ -288,7 +288,7 @@ function AppContent() {
               {unreadNotificationsCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="btn btn-ghost flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium"
+                  className="bg-transparent border-none flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium cursor-pointer rounded-lg hover:bg-surface-hover transition-colors"
                   style={{ color: 'var(--sys-primary)' }}
                 >
                   <CheckCircle2 size={14} /> Marcar todo leído
@@ -297,7 +297,7 @@ function AppContent() {
               {notifications.length > 0 && (
                 <button
                   onClick={handleClearAll}
-                  className="btn btn-ghost flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium text-red-500 hover:text-red-600"
+                  className="bg-transparent border-none flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium cursor-pointer rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
                 >
                   <Trash2 size={14} /> Limpiar todo
                 </button>
@@ -381,7 +381,7 @@ function AppContent() {
                       {isUnread && (
                         <button
                           onClick={() => handleMarkRead(n.id)}
-                          className="btn btn-ghost py-1 px-2.5 text-xs font-semibold flex items-center gap-1"
+                          className="bg-transparent border-none py-1 px-2.5 text-xs font-semibold flex items-center gap-1 cursor-pointer rounded-lg hover:bg-surface-hover transition-colors"
                           style={{ color: 'var(--sys-primary)' }}
                         >
                           <Check size={13} /> Marcar como leída
@@ -391,7 +391,7 @@ function AppContent() {
                       {n.entity_type && n.entity_id && (
                         <button
                           onClick={() => handleNavigateToEntity(n)}
-                          className="btn btn-primary py-1 px-2.5 text-xs font-semibold flex items-center gap-1.5"
+                          className="bg-primary text-on-primary border-none py-1 px-2.5 text-xs font-semibold flex items-center gap-1.5 cursor-pointer rounded-lg hover:bg-primary/90 transition-colors"
                         >
                           <ExternalLink size={12} />
                           {n.entity_type === 'crm_opportunity' ? 'Ver Negociación' : 'Ver Tarea'}

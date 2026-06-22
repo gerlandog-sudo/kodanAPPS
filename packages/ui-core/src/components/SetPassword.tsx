@@ -89,15 +89,15 @@ export function SetPassword({
           </div>
         </div>
 
-        <div className={`card ${cardClassName}`}>
+        <div className={`bg-surface border border-border-soft rounded-2xl shadow-xl ${cardClassName}`}>
           {error && (
-            <div className="mb-6 p-3 rounded-lg text-sm" style={{ background: 'var(--sys-error-container)', color: 'var(--color-on-error-container)' }}>
+            <div className="mb-6 p-3 rounded-lg text-sm bg-error-container text-on-error-container">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mb-6 p-3 rounded-lg text-sm flex items-center gap-2" style={{ background: 'var(--sys-primary-container)', color: 'var(--color-on-primary-container)' }}>
+            <div className="mb-6 p-3 rounded-lg text-sm flex items-center gap-2 bg-primary-container text-on-primary-container">
               <CheckCircle size={16} />
               {success}
             </div>
@@ -109,11 +109,11 @@ export function SetPassword({
                 CORREO ELECTRÓNICO
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)', opacity: 0.6 }} />
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/60" />
                 <input
                   id="set-email"
                   type="email"
-                  className="input pl-10"
+                  className="pl-10 pr-4 py-2.5 bg-surface-raised border border-border-soft rounded-lg text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder={emailPlaceholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -128,11 +128,11 @@ export function SetPassword({
                 TOKEN DE ACTIVACIÓN
               </label>
               <div className="relative">
-                <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)', opacity: 0.6 }} />
+                <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/60" />
                 <input
                   id="set-token"
                   type="text"
-                  className="input pl-10"
+                  className="pl-10 pr-4 py-2.5 bg-surface-raised border border-border-soft rounded-lg text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="a1b2c3d4..."
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
@@ -147,11 +147,11 @@ export function SetPassword({
                 NUEVA CONTRASEÑA
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)', opacity: 0.6 }} />
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/60" />
                 <input
                   id="set-password"
                   type="password"
-                  className="input pl-10"
+                  className="pl-10 pr-4 py-2.5 bg-surface-raised border border-border-soft rounded-lg text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Mínimo 8 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -166,11 +166,11 @@ export function SetPassword({
                 CONFIRMAR CONTRASEÑA
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-text-muted)', opacity: 0.6 }} />
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/60" />
                 <input
                   id="set-confirm"
                   type="password"
-                  className="input pl-10"
+                  className="pl-10 pr-4 py-2.5 bg-surface-raised border border-border-soft rounded-lg text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Repite la contraseña"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -182,12 +182,15 @@ export function SetPassword({
 
             <button
               type="submit"
-              className="btn btn-primary w-full mt-1"
+              className="bg-primary text-on-primary border-none px-5 py-2.5 rounded-lg font-semibold text-sm w-full cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-1"
               disabled={loading || !!success}
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <span className="spinner" />
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
                   Procesando...
                 </span>
               ) : (

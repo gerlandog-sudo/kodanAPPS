@@ -176,7 +176,7 @@ export function TenantCreateWizard({ open, plans, submitting, onSubmit, onClose 
                           <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Nombre *</label>
                           <input
                             type="text"
-                            className="input"
+                            className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                             value={formData.name}
                             onChange={e => handleChange('name', e.target.value)}
                             placeholder="Ej: Mi Empresa SRL"
@@ -188,7 +188,7 @@ export function TenantCreateWizard({ open, plans, submitting, onSubmit, onClose 
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Plan de Suscripción *</label>
                           <select
-                            className="input select"
+                            className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors cursor-pointer"
                             value={formData.subscription_plan_id}
                             onChange={e => handleChange('subscription_plan_id', parseInt(e.target.value))}
                           >
@@ -305,7 +305,7 @@ export function TenantCreateWizard({ open, plans, submitting, onSubmit, onClose 
                             <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Nombre *</label>
                             <input
                               type="text"
-                              className="input"
+                              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                               value={formData.admin_name}
                               onChange={e => handleChange('admin_name', e.target.value)}
                               placeholder="Juan Pérez"
@@ -316,7 +316,7 @@ export function TenantCreateWizard({ open, plans, submitting, onSubmit, onClose 
                             <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Email *</label>
                             <input
                               type="email"
-                              className="input"
+                              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                               value={formData.admin_email}
                               onChange={e => handleChange('admin_email', e.target.value)}
                               placeholder="admin@empresa.com"
@@ -328,7 +328,7 @@ export function TenantCreateWizard({ open, plans, submitting, onSubmit, onClose 
                           <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Contraseña *</label>
                           <input
                             type="password"
-                            className="input"
+                            className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
                             value={formData.admin_password}
                             onChange={e => handleChange('admin_password', e.target.value)}
                             placeholder="Mínimo 8 caracteres"

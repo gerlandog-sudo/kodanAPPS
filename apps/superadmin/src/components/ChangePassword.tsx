@@ -53,7 +53,7 @@ export function ChangePassword({ onClose }: ChangePasswordProps) {
             <input
               id="current_password"
               type={showCurrent ? 'text' : 'password'}
-              className="input"
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors disabled:opacity-50"
               style={{ paddingRight: '2.5rem' }}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
@@ -74,7 +74,7 @@ export function ChangePassword({ onClose }: ChangePasswordProps) {
             <input
               id="new_password"
               type={showNew ? 'text' : 'password'}
-              className="input"
+              className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors disabled:opacity-50"
               style={{ paddingRight: '2.5rem' }}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -94,7 +94,7 @@ export function ChangePassword({ onClose }: ChangePasswordProps) {
           <input
             id="confirm_password"
             type="password"
-            className="input"
+            className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors disabled:opacity-50"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required

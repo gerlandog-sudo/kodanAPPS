@@ -1,0 +1,22 @@
+.table-row-anim {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.table-row-anim[data-visible="true"] {
+  animation: table-fade-up 500ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+.table-skeleton {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--sys-surface) 25%,
+    var(--sys-surface-hover) 50%,
+    var(--sys-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: table-shimmer 1.4s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+}

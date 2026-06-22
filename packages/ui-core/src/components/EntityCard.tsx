@@ -83,7 +83,7 @@ export function EntityCard({
         {amount != null && (
           <>
             <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em', color: 'var(--sys-text-muted)', textTransform: 'uppercase', marginRight: '0.125rem' }}>
-              Valor Estimado
+              Estimado
             </span>
             <span style={{
               fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em',
@@ -167,7 +167,7 @@ export function EntityCard({
             <div style={{ fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               <span>Valor Cotización:</span>
               <span style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '11px', color: 'var(--sys-primary)' }}>
-                $ {quoteTotal.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                $ {quoteTotal.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           )}

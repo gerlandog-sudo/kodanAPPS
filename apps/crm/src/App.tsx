@@ -1,4 +1,4 @@
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, SlidePanel } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -11,9 +11,18 @@ import {
   FileText,
   Settings as SettingsIcon,
   User,
+  BellRing,
+  Clock,
+  AlertCircle,
+  UserCheck,
+  Check,
+  CheckCircle2,
+  Trash2,
+  ExternalLink,
 } from 'lucide-react';
 import type { UserMenuItem } from '@kodan-apps/ui-core';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { crmApi } from './api/client';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -47,6 +56,75 @@ function AppContent() {
   const printQuoteId = printMatch ? parseInt(printMatch[1], 10) : null
   const [chatOpen, setChatOpen] = useState(false);
   const [chatEntity, setChatEntity] = useState<{ type: string; id: number; title?: string } | null>(null);
+
+  // States for Smart Notifications
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [autoOpenOppId, setAutoOpenOppId] = useState<number | null>(null);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!authenticated) return;
+    try {
+      const list = await crmApi.listNotifications();
+      setNotifications(list || []);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }, [authenticated]);
+
+  useEffect(() => {
+    if (authenticated) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 45000);
+      return () => clearInterval(interval);
+    }
+  }, [authenticated, fetchNotifications]);
+
+  const unreadNotificationsCount = useMemo(() => {
+    return notifications.filter((n: any) => n.is_read === 0).length;
+  }, [notifications]);
+
+  const combinedUnreadCount = unreadCount + unreadNotificationsCount;
+
+  const handleMarkAllRead = async () => {
+    try {
+      await crmApi.markNotificationsRead();
+      fetchNotifications();
+    } catch (err) {
+      console.error('Error marking all read:', err);
+    }
+  };
+
+  const handleMarkRead = async (id: number) => {
+    try {
+      await crmApi.markNotificationsRead([id]);
+      fetchNotifications();
+    } catch (err) {
+      console.error('Error marking read:', err);
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await crmApi.clearNotifications();
+      setNotifications([]);
+    } catch (err) {
+      console.error('Error clearing notifications:', err);
+    }
+  };
+
+  const handleNavigateToEntity = async (n: any) => {
+    if (n.is_read === 0) {
+      await handleMarkRead(n.id);
+    }
+    setNotificationsOpen(false);
+    if (n.entity_type === 'crm_opportunity') {
+      setAutoOpenOppId(n.entity_id);
+      setRoute('negotiations');
+    } else if (n.entity_type === 'crm_task') {
+      setRoute('tasks');
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -145,10 +223,10 @@ function AppContent() {
           onThemeToggle={toggleTheme}
           onLogout={handleLogout}
           userMenuExtraItems={userMenuExtraItems}
-          notificationCount={unreadCount}
+          notificationCount={combinedUnreadCount}
           onNotificationClick={() => {
-            setChatEntity({ type: 'general', id: 0, title: 'Mensajería General' });
-            setChatOpen(true);
+            setNotificationsOpen(true);
+            fetchNotifications();
           }}
         />
         <main className="flex flex-col flex-1 p-4 lg:p-6 min-w-0" style={{ background: 'var(--sys-bg)', overflow: 'hidden' }}>
@@ -161,6 +239,8 @@ function AppContent() {
               {route === 'dashboard' && <Dashboard />}
               {route === 'negotiations' && (
                 <Negotiations
+                  autoOpenOppId={autoOpenOppId}
+                  onClearAutoOpen={() => setAutoOpenOppId(null)}
                   onOpenChat={(type, id, title) => {
                     setChatEntity({ type, id, title });
                     setChatOpen(true);
@@ -192,6 +272,139 @@ function AppContent() {
         title={chatEntity?.title}
         onMessagesRead={refetchUnreadCount}
       />
+
+      <SlidePanel
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        title="Centro de Alertas & Notificaciones"
+        width="34rem"
+      >
+        <div className="flex flex-col h-full" style={{ gap: '1rem' }}>
+          <div className="flex justify-between items-center pb-3 border-b" style={{ borderColor: 'var(--sys-border-soft)' }}>
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--sys-text-muted)' }}>
+              {notifications.length} notificaciones en total
+            </span>
+            <div className="flex gap-3">
+              {unreadNotificationsCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="btn btn-ghost flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium"
+                  style={{ color: 'var(--sys-primary)' }}
+                >
+                  <CheckCircle2 size={14} /> Marcar todo leído
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleClearAll}
+                  className="btn btn-ghost flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium text-red-500 hover:text-red-600"
+                >
+                  <Trash2 size={14} /> Limpiar todo
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3 min-h-0">
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                <div className="size-12 rounded-full flex items-center justify-center bg-[var(--sys-surface-muted)] text-[var(--sys-text-muted)]">
+                  <BellRing size={20} className="opacity-50" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold m-0">No tienes alertas pendientes</h4>
+                  <p className="text-xs text-[var(--sys-text-muted)] mt-1">El sistema está al día y bajo control.</p>
+                </div>
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const isUnread = n.is_read === 0;
+                let borderLeftColor = 'var(--sys-border-soft)';
+                let iconColor = 'var(--sys-text-muted)';
+                let IconComponent = AlertCircle;
+
+                if (n.type === 'overdue_close') {
+                  borderLeftColor = 'var(--sys-error)';
+                  iconColor = 'var(--sys-error)';
+                  IconComponent = Clock;
+                } else if (n.type === 'stalled_deal') {
+                  borderLeftColor = 'var(--sys-warning)';
+                  iconColor = 'var(--sys-warning)';
+                  IconComponent = AlertCircle;
+                } else if (n.type?.startsWith('new_assignment')) {
+                  borderLeftColor = 'var(--sys-primary)';
+                  iconColor = 'var(--sys-primary)';
+                  IconComponent = UserCheck;
+                }
+
+                return (
+                  <div
+                    key={n.id}
+                    className="p-4 rounded-xl border flex flex-col gap-3 transition-all relative"
+                    style={{
+                      background: isUnread ? 'var(--sys-surface-muted)' : 'var(--sys-surface)',
+                      borderColor: 'var(--sys-border-soft)',
+                      borderLeft: `4px solid ${borderLeftColor}`,
+                      boxShadow: 'var(--sys-shadow-sm)',
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span style={{ color: iconColor }}>
+                          <IconComponent size={16} />
+                        </span>
+                        <h4 className="text-sm font-semibold m-0">{n.title}</h4>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] font-medium" style={{ color: 'var(--sys-text-muted)' }}>
+                          {new Date(n.created_at).toLocaleDateString('es-AR', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        {isUnread && (
+                          <span
+                            className="size-2 rounded-full shrink-0"
+                            style={{ background: borderLeftColor }}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-xs m-0 leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>
+                      {n.message}
+                    </p>
+
+                    <div className="flex items-center justify-end gap-2.5 pt-2 border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
+                      {isUnread && (
+                        <button
+                          onClick={() => handleMarkRead(n.id)}
+                          className="btn btn-ghost py-1 px-2.5 text-xs font-semibold flex items-center gap-1"
+                          style={{ color: 'var(--sys-primary)' }}
+                        >
+                          <Check size={13} /> Marcar como leída
+                        </button>
+                      )}
+                      
+                      {n.entity_type && n.entity_id && (
+                        <button
+                          onClick={() => handleNavigateToEntity(n)}
+                          className="btn btn-primary py-1 px-2.5 text-xs font-semibold flex items-center gap-1.5"
+                        >
+                          <ExternalLink size={12} />
+                          {n.entity_type === 'crm_opportunity' ? 'Ver Negociación' : 'Ver Tarea'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </SlidePanel>
     </div>
   );
 }

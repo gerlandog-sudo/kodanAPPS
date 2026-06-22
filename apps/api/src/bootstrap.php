@@ -32,6 +32,8 @@ use kodanAPPS\Controllers\ProductController;
 use kodanAPPS\Controllers\QuoteController;
 use kodanAPPS\Controllers\CrmTaskController;
 use kodanAPPS\Controllers\ChatController;
+use kodanAPPS\Controllers\NotificationController;
+use kodanAPPS\Repositories\NotificationRepository;
 use kodanAPPS\Repositories\TenantRepository;
 use kodanAPPS\Repositories\PlanRepository;
 use kodanAPPS\Repositories\UserRepository;
@@ -184,6 +186,7 @@ $quoteRepo = new QuoteRepository($pdo);
 $taskRepo = new CrmTaskRepository($pdo);
 $chatRepo = new ChatRepository($pdo);
 $projectRepo = new ProjectRepository($pdo);
+$notificationRepo = new NotificationRepository($pdo);
 
 // ------------------------------------------------------------
 // Servicios
@@ -219,11 +222,12 @@ $pipelineController = new PipelineController($pipelineRepo);
 $oppController = new OpportunityController($oppRepo, $pipelineRepo, $crmController);
 $productController = new ProductController($productRepo);
 $quoteController = new QuoteController($quoteRepo);
-$taskController = new CrmTaskController($taskRepo);
+$taskController = new CrmTaskController($taskRepo, $notificationRepo);
 $chatController = new ChatController($chatRepo);
 $trackerController = new TrackerController($projectRepo);
 $tenantUserController = new TenantUserController($userRepo, $pdo);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
+$notificationController = new NotificationController($notificationRepo);
 
 return [
     'pdo' => $pdo,
@@ -269,5 +273,6 @@ return [
         'tracker' => $trackerController,
         'tenantUser' => $tenantUserController,
         'messaging' => $messagingController,
+        'notification' => $notificationController,
         ],
 ];

@@ -6,6 +6,7 @@ namespace kodanAPPS\Controllers;
 
 use kodanAPPS\Repositories\OpportunityRepository;
 use kodanAPPS\Repositories\PipelineRepository;
+use kodanAPPS\Repositories\NotificationRepository;
 use kodanAPPS\Controllers\CrmController;
 use kodanAPPS\DB\TenantContext;
 use InvalidArgumentException;
@@ -16,15 +17,18 @@ final class OpportunityController
     private OpportunityRepository $opportunityRepo;
     private PipelineRepository $pipelineRepo;
     private CrmController $crmController;
+    private NotificationRepository $notificationRepo;
 
     public function __construct(
         OpportunityRepository $opportunityRepo,
         PipelineRepository $pipelineRepo,
-        CrmController $crmController
+        CrmController $crmController,
+        NotificationRepository $notificationRepo
     ) {
         $this->opportunityRepo = $opportunityRepo;
         $this->pipelineRepo = $pipelineRepo;
         $this->crmController = $crmController;
+        $this->notificationRepo = $notificationRepo;
     }
 
     /**
@@ -141,6 +145,20 @@ final class OpportunityController
 
             $id = $this->opportunityRepo->createOpportunity($data);
 
+            // Disparar alerta si se asigna a un usuario
+            $ownerUserId = isset($data['owner_user_id']) ? (int)$data['owner_user_id'] : 0;
+            if ($ownerUserId > 0) {
+                $this->notificationRepo->upsertNotification([
+                    'user_id' => $ownerUserId,
+                    'type' => 'new_assignment_deal',
+                    'entity_type' => 'crm_opportunity',
+                    'entity_id' => $id,
+                    'title' => 'Nueva negociación asignada',
+                    'message' => "Se te ha asignado la negociación \"{$title}\".",
+                    'is_read' => 0
+                ]);
+            }
+
             // Guardar ítems si se proporcionan en la creación
             if (is_array($items)) {
                 $this->opportunityRepo->saveOpportunityLineItems($id, $items);
@@ -212,9 +230,25 @@ final class OpportunityController
         }
 
         // Actualizar datos propios
+        $oldOwnerId = isset($opp['owner_user_id']) ? (int)$opp['owner_user_id'] : 0;
         $affected = 0;
         if (!empty($data)) {
             $affected = $this->opportunityRepo->updateOpportunity($id, $data);
+
+            // Disparar alerta si cambió el dueño asignado
+            $newOwnerId = isset($data['owner_user_id']) ? (int)$data['owner_user_id'] : null;
+            if ($newOwnerId !== null && $newOwnerId !== $oldOwnerId && $newOwnerId > 0) {
+                $oppTitle = $data['title'] ?? ($opp['title'] ?? '');
+                $this->notificationRepo->upsertNotification([
+                    'user_id' => $newOwnerId,
+                    'type' => 'new_assignment_deal',
+                    'entity_type' => 'crm_opportunity',
+                    'entity_id' => $id,
+                    'title' => 'Nueva negociación asignada',
+                    'message' => "Se te ha asignado la negociación \"{$oppTitle}\".",
+                    'is_read' => 0
+                ]);
+            }
         }
 
         // Si se pasan ítems, guardarlos

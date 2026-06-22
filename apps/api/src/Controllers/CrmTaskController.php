@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace kodanAPPS\Controllers;
 
 use kodanAPPS\Repositories\CrmTaskRepository;
+use kodanAPPS\Repositories\NotificationRepository;
 use InvalidArgumentException;
 use RuntimeException;
 
 final class CrmTaskController
 {
     private CrmTaskRepository $taskRepo;
+    private NotificationRepository $notificationRepo;
 
-    public function __construct(CrmTaskRepository $taskRepo)
+    public function __construct(CrmTaskRepository $taskRepo, NotificationRepository $notificationRepo)
     {
         $this->taskRepo = $taskRepo;
+        $this->notificationRepo = $notificationRepo;
     }
 
     /**
@@ -80,6 +83,20 @@ final class CrmTaskController
 
         $id = $this->taskRepo->createTask($data);
 
+        // Disparar alerta si se asigna a un usuario
+        $assignedTo = isset($data['assigned_to']) ? (int)$data['assigned_to'] : 0;
+        if ($assignedTo > 0) {
+            $this->notificationRepo->upsertNotification([
+                'user_id' => $assignedTo,
+                'type' => 'new_assignment_task',
+                'entity_type' => 'crm_task',
+                'entity_id' => $id,
+                'title' => 'Nueva tarea asignada',
+                'message' => "Se te ha asignado la tarea \"{$title}\".",
+                'is_read' => 0
+            ]);
+        }
+
         // Guardar participantes si se pasan
         if (isset($input['participants']) && is_array($input['participants'])) {
             $this->taskRepo->saveParticipants($id, array_map('intval', $input['participants']));
@@ -133,9 +150,25 @@ final class CrmTaskController
             $data['assigned_to'] = isset($input['assigned_to']) && is_scalar($input['assigned_to']) && (int)$input['assigned_to'] > 0 ? (int)$input['assigned_to'] : null;
         }
 
+        $oldAssignedTo = isset($task['assigned_to']) ? (int)$task['assigned_to'] : 0;
         $affected = 0;
         if (!empty($data)) {
             $affected = $this->taskRepo->updateTask($id, $data);
+
+            // Disparar alerta si cambió el usuario asignado
+            $newAssignedTo = isset($data['assigned_to']) ? (int)$data['assigned_to'] : null;
+            if ($newAssignedTo !== null && $newAssignedTo !== $oldAssignedTo && $newAssignedTo > 0) {
+                $taskTitle = $data['title'] ?? ($task['title'] ?? '');
+                $this->notificationRepo->upsertNotification([
+                    'user_id' => $newAssignedTo,
+                    'type' => 'new_assignment_task',
+                    'entity_type' => 'crm_task',
+                    'entity_id' => $id,
+                    'title' => 'Nueva tarea asignada',
+                    'message' => "Se te ha asignado la tarea \"{$taskTitle}\".",
+                    'is_read' => 0
+                ]);
+            }
         }
 
         // Actualizar participantes si se pasan

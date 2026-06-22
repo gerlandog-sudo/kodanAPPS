@@ -279,6 +279,23 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['crm']->getPlanStatus($auth['tenant_id'] ?? 0));
     });
 
+    // Notifications
+    $router->get('/api/crm/notifications', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['notification']->list());
+    });
+
+    $router->post('/api/crm/notifications/mark-read', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['notification']->markRead($input));
+    });
+
+    $router->post('/api/crm/notifications/clear', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['notification']->clearAll());
+    });
+
     // Theme
     $router->get('/api/crm/theme', function () use ($app) {
         header('Content-Type: application/json');

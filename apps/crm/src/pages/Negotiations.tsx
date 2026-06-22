@@ -89,9 +89,11 @@ function OppCard({ opp, isDropped, onOpenDetail, onEdit, onDelete, onChat }: Car
 interface NegotiationsProps {
   onOpenChat?: (entityType: string, entityId: number, title?: string) => void;
   onNavigate?: (route: string) => void;
+  autoOpenOppId?: number | null;
+  onClearAutoOpen?: () => void;
 }
 
-export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
+export function Negotiations({ onOpenChat, onNavigate, autoOpenOppId, onClearAutoOpen }: NegotiationsProps) {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -167,6 +169,17 @@ export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
       loadPipelineData(selectedPipelineId, showArchived);
     }
   }, [selectedPipelineId, showArchived]);
+
+  // Auto-open negotiation if autoOpenOppId is provided from notification click
+  useEffect(() => {
+    if (autoOpenOppId && opportunities.length > 0) {
+      const opp = opportunities.find((o) => o.id === autoOpenOppId);
+      if (opp) {
+        openDetailDrawer(opp);
+        onClearAutoOpen?.();
+      }
+    }
+  }, [autoOpenOppId, opportunities, onClearAutoOpen]);
 
   const loadPipelines = async () => {
     try {

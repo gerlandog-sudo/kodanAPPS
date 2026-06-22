@@ -101,6 +101,11 @@ export const crmApi = {
   getQuoteLineItems: (id: number) => api.get<any[]>(`/api/crm/quotes/${id}/items`),
   saveQuoteLineItems: (id: number, data: any) => api.post(`/api/crm/quotes/${id}/items`, data),
 
+  // Notifications
+  listNotifications: () => api.get<any[]>('/api/crm/notifications'),
+  markNotificationsRead: (ids?: number[]) => api.post('/api/crm/notifications/mark-read', { ids }),
+  clearNotifications: () => api.post('/api/crm/notifications/clear', {}),
+
   // Theme
   getTheme: () => api.get<{ theme: 'light' | 'dark' }>('/api/crm/theme'),
   updateTheme: (theme: 'light' | 'dark') => api.put('/api/crm/theme', { theme }),

@@ -15,15 +15,46 @@ final class QuoteRepository extends BaseRepository
 
     /**
      * Lista todas las cotizaciones del tenant, opcionalmente filtradas por oportunidad
+     * Incluye datos de la oportunidad (título) y cuenta (nombre)
      * 
      * @return array<int, array<string, mixed>>
      */
     public function listAll(int $opportunityId = 0): array
     {
+        $where = '';
+        $params = [];
         if ($opportunityId > 0) {
-            return $this->findAll(self::TABLE, '*', 'opportunity_id = :opp_id', [':opp_id' => $opportunityId], 'created_at DESC');
+            $where = 'WHERE q.opportunity_id = :opp_id';
+            $params[':opp_id'] = $opportunityId;
         }
-        return $this->findAll(self::TABLE, '*', '', [], 'created_at DESC');
+
+        return $this->rawSelect(
+            "SELECT q.*, o.title AS opportunity_title, a.name AS account_name
+             FROM quotes q
+             LEFT JOIN opportunities o ON o.id = q.opportunity_id
+             LEFT JOIN accounts a ON a.account_id = o.account_id
+             {$where}
+             ORDER BY q.created_at DESC",
+            $params
+        );
+    }
+
+    /**
+     * Obtiene una cotización con datos de oportunidad y cuenta
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function getQuoteWithDetails(int $id): ?array
+    {
+        $result = $this->rawSelect(
+            "SELECT q.*, o.title AS opportunity_title, a.name AS account_name
+             FROM quotes q
+             LEFT JOIN opportunities o ON o.id = q.opportunity_id
+             LEFT JOIN accounts a ON a.account_id = o.account_id
+             WHERE q.id = :id",
+            [':id' => $id]
+        );
+        return $result[0] ?? null;
     }
 
     /**

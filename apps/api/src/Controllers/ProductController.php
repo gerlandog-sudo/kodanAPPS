@@ -70,7 +70,9 @@ final class ProductController
         $data = [
             'name' => $name,
             'sku' => isset($input['sku']) && is_scalar($input['sku']) ? trim((string)$input['sku']) : null,
+            'description' => isset($input['description']) && is_scalar($input['description']) ? trim((string)$input['description']) : null,
             'price' => $price,
+            'is_active' => isset($input['is_active']) ? (int)$input['is_active'] : 1,
         ];
 
         $id = $this->productRepo->createProduct($data);
@@ -120,6 +122,14 @@ final class ProductController
                 ], JSON_UNESCAPED_UNICODE));
             }
             $data['price'] = $price;
+        }
+
+        if (array_key_exists('description', $input)) {
+            $data['description'] = isset($input['description']) && is_scalar($input['description']) ? trim((string)$input['description']) : null;
+        }
+
+        if (array_key_exists('is_active', $input)) {
+            $data['is_active'] = (int)$input['is_active'];
         }
 
         if (empty($data)) {

@@ -14,6 +14,7 @@ import {
   Settings2,
   Archive,
   ArchiveRestore,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -85,9 +86,10 @@ function OppCard({ opp, isDropped, onOpenDetail, onEdit, onDelete, onChat }: Car
 
 interface NegotiationsProps {
   onOpenChat?: (entityType: string, entityId: number, title?: string) => void;
+  onNavigate?: (route: string) => void;
 }
 
-export function Negotiations({ onOpenChat }: NegotiationsProps) {
+export function Negotiations({ onOpenChat, onNavigate }: NegotiationsProps) {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -616,6 +618,7 @@ export function Negotiations({ onOpenChat }: NegotiationsProps) {
           onClose={() => setShowWonModal(false)}
           onSubmit={handleWonSubmit}
           defaultName={wonOppName}
+          opportunityId={wonOppId}
         />
       )}
 
@@ -983,6 +986,26 @@ export function Negotiations({ onOpenChat }: NegotiationsProps) {
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* Generar Cotización */}
+              <div className="border-t pt-4" style={{ borderColor: 'var(--sys-border-soft)' }}>
+                <Button
+                  variant="primary"
+                  className="btn-primary text-xs gap-1"
+                  onClick={() => {
+                    if (onNavigate && selectedOpp) {
+                      sessionStorage.setItem('preselectOpportunityId', String(selectedOpp.id))
+                      onNavigate('quotes')
+                    }
+                  }}
+                >
+                  <FileText size={14} />
+                  Generar Cotización
+                </Button>
+                <p className="text-[0.6rem] mt-1" style={{ color: 'var(--sys-text-muted)' }}>
+                  Crear una cotización desde los productos vinculados a esta oportunidad
+                </p>
               </div>
 
               {/* Campos Personalizados */}

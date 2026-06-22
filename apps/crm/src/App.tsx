@@ -8,6 +8,7 @@ import {
   Briefcase,
   Tag,
   ListTodo,
+  FileText,
   Settings as SettingsIcon,
   User,
 } from 'lucide-react';
@@ -22,6 +23,8 @@ const Contacts = lazy(() => import('./pages/Contacts').then(m => ({ default: m.C
 const Products = lazy(() => import('./pages/Products').then(m => ({ default: m.Products })));
 const Tasks = lazy(() => import('./pages/Tasks').then(m => ({ default: m.Tasks })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const Quotes = lazy(() => import('./pages/Quotes').then(m => ({ default: m.Quotes })));
+const QuotePrintView = lazy(() => import('./components/quotes/QuotePrintView').then(m => ({ default: m.QuotePrintView })));
 
 const LogoCRM3D = lazy(() => import('./components/LogoCRM3D').then(m => ({ default: m.LogoCRM3D })));
 
@@ -29,7 +32,7 @@ function LogoCRM3DPlaceholder({ size }: { size?: number }) {
   return <div style={{ width: size ?? 48, height: size ?? 48 }} />;
 }
 
-type Route = 'dashboard' | 'negotiations' | 'accounts' | 'contacts' | 'products' | 'tasks' | 'settings';
+type Route = 'dashboard' | 'negotiations' | 'accounts' | 'contacts' | 'products' | 'quotes' | 'tasks' | 'settings';
 type View = 'login' | 'set-password' | 'app';
 
 function AppContent() {
@@ -38,6 +41,10 @@ function AppContent() {
   const { messages: sseMessages, unreadCount, refetchUnreadCount } = useSSE(authenticated ? 'crm' : '');
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
+
+  // ── Print route detection (synchronous, no auth required) ──
+  const printMatch = window.location.pathname.match(/\/quotes\/(\d+)\/print/)
+  const printQuoteId = printMatch ? parseInt(printMatch[1], 10) : null
   const [chatOpen, setChatOpen] = useState(false);
   const [chatEntity, setChatEntity] = useState<{ type: string; id: number; title?: string } | null>(null);
 
@@ -76,6 +83,7 @@ function AppContent() {
       { key: 'accounts', label: 'Cuentas B2B', icon: <Building2 size={18} /> },
       { key: 'contacts', label: 'Contactos', icon: <Users size={18} /> },
       { key: 'products', label: 'Catalogo', icon: <Tag size={18} /> },
+      { key: 'quotes', label: 'Cotizaciones', icon: <FileText size={18} /> },
       { key: 'tasks', label: 'Agenda', icon: <ListTodo size={18} /> },
     ]
     return items
@@ -85,6 +93,15 @@ function AppContent() {
     { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
     ...(roles.includes('admin') ? [{ label: 'Configuracion', icon: <SettingsIcon size={16} />, onClick: () => setRoute('settings' as Route) }] : []),
   ], [roles])
+
+  // Print view — standalone, no sidebar/login
+  if (printQuoteId) {
+    return (
+      <Suspense fallback={<AuthLoading />}>
+        <QuotePrintView quoteId={printQuoteId} />
+      </Suspense>
+    )
+  }
 
   if (view === 'initial' || loading) {
     return <AuthLoading />;
@@ -148,11 +165,13 @@ function AppContent() {
                     setChatEntity({ type, id, title });
                     setChatOpen(true);
                   }}
+                  onNavigate={(r) => setRoute(r as Route)}
                 />
               )}
               {route === 'accounts' && <Accounts />}
               {route === 'contacts' && <Contacts />}
               {route === 'products' && <Products />}
+              {route === 'quotes' && <Quotes />}
               {route === 'tasks' && <Tasks />}
               {route === 'settings' && <Settings />}
             </Suspense>

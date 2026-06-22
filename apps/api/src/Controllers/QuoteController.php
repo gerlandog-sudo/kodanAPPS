@@ -35,7 +35,7 @@ final class QuoteController
      */
     public function get(int $id): array
     {
-        $quote = $this->quoteRepo->findById($id);
+        $quote = $this->quoteRepo->getQuoteWithDetails($id);
         if ($quote === null) {
             throw new RuntimeException('Cotización no encontrada.', 404);
         }

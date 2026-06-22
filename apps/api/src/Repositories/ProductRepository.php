@@ -7,7 +7,7 @@ namespace kodanAPPS\Repositories;
 /**
  * ProductRepository - Gestión del Catálogo de Productos/Servicios
  * 
- * @extends BaseRepository<array{id: int, tenant_id: int, name: string, sku: string|null, price: string}>
+ * @extends BaseRepository<array{id: int, tenant_id: int, name: string, sku: string|null, description: string|null, price: string, is_active: int}>
  */
 final class ProductRepository extends BaseRepository
 {
@@ -26,7 +26,7 @@ final class ProductRepository extends BaseRepository
     /**
      * Crea un nuevo producto en el catálogo
      * 
-     * @param array{name: string, sku: string|null, price: float} $data
+     * @param array{name: string, sku: string|null, description: string|null, price: float, is_active: int} $data
      * @return int ID del producto creado
      */
     public function createProduct(array $data): int
@@ -37,7 +37,7 @@ final class ProductRepository extends BaseRepository
     /**
      * Actualiza un producto existente
      * 
-     * @param array{name?: string, sku?: string|null, price?: float} $data
+     * @param array{name?: string, sku?: string|null, description?: string|null, price?: float, is_active?: int} $data
      */
     public function updateProduct(int $id, array $data): int
     {

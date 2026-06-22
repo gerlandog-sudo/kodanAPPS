@@ -91,6 +91,16 @@ export const crmApi = {
   updateTenantUser: (id: number, data: any) => api.put(`/api/crm/users/${id}`, data),
   deleteTenantUser: (id: number) => api.delete(`/api/crm/users/${id}`),
 
+  // Quotes
+  listQuotes: (params?: { opportunity_id?: number }) =>
+    api.get<any[]>('/api/crm/quotes', (params ? { opportunity_id: String(params.opportunity_id ?? '') } : undefined)),
+  getQuote: (id: number) => api.get<any>(`/api/crm/quotes/${id}`),
+  createQuote: (data: any) => api.post('/api/crm/quotes', data),
+  updateQuote: (id: number, data: any) => api.patch(`/api/crm/quotes/${id}`, data),
+  deleteQuote: (id: number) => api.delete(`/api/crm/quotes/${id}`),
+  getQuoteLineItems: (id: number) => api.get<any[]>(`/api/crm/quotes/${id}/items`),
+  saveQuoteLineItems: (id: number, data: any) => api.post(`/api/crm/quotes/${id}/items`, data),
+
   // Theme
   getTheme: () => api.get<{ theme: 'light' | 'dark' }>('/api/crm/theme'),
   updateTheme: (theme: 'light' | 'dark') => api.put('/api/crm/theme', { theme }),

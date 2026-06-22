@@ -21,15 +21,16 @@ final class QuoteRepository extends BaseRepository
      */
     public function listAll(int $opportunityId = 0): array
     {
-        $where = '';
-        $params = [];
+        $where = 'WHERE q.tenant_id = :tenant_id';
+        $params = [':tenant_id' => \kodanAPPS\DB\TenantContext::getTenantId()];
         if ($opportunityId > 0) {
-            $where = 'WHERE q.opportunity_id = :opp_id';
+            $where .= ' AND q.opportunity_id = :opp_id';
             $params[':opp_id'] = $opportunityId;
         }
 
         return $this->rawSelect(
-            "SELECT q.*, o.title AS opportunity_title, a.name AS account_name
+            "/* BYPASS_TENANT_SCOPE */
+             SELECT q.*, o.title AS opportunity_title, a.name AS account_name
              FROM quotes q
              LEFT JOIN opportunities o ON o.id = q.opportunity_id
              LEFT JOIN accounts a ON a.account_id = o.account_id
@@ -47,12 +48,13 @@ final class QuoteRepository extends BaseRepository
     public function getQuoteWithDetails(int $id): ?array
     {
         $result = $this->rawSelect(
-            "SELECT q.*, o.title AS opportunity_title, a.name AS account_name
+            "/* BYPASS_TENANT_SCOPE */
+             SELECT q.*, o.title AS opportunity_title, a.name AS account_name
              FROM quotes q
              LEFT JOIN opportunities o ON o.id = q.opportunity_id
              LEFT JOIN accounts a ON a.account_id = o.account_id
-             WHERE q.id = :id",
-            [':id' => $id]
+             WHERE q.id = :id AND q.tenant_id = :tenant_id",
+            [':id' => $id, ':tenant_id' => \kodanAPPS\DB\TenantContext::getTenantId()]
         );
         return $result[0] ?? null;
     }

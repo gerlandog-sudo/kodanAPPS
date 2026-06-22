@@ -146,7 +146,7 @@ final class OpportunityController
             $id = $this->opportunityRepo->createOpportunity($data);
 
             // Disparar alerta si se asigna a un usuario
-            $ownerUserId = isset($data['owner_user_id']) ? (int)$data['owner_user_id'] : 0;
+            $ownerUserId = (int)$data['owner_user_id'];
             if ($ownerUserId > 0) {
                 $this->notificationRepo->upsertNotification([
                     'user_id' => $ownerUserId,
@@ -230,14 +230,14 @@ final class OpportunityController
         }
 
         // Actualizar datos propios
-        $oldOwnerId = isset($opp['owner_user_id']) ? (int)$opp['owner_user_id'] : 0;
+        $oldOwnerId = (int)($opp['owner_user_id'] ?? 0);
         $affected = 0;
         if (!empty($data)) {
             $affected = $this->opportunityRepo->updateOpportunity($id, $data);
 
             // Disparar alerta si cambió el dueño asignado
             $newOwnerId = isset($data['owner_user_id']) ? (int)$data['owner_user_id'] : null;
-            if ($newOwnerId !== null && $newOwnerId !== $oldOwnerId && $newOwnerId > 0) {
+            if ($newOwnerId !== null && $newOwnerId !== $oldOwnerId) {
                 $oppTitle = $data['title'] ?? ($opp['title'] ?? '');
                 $this->notificationRepo->upsertNotification([
                     'user_id' => $newOwnerId,

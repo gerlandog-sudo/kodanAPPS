@@ -150,14 +150,14 @@ final class CrmTaskController
             $data['assigned_to'] = isset($input['assigned_to']) && is_scalar($input['assigned_to']) && (int)$input['assigned_to'] > 0 ? (int)$input['assigned_to'] : null;
         }
 
-        $oldAssignedTo = isset($task['assigned_to']) ? (int)$task['assigned_to'] : 0;
+        $oldAssignedTo = (int)($task['assigned_to'] ?? 0);
         $affected = 0;
         if (!empty($data)) {
             $affected = $this->taskRepo->updateTask($id, $data);
 
             // Disparar alerta si cambió el usuario asignado
             $newAssignedTo = isset($data['assigned_to']) ? (int)$data['assigned_to'] : null;
-            if ($newAssignedTo !== null && $newAssignedTo !== $oldAssignedTo && $newAssignedTo > 0) {
+            if ($newAssignedTo !== null && $newAssignedTo !== $oldAssignedTo) {
                 $taskTitle = $data['title'] ?? ($task['title'] ?? '');
                 $this->notificationRepo->upsertNotification([
                     'user_id' => $newAssignedTo,

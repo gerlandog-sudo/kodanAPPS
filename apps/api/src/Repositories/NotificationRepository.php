@@ -162,14 +162,14 @@ final class NotificationRepository extends BaseRepository
                              SELECT o.`id` 
                              FROM `opportunities` o
                              JOIN `pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
-                             WHERE o.`owner_user_id` = :user_id 
+                             WHERE o.`owner_user_id` = :sub_user_id 
                                AND o.`archived_at` IS NULL 
                                AND s.`is_won_stage` = 0 
                                AND s.`is_lost_stage` = 0 
                                AND o.`close_date` IS NOT NULL 
                                AND o.`close_date` < CURRENT_DATE()
-                         )";
-        $this->rawExecute($sqlOverdue, [':user_id' => $userId]);
+                          )";
+        $this->rawExecute($sqlOverdue, [':user_id' => $userId, ':sub_user_id' => $userId]);
 
         // 2. Eliminar alertas de negociación estancada de oportunidades que ya no están estancadas, fueron cerradas, archivadas o cambiaron de dueño
         $sqlStalled = "DELETE FROM `notifications` 
@@ -180,13 +180,13 @@ final class NotificationRepository extends BaseRepository
                              SELECT o.`id` 
                              FROM `opportunities` o
                              JOIN `pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
-                             WHERE o.`owner_user_id` = :user_id 
+                             WHERE o.`owner_user_id` = :sub_user_id 
                                AND o.`archived_at` IS NULL 
                                AND s.`is_won_stage` = 0 
                                AND s.`is_lost_stage` = 0 
                                AND o.`updated_at` < DATE_SUB(NOW(), INTERVAL :days DAY)
                          )";
-        $this->rawExecute($sqlStalled, [':user_id' => $userId, ':days' => $days]);
+        $this->rawExecute($sqlStalled, [':user_id' => $userId, ':sub_user_id' => $userId, ':days' => $days]);
     }
 
     /**

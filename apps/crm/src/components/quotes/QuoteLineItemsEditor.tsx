@@ -91,7 +91,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
   )
 
   const formatAmount = (val: number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(val)
+    return new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val)
   }
 
   if (readOnly) {
@@ -123,10 +123,10 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                   {item.product_sku && <span className="ml-1" style={{ color: 'var(--sys-text-muted)' }}>({item.product_sku})</span>}
                 </td>
                 <td className="py-2 pr-2 text-right">{Number(item.quantity)}</td>
-                <td className="py-2 pr-3 text-right">{formatAmount(Number(item.unit_price))}</td>
+                <td className="py-2 pr-3 text-right">$ {formatAmount(Number(item.unit_price))}</td>
                 <td className="py-2 pr-2 text-right">{Number(item.discount_percentage)}%</td>
                 <td className="py-2 pr-2 text-right">{Number(item.tax_percentage)}%</td>
-                <td className="py-2 pr-3 text-right font-semibold">{formatAmount(lineTotal(item))}</td>
+                <td className="py-2 pr-3 text-right font-semibold">$ {formatAmount(lineTotal(item))}</td>
               </tr>
             ))}
           </tbody>
@@ -190,10 +190,11 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                 <td className="py-2 pr-3">
                   <Input
                     type="number"
-                    step="1"
+                    step="0.01"
                     min="0"
+                    icon={<span className="text-xs font-semibold select-none" style={{ color: 'var(--sys-text-muted)' }}>$</span>}
                     value={item.unit_price}
-                    onChange={(e) => handleChange(i, 'unit_price', parseInt(e.target.value, 10) || 0)}
+                    onChange={(e) => handleChange(i, 'unit_price', parseFloat(e.target.value) || 0)}
                     className="w-full text-right"
                   />
                 </td>
@@ -220,7 +221,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                   />
                 </td>
                 <td className="py-2 pr-3 text-right font-semibold">
-                  {formatAmount(lineTotal(item))}
+                  $ {formatAmount(lineTotal(item))}
                 </td>
                 <td className="py-2">
                   <button

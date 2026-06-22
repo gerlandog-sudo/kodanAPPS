@@ -225,6 +225,15 @@ try {
     ");
     $stmt->execute([$userId]);
 
+    // Configuración por defecto para el tenant en app_configs
+    $stmt = $pdo->prepare("
+        INSERT INTO `app_configs` (`tenant_id`, `app_id`, `config_key`, `config_value`)
+        VALUES (?, 'crm', 'stalled_deal_days', '15')
+        ON DUPLICATE KEY UPDATE `config_value` = VALUES(`config_value`)
+    ");
+    $stmt->execute([$tenantId]);
+    echo "✅ Configuración de alertas por defecto 'stalled_deal_days' = 15 registrada en app_configs\n";
+
     // ------------------------------------------------------------
     // 6. Limpieza / Re-inserción controlada de datos de negocio
     // Para que las pruebas sean limpias, podemos eliminar los datos previos de este tenant.

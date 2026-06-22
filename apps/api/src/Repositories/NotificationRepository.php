@@ -101,7 +101,12 @@ final class NotificationRepository extends BaseRepository
         $params = [':tenant_id' => $tenantId, ':config_key' => $configKey];
         $result = $this->rawSelect($sql, $params);
         
-        return !empty($result) ? (string)$result[0]['config_value'] : $default;
+        if (empty($result)) {
+            $this->setAppConfig($configKey, $default);
+            return $default;
+        }
+        
+        return (string)$result[0]['config_value'];
     }
 
     /**

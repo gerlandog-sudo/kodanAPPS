@@ -83,6 +83,53 @@ final class NotificationRepository extends BaseRepository
     }
 
     /**
+     * Obtiene el valor de configuración de la aplicación para el tenant actual
+     * 
+     * @param string $configKey
+     * @param string $default
+     * @return string
+     */
+    public function getAppConfig(string $configKey, string $default): string
+    {
+        $tenantId = TenantContext::getTenantId();
+        $sql = "SELECT `config_value` 
+                FROM `app_configs` 
+                WHERE `tenant_id` = :tenant_id 
+                  AND `app_id` = 'crm' 
+                  AND `config_key` = :config_key";
+        
+        $params = [':tenant_id' => $tenantId, ':config_key' => $configKey];
+        $result = $this->rawSelect($sql, $params);
+        
+        return !empty($result) ? (string)$result[0]['config_value'] : $default;
+    }
+
+    /**
+     * Guarda el valor de configuración de la aplicación para el tenant actual
+     * 
+     * @param string $configKey
+     * @param string $configValue
+     */
+    public function setAppConfig(string $configKey, string $configValue): void
+    {
+        $tenantId = TenantContext::getTenantId();
+        $sql = "INSERT INTO `app_configs` (
+                    `tenant_id`, `app_id`, `config_key`, `config_value`
+                ) VALUES (
+                    :tenant_id, 'crm', :config_key, :config_value
+                ) ON DUPLICATE KEY UPDATE 
+                    `config_value` = VALUES(`config_value`)";
+        
+        $params = [
+            ':tenant_id' => $tenantId,
+            ':config_key' => $configKey,
+            ':config_value' => $configValue
+        ];
+        
+        $this->rawExecute($sql, $params);
+    }
+
+    /**
      * Limpia (elimina) todas las notificaciones de un usuario
      * 
      * @param int $userId
@@ -97,8 +144,9 @@ final class NotificationRepository extends BaseRepository
      * Limpia alertas viejas/resueltas de negociaciones del usuario
      * 
      * @param int $userId
+     * @param int $days
      */
-    public function removeStaleAlerts(int $userId): void
+    public function removeStaleAlerts(int $userId, int $days): void
     {
         // 1. Eliminar alertas de fecha vencida de oportunidades que ya no están vencidas, fueron cerradas, archivadas o cambiaron de dueño
         $sqlOverdue = "DELETE FROM `notifications` 
@@ -131,9 +179,9 @@ final class NotificationRepository extends BaseRepository
                                AND o.`archived_at` IS NULL 
                                AND s.`is_won_stage` = 0 
                                AND s.`is_lost_stage` = 0 
-                               AND o.`updated_at` >= DATE_SUB(NOW(), INTERVAL 15 DAY)
+                               AND o.`updated_at` >= DATE_SUB(NOW(), INTERVAL :days DAY)
                          )";
-        $this->rawExecute($sqlStalled, [':user_id' => $userId]);
+        $this->rawExecute($sqlStalled, [':user_id' => $userId, ':days' => $days]);
     }
 
     /**
@@ -144,13 +192,15 @@ final class NotificationRepository extends BaseRepository
      */
     public function getActiveOpportunitiesForUser(int $userId): array
     {
-        $sql = "SELECT o.`id`, o.`title`, o.`close_date`, o.`updated_at`
+        $sql = "/* BYPASS_TENANT_SCOPE */
+                SELECT o.`id`, o.`title`, o.`close_date`, o.`updated_at`
                 FROM `opportunities` o
                 JOIN `pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
                 WHERE o.`owner_user_id` = :user_id 
                   AND o.`archived_at` IS NULL 
                   AND s.`is_won_stage` = 0 
-                  AND s.`is_lost_stage` = 0";
-        return $this->rawSelect($sql, [':user_id' => $userId]);
+                  AND s.`is_lost_stage` = 0
+                  AND o.`tenant_id` = :tenant_id";
+        return $this->rawSelect($sql, [':user_id' => $userId, ':tenant_id' => TenantContext::getTenantId()]);
     }
 }

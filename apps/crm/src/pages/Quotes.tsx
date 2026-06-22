@@ -64,10 +64,19 @@ export function Quotes() {
     setEditorOpen(true)
   }
 
-  const handleOpenEdit = (quote: Quote) => {
+  const handleOpenEdit = async (quote: Quote) => {
     setEditQuote(quote)
     setPreselectedOppId(null)
     setEditorOpen(true)
+    // Cargar cotización completa con ítems
+    try {
+      const full = await crmApi.getQuote(quote.id)
+      if (full && full.items) {
+        setEditQuote(full as Quote)
+      }
+    } catch {
+      // fallback: usar datos de la lista (sin items)
+    }
   }
 
   const handleRowClick = (quote: Quote) => {

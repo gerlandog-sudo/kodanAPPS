@@ -349,10 +349,10 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       });
       if (selectedPipelineId) loadPipelineData(selectedPipelineId);
 
-      // Auto-open detail drawer as step 2: crear cotización
+      // Segundo paso: abrir modal de editar con cotización
       if (created && created.id) {
         const newOpp: Opportunity = { ...created, line_items_count: 0 };
-        openDetailDrawer(newOpp);
+        handleEditOpp(newOpp);
       }
     } catch (err: any) {
       toast.error(err?.message || 'Error al crear la oportunidad.');

@@ -10,6 +10,7 @@ interface MultiSelectProps {
   values: string[]
   onChange: (values: string[]) => void
   placeholder?: string
+  disabled?: boolean
 }
 
 export function MultiSelect({
@@ -17,6 +18,7 @@ export function MultiSelect({
   values,
   onChange,
   placeholder = 'Seleccionar...',
+  disabled = false,
 }: MultiSelectProps) {
   return (
     <Select
@@ -26,6 +28,7 @@ export function MultiSelect({
       placeholder={placeholder}
       multiple={true}
       searchable={true}
+      disabled={disabled}
     />
   )
 }

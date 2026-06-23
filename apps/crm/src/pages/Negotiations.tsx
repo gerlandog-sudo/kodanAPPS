@@ -21,6 +21,8 @@ import {
   ChevronRight,
   MessageSquare,
   Download,
+  Trophy,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportToExcel } from '../utils/excelExport';
@@ -147,6 +149,14 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
   const [oppFormLineItems, setOppFormLineItems] = useState<QuoteLineItem[]>([]);
   const [oppQuoteId, setOppQuoteId] = useState<number | null>(null);
   const [editingOppId, setEditingOppId] = useState<number | null>(null);
+
+  const editingOpp = useMemo(() => {
+    return editingOppId ? opportunities.find(o => o.id === editingOppId) : null;
+  }, [editingOppId, opportunities]);
+
+  const isReadOnly = useMemo(() => {
+    return editingOpp ? (editingOpp.status === 'won' || editingOpp.status === 'lost') : false;
+  }, [editingOpp]);
 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
@@ -978,7 +988,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           setCustomFields({});
           setModalTab('general');
         }} 
-        title={editingOppId ? 'Editar Negociación' : 'Nueva Negociación'} 
+        title={editingOppId ? (isReadOnly ? 'Ver Negociación' : 'Editar Negociación') : 'Nueva Negociación'} 
         className="max-w-5xl"
       >
         <div className="flex gap-1 p-1 rounded-lg mb-4 mt-2" style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content' }}>
@@ -994,6 +1004,38 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
 
         {modalTab === 'general' ? (
           <form onSubmit={handleOppSubmit} className="flex flex-col gap-4 mt-2 max-h-[70vh] overflow-y-auto pr-2">
+            {/* Banner de estado Ganada/Perdida */}
+            {isReadOnly && editingOpp && (
+              <div
+                className="flex items-center gap-3 p-3 rounded-lg border mb-2"
+                style={{
+                  background: editingOpp.status === 'won'
+                    ? 'color-mix(in srgb, var(--sys-success) 10%, transparent)'
+                    : 'color-mix(in srgb, var(--sys-error) 10%, transparent)',
+                  borderColor: editingOpp.status === 'won'
+                    ? 'color-mix(in srgb, var(--sys-success) 20%, transparent)'
+                    : 'color-mix(in srgb, var(--sys-error) 20%, transparent)',
+                }}
+              >
+                {editingOpp.status === 'won' ? (
+                  <Trophy size={18} style={{ color: 'var(--sys-success)' }} />
+                ) : (
+                  <AlertTriangle size={18} style={{ color: 'var(--sys-error)' }} />
+                )}
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--sys-text)' }}>
+                    {editingOpp.status === 'won' ? 'Negociación Ganada' : 'Negociación Perdida'}
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>
+                    {editingOpp.status === 'won' ? 'Motivo de éxito: ' : 'Motivo de pérdida: '}
+                    <span className="font-semibold" style={{ color: 'var(--sys-text)' }}>
+                      {editingOpp.close_reason || 'No especificado'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* ── Datos básicos ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1 md:col-span-2">
@@ -1005,6 +1047,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   onChange={(e) => setOppFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Ej: Licencias Enterprise KODAN"
                   required
+                  disabled={isReadOnly}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -1017,6 +1060,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   onChange={(e) => setOppFormData((prev) => ({ ...prev, value: e.target.value }))}
                   placeholder="0"
                   required
+                  disabled={isReadOnly}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -1027,6 +1071,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   type="date"
                   value={oppFormData.close_date}
                   onChange={(e) => setOppFormData((prev) => ({ ...prev, close_date: e.target.value }))}
+                  disabled={isReadOnly}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -1039,6 +1084,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   onChange={(val) => setOppFormData((prev) => ({ ...prev, account_id: String(val) }))}
                   placeholder="Selecciona una cuenta corporativa"
                   searchable={true}
+                  disabled={isReadOnly}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -1051,6 +1097,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   onChange={(val) => setOppFormData((prev) => ({ ...prev, contact_id: String(val) }))}
                   placeholder="Selecciona un contacto corporativo"
                   searchable={true}
+                  disabled={isReadOnly}
                 />
               </div>
               <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
@@ -1062,6 +1109,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   value={oppFormData.pipeline_stage_id}
                   onChange={(val) => setOppFormData((prev) => ({ ...prev, pipeline_stage_id: String(val) }))}
                   placeholder="Selecciona una etapa"
+                  disabled={isReadOnly}
                 />
               </div>
             </div>
@@ -1080,7 +1128,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                 <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                   PRODUCTOS / SERVICIOS
                 </label>
-                <QuoteLineItemsEditor items={oppFormLineItems} onChange={setOppFormLineItems} />
+                <QuoteLineItemsEditor items={oppFormLineItems} onChange={setOppFormLineItems} readOnly={isReadOnly} />
               </div>
             </div>
 
@@ -1123,11 +1171,13 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
               style={{ borderTop: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)' }}
             >
               <Button variant="secondary" type="button" onClick={() => { setShowOppModal(false); setEditingOppId(null); setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '' }); setOppFormLineItems([]); setOppQuoteId(null); setCustomFields({}); setModalTab('general'); }}>
-                Cancelar
+                {isReadOnly ? 'Cerrar' : 'Cancelar'}
               </Button>
-              <Button variant="primary" type="submit" className="btn-primary">
-                {editingOppId ? 'Guardar Cambios' : 'Crear Negociación'}
-              </Button>
+              {!isReadOnly && (
+                <Button variant="primary" type="submit" className="btn-primary">
+                  {editingOppId ? 'Guardar Cambios' : 'Crear Negociación'}
+                </Button>
+              )}
             </div>
           </form>
         ) : (
@@ -1136,17 +1186,20 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
               definitions={fieldDefs}
               values={customFields}
               onChange={(key, value) => setCustomFields(prev => ({ ...prev, [key]: value }))}
+              disabled={isReadOnly}
             />
             <div
               className="flex justify-end gap-3 mt-2 pt-3 sticky bottom-0"
               style={{ borderTop: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)' }}
             >
               <Button variant="secondary" type="button" onClick={() => { setShowOppModal(false); setEditingOppId(null); setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '' }); setOppFormLineItems([]); setOppQuoteId(null); setCustomFields({}); setModalTab('general'); }}>
-                Cancelar
+                {isReadOnly ? 'Cerrar' : 'Cancelar'}
               </Button>
-              <Button variant="primary" onClick={() => handleOppSubmit()} className="btn-primary">
-                {editingOppId ? 'Guardar Cambios' : 'Crear Negociación'}
-              </Button>
+              {!isReadOnly && (
+                <Button variant="primary" onClick={() => handleOppSubmit()} className="btn-primary">
+                  {editingOppId ? 'Guardar Cambios' : 'Crear Negociación'}
+                </Button>
+              )}
             </div>
           </div>
         )}

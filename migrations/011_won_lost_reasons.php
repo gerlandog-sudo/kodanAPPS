@@ -50,6 +50,14 @@ if (file_exists($envPathRoot)) {
 // Intentar primera configuración (API Env)
 $configs = [
     [
+        'host' => '170.249.236.27',
+        'port' => 3306,
+        'dbname' => 'admkoda_BBDD_APPS',
+        'user' => 'admkoda_APPS_admin',
+        'pass' => 'admin2026',
+        'label' => 'Entorno Remoto Admin (admkoda_APPS_admin)'
+    ],
+    [
         'host' => $dotenvApi['DB_HOST'] ?? '170.249.236.27',
         'port' => (int)($dotenvApi['DB_PORT'] ?? 3306),
         'dbname' => $dotenvApi['DB_NAME'] ?? 'admkoda_BBDD_APPS',

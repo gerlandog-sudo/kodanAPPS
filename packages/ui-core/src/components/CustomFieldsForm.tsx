@@ -16,6 +16,7 @@ interface CustomFieldsFormProps {
   definitions: FieldDefinition[]
   values: Record<string, any>
   onChange: (key: string, value: any) => void
+  disabled?: boolean
 }
 
 const selectOptions = (options: string[] | null): { label: string; value: string }[] =>
@@ -25,7 +26,7 @@ const selectOptions = (options: string[] | null): { label: string; value: string
     return { label, value }
   })
 
-export function CustomFieldsForm({ definitions, values, onChange }: CustomFieldsFormProps) {
+export function CustomFieldsForm({ definitions, values, onChange, disabled = false }: CustomFieldsFormProps) {
   if (!definitions || definitions.length === 0) {
     return (
       <div style={{ padding: '1.5rem 0', textAlign: 'center', color: 'var(--sys-text-muted)', fontSize: '0.875rem' }}>
@@ -53,6 +54,7 @@ export function CustomFieldsForm({ definitions, values, onChange }: CustomFields
                 <UiInput
                   value={val ?? ''}
                   onChange={e => onChange(def.field_key, e.target.value)}
+                  disabled={disabled}
                 />
               </div>
             )
@@ -65,6 +67,7 @@ export function CustomFieldsForm({ definitions, values, onChange }: CustomFields
                   type="number"
                   value={val ?? ''}
                   onChange={e => onChange(def.field_key, e.target.value === '' ? null : Number(e.target.value))}
+                  disabled={disabled}
                 />
               </div>
             )
@@ -79,6 +82,7 @@ export function CustomFieldsForm({ definitions, values, onChange }: CustomFields
                   value={val ?? ''}
                   onChange={v => onChange(def.field_key, v)}
                   placeholder="Seleccionar..."
+                  disabled={disabled}
                 />
               </div>
             )
@@ -93,6 +97,7 @@ export function CustomFieldsForm({ definitions, values, onChange }: CustomFields
                   options={opts}
                   values={val ?? []}
                   onChange={v => onChange(def.field_key, v)}
+                  disabled={disabled}
                 />
               </div>
             )
@@ -106,6 +111,7 @@ export function CustomFieldsForm({ definitions, values, onChange }: CustomFields
                   type="date"
                   value={val ?? ''}
                   onChange={e => onChange(def.field_key, e.target.value)}
+                  disabled={disabled}
                 />
               </div>
             )
@@ -117,6 +123,7 @@ export function CustomFieldsForm({ definitions, values, onChange }: CustomFields
                   checked={!!val}
                   onChange={e => onChange(def.field_key, e.target.checked)}
                   label={def.field_label}
+                  disabled={disabled}
                 />
               </div>
             )

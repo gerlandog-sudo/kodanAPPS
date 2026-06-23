@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Card, SlidePanel, Table, Select } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
-import { DollarSign, BarChart3, Users, Briefcase, TrendingUp, Sparkles, FolderKanban, Download, FileDown } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid, RadialBarChart, RadialBar } from 'recharts';
+import { DollarSign, BarChart3, Users, Briefcase, TrendingUp, Sparkles, FolderKanban, Download, FileDown, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid, RadialBarChart, RadialBar, PieChart, Pie, Cell } from 'recharts';
 import { toast } from 'sonner';
 import { exportToExcel } from '../utils/excelExport';
 import { SalesFunnelSVG } from '../components/dashboard/SalesFunnelSVG';
@@ -388,6 +388,82 @@ export function Dashboard() {
     { name: 'Propuesta', value: 15000, count: 4 },
     { name: 'Negociación', value: 25000, count: 2 },
   ];
+
+  const WON_COLORS = [
+    'var(--sys-success)',
+    'color-mix(in srgb, var(--sys-success) 70%, var(--sys-surface))',
+    'color-mix(in srgb, var(--sys-success) 45%, var(--sys-surface))',
+    'color-mix(in srgb, var(--sys-success) 25%, var(--sys-surface))',
+    'var(--sys-text-muted)'
+  ];
+
+  const LOST_COLORS = [
+    'var(--sys-error)',
+    'color-mix(in srgb, var(--sys-error) 70%, var(--sys-surface))',
+    'color-mix(in srgb, var(--sys-error) 45%, var(--sys-surface))',
+    'color-mix(in srgb, var(--sys-error) 25%, var(--sys-surface))',
+    'var(--sys-text-muted)'
+  ];
+
+  const closeReasonsAnalysis = useMemo(() => {
+    const wonOpps = opportunities.filter(o => o.status === 'won');
+    const lostOpps = opportunities.filter(o => o.status === 'lost');
+
+    const getReasonsData = (opps: any[]) => {
+      const counts: Record<string, { count: number; value: number }> = {};
+      opps.forEach(o => {
+        const reason = o.close_reason || 'Otro / No especificado';
+        if (!counts[reason]) {
+          counts[reason] = { count: 0, value: 0 };
+        }
+        counts[reason].count += 1;
+        counts[reason].value += parseFloat(o.value) || 0;
+      });
+
+      const sorted = Object.entries(counts)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.count - a.count);
+
+      if (sorted.length <= 4) {
+        return sorted;
+      }
+
+      const top4 = sorted.slice(0, 4);
+      const others = sorted.slice(4);
+      const othersCount = others.reduce((acc, curr) => acc + curr.count, 0);
+      const othersValue = others.reduce((acc, curr) => acc + curr.value, 0);
+
+      return [
+        ...top4,
+        { name: 'Otros', count: othersCount, value: othersValue }
+      ];
+    };
+
+    const wonReasons = getReasonsData(wonOpps);
+    const lostReasons = getReasonsData(lostOpps);
+
+    const allReasonsMap: Record<string, { wonCount: number; wonValue: number; lostCount: number; lostValue: number }> = {};
+    opportunities.forEach(o => {
+      if (o.status !== 'won' && o.status !== 'lost') return;
+      const reason = o.close_reason || 'Otro / No especificado';
+      if (!allReasonsMap[reason]) {
+        allReasonsMap[reason] = { wonCount: 0, wonValue: 0, lostCount: 0, lostValue: 0 };
+      }
+      if (o.status === 'won') {
+        allReasonsMap[reason].wonCount += 1;
+        allReasonsMap[reason].wonValue += parseFloat(o.value) || 0;
+      } else {
+        allReasonsMap[reason].lostCount += 1;
+        allReasonsMap[reason].lostValue += parseFloat(o.value) || 0;
+      }
+    });
+
+    const summaryTable = Object.entries(allReasonsMap)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => (b.wonCount + b.lostCount) - (a.wonCount + a.lostCount));
+
+    return { wonReasons, lostReasons, summaryTable };
+  }, [opportunities]);
 
   const handleExportDashboardExcel = async () => {
     try {
@@ -796,33 +872,150 @@ export function Dashboard() {
           <ForecastChart opportunities={opportunities} />
         </div>
 
-        {/* Gráfico 4: Proyección y Crecimiento Comercial (Área) */}
+        {/* Gráfico 4: Análisis de Motivos de Cierre (Éxito vs Pérdida) */}
         <div className="glass-panel p-6" style={{ borderRadius: 'var(--radius-lg)' }}>
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp size={18} style={{ color: 'var(--sys-tertiary)' }} />
-            <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-montserrat)' }}>Proyección y Crecimiento Comercial</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 size={18} style={{ color: 'var(--sys-primary)' }} />
+            <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-montserrat)' }}>Análisis de Motivos de Cierre</h2>
           </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--sys-tertiary)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--sys-tertiary)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--sys-border-soft)" />
-                <XAxis dataKey="name" stroke="var(--sys-text-muted)" fontSize={11} tickLine={false} />
-                <YAxis stroke="var(--sys-text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
-                <Tooltip
-                  formatter={(value: any) => [formatCurrency(Number(value)), 'Valor Proyectado']}
-                  contentStyle={{ background: 'var(--sys-surface-raised)', borderColor: 'var(--sys-border-soft)', borderRadius: '8px' }}
-                  labelStyle={{ fontWeight: 'bold', color: 'var(--sys-text)' }}
-                />
-                <Area type="monotone" dataKey="value" stroke="var(--sys-tertiary)" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          {closeReasonsAnalysis.wonReasons.length === 0 && closeReasonsAnalysis.lostReasons.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-80 text-center gap-2">
+              <Briefcase className="text-3xl opacity-20 animate-pulse" style={{ color: 'var(--sys-text-muted)' }} />
+              <span className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>Sin motivos de cierre</span>
+              <span className="text-[10px] px-4" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }}>Aún no se han registrado motivos de ganada/pérdida para las oportunidades en este pipeline.</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6 h-80 overflow-y-auto pr-1 scrollbar-none">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Columna Ganadas */}
+                <div className="flex flex-col items-center">
+                  <h3 className="text-xs font-bold mb-2 flex items-center gap-1.5" style={{ color: 'var(--sys-success)' }}>
+                    <CheckCircle size={14} /> Éxito (Ganadas)
+                  </h3>
+                  {closeReasonsAnalysis.wonReasons.length === 0 ? (
+                    <div className="h-32 flex items-center justify-center">
+                      <span className="text-[10px]" style={{ color: 'var(--sys-text-muted)' }}>Sin datos suficientes</span>
+                    </div>
+                  ) : (
+                    <div className="w-full flex flex-col items-center">
+                      <div className="h-32 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={closeReasonsAnalysis.wonReasons}
+                              dataKey="count"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={25}
+                              outerRadius={45}
+                              paddingAngle={2}
+                            >
+                              {closeReasonsAnalysis.wonReasons.map((_, index) => (
+                                <Cell key={`cell-won-${index}`} fill={WON_COLORS[index % WON_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value: any, name: any, props: any) => [
+                                `${value} tratos (${formatCurrency(props.payload.value)})`,
+                                name
+                              ]}
+                              contentStyle={{ background: 'var(--sys-surface-raised)', borderColor: 'var(--sys-border-soft)', borderRadius: '8px', fontSize: '10px' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex flex-col gap-1 w-full mt-2">
+                        {closeReasonsAnalysis.wonReasons.map((item, index) => (
+                          <div key={item.name} className="flex items-center justify-between text-[10px]">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: WON_COLORS[index % WON_COLORS.length] }} />
+                              <span className="truncate text-text font-medium" style={{ color: 'var(--sys-text)' }} title={item.name}>{item.name}</span>
+                            </div>
+                            <span className="font-semibold text-text-muted shrink-0 ml-2">{item.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Columna Perdidas */}
+                <div className="flex flex-col items-center">
+                  <h3 className="text-xs font-bold mb-2 flex items-center gap-1.5" style={{ color: 'var(--sys-error)' }}>
+                    <AlertTriangle size={14} /> Pérdida (Perdidas)
+                  </h3>
+                  {closeReasonsAnalysis.lostReasons.length === 0 ? (
+                    <div className="h-32 flex items-center justify-center">
+                      <span className="text-[10px]" style={{ color: 'var(--sys-text-muted)' }}>Sin datos suficientes</span>
+                    </div>
+                  ) : (
+                    <div className="w-full flex flex-col items-center">
+                      <div className="h-32 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={closeReasonsAnalysis.lostReasons}
+                              dataKey="count"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={25}
+                              outerRadius={45}
+                              paddingAngle={2}
+                            >
+                              {closeReasonsAnalysis.lostReasons.map((_, index) => (
+                                <Cell key={`cell-lost-${index}`} fill={LOST_COLORS[index % LOST_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value: any, name: any, props: any) => [
+                                `${value} tratos (${formatCurrency(props.payload.value)})`,
+                                name
+                              ]}
+                              contentStyle={{ background: 'var(--sys-surface-raised)', borderColor: 'var(--sys-border-soft)', borderRadius: '8px', fontSize: '10px' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex flex-col gap-1 w-full mt-2">
+                        {closeReasonsAnalysis.lostReasons.map((item, index) => (
+                          <div key={item.name} className="flex items-center justify-between text-[10px]">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: LOST_COLORS[index % LOST_COLORS.length] }} />
+                              <span className="truncate text-text font-medium" style={{ color: 'var(--sys-text)' }} title={item.name}>{item.name}</span>
+                            </div>
+                            <span className="font-semibold text-text-muted shrink-0 ml-2">{item.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabla Resumen */}
+              {closeReasonsAnalysis.summaryTable.length > 0 && (
+                <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--sys-border-soft)' }}>
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--sys-text-muted)' }}>Resumen por Motivo de Cierre</h4>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-[9px] font-bold text-text-muted border-b pb-1 mb-1" style={{ borderColor: 'var(--sys-border-soft)' }}>
+                      <span className="w-1/2">Motivo / Patrón</span>
+                      <span className="w-1/4 text-right" style={{ color: 'var(--sys-success)' }}>Ganadas</span>
+                      <span className="w-1/4 text-right" style={{ color: 'var(--sys-error)' }}>Perdidas</span>
+                    </div>
+                    {closeReasonsAnalysis.summaryTable.map((row) => (
+                      <div key={row.name} className="flex items-center justify-between text-[10px] py-1 border-b border-border-soft/20">
+                        <span className="w-1/2 truncate font-medium" style={{ color: 'var(--sys-text)' }}>{row.name}</span>
+                        <span className="w-1/4 text-right text-text-muted">{row.wonCount} ({formatCurrency(row.wonValue)})</span>
+                        <span className="w-1/4 text-right text-text-muted">{row.lostCount} ({formatCurrency(row.lostValue)})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

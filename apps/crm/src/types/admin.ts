@@ -23,6 +23,10 @@ export interface Pipeline {
   id: number
   name: string
   is_default: number
+  ui_config?: {
+    won_reasons?: string[]
+    lost_reasons?: string[]
+  } | null
 }
 
 export interface Stage {

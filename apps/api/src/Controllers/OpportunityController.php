@@ -141,6 +141,7 @@ final class OpportunityController
                 'close_date' => isset($input['close_date']) && is_scalar($input['close_date']) ? trim((string)$input['close_date']) : null,
                 'owner_user_id' => isset($input['owner_user_id']) && is_scalar($input['owner_user_id']) && (int)$input['owner_user_id'] > 0 ? (int)$input['owner_user_id'] : TenantContext::getUserId(),
                 'custom_fields' => $customFields,
+                'close_reason' => isset($input['close_reason']) && is_scalar($input['close_reason']) ? trim((string)$input['close_reason']) : null,
             ];
 
             $id = $this->opportunityRepo->createOpportunity($data);
@@ -227,6 +228,9 @@ final class OpportunityController
         }
         if (isset($input['custom_fields']) && is_array($input['custom_fields'])) {
             $data['custom_fields'] = $input['custom_fields'];
+        }
+        if (array_key_exists('close_reason', $input)) {
+            $data['close_reason'] = isset($input['close_reason']) && is_scalar($input['close_reason']) ? trim((string)$input['close_reason']) : null;
         }
 
         // Actualizar datos propios
@@ -362,6 +366,7 @@ final class OpportunityController
         if ($projectName === '') {
             $projectName = isset($opp['title']) && is_scalar($opp['title']) ? (string)$opp['title'] : 'Proyecto';
         }
+        $closeReason = isset($input['close_reason']) && is_scalar($input['close_reason']) ? trim((string)$input['close_reason']) : null;
 
         if ($budgetHours <= 0) {
             throw new InvalidArgumentException((string)json_encode([
@@ -375,7 +380,8 @@ final class OpportunityController
             $id,
             $wonStageId,
             $projectName,
-            $budgetHours
+            $budgetHours,
+            $closeReason
         );
 
         return [

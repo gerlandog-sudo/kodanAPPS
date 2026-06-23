@@ -239,11 +239,14 @@ final class OpportunityRepository extends BaseRepository
      * 
      * @return int ID del proyecto creado
      */
-    public function markAsWonAndCreateProject(int $opportunityId, int $wonStageId, string $projectName, float $budgetHours): int
+    public function markAsWonAndCreateProject(int $opportunityId, int $wonStageId, string $projectName, float $budgetHours, ?string $closeReason = null): int
     {
-        return $this->transactional(function () use ($opportunityId, $wonStageId, $projectName, $budgetHours) {
-            // 1. Actualizar etapa de la oportunidad a ganada
-            $this->update(self::TABLE, ['pipeline_stage_id' => $wonStageId], 'id = :id', [':id' => $opportunityId]);
+        return $this->transactional(function () use ($opportunityId, $wonStageId, $projectName, $budgetHours, $closeReason) {
+            // 1. Actualizar etapa de la oportunidad a ganada y guardar el motivo de cierre
+            $this->update(self::TABLE, [
+                'pipeline_stage_id' => $wonStageId,
+                'close_reason' => $closeReason
+            ], 'id = :id', [':id' => $opportunityId]);
             
             $oppResult = $this->rawSelect(
                 "/* BYPASS_TENANT_SCOPE */ SELECT account_id FROM opportunities WHERE id = ?",

@@ -7,7 +7,7 @@ namespace kodanAPPS\Repositories;
 /**
  * PipelineRepository - Gestión de Pipelines y Etapas comerciales
  * 
- * @extends BaseRepository<array{id: int, tenant_id: int, name: string, is_default: int, created_at: string}>
+ * @extends BaseRepository<array{id: int, tenant_id: int, name: string, is_default: int, ui_config: string|null, created_at: string}>
  */
 final class PipelineRepository extends BaseRepository
 {
@@ -36,7 +36,7 @@ final class PipelineRepository extends BaseRepository
     /**
      * Crea un nuevo pipeline
      * 
-     * @param array{name: string, is_default?: int} $data
+     * @param array{name: string, is_default?: int, ui_config?: string|null} $data
      * @return int ID del pipeline creado
      */
     public function createPipeline(array $data): int
@@ -51,7 +51,7 @@ final class PipelineRepository extends BaseRepository
     /**
      * Actualiza un pipeline existente
      * 
-     * @param array{name?: string, is_default?: int} $data
+     * @param array{name?: string, is_default?: int, ui_config?: string|null} $data
      */
     public function updatePipeline(int $id, array $data): int
     {

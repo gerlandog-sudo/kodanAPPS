@@ -25,7 +25,8 @@ final class PipelineController
      */
     public function listPipelines(): array
     {
-        return $this->pipelineRepo->listPipelines();
+        $pipelines = $this->pipelineRepo->listPipelines();
+        return array_map([$this, 'decodeUiConfig'], $pipelines);
     }
 
     /**
@@ -38,6 +39,20 @@ final class PipelineController
         $pipeline = $this->pipelineRepo->findPipelineById($id);
         if ($pipeline === null) {
             throw new RuntimeException('Pipeline no encontrado.', 404);
+        }
+        return $this->decodeUiConfig($pipeline);
+    }
+
+    /**
+     * Decodifica ui_config si viene como string JSON
+     * 
+     * @param array<string, mixed> $pipeline
+     * @return array<string, mixed>
+     */
+    private function decodeUiConfig(array $pipeline): array
+    {
+        if (isset($pipeline['ui_config']) && is_string($pipeline['ui_config'])) {
+            $pipeline['ui_config'] = json_decode($pipeline['ui_config'], true);
         }
         return $pipeline;
     }
@@ -61,6 +76,7 @@ final class PipelineController
         $data = [
             'name' => $name,
             'is_default' => isset($input['is_default']) && is_scalar($input['is_default']) ? ((int)$input['is_default'] === 1 ? 1 : 0) : 0,
+            'ui_config' => isset($input['ui_config']) && is_array($input['ui_config']) ? json_encode($input['ui_config'], JSON_UNESCAPED_UNICODE) : null,
         ];
 
         $id = $this->pipelineRepo->createPipeline($data);
@@ -99,6 +115,10 @@ final class PipelineController
 
         if (isset($input['is_default'])) {
             $data['is_default'] = is_scalar($input['is_default']) && (int)$input['is_default'] === 1 ? 1 : 0;
+        }
+
+        if (isset($input['ui_config'])) {
+            $data['ui_config'] = is_array($input['ui_config']) ? json_encode($input['ui_config'], JSON_UNESCAPED_UNICODE) : null;
         }
 
         if (empty($data)) {

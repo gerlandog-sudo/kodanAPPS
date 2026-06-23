@@ -6,7 +6,7 @@ import type { Pipeline, Stage } from '../../types/admin'
 import { STAGE_PRESET_LIST } from '../../utils/stageColorPresets'
 import { STAGE_TEMPLATES } from './stageTemplates'
 import { usePipelineSync } from '../../hooks/usePipelineSync'
-import { Plus, Trash2, Layout, X } from 'lucide-react'
+import { Plus, Trash2, Layout, X, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
@@ -16,10 +16,11 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-function SortableStageRow({ stage, idx, editingStages, updateEditingStage, removeEditingStage }: {
+function SortableStageRow({ stage, idx, editingStages, updateEditingStage, removeEditingStage, onConfigureReasons }: {
   stage: StageBulkInput; idx: number; editingStages: StageBulkInput[]
   updateEditingStage: (idx: number, field: keyof StageBulkInput, value: any) => void
   removeEditingStage: (idx: number) => void
+  onConfigureReasons: (type: 'won' | 'lost') => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `stage-${idx}` })
   const style: React.CSSProperties = {
@@ -31,52 +32,84 @@ function SortableStageRow({ stage, idx, editingStages, updateEditingStage, remov
 
   return (
     <tr ref={setNodeRef} style={style} className="table-row">
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '2.5rem', textAlign: 'center' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '2.5rem', textAlign: 'center', padding: '0.75rem 0.5rem' }}>
         <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--sys-text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="19" r="1"/></svg>
         </div>
       </td>
-      <td className="table-td" style={{ verticalAlign: 'middle' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', padding: '0.75rem 0.5rem' }}>
         <Input 
           value={stage.name || ''} 
           onChange={e => updateEditingStage(idx, 'name', e.target.value)} 
           placeholder="Ej: Propuesta" 
-          style={{ height: '2rem', padding: '0 0.5rem', fontSize: '0.8125rem' }}
+          style={{ padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
         />
       </td>
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '7rem' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '7rem', padding: '0.75rem 0.5rem' }}>
         <ColorPicker value={stage.color_hex || '#6366F1'} onChange={color => updateEditingStage(idx, 'color_hex', color)} />
       </td>
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '5.5rem' }}>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '5.5rem', padding: '0.75rem 0.5rem' }}>
         <Input 
           type="number" 
           min={0} 
           max={100} 
           value={stage.probability ?? 0} 
           onChange={e => updateEditingStage(idx, 'probability', Math.min(100, Math.max(0, Number(e.target.value))))} 
-          style={{ height: '2rem', padding: '0 0.5rem', fontSize: '0.8125rem', width: '100%' }}
+          style={{ padding: '0.375rem 0.5rem', fontSize: '0.8125rem', width: '100%' }}
         />
       </td>
-      <td className="table-td" style={{ verticalAlign: 'middle', width: '12rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {[
-            { key: 'is_won_stage', label: 'Ganada', color: 'var(--sys-success, #22c55e)' },
-            { key: 'is_lost_stage', label: 'Perdida', color: 'var(--sys-error)' },
-          ].map(({ key, label, color }) => (
-            <label key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', fontSize: '0.725rem', fontWeight: 600 }}>
-              <input type="radio" name={`st-${idx}`} checked={!!(stage as any)[key]}
-                onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0); updateEditingStage(idx, key as any, 1) }} />
-              <span style={{ color }}>{label}</span>
+      <td className="table-td" style={{ verticalAlign: 'middle', width: '18rem', padding: '0.75rem 0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {[
+              { key: 'is_won_stage', label: 'Ganada', color: 'var(--sys-success, #22c55e)' },
+              { key: 'is_lost_stage', label: 'Perdida', color: 'var(--sys-error)' },
+            ].map(({ key, label, color }) => (
+              <label key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', fontSize: '0.725rem', fontWeight: 600 }}>
+                <input type="radio" name={`st-${idx}`} checked={!!(stage as any)[key]}
+                  onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0); updateEditingStage(idx, key as any, 1) }} />
+                <span style={{ color }}>{label}</span>
+              </label>
+            ))}
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', fontSize: '0.725rem', fontWeight: 600 }}>
+              <input type="radio" name={`st-${idx}`} checked={!stage.is_won_stage && !stage.is_lost_stage}
+                onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0) }} />
+              <span style={{ color: 'var(--sys-text-muted)' }}>Abierta</span>
             </label>
-          ))}
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer', fontSize: '0.725rem', fontWeight: 600 }}>
-            <input type="radio" name={`st-${idx}`} checked={!stage.is_won_stage && !stage.is_lost_stage}
-              onChange={() => { updateEditingStage(idx, 'is_won_stage', 0); updateEditingStage(idx, 'is_lost_stage', 0) }} />
-            <span style={{ color: 'var(--sys-text-muted)' }}>Abierta</span>
-          </label>
+          </div>
+          {stage.is_won_stage === 1 && (
+            <button
+              type="button"
+              onClick={() => onConfigureReasons('won')}
+              className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded transition-all active:scale-95 cursor-pointer"
+              style={{
+                background: 'color-mix(in srgb, var(--sys-success) 10%, var(--sys-surface-raised))',
+                color: 'var(--sys-success)',
+                border: '1px solid color-mix(in srgb, var(--sys-success) 30%, transparent)'
+              }}
+              title="Configurar motivos de éxito"
+            >
+              <Settings size={10} /> Motivos
+            </button>
+          )}
+          {stage.is_lost_stage === 1 && (
+            <button
+              type="button"
+              onClick={() => onConfigureReasons('lost')}
+              className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded transition-all active:scale-95 cursor-pointer"
+              style={{
+                background: 'color-mix(in srgb, var(--sys-error) 10%, var(--sys-surface-raised))',
+                color: 'var(--sys-error)',
+                border: '1px solid color-mix(in srgb, var(--sys-error) 30%, transparent)'
+              }}
+              title="Configurar motivos de pérdida"
+            >
+              <Settings size={10} /> Motivos
+            </button>
+          )}
         </div>
       </td>
-      <td className="table-td table-td-right" style={{ verticalAlign: 'middle', width: '3.5rem' }}>
+      <td className="table-td table-td-right" style={{ verticalAlign: 'middle', width: '3.5rem', padding: '0.75rem 0.5rem' }}>
         <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
           <button 
             type="button" 
@@ -209,12 +242,12 @@ export function PipelineManager() {
     } catch { toast.error('Error al clonar') }
   }
 
-  const openReasons = (pipeline: Pipeline) => {
+  const openReasons = (pipeline: Pipeline, type: 'won' | 'lost' = 'won') => {
     const config = (pipeline as any).ui_config || {}
     setWonReasons(config.won_reasons || [])
     setLostReasons(config.lost_reasons || [])
     setNewReason('')
-    setReasonType('won')
+    setReasonType(type)
     setShowReasonsModal(true)
   }
 
@@ -292,14 +325,22 @@ export function PipelineManager() {
                         <th className="table-th">Nombre de Etapa</th>
                         <th className="table-th" style={{ width: '7rem' }}>Color</th>
                         <th className="table-th" style={{ width: '5.5rem' }}>Probabilidad (%)</th>
-                        <th className="table-th" style={{ width: '12rem' }}>Tipo de Etapa</th>
+                        <th className="table-th" style={{ width: '18rem' }}>Tipo de Etapa</th>
                         <th className="table-th table-th-right" style={{ width: '3.5rem' }}>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
                       {editingStages.map((stage, idx) => (
                         <SortableStageRow key={`stage-${idx}`} stage={stage} idx={idx} editingStages={editingStages}
-                          updateEditingStage={updateEditingStage} removeEditingStage={removeEditingStage} />
+                          updateEditingStage={updateEditingStage} removeEditingStage={removeEditingStage}
+                          onConfigureReasons={(type) => {
+                            if (currentPipeline) {
+                              openReasons(currentPipeline, type)
+                            } else {
+                              toast.error('Guarda el canal primero')
+                            }
+                          }}
+                        />
                       ))}
                     </tbody>
                   </table>

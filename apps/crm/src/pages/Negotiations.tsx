@@ -4,6 +4,7 @@ import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
+import { LostOpportunityModal } from '../components/modals/LostOpportunityModal';
 import { KanbanBoard } from '../components/kanban/KanbanBoard';
 import type { ColumnDef } from '../components/kanban/KanbanBoard';
 import { QuoteLineItemsEditor } from '../components/quotes/QuoteLineItemsEditor';
@@ -45,6 +46,7 @@ interface Opportunity {
   owner_avatar?: string | null;
   line_items_count?: number;
   quote_total?: number;
+  close_reason?: string | null;
 }
 
 interface Stage {
@@ -53,6 +55,7 @@ interface Stage {
   color_hex: string;
   sort_order: number;
   is_won_stage: number;
+  is_lost_stage: number;
   pipeline_id: number;
 }
 
@@ -60,6 +63,10 @@ interface Pipeline {
   id: number;
   name: string;
   is_default: number;
+  ui_config?: {
+    won_reasons?: string[];
+    lost_reasons?: string[];
+  } | null;
 }
 
 interface CardProps {
@@ -121,6 +128,10 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
   const [wonOppId, setWonOppId] = useState<number | null>(null);
   const [wonOppName, setWonOppName] = useState('');
   const [targetWonStageId, setTargetWonStageId] = useState<number | null>(null);
+  const [showLostModal, setShowLostModal] = useState(false);
+  const [lostOppId, setLostOppId] = useState<number | null>(null);
+  const [lostOppName, setLostOppName] = useState('');
+  const [targetLostStageId, setTargetLostStageId] = useState<number | null>(null);
   const [justDroppedId, setJustDroppedId] = useState<number | null>(null);
   const [modalTab, setModalTab] = useState<'general' | 'custom-fields'>('general');
 
@@ -223,16 +234,17 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
   }, [opportunities, columns]);
 
   const updateOppStage = useCallback(
-    async (oppId: number, stageId: number, status: 'open' | 'won' | 'lost') => {
+    async (oppId: number, stageId: number, status: 'open' | 'won' | 'lost', extraData: Record<string, any> = {}) => {
       const previousOpps = [...opportunities];
       setOpportunities((prev) =>
-        prev.map((o) => (o.id === oppId ? { ...o, pipeline_stage_id: stageId, status } : o))
+        prev.map((o) => (o.id === oppId ? { ...o, pipeline_stage_id: stageId, status, ...extraData } : o))
       );
 
       try {
         await crmApi.updateOpportunity(oppId, {
           pipeline_stage_id: stageId,
           status,
+          ...extraData
         });
         toast.success('Estado actualizado correctamente.');
       } catch (err: any) {
@@ -262,6 +274,15 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         return;
       }
 
+      // If it's a Lost stage, trigger the Lost modal
+      if (targetStage.is_lost_stage === 1) {
+        setLostOppId(oppId);
+        setLostOppName(opp.name);
+        setTargetLostStageId(targetStageId);
+        setShowLostModal(true);
+        return;
+      }
+
       // Don't update if same stage
       if (opp.pipeline_stage_id === targetStageId) return;
 
@@ -272,18 +293,30 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
     [opportunities, stages, updateOppStage]
   );
 
-  const handleWonSubmit = async (data: { tracker_project_name: string; budgeted_hours: number }) => {
+  const handleWonSubmit = async (data: { tracker_project_name: string; budgeted_hours: number; close_reason: string }) => {
     if (!wonOppId || !targetWonStageId) return;
     try {
       await crmApi.markAsWon(wonOppId, data);
       setOpportunities((prev) =>
         prev.map((o) =>
-          o.id === wonOppId ? { ...o, pipeline_stage_id: targetWonStageId, status: 'won' } : o
+          o.id === wonOppId ? { ...o, pipeline_stage_id: targetWonStageId, status: 'won', close_reason: data.close_reason } : o
         )
       );
       setShowWonModal(false);
       setWonOppId(null);
       setTargetWonStageId(null);
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  const handleLostSubmit = async (closeReason: string) => {
+    if (!lostOppId || !targetLostStageId) return;
+    try {
+      await updateOppStage(lostOppId, targetLostStageId, 'lost', { close_reason: closeReason });
+      setShowLostModal(false);
+      setLostOppId(null);
+      setTargetLostStageId(null);
     } catch (err: any) {
       throw err;
     }
@@ -918,6 +951,18 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           onSubmit={handleWonSubmit}
           defaultName={wonOppName}
           opportunityId={wonOppId}
+          wonReasons={pipelines.find(p => p.id === selectedPipelineId)?.ui_config?.won_reasons || []}
+        />
+      )}
+
+      {/* Lost Modal Integration */}
+      {showLostModal && (
+        <LostOpportunityModal
+          isOpen={showLostModal}
+          onClose={() => setShowLostModal(false)}
+          onSubmit={handleLostSubmit}
+          opportunityName={lostOppName}
+          lostReasons={pipelines.find(p => p.id === selectedPipelineId)?.ui_config?.lost_reasons || []}
         />
       )}
 

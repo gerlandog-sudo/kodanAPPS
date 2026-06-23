@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Modal, Input } from '@kodan-apps/ui-core';
+import { Button, Modal, Input, Select } from '@kodan-apps/ui-core';
 import { Trophy, Clock, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { crmApi } from '../../api/client';
@@ -9,14 +9,16 @@ import type { Quote, QuoteStatus } from '../../types/admin';
 interface WonOpportunityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { tracker_project_name: string; budgeted_hours: number }) => Promise<void>;
+  onSubmit: (data: { tracker_project_name: string; budgeted_hours: number; close_reason: string }) => Promise<void>;
   defaultName: string;
   opportunityId?: number | null;
+  wonReasons?: string[];
 }
 
-export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, opportunityId }: WonOpportunityModalProps) {
+export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, opportunityId, wonReasons = [] }: WonOpportunityModalProps) {
   const [projectName, setProjectName] = useState(defaultName);
   const [hours, setHours] = useState('0');
+  const [closeReason, setCloseReason] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Accepted quotes
@@ -32,6 +34,7 @@ export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, op
     }
     setProjectName(defaultName)
     setHours('0')
+    setCloseReason(wonReasons.length > 0 ? wonReasons[0] : 'Otro / No especificado')
     setLoadingQuotes(true)
     crmApi.listQuotes({ opportunity_id: opportunityId })
       .then((quotes) => {
@@ -71,6 +74,7 @@ export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, op
       await onSubmit({
         tracker_project_name: projectName,
         budgeted_hours: parsedHours,
+        close_reason: closeReason || 'Otro / No especificado',
       });
       toast.success('¡Negociación ganada y proyecto creado en TimeTracker!');
       onClose();
@@ -151,6 +155,23 @@ export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, op
             No hay cotizaciones aceptadas para esta oportunidad
           </div>
         )}
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+            MOTIVO DE GANADA *
+          </label>
+          <Select
+            options={
+              wonReasons.length > 0
+                ? wonReasons.map(r => ({ value: r, label: r }))
+                : [{ value: 'Otro / No especificado', label: 'Otro / No especificado' }]
+            }
+            value={closeReason}
+            onChange={(val) => setCloseReason(String(val))}
+            placeholder="Selecciona el motivo del cierre ganado..."
+            disabled={loading}
+          />
+        </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>

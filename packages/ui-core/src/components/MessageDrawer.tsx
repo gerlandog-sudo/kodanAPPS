@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useTransition, useMemo } from 'react';
 import { X, Send } from 'lucide-react';
+import './MessageDrawer.css';
 import { api } from '../api/client';
 import type { SSEMessage } from '../hooks/useSSE';
 

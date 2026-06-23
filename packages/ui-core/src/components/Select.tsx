@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, Search, Check, X } from 'lucide-react'
 import './Select.css'
 
@@ -37,9 +38,14 @@ export function Select({
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(-1)
+  
   const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const optionsListRef = useRef<HTMLDivElement>(null)
+
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 })
 
   // Normalizar valor para evitar errores de tipo en las comparaciones
   const selectedValues = useMemo<(string | number)[]>(() => {
@@ -59,10 +65,14 @@ export function Select({
     )
   }, [options, searchQuery])
 
-  // Cerrar al hacer clic fuera del componente
+  // Cerrar al hacer clic fuera del componente (tanto gatillo como portal)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      const clickedTrigger = containerRef.current?.contains(target)
+      const clickedDropdown = dropdownRef.current?.contains(target)
+      
+      if (!clickedTrigger && !clickedDropdown) {
         setIsOpen(false)
       }
     }
@@ -70,16 +80,52 @@ export function Select({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Posicionar dinámicamente el dropdown usando position: fixed
+  useEffect(() => {
+    if (!isOpen) return
+
+    const updatePosition = () => {
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect()
+        setCoords({
+          top: rect.bottom,
+          left: rect.left,
+          width: rect.width,
+        })
+      }
+    }
+
+    updatePosition()
+    
+    // Escuchar scroll global en fase de captura (true) para captar scroll dentro de modales o tablas
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+    
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [isOpen])
+
+  // Mostrar el buscador solo si searchable está activo Y la lista tiene más de 5 opciones
+  const showSearch = useMemo(() => {
+    return searchable && options.length > 5
+  }, [searchable, options])
+
   // Auto-enfocar el input de búsqueda cuando se abre
   useEffect(() => {
-    if (isOpen && searchable && searchInputRef.current) {
-      searchInputRef.current.focus()
+    if (isOpen && showSearch && searchInputRef.current) {
+      // Pequeño timeout para asegurar que el portal ya esté en el DOM
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus()
+      }, 30)
+      return () => clearTimeout(timer)
     }
     if (!isOpen) {
       setSearchQuery('')
       setActiveIndex(-1)
     }
-  }, [isOpen, searchable])
+  }, [isOpen, showSearch])
 
   // Asegurar que la opción activa sea visible mediante scroll automático
   useEffect(() => {
@@ -148,7 +194,6 @@ export function Select({
         }
         break
       case 'Tab':
-        // Permitir tabulación normal y cerrar
         setIsOpen(false)
         break
       default:
@@ -161,9 +206,75 @@ export function Select({
     return options.filter((opt) => selectedValues.includes(opt.value))
   }, [options, selectedValues])
 
+  const dropdownMenu = isOpen ? (
+    <div
+      ref={dropdownRef}
+      className="select-dropdown"
+      role="listbox"
+      style={{
+        position: 'fixed',
+        top: `${coords.top + 4}px`,
+        left: `${coords.left}px`,
+        width: `${Math.max(coords.width, 300)}px`,
+        maxWidth: '450px',
+      }}
+    >
+      {showSearch && (
+        <div className="select-search-container">
+          <Search size={14} className="select-search-icon" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="select-search-input"
+            placeholder="Buscar..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      <div className="select-options-list" ref={optionsListRef}>
+        {filteredOptions.length === 0 ? (
+          <div className="select-empty">Sin resultados</div>
+        ) : (
+          filteredOptions.map((option, idx) => {
+            const isSelected = selectedValues.includes(option.value)
+            const isActive = idx === activeIndex
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                className={`select-option ${isSelected ? 'selected' : ''} ${isActive ? 'active' : ''}`}
+                onClick={() => handleSelectOption(option)}
+                onMouseEnter={() => setActiveIndex(idx)}
+              >
+                {option.icon && <span className="select-option-icon">{option.icon}</span>}
+                <div className="select-option-content">
+                  <span className="select-option-label">{option.label}</span>
+                  {option.description && (
+                    <span className="select-option-description">{option.description}</span>
+                  )}
+                </div>
+                {isSelected && (
+                  <span className="select-option-check">
+                    <Check size={14} />
+                  </span>
+                )}
+              </button>
+            )
+          })
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
     <div className={`select-container ${className}`} ref={containerRef} id={id}>
       <button
+        ref={triggerRef}
         type="button"
         className={`select-trigger ${isOpen ? 'open' : ''} ${error ? 'border-error' : ''}`}
         onClick={toggleDropdown}
@@ -202,59 +313,7 @@ export function Select({
         </span>
       </button>
 
-      {isOpen && (
-        <div className="select-dropdown" role="listbox">
-          {searchable && (
-            <div className="select-search-container">
-              <Search size={14} className="select-search-icon" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                className="select-search-input"
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          )}
-
-          <div className="select-options-list" ref={optionsListRef}>
-            {filteredOptions.length === 0 ? (
-              <div className="select-empty">Sin resultados</div>
-            ) : (
-              filteredOptions.map((option, idx) => {
-                const isSelected = selectedValues.includes(option.value)
-                const isActive = idx === activeIndex
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    className={`select-option ${isSelected ? 'selected' : ''} ${isActive ? 'active' : ''}`}
-                    onClick={() => handleSelectOption(option)}
-                    onMouseEnter={() => setActiveIndex(idx)}
-                  >
-                    {option.icon && <span className="select-option-icon">{option.icon}</span>}
-                    <div className="select-option-content">
-                      <span className="select-option-label">{option.label}</span>
-                      {option.description && (
-                        <span className="select-option-description">{option.description}</span>
-                      )}
-                    </div>
-                    {isSelected && (
-                      <span className="select-option-check">
-                        <Check size={14} />
-                      </span>
-                    )}
-                  </button>
-                )
-              })
-            )}
-          </div>
-        </div>
-      )}
+      {dropdownMenu && createPortal(dropdownMenu, document.body)}
       {error && <span className="text-xs text-error mt-1 block">{error}</span>}
     </div>
   )

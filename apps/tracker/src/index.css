@@ -189,6 +189,41 @@
   border: 1px solid var(--sys-glass-border);
 }
 
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 999px;
+  font-family: var(--font-hanken);
+}
+
+.badge-active {
+  background: color-mix(in srgb, var(--sys-success-bg) 20%, transparent);
+  color: var(--sys-success);
+}
+
+.badge-inactive {
+  background: color-mix(in srgb, var(--sys-text-muted) 10%, transparent);
+  color: var(--sys-text-muted);
+}
+
+.modal-wide {
+  max-width: 48rem !important;
+}
+
+.mention-highlight {
+  color: var(--sys-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mention-highlight:hover {
+  text-decoration: underline;
+}
+
 * {
   box-sizing: border-box;
 }

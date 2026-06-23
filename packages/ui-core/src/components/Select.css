@@ -73,12 +73,10 @@
 }
 
 .select-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
+  position: fixed;
+  z-index: 99999;
   min-width: max(100%, 300px);
   max-width: 450px;
-  z-index: 100;
   margin-top: 4px;
   max-height: 250px;
   background: var(--sys-surface-raised);
@@ -241,6 +239,15 @@
   font-weight: 500;
   border-radius: var(--radius-sm);
   margin: 1px 0;
+}
+
+.select-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 .select-chip-remove {

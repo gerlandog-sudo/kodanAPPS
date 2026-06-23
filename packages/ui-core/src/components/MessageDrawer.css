@@ -1,4 +1,4 @@
-.chat-bubble-container.me .chat-bubble {
+.chat-bubble.me {
   background: var(--sys-primary-container);
   color: var(--sys-on-primary-container, var(--sys-on-primary));
   border-bottom-right-radius: 0.25rem;
@@ -6,7 +6,7 @@
   box-shadow: 0 4px 12px color-mix(in srgb, var(--sys-primary) 15%, transparent);
 }
 
-.chat-bubble-container.others .chat-bubble {
+.chat-bubble.others {
   background: var(--sys-surface-raised);
   color: var(--sys-text);
   border-bottom-left-radius: 0.25rem;

@@ -1,5 +1,6 @@
 import { type ReactNode, useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Edit, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react'
+import './Table.css'
 
 export interface TableAction<T> {
   icon: ReactNode

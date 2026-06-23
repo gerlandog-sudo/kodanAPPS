@@ -47,6 +47,7 @@ use kodanAPPS\Repositories\ProductRepository;
 use kodanAPPS\Repositories\QuoteRepository;
 use kodanAPPS\Repositories\CrmTaskRepository;
 use kodanAPPS\Repositories\TaskTypeRepository;
+use kodanAPPS\Repositories\WorkflowRepository;
 use kodanAPPS\Repositories\ChatRepository;
 use kodanAPPS\Repositories\ProjectRepository;
 use kodanAPPS\Controllers\TrackerController;
@@ -75,9 +76,14 @@ if (isset($_GET['debug_api'])) {
     try {
         $envPath = file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env' : __DIR__ . '/../../.env';
         $dotenv  = parse_ini_file($envPath);
-        if ($dotenv) {
-            $dsn = "mysql:host={$dotenv['DB_HOST']};port={$dotenv['DB_PORT']};dbname={$dotenv['DB_NAME']};charset=utf8mb4";
-            $testPdo = new \PDO($dsn, $dotenv['DB_USER'], $dotenv['DB_PASS'], [
+        if (is_array($dotenv)) {
+            $dbHost = isset($dotenv['DB_HOST']) && is_string($dotenv['DB_HOST']) ? $dotenv['DB_HOST'] : 'localhost';
+            $dbPort = isset($dotenv['DB_PORT']) && is_string($dotenv['DB_PORT']) ? $dotenv['DB_PORT'] : '3306';
+            $dbName = isset($dotenv['DB_NAME']) && is_string($dotenv['DB_NAME']) ? $dotenv['DB_NAME'] : '';
+            $dbUser = isset($dotenv['DB_USER']) && is_string($dotenv['DB_USER']) ? $dotenv['DB_USER'] : '';
+            $dbPass = isset($dotenv['DB_PASS']) && is_string($dotenv['DB_PASS']) ? $dotenv['DB_PASS'] : '';
+            $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8mb4";
+            $testPdo = new \PDO($dsn, $dbUser, $dbPass, [
                 \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
                 \PDO::ATTR_TIMEOUT => 3,
             ]);
@@ -102,8 +108,8 @@ if (isset($_GET['debug_api'])) {
             'root/vendor/autoload.php'   => file_exists($rootDir . '/vendor/autoload.php'),
         ],
         'doc_root_relative' => [
-            'public/vendor' => file_exists(($_SERVER['DOCUMENT_ROOT'] ?? '') . '/vendor/autoload.php'),
-            'parent_vendor' => file_exists(dirname($_SERVER['DOCUMENT_ROOT'] ?? '') . '/vendor/autoload.php'),
+            'public/vendor' => file_exists((isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '') . '/vendor/autoload.php'),
+            'parent_vendor' => file_exists(dirname(isset($_SERVER['DOCUMENT_ROOT']) && is_string($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '') . '/vendor/autoload.php'),
         ],
         'open_basedir' => ini_get('open_basedir') ?: '(not set)',
         'db_status' => $dbStatus,
@@ -152,22 +158,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 // ------------------------------------------------------------
 $envPath = file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env' : __DIR__ . '/../../.env';
 $dotenv = parse_ini_file($envPath);
+$dotenv = is_array($dotenv) ? $dotenv : [];
 
-$dbConfig = [
-    'host' => $dotenv['DB_HOST'] ?? 'localhost',
-    'port' => (int)($dotenv['DB_PORT'] ?? 3306),
-    'dbname' => $dotenv['DB_NAME'] ?? 'admkoda_BBDD_APPS',
-    'user' => $dotenv['DB_USER'] ?? 'kodan_apps',
-    'pass' => $dotenv['DB_PASS'] ?? '',
-    'charset' => 'utf8mb4',
-];
-
-$dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
+$dbHost = isset($dotenv['DB_HOST']) && is_string($dotenv['DB_HOST']) ? $dotenv['DB_HOST'] : 'localhost';
+$dbPortRaw = isset($dotenv['DB_PORT']) && is_numeric($dotenv['DB_PORT']) ? (int)$dotenv['DB_PORT'] : 3306;
+$dbName = isset($dotenv['DB_NAME']) && is_string($dotenv['DB_NAME']) ? $dotenv['DB_NAME'] : 'admkoda_BBDD_APPS';
+$dbUser = isset($dotenv['DB_USER']) && is_string($dotenv['DB_USER']) ? $dotenv['DB_USER'] : 'kodan_apps';
+$dbPass = isset($dotenv['DB_PASS']) && is_string($dotenv['DB_PASS']) ? $dotenv['DB_PASS'] : '';
+$dsn = "mysql:host={$dbHost};port={$dbPortRaw};dbname={$dbName};charset=utf8mb4";
 
 $pdo = new TenantAwarePDO(
     $dsn,
-    $dbConfig['user'],
-    $dbConfig['pass'],
+    $dbUser,
+    $dbPass,
     [
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
         \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
@@ -207,11 +210,42 @@ $workflowEngine = new WorkflowEngine($workflowRepo, $taskRepo, $oppRepo, $notifi
 // ------------------------------------------------------------
 // Configuración sensible
 // ------------------------------------------------------------
-$jwtSecret = $dotenv['JWT_SECRET'] ?? $_ENV['JWT_SECRET'] ?? 'change-me-in-production';
-$csrfSecret = $dotenv['CSRF_SECRET'] ?? $_ENV['CSRF_SECRET'] ?? 'csrf-secret-change-in-production';
-$systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
-$cookieDomain = $dotenv['COOKIE_DOMAIN'] ?? $_ENV['COOKIE_DOMAIN'] ?? '';
-$publicSecret = $dotenv['PUBLIC_SECRET'] ?? $_ENV['PUBLIC_SECRET'] ?? '';
+$jwtSecret = 'change-me-in-production';
+if (isset($dotenv['JWT_SECRET']) && is_string($dotenv['JWT_SECRET'])) {
+    $jwtSecret = $dotenv['JWT_SECRET'];
+} elseif (isset($_ENV['JWT_SECRET']) && is_string($_ENV['JWT_SECRET'])) {
+    $jwtSecret = $_ENV['JWT_SECRET'];
+}
+
+$csrfSecret = 'csrf-secret-change-in-production';
+if (isset($dotenv['CSRF_SECRET']) && is_string($dotenv['CSRF_SECRET'])) {
+    $csrfSecret = $dotenv['CSRF_SECRET'];
+} elseif (isset($_ENV['CSRF_SECRET']) && is_string($_ENV['CSRF_SECRET'])) {
+    $csrfSecret = $_ENV['CSRF_SECRET'];
+}
+
+$systemTenantId = 1;
+$sysTenantFromDotenv = isset($dotenv['SYSTEM_TENANT_ID']) && is_numeric($dotenv['SYSTEM_TENANT_ID']) ? (int)$dotenv['SYSTEM_TENANT_ID'] : null;
+$sysTenantFromEnv = isset($_ENV['SYSTEM_TENANT_ID']) && is_numeric($_ENV['SYSTEM_TENANT_ID']) ? (int)$_ENV['SYSTEM_TENANT_ID'] : null;
+if ($sysTenantFromDotenv !== null) {
+    $systemTenantId = $sysTenantFromDotenv;
+} elseif ($sysTenantFromEnv !== null) {
+    $systemTenantId = $sysTenantFromEnv;
+}
+
+$cookieDomain = '';
+if (isset($dotenv['COOKIE_DOMAIN']) && is_string($dotenv['COOKIE_DOMAIN'])) {
+    $cookieDomain = $dotenv['COOKIE_DOMAIN'];
+} elseif (isset($_ENV['COOKIE_DOMAIN']) && is_string($_ENV['COOKIE_DOMAIN'])) {
+    $cookieDomain = $_ENV['COOKIE_DOMAIN'];
+}
+
+$publicSecret = '';
+if (isset($dotenv['PUBLIC_SECRET']) && is_string($dotenv['PUBLIC_SECRET'])) {
+    $publicSecret = $dotenv['PUBLIC_SECRET'];
+} elseif (isset($_ENV['PUBLIC_SECRET']) && is_string($_ENV['PUBLIC_SECRET'])) {
+    $publicSecret = $_ENV['PUBLIC_SECRET'];
+}
 
 // ------------------------------------------------------------
 // Auth Middleware
@@ -238,7 +272,7 @@ $trackerController = new TrackerController($projectRepo);
 $tenantUserController = new TenantUserController($userRepo, $pdo);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
-$workflowController = new WorkflowController($workflowRepo, $workflowEngine, $oppRepo, $taskRepo, $notificationRepo);
+$workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);

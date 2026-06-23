@@ -6,10 +6,16 @@ namespace kodanAPPS\Repositories;
 
 use kodanAPPS\DB\TenantContext;
 
+/**
+ * @extends BaseRepository<array{id: int, tenant_id: int, name: string, description: string|null, trigger_entity: string, trigger_event: string, trigger_conditions: string, actions: string, is_active: int, execution_order: int, created_at: string, updated_at: string}>
+ */
 final class WorkflowRepository extends BaseRepository
 {
     protected const TABLE = 'workflow_rules';
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function listActiveRulesByTrigger(string $entity, string $event): array
     {
         return $this->findAll(
@@ -21,11 +27,17 @@ final class WorkflowRepository extends BaseRepository
         );
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function createRule(array $data): int
     {
         return $this->create(self::TABLE, $data);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function updateRule(int $id, array $data): int
     {
         return $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
@@ -36,6 +48,9 @@ final class WorkflowRepository extends BaseRepository
         return $this->delete(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function logExecution(array $data): int
     {
         $tenantId = TenantContext::getTenantId();
@@ -51,6 +66,9 @@ final class WorkflowRepository extends BaseRepository
         return (int)$this->pdo->lastInsertId();
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getExecutionHistory(int $ruleId, int $limit = 50): array
     {
         $sql = "/* BYPASS_TENANT_SCOPE */
@@ -68,14 +86,20 @@ final class WorkflowRepository extends BaseRepository
         $rows = $this->rawSelect(
             "SELECT COUNT(*) AS cnt FROM `workflow_rules` WHERE is_active = 1"
         );
-        return (int)($rows[0]['cnt'] ?? 0);
+        return isset($rows[0]['cnt']) && is_numeric($rows[0]['cnt']) ? (int)$rows[0]['cnt'] : 0;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function listAll(): array
     {
         return $this->findAll(self::TABLE, '*', '', [], 'execution_order ASC, name ASC');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getStats(): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -167,19 +191,19 @@ final class WorkflowRepository extends BaseRepository
 
         return [
             'rules' => [
-                'total' => (int)$ruleStats['total'],
-                'active' => (int)$ruleStats['active'],
-                'inactive' => (int)$ruleStats['inactive'],
+                'total' => isset($ruleStats['total']) && is_numeric($ruleStats['total']) ? (int)$ruleStats['total'] : 0,
+                'active' => isset($ruleStats['active']) && is_numeric($ruleStats['active']) ? (int)$ruleStats['active'] : 0,
+                'inactive' => isset($ruleStats['inactive']) && is_numeric($ruleStats['inactive']) ? (int)$ruleStats['inactive'] : 0,
             ],
             'executions' => [
-                'total' => (int)($execRows[0]['total'] ?? 0),
-                'today' => (int)($execRows[0]['today'] ?? 0),
-                'this_week' => (int)($execRows[0]['this_week'] ?? 0),
+                'total' => isset($execRows[0]['total']) && is_numeric($execRows[0]['total']) ? (int)$execRows[0]['total'] : 0,
+                'today' => isset($execRows[0]['today']) && is_numeric($execRows[0]['today']) ? (int)$execRows[0]['today'] : 0,
+                'this_week' => isset($execRows[0]['this_week']) && is_numeric($execRows[0]['this_week']) ? (int)$execRows[0]['this_week'] : 0,
             ],
-            'by_status' => array_map(fn($r) => ['status' => $r['status'], 'count' => (int)$r['count']], $byStatus),
-            'by_day' => array_map(fn($r) => ['date' => $r['date'], 'count' => (int)$r['count']], $byDay),
-            'top_events' => array_map(fn($r) => ['event' => $r['trigger_event'], 'count' => (int)$r['count']], $topEvents),
-            'top_rules' => array_map(fn($r) => ['id' => (int)$r['id'], 'name' => $r['name'], 'execution_count' => (int)$r['execution_count']], $topRules),
+            'by_status' => array_map(fn($r) => ['status' => isset($r['status']) && is_string($r['status']) ? $r['status'] : '', 'count' => isset($r['count']) && is_numeric($r['count']) ? (int)$r['count'] : 0], $byStatus),
+            'by_day' => array_map(fn($r) => ['date' => isset($r['date']) && is_string($r['date']) ? $r['date'] : '', 'count' => isset($r['count']) && is_numeric($r['count']) ? (int)$r['count'] : 0], $byDay),
+            'top_events' => array_map(fn($r) => ['event' => isset($r['trigger_event']) && is_string($r['trigger_event']) ? $r['trigger_event'] : '', 'count' => isset($r['count']) && is_numeric($r['count']) ? (int)$r['count'] : 0], $topEvents),
+            'top_rules' => array_map(fn($r) => ['id' => isset($r['id']) && is_numeric($r['id']) ? (int)$r['id'] : 0, 'name' => isset($r['name']) && is_string($r['name']) ? $r['name'] : '', 'execution_count' => isset($r['execution_count']) && is_numeric($r['execution_count']) ? (int)$r['execution_count'] : 0], $topRules),
             'recent_executions' => $recent,
         ];
     }

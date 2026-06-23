@@ -25,7 +25,6 @@ final class WorkflowEngine
         'send_notification' => 'executeSendNotification',
     ];
 
-    private const MAX_RULES_PER_TENANT = 50;
     private const MAX_ACTIONS_PER_RULE = 10;
 
     public function __construct(
@@ -35,6 +34,10 @@ final class WorkflowEngine
         private NotificationRepository $notificationRepo,
     ) {}
 
+    /**
+     * @param array<string, mixed> $context
+     * @return array{executed: int, failed: int, details: array<int, array<string, mixed>>}
+     */
     public function execute(string $entity, string $event, int $entityId, array $context = []): array
     {
         $rules = $this->workflowRepo->listActiveRulesByTrigger($entity, $event);
@@ -45,8 +48,10 @@ final class WorkflowEngine
         $results = ['executed' => 0, 'failed' => 0, 'details' => []];
 
         foreach ($rules as $rule) {
-            $conditions = json_decode($rule['trigger_conditions'], true) ?? [];
-            $actions = json_decode($rule['actions'], true) ?? [];
+            $rawConditions = isset($rule['trigger_conditions']) && is_string($rule['trigger_conditions']) ? json_decode($rule['trigger_conditions'], true) : null;
+            $conditions = is_array($rawConditions) ? $rawConditions : [];
+            $rawActions = isset($rule['actions']) && is_string($rule['actions']) ? json_decode($rule['actions'], true) : null;
+            $actions = is_array($rawActions) ? $rawActions : [];
 
             if (!$this->matchConditions($conditions, $entity, $entityId, $context)) {
                 continue;
@@ -57,24 +62,26 @@ final class WorkflowEngine
             }
 
             $actions = array_slice($actions, 0, self::MAX_ACTIONS_PER_RULE);
-            $ruleResult = ['rule_id' => (int)$rule['id'], 'actions' => []];
+            $ruleResult = ['rule_id' => $rule['id'], 'actions' => []];
             $overallStatus = 'success';
 
             foreach ($actions as $action) {
-                if (!isset($action['type']) || !isset(self::ACTION_HANDLERS[$action['type']])) {
-                    $ruleResult['actions'][] = ['type' => $action['type'] ?? 'unknown', 'status' => 'failed', 'error' => 'Unknown action type'];
+                $actionType = is_array($action) && isset($action['type']) && is_string($action['type']) ? $action['type'] : null;
+                if ($actionType === null || !isset(self::ACTION_HANDLERS[$actionType])) {
+                    $ruleResult['actions'][] = ['type' => $actionType ?? 'unknown', 'status' => 'failed', 'error' => 'Unknown action type'];
                     $results['failed']++;
                     $overallStatus = 'partial';
                     continue;
                 }
 
                 try {
-                    $handler = self::ACTION_HANDLERS[$action['type']];
-                    $this->$handler($action['params'] ?? [], $entity, $entityId, $context);
-                    $ruleResult['actions'][] = ['type' => $action['type'], 'status' => 'success'];
+                    $handler = self::ACTION_HANDLERS[$actionType];
+                    $params = isset($action['params']) && is_array($action['params']) ? $action['params'] : [];
+                    $this->$handler($params, $entity, $entityId, $context);
+                    $ruleResult['actions'][] = ['type' => $actionType, 'status' => 'success'];
                     $results['executed']++;
                 } catch (\Throwable $e) {
-                    $ruleResult['actions'][] = ['type' => $action['type'], 'status' => 'failed', 'error' => $e->getMessage()];
+                    $ruleResult['actions'][] = ['type' => $actionType, 'status' => 'failed', 'error' => $e->getMessage()];
                     $results['failed']++;
                     $overallStatus = 'partial';
                 }
@@ -94,40 +101,66 @@ final class WorkflowEngine
         return $results;
     }
 
+    /**
+     * @param array<mixed> $conditions
+     * @param array<string, mixed> $context
+     */
     private function matchConditions(array $conditions, string $entity, int $entityId, array $context): bool
     {
         if (empty($conditions)) {
             return true;
         }
 
-        if (isset($conditions['from_stage_id']) && (!isset($context['old_stage_id']) || (int)$conditions['from_stage_id'] !== (int)$context['old_stage_id'])) {
+        $fromStageId = isset($conditions['from_stage_id']) && is_numeric($conditions['from_stage_id']) ? (int)$conditions['from_stage_id'] : null;
+        $toStageId = isset($conditions['to_stage_id']) && is_numeric($conditions['to_stage_id']) ? (int)$conditions['to_stage_id'] : null;
+        $pipelineId = isset($conditions['pipeline_id']) && is_numeric($conditions['pipeline_id']) ? (int)$conditions['pipeline_id'] : null;
+        $rawPipelineIds = isset($conditions['pipeline_ids']) && is_array($conditions['pipeline_ids']) ? $conditions['pipeline_ids'] : [];
+        $fromStatus = isset($conditions['from_status']) && is_string($conditions['from_status']) ? $conditions['from_status'] : null;
+        $toStatus = isset($conditions['to_status']) && is_string($conditions['to_status']) ? $conditions['to_status'] : null;
+        $rawTaskTypeIds = isset($conditions['task_type_ids']) && is_array($conditions['task_type_ids']) ? $conditions['task_type_ids'] : [];
+        $valueMin = isset($conditions['value_min']) && is_numeric($conditions['value_min']) ? (float)$conditions['value_min'] : null;
+        $oldStageId = isset($context['old_stage_id']) && is_numeric($context['old_stage_id']) ? (int)$context['old_stage_id'] : null;
+        $newStageId = isset($context['new_stage_id']) && is_numeric($context['new_stage_id']) ? (int)$context['new_stage_id'] : null;
+        $ctxPipelineId = isset($context['pipeline_id']) && is_numeric($context['pipeline_id']) ? (int)$context['pipeline_id'] : null;
+        $oldStatus = isset($context['old_status']) && is_string($context['old_status']) ? $context['old_status'] : null;
+        $newStatus = isset($context['new_status']) && is_string($context['new_status']) ? $context['new_status'] : null;
+        $ctxTaskTypeId = isset($context['task_type_id']) && is_numeric($context['task_type_id']) ? (int)$context['task_type_id'] : null;
+        $ctxValue = isset($context['value']) && is_numeric($context['value']) ? (float)$context['value'] : null;
+
+        $pipelineIds = array_filter($rawPipelineIds, fn($v) => is_numeric($v));
+        $taskTypeIds = array_filter($rawTaskTypeIds, fn($v) => is_numeric($v));
+
+        if ($fromStageId !== null && ($oldStageId === null || $fromStageId !== $oldStageId)) {
             return false;
         }
-        if (isset($conditions['to_stage_id']) && (!isset($context['new_stage_id']) || (int)$conditions['to_stage_id'] !== (int)$context['new_stage_id'])) {
+        if ($toStageId !== null && ($newStageId === null || $toStageId !== $newStageId)) {
             return false;
         }
-        if (isset($conditions['pipeline_id']) && (!isset($context['pipeline_id']) || (int)$conditions['pipeline_id'] !== (int)$context['pipeline_id'])) {
+        if ($pipelineId !== null && ($ctxPipelineId === null || $pipelineId !== $ctxPipelineId)) {
             return false;
         }
-        if (!empty($conditions['pipeline_ids']) && isset($context['pipeline_id']) && !in_array((int)$context['pipeline_id'], array_map('intval', $conditions['pipeline_ids']), true)) {
+        if (!empty($pipelineIds) && $ctxPipelineId !== null && !in_array($ctxPipelineId, $pipelineIds, true)) {
             return false;
         }
-        if (isset($conditions['from_status']) && (!isset($context['old_status']) || $conditions['from_status'] !== $context['old_status'])) {
+        if ($fromStatus !== null && ($oldStatus === null || $fromStatus !== $oldStatus)) {
             return false;
         }
-        if (isset($conditions['to_status']) && (!isset($context['new_status']) || $conditions['to_status'] !== $context['new_status'])) {
+        if ($toStatus !== null && ($newStatus === null || $toStatus !== $newStatus)) {
             return false;
         }
-        if (isset($conditions['task_type_ids']) && !empty($context['task_type_id']) && !in_array((int)$context['task_type_id'], array_map('intval', $conditions['task_type_ids']), true)) {
+        if (!empty($taskTypeIds) && $ctxTaskTypeId !== null && !in_array($ctxTaskTypeId, $taskTypeIds, true)) {
             return false;
         }
-        if (isset($conditions['value_min']) && (!isset($context['value']) || (float)$conditions['value_min'] > (float)$context['value'])) {
+        if ($valueMin !== null && ($ctxValue === null || $valueMin > $ctxValue)) {
             return false;
         }
 
         return true;
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     private function resolveAssignedTo(mixed $spec, array $context): ?int
     {
         if ($spec === null || $spec === '') {
@@ -135,8 +168,8 @@ final class WorkflowEngine
         }
         if (is_string($spec)) {
             return match ($spec) {
-                'owner' => $context['owner_user_id'] ?? null,
-                'creator' => $context['created_by'] ?? TenantContext::getUserId(),
+                'owner' => isset($context['owner_user_id']) && is_numeric($context['owner_user_id']) ? (int)$context['owner_user_id'] : null,
+                'creator' => isset($context['created_by']) && is_numeric($context['created_by']) ? (int)$context['created_by'] : TenantContext::getUserId(),
                 'trigger_user' => TenantContext::getUserId(),
                 default => is_numeric($spec) ? (int)$spec : null,
             };
@@ -144,58 +177,77 @@ final class WorkflowEngine
         return is_numeric($spec) ? (int)$spec : null;
     }
 
+    /**
+     * @param array<array-key, mixed>|string|int|null $spec
+     * @param array<string, mixed> $context
+     * @return list<int>
+     */
     private function resolveUserIds(array|string|int|null $spec, array $context): array
     {
         if ($spec === null || $spec === '' || $spec === []) {
             return [];
         }
         if (is_array($spec)) {
-            return array_filter(array_map(fn($s) => $this->resolveAssignedTo($s, $context), $spec), fn($v) => $v !== null);
+            return array_values(array_filter(array_map(fn($s) => $this->resolveAssignedTo($s, $context), $spec), fn($v) => $v !== null));
         }
         $resolved = $this->resolveAssignedTo($spec, $context);
         return $resolved !== null ? [$resolved] : [];
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     private function resolveOpportunityId(string $entity, int $entityId, array $context): ?int
     {
         if ($entity === 'opportunity') {
             return $entityId;
         }
         if ($entity === 'task') {
-            return $context['opportunity_id'] ?? null;
+            return isset($context['opportunity_id']) && is_numeric($context['opportunity_id']) ? (int)$context['opportunity_id'] : null;
         }
         return null;
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     private function interpolate(string $text, string $entity, int $entityId, array $context): string
     {
         $replacements = [
-            '{{opportunity_title}}' => $context['opportunity_title'] ?? $context['title'] ?? '',
-            '{{account_name}}' => $context['account_name'] ?? '',
-            '{{value}}' => $context['value'] ?? '',
-            '{{currency}}' => $context['currency'] ?? 'USD',
-            '{{task_title}}' => $context['task_title'] ?? $context['title'] ?? '',
-            '{{old_status}}' => $context['old_status'] ?? '',
-            '{{new_status}}' => $context['new_status'] ?? '',
-            '{{owner_name}}' => $context['owner_name'] ?? '',
+            '{{opportunity_title}}' => isset($context['opportunity_title']) && is_scalar($context['opportunity_title']) ? (string)$context['opportunity_title'] : (isset($context['title']) && is_scalar($context['title']) ? (string)$context['title'] : ''),
+            '{{account_name}}' => isset($context['account_name']) && is_scalar($context['account_name']) ? (string)$context['account_name'] : '',
+            '{{value}}' => isset($context['value']) && is_scalar($context['value']) ? (string)$context['value'] : '',
+            '{{currency}}' => isset($context['currency']) && is_scalar($context['currency']) ? (string)$context['currency'] : 'USD',
+            '{{task_title}}' => isset($context['task_title']) && is_scalar($context['task_title']) ? (string)$context['task_title'] : (isset($context['title']) && is_scalar($context['title']) ? (string)$context['title'] : ''),
+            '{{old_status}}' => isset($context['old_status']) && is_scalar($context['old_status']) ? (string)$context['old_status'] : '',
+            '{{new_status}}' => isset($context['new_status']) && is_scalar($context['new_status']) ? (string)$context['new_status'] : '',
+            '{{owner_name}}' => isset($context['owner_name']) && is_scalar($context['owner_name']) ? (string)$context['owner_name'] : '',
             '{{trigger_user}}' => (string)TenantContext::getUserId(),
         ];
         return str_replace(array_keys($replacements), array_values($replacements), $text);
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeCreateTask(array $params, string $entity, int $entityId, array $context): void
     {
         $opportunityId = isset($params['link_to_trigger_opportunity']) && $params['link_to_trigger_opportunity']
             ? $this->resolveOpportunityId($entity, $entityId, $context)
             : (isset($params['opportunity_id']) && is_numeric($params['opportunity_id']) ? (int)$params['opportunity_id'] : null);
 
-        $title = $this->interpolate($params['title'] ?? 'Tarea automática', $entity, $entityId, $context);
-        $description = isset($params['description']) ? $this->interpolate($params['description'], $entity, $entityId, $context) : null;
+        $rawTitle = isset($params['title']) && is_string($params['title']) ? $params['title'] : 'Tarea automática';
+        $title = $this->interpolate($rawTitle, $entity, $entityId, $context);
+        $rawDescription = isset($params['description']) && is_string($params['description']) ? $params['description'] : null;
+        $description = $rawDescription !== null ? $this->interpolate($rawDescription, $entity, $entityId, $context) : null;
         $assignedTo = $this->resolveAssignedTo($params['assigned_to'] ?? 'owner', $context);
+        $rawStatus = isset($params['status']) && is_string($params['status']) ? $params['status'] : 'todo';
 
         $dueDate = null;
-        if (isset($params['due_date_offset_days']) && (int)$params['due_date_offset_days'] > 0) {
-            $dueDate = date('Y-m-d H:i:s', strtotime('+' . (int)$params['due_date_offset_days'] . ' days'));
+        if (isset($params['due_date_offset_days']) && is_numeric($params['due_date_offset_days']) && (int)$params['due_date_offset_days'] > 0) {
+            $ts = strtotime('+' . (int)$params['due_date_offset_days'] . ' days');
+            $dueDate = $ts !== false ? date('Y-m-d H:i:s', $ts) : null;
         }
 
         $taskId = $this->taskRepo->createTask([
@@ -203,12 +255,12 @@ final class WorkflowEngine
             'title' => $title,
             'description' => $description,
             'due_date' => $dueDate,
-            'status' => $params['status'] ?? 'todo',
+            'status' => $rawStatus,
             'assigned_to' => $assignedTo,
             'task_type_id' => isset($params['task_type_id']) && is_numeric($params['task_type_id']) ? (int)$params['task_type_id'] : null,
         ]);
 
-        if (!empty($params['participants'])) {
+        if (!empty($params['participants']) && is_array($params['participants'])) {
             $participantIds = $this->resolveUserIds($params['participants'], $context);
             if (!empty($participantIds)) {
                 $this->taskRepo->saveParticipants($taskId, $participantIds);
@@ -216,16 +268,25 @@ final class WorkflowEngine
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeUpdateTaskStatus(array $params, string $entity, int $entityId, array $context): void
     {
         if (isset($params['task_id']) && is_numeric($params['task_id'])) {
             $task = $this->taskRepo->findById((int)$params['task_id']);
+            $status = isset($params['to_status']) && is_string($params['to_status']) ? $params['to_status'] : 'todo';
             if ($task !== null) {
-                $this->taskRepo->updateTask((int)$params['task_id'], ['status' => $params['to_status'] ?? 'todo']);
+                $this->taskRepo->updateTask((int)$params['task_id'], ['status' => $status]);
             }
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeAssignTask(array $params, string $entity, int $entityId, array $context): void
     {
         $taskId = isset($params['task_id']) && is_numeric($params['task_id']) ? (int)$params['task_id'] : $entityId;
@@ -238,19 +299,29 @@ final class WorkflowEngine
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeAddTaskParticipants(array $params, string $entity, int $entityId, array $context): void
     {
         $taskId = isset($params['task_id']) && is_numeric($params['task_id']) ? (int)$params['task_id'] : $entityId;
         if ($entity !== 'task') {
             return;
         }
-        $userIds = $this->resolveUserIds($params['user_ids'] ?? [], $context);
+        $rawUserIds = isset($params['user_ids']) && is_array($params['user_ids']) ? $params['user_ids'] : [];
+        $userIds = $this->resolveUserIds($rawUserIds, $context);
         if (!empty($userIds)) {
             $existing = array_column($this->taskRepo->getParticipants($taskId), 'user_id');
-            $this->taskRepo->saveParticipants($taskId, array_unique([...$existing, ...$userIds]));
+            $existingTyped = array_map(fn($v) => is_numeric($v) ? (int)$v : 0, $existing);
+            $this->taskRepo->saveParticipants($taskId, array_unique(array_merge($existingTyped, $userIds)));
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeCreateFollowUpTask(array $params, string $entity, int $entityId, array $context): void
     {
         $this->executeCreateTask(array_merge($params, [
@@ -258,6 +329,10 @@ final class WorkflowEngine
         ]), $entity, $entityId, $context);
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeUpdateOpportunityStage(array $params, string $entity, int $entityId, array $context): void
     {
         $oppId = $this->resolveOpportunityId($entity, $entityId, $context);
@@ -270,6 +345,10 @@ final class WorkflowEngine
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeAssignOpportunity(array $params, string $entity, int $entityId, array $context): void
     {
         $oppId = $this->resolveOpportunityId($entity, $entityId, $context);
@@ -282,6 +361,10 @@ final class WorkflowEngine
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeUpdateOpportunityField(array $params, string $entity, int $entityId, array $context): void
     {
         $oppId = $this->resolveOpportunityId($entity, $entityId, $context);
@@ -289,13 +372,27 @@ final class WorkflowEngine
             return;
         }
         $field = $params['field'];
-        $value = $this->interpolate((string)$params['value'], $entity, $entityId, $context);
-        if (in_array($field, ['title', 'value', 'currency', 'close_date', 'owner_user_id', 'pipeline_stage_id', 'close_reason'], true)) {
-            $updateData = [$field => is_numeric($value) && $field !== 'title' && $field !== 'currency' && $field !== 'close_reason' && $field !== 'close_date' ? (float)$value : $value];
+        $rawValue = $params['value'];
+        if (!is_string($field) || !is_scalar($rawValue)) {
+            return;
+        }
+        $value = $this->interpolate((string)$rawValue, $entity, $entityId, $context);
+        $allowedFields = ['title', 'value', 'currency', 'close_date', 'owner_user_id', 'pipeline_stage_id', 'close_reason'];
+        if (in_array($field, $allowedFields, true)) {
+            $updateData = match ($field) {
+                'value' => ['value' => (float)$value],
+                'owner_user_id', 'pipeline_stage_id' => [$field => (int)$value],
+                'close_date' => ['close_date' => (string)$value],
+                default => [$field => (string)$value],
+            };
             $this->opportunityRepo->updateOpportunity($oppId, $updateData);
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeCreateFollowUpOpportunity(array $params, string $entity, int $entityId, array $context): void
     {
         $parentOppId = $this->resolveOpportunityId($entity, $entityId, $context);
@@ -307,35 +404,52 @@ final class WorkflowEngine
             return;
         }
 
-        $title = $this->interpolate($params['title_template'] ?? 'Seguimiento: {{opportunity_title}}', $entity, $entityId, $context);
-        $stageId = isset($params['stage_id']) && is_numeric($params['stage_id']) ? (int)$params['stage_id'] : (int)($parentOpp['pipeline_stage_id'] ?? 0);
-        $valuePercentage = isset($params['value_percentage']) ? (float)$params['value_percentage'] : 100;
+        $rawTitleTemplate = isset($params['title_template']) && is_string($params['title_template']) ? $params['title_template'] : 'Seguimiento: {{opportunity_title}}';
+        $title = $this->interpolate($rawTitleTemplate, $entity, $entityId, $context);
+        $stageId = isset($params['stage_id']) && is_numeric($params['stage_id']) ? (int)$params['stage_id'] : (isset($parentOpp['pipeline_stage_id']) && is_numeric($parentOpp['pipeline_stage_id']) ? (int)$parentOpp['pipeline_stage_id'] : 0);
+        $valuePercentage = isset($params['value_percentage']) && is_numeric($params['value_percentage']) ? (float)$params['value_percentage'] : 100;
+
+        $parentAccountId = isset($parentOpp['account_id']) && is_numeric($parentOpp['account_id']) ? (int)$parentOpp['account_id'] : 0;
+        $parentContactId = isset($parentOpp['contact_id']) && is_numeric($parentOpp['contact_id']) ? (int)$parentOpp['contact_id'] : null;
+        $parentValue = isset($parentOpp['value']) && is_numeric($parentOpp['value']) ? (float)$parentOpp['value'] : 0;
+        $parentCurrency = isset($parentOpp['currency']) && is_scalar($parentOpp['currency']) ? (string)$parentOpp['currency'] : 'USD';
+        $parentOwnerId = isset($parentOpp['owner_user_id']) && is_numeric($parentOpp['owner_user_id']) ? (int)$parentOpp['owner_user_id'] : null;
 
         $this->opportunityRepo->createOpportunity([
-            'account_id' => (int)$parentOpp['account_id'],
-            'contact_id' => isset($parentOpp['contact_id']) ? (int)$parentOpp['contact_id'] : null,
+            'account_id' => $parentAccountId,
+            'contact_id' => $parentContactId,
             'pipeline_stage_id' => $stageId,
             'title' => $title,
-            'value' => ($parentOpp['value'] ?? 0) * $valuePercentage / 100,
-            'currency' => $parentOpp['currency'] ?? 'USD',
-            'owner_user_id' => $parentOpp['owner_user_id'] ?? TenantContext::getUserId(),
+            'value' => $parentValue * $valuePercentage / 100,
+            'currency' => $parentCurrency,
+            'close_date' => null,
+            'owner_user_id' => $parentOwnerId ?? TenantContext::getUserId(),
             'custom_fields' => [],
         ]);
     }
 
+    /**
+     * @param array<mixed> $params
+     * @param array<string, mixed> $context
+     */
     private function executeSendNotification(array $params, string $entity, int $entityId, array $context): void
     {
-        $userIds = $this->resolveUserIds($params['user_id'] ?? null, $context);
+        $rawUserId = $params['user_id'] ?? null;
+        $userIdSpec = is_array($rawUserId) || is_string($rawUserId) || is_int($rawUserId) || $rawUserId === null ? $rawUserId : null;
+        $userIds = $this->resolveUserIds($userIdSpec, $context);
         if (empty($userIds)) {
             return;
         }
-        $title = $this->interpolate($params['title'] ?? 'Notificación automática', $entity, $entityId, $context);
-        $message = isset($params['message']) ? $this->interpolate($params['message'], $entity, $entityId, $context) : '';
+        $rawTitle = isset($params['title']) && is_string($params['title']) ? $params['title'] : 'Notificación automática';
+        $title = $this->interpolate($rawTitle, $entity, $entityId, $context);
+        $rawMessage = isset($params['message']) && is_string($params['message']) ? $params['message'] : '';
+        $message = $rawMessage !== '' ? $this->interpolate($rawMessage, $entity, $entityId, $context) : '';
+        $notifType = isset($params['type']) && is_string($params['type']) ? $params['type'] : 'workflow_auto';
 
         foreach ($userIds as $userId) {
             $this->notificationRepo->upsertNotification([
                 'user_id' => $userId,
-                'type' => $params['type'] ?? 'workflow_auto',
+                'type' => $notifType,
                 'entity_type' => $entity === 'opportunity' ? 'crm_opportunity' : 'crm_task',
                 'entity_id' => $entityId,
                 'title' => $title,

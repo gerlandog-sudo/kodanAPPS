@@ -106,7 +106,11 @@ final class WorkflowRepository extends BaseRepository
 
         // Rule counts
         $rules = $this->rawSelect(
-            "SELECT COUNT(*) AS total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) AS inactive FROM `workflow_rules`"
+            "/* BYPASS_TENANT_SCOPE */
+            SELECT COUNT(*) AS total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) AS inactive
+            FROM `workflow_rules`
+            WHERE tenant_id = :tenant_id",
+            [':tenant_id' => $tenantId]
         );
         $ruleStats = $rules[0] ?? ['total' => 0, 'active' => 0, 'inactive' => 0];
 

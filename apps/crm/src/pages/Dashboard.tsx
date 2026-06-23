@@ -420,7 +420,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 flex-1 overflow-y-auto pr-2 scrollbar-none">
       {/* Cabecera del Dashboard con selector de Pipeline */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0 pb-2 border-b" style={{ borderColor: 'var(--sys-border-soft)' }}>
         <div>

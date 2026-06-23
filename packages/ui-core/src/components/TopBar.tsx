@@ -1,4 +1,5 @@
-﻿import { DateTimeLive } from './DateTimeLive';
+import { MessageSquare } from 'lucide-react';
+import { DateTimeLive } from './DateTimeLive';
 import { NotificationBell } from './NotificationBell';
 import { UserMenu } from './UserMenu';
 import type { UserMenuUser, UserMenuItem } from './UserMenu';
@@ -13,6 +14,8 @@ interface TopBarProps {
   userMenuExtraItems?: UserMenuItem[];
   notificationCount?: number;
   onNotificationClick?: () => void;
+  chatCount?: number;
+  onChatClick?: () => void;
   children?: React.ReactNode;
 }
 
@@ -26,6 +29,8 @@ export function TopBar({
   userMenuExtraItems,
   notificationCount = 0,
   onNotificationClick,
+  chatCount = 0,
+  onChatClick,
   children,
 }: TopBarProps) {
   return (
@@ -41,6 +46,20 @@ export function TopBar({
       )}
 
       <div className="flex items-center gap-4">
+        {onChatClick && (
+          <button
+            className="relative inline-flex items-center justify-center w-9 h-9 rounded-md text-text-muted bg-transparent border-none cursor-pointer hover:text-text hover:bg-surface-hover transition-all"
+            onClick={onChatClick}
+            aria-label="Chat"
+          >
+            <MessageSquare size={18} />
+            {chatCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none rounded-full bg-primary text-on-primary animate-[badge-pulse_2s_ease-in-out_infinite]">
+                {chatCount > 9 ? '9+' : chatCount}
+              </span>
+            )}
+          </button>
+        )}
         <NotificationBell
           count={notificationCount}
           onClick={onNotificationClick}

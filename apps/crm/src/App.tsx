@@ -84,8 +84,6 @@ function AppContent() {
     return notifications.filter((n: any) => n.is_read === 0).length;
   }, [notifications]);
 
-  const combinedUnreadCount = unreadCount + unreadNotificationsCount;
-
   const handleMarkAllRead = async () => {
     try {
       await crmApi.markNotificationsRead();
@@ -223,11 +221,13 @@ function AppContent() {
           onThemeToggle={toggleTheme}
           onLogout={handleLogout}
           userMenuExtraItems={userMenuExtraItems}
-          notificationCount={combinedUnreadCount}
+          notificationCount={unreadNotificationsCount}
           onNotificationClick={() => {
             setNotificationsOpen(true);
             fetchNotifications();
           }}
+          chatCount={unreadCount}
+          onChatClick={() => setChatOpen(true)}
         />
         <main className="flex flex-col flex-1 p-4 lg:p-6 min-w-0" style={{ background: 'var(--sys-bg)', overflow: 'hidden' }}>
           <div className="flex flex-col flex-1" style={{ overflow: 'hidden' }}>

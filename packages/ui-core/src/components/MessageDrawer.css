@@ -1,15 +1,19 @@
 .chat-bubble.me {
   background: var(--sys-primary-container);
-  color: var(--sys-on-primary-container, var(--sys-on-primary));
+  color: var(--sys-on-primary-container);
+  border-radius: var(--radius-lg);
   border-bottom-right-radius: 0.25rem;
-  border: 1px solid var(--sys-border-soft);
+  border: 1px solid color-mix(in srgb, var(--sys-primary) 20%, transparent);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--sys-primary) 15%, transparent);
+  padding: 0.625rem 0.875rem;
 }
 
 .chat-bubble.others {
   background: var(--sys-surface-raised);
   color: var(--sys-text);
+  border-radius: var(--radius-lg);
   border-bottom-left-radius: 0.25rem;
   border: 1px solid var(--sys-border-soft);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  padding: 0.625rem 0.875rem;
 }

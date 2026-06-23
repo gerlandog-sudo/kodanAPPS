@@ -1,0 +1,326 @@
+/* DatePicker Component CSS Stylesheet */
+
+.datepicker-container {
+  position: relative;
+  width: 100%;
+}
+
+.datepicker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--sys-text);
+  background: var(--sys-surface-raised);
+  border: 1px solid var(--sys-border-soft);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  text-align: left;
+}
+
+.datepicker-trigger:hover:not(:disabled) {
+  border-color: var(--sys-border);
+  background: var(--sys-surface-hover);
+}
+
+.datepicker-trigger:focus-visible,
+.datepicker-trigger.open {
+  border-color: var(--sys-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sys-primary) 25%, transparent);
+}
+
+.datepicker-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.datepicker-value-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 90%;
+}
+
+.datepicker-trigger-icon {
+  color: var(--sys-text-muted);
+  flex-shrink: 0;
+}
+
+.datepicker-value-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datepicker-actions-container {
+  display: flex;
+  align-items: center;
+  margin-left: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+.datepicker-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: var(--spacing-1);
+  cursor: pointer;
+  color: var(--sys-text-muted);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+
+.datepicker-clear-btn:hover {
+  opacity: 1;
+  color: var(--sys-error);
+  background: var(--sys-surface-hover);
+}
+
+.datepicker-dropdown {
+  position: fixed;
+  z-index: 99999;
+  margin-top: 4px;
+  background: var(--sys-surface-raised);
+  border: 1px solid var(--sys-border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: datepicker-fade-in var(--transition-fast) cubic-bezier(0.4, 0, 0.2, 1);
+  width: 290px;
+}
+
+.datepicker-dropdown.with-time {
+  width: 410px;
+}
+
+@keyframes datepicker-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.datepicker-layout {
+  display: flex;
+  flex-direction: row;
+}
+
+.datepicker-calendar-section {
+  padding: var(--spacing-3);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.datepicker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-3);
+}
+
+.datepicker-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--sys-border-soft);
+  background: transparent;
+  color: var(--sys-text-muted);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.datepicker-nav-btn:hover {
+  background: var(--sys-surface-hover);
+  color: var(--sys-text);
+}
+
+.datepicker-month-year {
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sys-text);
+}
+
+.datepicker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: var(--spacing-2);
+  text-align: center;
+}
+
+.datepicker-weekday {
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--sys-text-muted);
+  text-transform: uppercase;
+}
+
+.datepicker-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.datepicker-day-btn {
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sys-text);
+  background: transparent;
+  border: none;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.datepicker-day-btn:hover {
+  background: var(--sys-surface-hover);
+}
+
+.datepicker-day-btn.outside-month {
+  color: var(--sys-text-muted);
+  opacity: 0.35;
+}
+
+.datepicker-day-btn.today {
+  border: 1px solid var(--sys-primary);
+  font-weight: 700;
+}
+
+.datepicker-day-btn.selected {
+  background: var(--sys-primary);
+  color: var(--sys-on-primary);
+  font-weight: 600;
+}
+
+.datepicker-day-btn.selected:hover {
+  background: var(--sys-primary);
+}
+
+.datepicker-footer {
+  margin-top: var(--spacing-3);
+  padding-top: var(--spacing-2);
+  border-top: 1px solid var(--sys-border-soft);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.datepicker-today-btn {
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--sys-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.datepicker-today-btn:hover {
+  background: color-mix(in srgb, var(--sys-primary) 8%, transparent);
+}
+
+/* Time Picker Column Section */
+.datepicker-time-section {
+  width: 120px;
+  border-left: 1px solid var(--sys-border-soft);
+  display: flex;
+  flex-direction: column;
+}
+
+.datepicker-time-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: 1px solid var(--sys-border-soft);
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--sys-text-muted);
+  text-transform: uppercase;
+}
+
+.datepicker-time-icon {
+  color: var(--sys-text-muted);
+}
+
+.datepicker-time-scroll-container {
+  display: flex;
+  flex: 1;
+  height: 220px; /* Aligned height with calendar */
+  overflow: hidden;
+}
+
+.datepicker-time-column {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  scrollbar-width: none; /* Firefox */
+}
+
+.datepicker-time-column::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.datepicker-time-column-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: var(--sys-text-muted);
+  text-align: center;
+  padding: 2px 0;
+  position: sticky;
+  top: 0;
+  background: var(--sys-surface-raised);
+  opacity: 0.8;
+  z-index: 1;
+}
+
+.datepicker-time-item {
+  width: 100%;
+  padding: 6px 0;
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sys-text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.datepicker-time-item:hover {
+  background: var(--sys-surface-hover);
+}
+
+.datepicker-time-item.active {
+  background: var(--sys-primary);
+  color: var(--sys-on-primary);
+  font-weight: 600;
+}

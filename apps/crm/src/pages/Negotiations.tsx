@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select, Table } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select, Table, DatePicker } from '@kodan-apps/ui-core';
 import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
@@ -1067,10 +1067,9 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                 <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                   FECHA CIERRE PROYECTADA
                 </label>
-                <Input
-                  type="date"
+                <DatePicker
                   value={oppFormData.close_date}
-                  onChange={(e) => setOppFormData((prev) => ({ ...prev, close_date: e.target.value }))}
+                  onChange={(val) => setOppFormData((prev) => ({ ...prev, close_date: val }))}
                   disabled={isReadOnly}
                 />
               </div>

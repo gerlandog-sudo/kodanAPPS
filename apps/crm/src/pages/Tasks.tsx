@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, ConfirmDialog, Select, MultiSelect, Table, EntityCard, useAuth } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, ConfirmDialog, Select, MultiSelect, Table, EntityCard, useAuth, DatePicker } from '@kodan-apps/ui-core';
 import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import { KanbanBoard } from '../components/kanban/KanbanBoard';
@@ -1038,20 +1038,18 @@ export function Tasks() {
 
           {/* Date range pickers */}
           <div className="flex items-center gap-1.5 text-xs text-text-muted">
-            <input
-              type="date"
+            <DatePicker
               value={filters.dateStart}
-              onChange={e => setFilters(p => ({ ...p, dateStart: e.target.value }))}
-              className="border border-border-soft bg-surface-raised rounded px-2 py-1 text-text focus:outline-none"
-              title="Desde"
+              onChange={val => setFilters(p => ({ ...p, dateStart: val }))}
+              placeholder="Desde"
+              className="w-[140px]"
             />
             <span>a</span>
-            <input
-              type="date"
+            <DatePicker
               value={filters.dateEnd}
-              onChange={e => setFilters(p => ({ ...p, dateEnd: e.target.value }))}
-              className="border border-border-soft bg-surface-raised rounded px-2 py-1 text-text focus:outline-none"
-              title="Hasta"
+              onChange={val => setFilters(p => ({ ...p, dateEnd: val }))}
+              placeholder="Hasta"
+              className="w-[140px]"
             />
           </div>
 
@@ -1176,18 +1174,18 @@ export function Tasks() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold tracking-wider text-text-muted uppercase">FECHA Y HORA DE INICIO</label>
-              <Input 
-                type="datetime-local"
-                value={form.start_date} 
-                onChange={(e) => setForm(prev => ({ ...prev, start_date: e.target.value }))} 
+              <DatePicker
+                showTime={true}
+                value={form.start_date || ''} 
+                onChange={(val) => setForm(prev => ({ ...prev, start_date: val }))} 
               />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold tracking-wider text-text-muted uppercase">FECHA Y HORA DE FIN</label>
-              <Input 
-                type="datetime-local"
-                value={form.end_date} 
-                onChange={(e) => setForm(prev => ({ ...prev, end_date: e.target.value }))} 
+              <DatePicker
+                showTime={true}
+                value={form.end_date || ''} 
+                onChange={(val) => setForm(prev => ({ ...prev, end_date: val }))} 
               />
             </div>
           </div>

@@ -2,6 +2,7 @@ import { Input as UiInput } from './Input'
 import { MultiSelect } from './MultiSelect'
 import { Toggle } from './Toggle'
 import { Select } from './Select'
+import { DatePicker } from './DatePicker'
 
 interface FieldDefinition {
   id: number
@@ -107,10 +108,9 @@ export function CustomFieldsForm({ definitions, values, onChange, disabled = fal
             return (
               <div key={def.id}>
                 {label}
-                <UiInput
-                  type="date"
+                <DatePicker
                   value={val ?? ''}
-                  onChange={e => onChange(def.field_key, e.target.value)}
+                  onChange={v => onChange(def.field_key, v)}
                   disabled={disabled}
                 />
               </div>

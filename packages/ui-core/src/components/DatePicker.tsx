@@ -116,30 +116,50 @@ export function DatePicker({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Posicionar dinámicamente el dropdown usando fixed
+  // Posicionar dinámicamente el dropdown usando fixed y previniendo desbordamientos del viewport
   useEffect(() => {
     if (!isOpen) return
 
     const updatePosition = () => {
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect()
+        const dropdownWidth = showTime ? 410 : 290
+        const dropdownHeight = 310
+
+        let left = rect.left
+        if (left + dropdownWidth > window.innerWidth) {
+          left = window.innerWidth - dropdownWidth - 16
+        }
+        if (left < 16) left = 16
+
+        const spaceBelow = window.innerHeight - rect.bottom
+        const spaceAbove = rect.top
+        let top = rect.bottom + 4
+
+        if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+          top = rect.top - dropdownHeight - 4
+        }
+
         setCoords({
-          top: rect.bottom,
-          left: rect.left,
+          top,
+          left,
           width: rect.width,
         })
       }
     }
 
     updatePosition()
+    const timer = setTimeout(updatePosition, 30)
+
     window.addEventListener('scroll', updatePosition, true)
     window.addEventListener('resize', updatePosition)
 
     return () => {
+      clearTimeout(timer)
       window.removeEventListener('scroll', updatePosition, true)
       window.removeEventListener('resize', updatePosition)
     }
-  }, [isOpen])
+  }, [isOpen, showTime])
 
   // Scroll automático para horas y minutos seleccionados
   useEffect(() => {
@@ -370,6 +390,15 @@ export function DatePicker({
             >
               {showTime ? 'Ahora' : 'Hoy'}
             </button>
+            {showTime && (
+              <button
+                type="button"
+                className="datepicker-done-btn"
+                onClick={() => setIsOpen(false)}
+              >
+                Listo
+              </button>
+            )}
           </div>
         </div>
 

@@ -243,6 +243,24 @@
   background: color-mix(in srgb, var(--sys-primary) 8%, transparent);
 }
 
+.datepicker-done-btn {
+  font-family: var(--font-hanken), system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--sys-on-primary);
+  background: var(--sys-primary);
+  border: none;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  margin-left: auto;
+}
+
+.datepicker-done-btn:hover {
+  background: color-mix(in srgb, var(--sys-primary) 85%, black);
+}
+
 /* Time Picker Column Section */
 .datepicker-time-section {
   width: 120px;
@@ -277,6 +295,8 @@
 
 .datepicker-time-column {
   flex: 1;
+  height: 220px;
+  max-height: 220px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

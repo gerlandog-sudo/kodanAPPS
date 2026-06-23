@@ -88,6 +88,27 @@ return function (Router $router, array $app): void {
         ]);
     });
 
+    // ============================================================
+    // Public Routes (sin JWT)
+    // ============================================================
+    $router->post('/api/v1/public/companies', function () use ($app) {
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $result = $app['controllers']['webLead']->submit($input);
+            echo json_encode($result);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('WebLead error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    });
 
     // ============================================================
     // Auth Routes

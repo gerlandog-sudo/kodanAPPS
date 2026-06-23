@@ -33,6 +33,7 @@ use kodanAPPS\Controllers\QuoteController;
 use kodanAPPS\Controllers\CrmTaskController;
 use kodanAPPS\Controllers\ChatController;
 use kodanAPPS\Controllers\NotificationController;
+use kodanAPPS\Controllers\LeadController;
 use kodanAPPS\Repositories\NotificationRepository;
 use kodanAPPS\Repositories\TenantRepository;
 use kodanAPPS\Repositories\PlanRepository;
@@ -203,6 +204,7 @@ $jwtSecret = $dotenv['JWT_SECRET'] ?? $_ENV['JWT_SECRET'] ?? 'change-me-in-produ
 $csrfSecret = $dotenv['CSRF_SECRET'] ?? $_ENV['CSRF_SECRET'] ?? 'csrf-secret-change-in-production';
 $systemTenantId = (int)($dotenv['SYSTEM_TENANT_ID'] ?? $_ENV['SYSTEM_TENANT_ID'] ?? 1);
 $cookieDomain = $dotenv['COOKIE_DOMAIN'] ?? $_ENV['COOKIE_DOMAIN'] ?? '';
+$publicSecret = $dotenv['PUBLIC_SECRET'] ?? $_ENV['PUBLIC_SECRET'] ?? '';
 
 // ------------------------------------------------------------
 // Auth Middleware
@@ -228,6 +230,7 @@ $trackerController = new TrackerController($projectRepo);
 $tenantUserController = new TenantUserController($userRepo, $pdo);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
+$leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);
 
 return [
     'pdo' => $pdo,
@@ -274,5 +277,6 @@ return [
         'tenantUser' => $tenantUserController,
         'messaging' => $messagingController,
         'notification' => $notificationController,
+        'webLead' => $leadController,
         ],
 ];

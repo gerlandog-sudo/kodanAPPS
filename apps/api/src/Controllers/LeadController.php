@@ -23,6 +23,10 @@ final class LeadController
         private PipelineRepository $pipelineRepo,
     ) {}
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function submit(array $input): array
     {
         $secret = $_SERVER['HTTP_X_PUBLIC_SECRET'] ?? '';
@@ -67,6 +71,10 @@ final class LeadController
         $accountId = $this->accountRepo->createAccount([
             'name' => $companyName,
             'phone' => $companyPhone,
+            'legal_name' => null,
+            'tax_id' => null,
+            'website' => null,
+            'address' => null,
         ]);
 
         $contactPhone = isset($input['contact']['phone']) && is_scalar($input['contact']['phone'])

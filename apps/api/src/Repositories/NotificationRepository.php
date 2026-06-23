@@ -62,10 +62,17 @@ final class NotificationRepository extends BaseRepository
             return 0;
         }
 
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $sql = "UPDATE `notifications` SET `is_read` = 1 WHERE `user_id` = ? AND `id` IN ($placeholders)";
+        $params = [':user_id' => $userId];
+        $placeholders = [];
+        foreach ($ids as $index => $id) {
+            $key = ":id_" . $index;
+            $placeholders[] = $key;
+            $params[$key] = $id;
+        }
+
+        $placeholdersStr = implode(',', $placeholders);
+        $sql = "UPDATE `notifications` SET `is_read` = 1 WHERE `user_id` = :user_id AND `id` IN ($placeholdersStr)";
         
-        $params = array_merge([$userId], $ids);
         return $this->rawExecute($sql, $params);
     }
 

@@ -68,8 +68,10 @@ export function WorkflowRuleEditor({ open, rule, onClose, onSaved }: Props) {
       setTriggerEvent(rule.trigger_event)
       setExecutionOrder(rule.execution_order)
       setIsActive(rule.is_active === 1)
-      setConditions(conditionsFromRecord(rule.trigger_conditions))
-      setActions(rule.actions)
+      const rawConditions = typeof rule.trigger_conditions === 'string' ? JSON.parse(rule.trigger_conditions) : rule.trigger_conditions
+      setConditions(conditionsFromRecord(rawConditions || {}))
+      const rawActions = typeof rule.actions === 'string' ? JSON.parse(rule.actions) : rule.actions
+      setActions(Array.isArray(rawActions) ? rawActions : [])
     } else {
       setName('')
       setDescription('')

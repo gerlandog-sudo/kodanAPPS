@@ -30,7 +30,18 @@ final class WorkflowController
      */
     public function listRules(): array
     {
-        return $this->workflowRepo->listAll();
+        $rules = $this->workflowRepo->listAll();
+        return array_map(function (array $rule): array {
+            if (isset($rule['trigger_conditions']) && is_string($rule['trigger_conditions'])) {
+                $decoded = json_decode($rule['trigger_conditions'], true);
+                $rule['trigger_conditions'] = is_array($decoded) ? $decoded : $rule['trigger_conditions'];
+            }
+            if (isset($rule['actions']) && is_string($rule['actions'])) {
+                $decoded = json_decode($rule['actions'], true);
+                $rule['actions'] = is_array($decoded) ? $decoded : $rule['actions'];
+            }
+            return $rule;
+        }, $rules);
     }
 
     /**
@@ -42,6 +53,14 @@ final class WorkflowController
         $rule = $this->workflowRepo->findById($id);
         if ($rule === null) {
             throw new RuntimeException('Regla de workflow no encontrada.', 404);
+        }
+        if (isset($rule['trigger_conditions']) && is_string($rule['trigger_conditions'])) {
+            $decoded = json_decode($rule['trigger_conditions'], true);
+            $rule['trigger_conditions'] = is_array($decoded) ? $decoded : $rule['trigger_conditions'];
+        }
+        if (isset($rule['actions']) && is_string($rule['actions'])) {
+            $decoded = json_decode($rule['actions'], true);
+            $rule['actions'] = is_array($decoded) ? $decoded : $rule['actions'];
         }
         return $rule;
     }
@@ -225,7 +244,15 @@ final class WorkflowController
         if ($rule === null) {
             throw new RuntimeException('Regla de workflow no encontrada.', 404);
         }
-        return $this->workflowRepo->getExecutionHistory($id);
+        $executions = $this->workflowRepo->getExecutionHistory($id);
+        foreach ($executions as &$ex) {
+            if (isset($ex['executed_actions']) && is_string($ex['executed_actions'])) {
+                $decoded = json_decode($ex['executed_actions'], true);
+                $ex['executed_actions'] = is_array($decoded) ? $decoded : $ex['executed_actions'];
+            }
+        }
+        unset($ex);
+        return $executions;
     }
 
     /**

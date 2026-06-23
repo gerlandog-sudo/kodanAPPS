@@ -240,7 +240,6 @@ export function WorkflowManager() {
           columns={columns}
           keyExtractor={(r) => r.id}
           editable={{ onClick: handleOpenEdit }}
-          deletable={{ onClick: (r) => handleDeleteClick(r.id) }}
           actions={actions}
           pageSize={20}
           emptyState={{

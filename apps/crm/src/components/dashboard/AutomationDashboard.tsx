@@ -44,7 +44,6 @@ export function AutomationDashboard() {
   }, [])
 
   if (loading || !stats) return null
-  if (stats.executions.total === 0 && stats.rules.total === 0) return null
 
   const successRate = stats.executions.total > 0
     ? Math.round((stats.by_status.find(s => s.status === 'success')?.count ?? 0) / stats.executions.total * 100)

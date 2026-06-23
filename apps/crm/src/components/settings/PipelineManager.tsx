@@ -82,7 +82,7 @@ function SortableStageRow({ stage, idx, editingStages, updateEditingStage, remov
             type="button" 
             onClick={() => removeEditingStage(idx)} 
             disabled={editingStages.length <= 1}
-            className="p-1.5 rounded-lg bg-transparent border border-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+            className="p-1.5 rounded-lg bg-transparent border border-transparent text-red-500 hover:bg-red-50 transition-colors"
             style={{ opacity: editingStages.length <= 1 ? 0.3 : 1, cursor: editingStages.length <= 1 ? 'not-allowed' : 'pointer' }}
           >
             <Trash2 size={14} />

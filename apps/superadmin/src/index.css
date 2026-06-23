@@ -2,55 +2,31 @@
 @source "../../../packages/ui-core/src";
 
 :root {
-  --sys-bg: #faf8ff;
-  --sys-surface: #f2f3ff;
-  --sys-surface-raised: #ffffff;
-  --sys-surface-hover: #eaedff;
-  --sys-text: #131b2e;
-  --sys-text-muted: #3c4947;
-  --sys-border: #bbc9c6;
-  --sys-border-soft: #dae2fd;
-  --sys-primary: #006a60;
-  --sys-primary-container: #62e2d1;
-  --sys-on-primary: #ffffff;
-  --sys-on-primary-container: #006359;
-  --sys-primary-hover: #005048;
-  --sys-tertiary: #732ee4;
-  --sys-tertiary-container: #d9c4ff;
-  --sys-error: #ba1a1a;
-  --sys-error-container: #ffdad6;
-  --sys-success: #006a60;
-  --sys-success-bg: #62e2d1;
-  --sys-glass: rgba(250, 248, 255, 0.7);
-  --sys-glass-border: rgba(19, 27, 46, 0.08);
-  --sys-on-error: #ffffff;
-  --sys-on-error-container: #93000a;
-}
+  color-scheme: light dark;
 
-.theme-dark {
-  --sys-bg: #0b1326;
-  --sys-surface: #131b2e;
-  --sys-surface-raised: #171f33;
-  --sys-surface-hover: #222a3d;
-  --sys-text: #dae2fd;
-  --sys-text-muted: #bbc9c6;
-  --sys-border: #3c4947;
-  --sys-border-soft: #2d3449;
-  --sys-primary: #81ffed;
-  --sys-primary-container: #62e2d1;
-  --sys-on-primary: #003731;
-  --sys-on-primary-container: #003731;
-  --sys-primary-hover: #59daca;
-  --sys-tertiary: #f1e5ff;
-  --sys-tertiary-container: #d9c4ff;
-  --sys-error: #ffb4ab;
-  --sys-error-container: #93000a;
-  --sys-success: #81ffed;
-  --sys-success-bg: #62e2d1;
-  --sys-glass: rgba(11, 19, 38, 0.75);
-  --sys-glass-border: rgba(218, 226, 253, 0.08);
-  --sys-on-error: #690005;
-  --sys-on-error-container: #ffdad6;
+  --sys-bg: light-dark(#faf8ff, #0b1326);
+  --sys-surface: light-dark(#f2f3ff, #131b2e);
+  --sys-surface-raised: light-dark(#ffffff, #171f33);
+  --sys-surface-hover: light-dark(#eaedff, #222a3d);
+  --sys-text: light-dark(#131b2e, #dae2fd);
+  --sys-text-muted: light-dark(#3c4947, #bbc9c6);
+  --sys-border: light-dark(#bbc9c6, #3c4947);
+  --sys-border-soft: light-dark(#dae2fd, #2d3449);
+  --sys-primary: light-dark(#006a60, #81ffed);
+  --sys-primary-container: light-dark(#62e2d1, #62e2d1);
+  --sys-on-primary: light-dark(#ffffff, #003731);
+  --sys-on-primary-container: light-dark(#006359, #003731);
+  --sys-primary-hover: light-dark(#005048, #59daca);
+  --sys-tertiary: light-dark(#732ee4, #f1e5ff);
+  --sys-tertiary-container: light-dark(#d9c4ff, #d9c4ff);
+  --sys-error: light-dark(#ba1a1a, #ffb4ab);
+  --sys-error-container: light-dark(#ffdad6, #93000a);
+  --sys-success: light-dark(#006a60, #81ffed);
+  --sys-success-bg: light-dark(#62e2d1, #62e2d1);
+  --sys-glass: light-dark(rgba(250, 248, 255, 0.7), rgba(11, 19, 38, 0.75));
+  --sys-glass-border: light-dark(rgba(19, 27, 46, 0.08), rgba(218, 226, 253, 0.08));
+  --sys-on-error: light-dark(#ffffff, #690005);
+  --sys-on-error-container: light-dark(#93000a, #ffdad6);
 }
 
 @theme {
@@ -190,15 +166,16 @@ h1, h2, h3, h4, h5, h6 {
 
 .select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%233c4947' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-  background-position: right 0.75rem center;
-  background-repeat: no-repeat;
-  background-size: 1.25em 1.25em;
   padding-right: 2.5rem;
-}
-
-.theme-dark .select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23bbc9c6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-color: var(--sys-text-muted);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: right 0.75rem center;
+  mask-position: right 0.75rem center;
+  -webkit-mask-size: 1.25em;
+  mask-size: 1.25em;
 }
 
 .table-container {

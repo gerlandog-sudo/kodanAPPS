@@ -20,12 +20,9 @@ export function LogoAdmin3D({ size = 48, theme }: LogoAdmin3DProps) {
     const width = size;
     const height = size;
 
-    // Detect dark/light theme
-    const isLight = theme ? theme === 'light' : !document.documentElement.classList.contains('theme-dark');
-
-    // Brand colors
-    const primary = getComputedStyle(document.documentElement).getPropertyValue('--sys-primary').trim() || '#006a60';
-    const secondary = getComputedStyle(document.documentElement).getPropertyValue('--sys-primary-container').trim() || '#62e2d1';
+    const isLight = theme === 'light';
+    const primary = isLight ? '#006a60' : '#81ffed';
+    const secondary = '#62e2d1';
 
     // Scene setup
     const scene = new THREE.Scene();

@@ -75,8 +75,6 @@
 .select-dropdown {
   position: fixed;
   z-index: 99999;
-  min-width: max(100%, 300px);
-  max-width: 450px;
   margin-top: 4px;
   max-height: 250px;
   background: var(--sys-surface-raised);

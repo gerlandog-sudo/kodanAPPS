@@ -174,7 +174,7 @@ export function Tasks() {
                         className="rounded cursor-pointer w-4 h-4 accent-indigo-600"
                       />
                       <div>
-                        <h4 className={`font-bold text-sm tracking-tight ${t.status === 'completed' ? 'line-through text-slate-400 dark:text-slate-600' : ''}`}>
+                        <h4 className={`font-bold text-sm tracking-tight ${t.status === 'completed' ? 'line-through text-slate-400' : ''}`}>
                           {t.title}
                         </h4>
                         {t.opportunity_name && (
@@ -185,7 +185,7 @@ export function Tasks() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => handleOpenEdit(t)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" title="Editar">
+                      <button onClick={() => handleOpenEdit(t)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500" title="Editar">
                         <Edit size={14} />
                       </button>
                       <button onClick={() => handleDeleteClick(t.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500" title="Eliminar">
@@ -218,7 +218,7 @@ export function Tasks() {
           })}
 
           {tasks.length === 0 && (
-            <div className="col-span-full flex flex-col items-center justify-center p-10 bg-slate-50 dark:background-slate-900 rounded-xl border border-dashed">
+            <div className="col-span-full flex flex-col items-center justify-center p-10 bg-slate-50 rounded-xl border border-dashed">
               <ListTodo size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
               <p className="text-sm italic mt-2" style={{ color: 'var(--sys-text-muted)' }}>No hay tareas de ventas agendadas.</p>
             </div>

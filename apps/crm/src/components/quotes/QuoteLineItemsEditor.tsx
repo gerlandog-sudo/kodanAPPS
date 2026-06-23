@@ -228,7 +228,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                 <td className="py-2">
                   <button
                     type="button"
-                    className="p-1 rounded transition-colors hover:bg-red-100 dark:hover:bg-red-900/30"
+                    className="p-1 rounded transition-colors hover:bg-red-100"
                     style={{ color: 'var(--sys-error)' }}
                     onClick={() => handleDelete(i)}
                     title="Eliminar línea"

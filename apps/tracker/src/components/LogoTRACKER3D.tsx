@@ -20,12 +20,9 @@ export function LogoTRACKER3D({ size = 48, theme }: LogoTRACKER3DProps) {
     const width = size;
     const height = size;
 
-    // Detectar tema claro/oscuro
-    const isLight = theme ? theme === 'light' : document.documentElement.classList.contains('theme-dark') === false;
-    
-    // Obtener variables de colores de CSS
-    const primary = getComputedStyle(document.documentElement).getPropertyValue('--sys-primary').trim() || '#0059ba';
-    const secondary = getComputedStyle(document.documentElement).getPropertyValue('--sys-primary-container').trim() || '#2372df';
+    const isLight = theme === 'light';
+    const primary = isLight ? '#0059ba' : '#acc7ff';
+    const secondary = isLight ? '#2372df' : '#0059ba';
 
     // 1. Escena, cámara y renderizador
     const scene = new THREE.Scene();

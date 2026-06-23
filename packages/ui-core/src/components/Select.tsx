@@ -216,7 +216,7 @@ export function Select({
         top: `${coords.top + 4}px`,
         left: `${coords.left}px`,
         width: `${Math.max(coords.width, 300)}px`,
-        maxWidth: '450px',
+        maxWidth: 'calc(100vw - 32px)',
       }}
     >
       {showSearch && (

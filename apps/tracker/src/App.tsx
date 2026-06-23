@@ -7,7 +7,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m
 const LogoTRACKER3D = lazy(() => import('./components/LogoTRACKER3D').then(m => ({ default: m.LogoTRACKER3D })));
 
 function Logo3DPlaceholder({ size }: { size?: number }) {
-  return <div className="shrink-0 animate-pulse bg-slate-200 dark:bg-slate-800 rounded-full" style={{ width: size ?? 48, height: size ?? 48 }} />;
+  return <div className="shrink-0 animate-pulse bg-slate-200 rounded-full" style={{ width: size ?? 48, height: size ?? 48 }} />;
 }
 
 type View = 'login' | 'set-password' | 'app';

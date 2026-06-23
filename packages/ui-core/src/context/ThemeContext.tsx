@@ -30,7 +30,7 @@ export function ThemeProvider({
   })
 
   const applyTheme = useCallback((t: Theme) => {
-    document.documentElement.classList.toggle('theme-dark', t === 'dark')
+    document.documentElement.style.colorScheme = t
   }, [])
 
   useEffect(() => {

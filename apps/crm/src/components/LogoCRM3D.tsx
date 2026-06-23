@@ -20,9 +20,9 @@ export function LogoCRM3D({ size = 48, theme }: LogoCRM3DProps) {
     const width = size;
     const height = size;
 
-    const isLight = theme ? theme === 'light' : document.documentElement.classList.contains('theme-dark') === false;
-    const primary = getComputedStyle(document.documentElement).getPropertyValue('--sys-primary').trim() || '#8b5cf6';
-    const secondary = getComputedStyle(document.documentElement).getPropertyValue('--sys-secondary').trim() || '#06b6d4';
+    const isLight = theme === 'light';
+    const primary = isLight ? '#0059ba' : '#acc7ff';
+    const secondary = isLight ? '#2372df' : '#0059ba';
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);

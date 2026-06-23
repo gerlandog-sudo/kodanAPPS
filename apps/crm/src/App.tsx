@@ -297,7 +297,7 @@ function AppContent() {
               {notifications.length > 0 && (
                 <button
                   onClick={handleClearAll}
-                  className="bg-transparent border-none flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium cursor-pointer rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                  className="bg-transparent border-none flex items-center gap-1.5 text-xs py-1 px-2.5 font-medium cursor-pointer rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                 >
                   <Trash2 size={14} /> Limpiar todo
                 </button>

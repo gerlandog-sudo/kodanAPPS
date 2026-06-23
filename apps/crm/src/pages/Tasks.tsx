@@ -110,8 +110,8 @@ export function Tasks() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   }, []);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [taskList, typeList, oppList, userList] = await Promise.all([
         crmApi.listTasks({ include_archived: showArchived ? 'true' : 'false' }),
@@ -126,7 +126,7 @@ export function Tasks() {
     } catch {
       toast.error('Error al cargar la agenda comercial.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [showArchived]);
 
@@ -307,11 +307,15 @@ export function Tasks() {
   };
 
   const handleDrop = async (itemId: string | number, toStage: string) => {
+    setTasks(prevTasks => 
+      prevTasks.map(t => t.id === Number(itemId) ? { ...t, status: toStage as any } : t)
+    );
     try {
       await crmApi.updateTask(Number(itemId), { status: toStage });
       toast.success('Estado de la tarea actualizado.');
-      loadData();
+      loadData(true);
     } catch {
+      loadData();
       toast.error('Error al actualizar el estado de la tarea.');
     }
   };
@@ -336,12 +340,16 @@ export function Tasks() {
   };
 
   const handleToggleArchive = async (task: Task) => {
+    const nextStatus = task.status === 'archived' ? 'todo' : 'archived';
+    setTasks(prevTasks => 
+      prevTasks.map(t => t.id === task.id ? { ...t, status: nextStatus as any } : t)
+    );
     try {
-      const nextStatus = task.status === 'archived' ? 'todo' : 'archived';
       await crmApi.updateTask(task.id, { status: nextStatus });
       toast.success(nextStatus === 'archived' ? 'Tarea comercial archivada.' : 'Tarea comercial restaurada.');
-      loadData();
+      loadData(true);
     } catch {
+      loadData();
       toast.error('Error al cambiar el estado de archivado.');
     }
   };
@@ -1057,7 +1065,7 @@ export function Tasks() {
               Limpiar
             </button>
             <button
-              onClick={loadData}
+              onClick={() => loadData()}
               className="bg-transparent border border-border-soft hover:bg-surface rounded p-1.5 text-text-muted cursor-pointer transition-colors"
               title="Actualizar datos"
             >

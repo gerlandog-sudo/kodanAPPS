@@ -106,7 +106,12 @@ return function (Router $router, array $app): void {
             error_log('WebLead error: ' . $e->getMessage());
             http_response_code(500);
             header('Content-Type: application/json');
-            echo json_encode(['error' => 'Internal server error']);
+            echo json_encode([
+                'error' => 'Internal server error',
+                'type' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => basename($e->getFile()) . ':' . $e->getLine(),
+            ]);
         }
     });
 

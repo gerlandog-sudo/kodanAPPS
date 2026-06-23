@@ -407,7 +407,6 @@ export function Tasks() {
         startDate={task.start_date || undefined}
         closeDate={task.end_date || undefined}
         ownerName={getOwnerName(task.assigned_to)}
-        onClick={() => handleOpenEdit(task)}
         onEdit={() => handleOpenEdit(task)}
         onDelete={() => handleDeleteClick(task.id)}
       />

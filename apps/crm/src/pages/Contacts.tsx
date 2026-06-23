@@ -198,84 +198,109 @@ export function Contacts() {
         pageSize={15}
       />
 
-      {/* Modal Creación / Edición */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedContact ? 'Editar Contacto' : 'Nuevo Contacto'}>
-        <div className="flex gap-1 p-1 rounded-lg mb-4" style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content' }}>
-          <button onClick={() => setModalTab('general')} className="btn" style={{ background: modalTab === 'general' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'general' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', fontWeight: modalTab === 'general' ? 600 : 500, fontSize: '0.8125rem' }}>
-            <User2 size={14} /> General
-          </button>
-          {fieldDefs.length > 0 && (
-            <button onClick={() => setModalTab('custom-fields')} className="btn" style={{ background: modalTab === 'custom-fields' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'custom-fields' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', fontWeight: modalTab === 'custom-fields' ? 600 : 500, fontSize: '0.8125rem' }}>
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedContact ? 'Editar Contacto' : 'Nuevo Contacto'} className="max-w-4xl">
+        {fieldDefs.length > 0 && (
+          <div className="flex gap-1 p-1 rounded-lg mb-6" style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content' }}>
+            <button 
+              type="button"
+              onClick={() => setModalTab('general')} 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors duration-200 cursor-pointer border-none" 
+              style={{ 
+                background: modalTab === 'general' ? 'var(--sys-primary-container)' : 'transparent', 
+                color: modalTab === 'general' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', 
+                fontWeight: modalTab === 'general' ? 600 : 500 
+              }}
+            >
+              <User2 size={14} /> General
+            </button>
+            <button 
+              type="button"
+              onClick={() => setModalTab('custom-fields')} 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors duration-200 cursor-pointer border-none" 
+              style={{ 
+                background: modalTab === 'custom-fields' ? 'var(--sys-primary-container)' : 'transparent', 
+                color: modalTab === 'custom-fields' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', 
+                fontWeight: modalTab === 'custom-fields' ? 600 : 500 
+              }}
+            >
               <Settings2 size={14} /> Campos Personalizados
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {modalTab === 'general' ? (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NOMBRE *</label>
-                <Input 
-                  value={form.first_name} 
-                  onChange={(e) => setForm(prev => ({ ...prev, first_name: e.target.value }))} 
-                  placeholder="Ej: Juan" 
-                  required 
-                />
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Columna Izquierda - Identificación Personal */}
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>Nombre *</label>
+                    <Input 
+                      value={form.first_name} 
+                      onChange={(e) => setForm(prev => ({ ...prev, first_name: e.target.value }))} 
+                      placeholder="Ej: Juan" 
+                      required 
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>Apellido *</label>
+                    <Input 
+                      value={form.last_name} 
+                      onChange={(e) => setForm(prev => ({ ...prev, last_name: e.target.value }))} 
+                      placeholder="Ej: Pérez" 
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>Empresa / Cuenta Asociada</label>
+                  <Select
+                    options={accountSelectOptions}
+                    value={form.account_id}
+                    onChange={(val) => setForm(prev => ({ ...prev, account_id: String(val) }))}
+                    placeholder="Selecciona la cuenta corporativa"
+                    searchable={true}
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>APELLIDO *</label>
-                <Input 
-                  value={form.last_name} 
-                  onChange={(e) => setForm(prev => ({ ...prev, last_name: e.target.value }))} 
-                  placeholder="Ej: Pérez" 
-                  required 
-                />
+
+              {/* Columna Derecha - Información de Contacto */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>Correo Electrónico *</label>
+                  <Input 
+                    type="email"
+                    value={form.email} 
+                    onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} 
+                    placeholder="juan.perez@empresa.com" 
+                    required 
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>Teléfono Fijo</label>
+                    <Input 
+                      value={form.phone} 
+                      onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} 
+                      placeholder="Ej: +54 11 5000-0000" 
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>Celular / Móvil</label>
+                    <Input 
+                      value={form.mobile} 
+                      onChange={(e) => setForm(prev => ({ ...prev, mobile: e.target.value }))} 
+                      placeholder="Ej: +54 9 11 2222-3333" 
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>CORREO ELECTRÓNICO *</label>
-              <Input 
-                type="email"
-                value={form.email} 
-                onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} 
-                placeholder="juan.perez@empresa.com" 
-                required 
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>TELÉFONO FIJO</label>
-                <Input 
-                  value={form.phone} 
-                  onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} 
-                  placeholder="Ej: +54 11 5000-0000" 
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>CELULAR / MÓVIL</label>
-                <Input 
-                  value={form.mobile} 
-                  onChange={(e) => setForm(prev => ({ ...prev, mobile: e.target.value }))} 
-                  placeholder="Ej: +54 9 11 2222-3333" 
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>EMPRESA / CUENTA ASOCIADA</label>
-              <Select
-                options={accountSelectOptions}
-                value={form.account_id}
-                onChange={(val) => setForm(prev => ({ ...prev, account_id: String(val) }))}
-                placeholder="Selecciona la cuenta corporativa"
-                searchable={true}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 mt-4 pt-3" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+            <div className="flex justify-end gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
               <Button variant="secondary" type="button" onClick={() => setShowModal(false)}>Cancelar</Button>
               <Button variant="primary" type="submit" className="btn-primary">
                 {selectedContact ? 'Actualizar Contacto' : 'Crear Contacto'}
@@ -283,13 +308,13 @@ export function Contacts() {
             </div>
           </form>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full">
             <CustomFieldsForm
               definitions={fieldDefs}
               values={customFields}
               onChange={(key, value) => setCustomFields(prev => ({ ...prev, [key]: value }))}
             />
-            <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+            <div className="flex justify-end gap-3 pt-4 w-full" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
               <Button variant="secondary" type="button" onClick={() => setShowModal(false)}>Cancelar</Button>
               <Button variant="primary" className="btn-primary" onClick={handleSubmit}>
                 {selectedContact ? 'Actualizar Contacto' : 'Crear Contacto'}

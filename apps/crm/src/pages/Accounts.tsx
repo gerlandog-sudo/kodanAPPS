@@ -206,78 +206,114 @@ export function Accounts() {
         pageSize={15}
       />
 
-      {/* Modal Creación / Edición */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedAcc ? 'Editar Cuenta Comercial' : 'Nueva Cuenta Comercial'}>
-        <div className="flex gap-1 p-1 rounded-lg mb-4" style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content' }}>
-          <button onClick={() => setModalTab('general')} className="btn" style={{ background: modalTab === 'general' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'general' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', fontWeight: modalTab === 'general' ? 600 : 500, fontSize: '0.8125rem' }}>
-            <Building2 size={14} /> General
-          </button>
-          {fieldDefs.length > 0 && (
-            <button onClick={() => setModalTab('custom-fields')} className="btn" style={{ background: modalTab === 'custom-fields' ? 'var(--sys-primary-container)' : 'transparent', color: modalTab === 'custom-fields' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', fontWeight: modalTab === 'custom-fields' ? 600 : 500, fontSize: '0.8125rem' }}>
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedAcc ? 'Editar Cuenta Comercial' : 'Nueva Cuenta Comercial'} className="max-w-4xl">
+        {fieldDefs.length > 0 && (
+          <div className="flex gap-1 p-1 rounded-lg mb-6" style={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content' }}>
+            <button 
+              type="button"
+              onClick={() => setModalTab('general')} 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors duration-200 cursor-pointer border-none" 
+              style={{ 
+                background: modalTab === 'general' ? 'var(--sys-primary-container)' : 'transparent', 
+                color: modalTab === 'general' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', 
+                fontWeight: modalTab === 'general' ? 600 : 500 
+              }}
+            >
+              <Building2 size={14} /> General
+            </button>
+            <button 
+              type="button"
+              onClick={() => setModalTab('custom-fields')} 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors duration-200 cursor-pointer border-none" 
+              style={{ 
+                background: modalTab === 'custom-fields' ? 'var(--sys-primary-container)' : 'transparent', 
+                color: modalTab === 'custom-fields' ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)', 
+                fontWeight: modalTab === 'custom-fields' ? 600 : 500 
+              }}
+            >
               <Settings2 size={14} /> Campos Personalizados
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {modalTab === 'general' ? (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>NOMBRE COMERCIAL *</label>
-              <Input 
-                value={form.name} 
-                onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} 
-                placeholder="Ej: KODAN Software Corp" 
-                required 
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Columna Izquierda - Información Comercial */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>
+                    Nombre Comercial *
+                  </label>
+                  <Input 
+                    value={form.name} 
+                    onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} 
+                    placeholder="Ej: KODAN Software Corp" 
+                    required 
+                  />
+                </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>RAZÓN SOCIAL / NOMBRE LEGAL</label>
-              <Input 
-                value={form.legal_name} 
-                onChange={(e) => setForm(prev => ({ ...prev, legal_name: e.target.value }))} 
-                placeholder="Ej: KODAN S.A." 
-              />
-            </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>
+                    Razón Social / Nombre Legal
+                  </label>
+                  <Input 
+                    value={form.legal_name} 
+                    onChange={(e) => setForm(prev => ({ ...prev, legal_name: e.target.value }))} 
+                    placeholder="Ej: KODAN S.A." 
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>IDENTIFICACIÓN TRIBUTARIA (TAX ID)</label>
-                <Input 
-                  value={form.tax_id} 
-                  onChange={(e) => setForm(prev => ({ ...prev, tax_id: e.target.value }))} 
-                  placeholder="Ej: 30-71458983-9" 
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>
+                    Identificación Tributaria (TAX ID)
+                  </label>
+                  <Input 
+                    value={form.tax_id} 
+                    onChange={(e) => setForm(prev => ({ ...prev, tax_id: e.target.value }))} 
+                    placeholder="Ej: 30-71458983-9" 
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>TELÉFONO DE CONTACTO</label>
-                <Input 
-                  value={form.phone} 
-                  onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} 
-                  placeholder="Ej: +54 11 5236-9874" 
-                />
+
+              {/* Columna Derecha - Localización y Contacto */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>
+                    Teléfono de Contacto
+                  </label>
+                  <Input 
+                    value={form.phone} 
+                    onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} 
+                    placeholder="Ej: +54 11 5236-9874" 
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>
+                    Sitio Web Corporativo
+                  </label>
+                  <Input 
+                    value={form.website} 
+                    onChange={(e) => setForm(prev => ({ ...prev, website: e.target.value }))} 
+                    placeholder="Ej: www.kodan.software" 
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold tracking-wide uppercase text-text-muted" style={{ color: 'var(--sys-text-muted)' }}>
+                    Dirección Postal
+                  </label>
+                  <Input 
+                    value={form.address} 
+                    onChange={(e) => setForm(prev => ({ ...prev, address: e.target.value }))} 
+                    placeholder="Ej: Av. del Libertador 4200, CABA" 
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>SITIO WEB corporativo</label>
-              <Input 
-                value={form.website} 
-                onChange={(e) => setForm(prev => ({ ...prev, website: e.target.value }))} 
-                placeholder="Ej: www.kodan.software" 
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>DIRECCIÓN POSTAL</label>
-              <Input 
-                value={form.address} 
-                onChange={(e) => setForm(prev => ({ ...prev, address: e.target.value }))} 
-                placeholder="Ej: Av. del Libertador 4200, CABA" 
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 mt-4 pt-3" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+            <div className="flex justify-end gap-3 mt-4 pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
               <Button variant="secondary" type="button" onClick={() => setShowModal(false)}>Cancelar</Button>
               <Button variant="primary" type="submit" className="btn-primary">
                 {selectedAcc ? 'Actualizar Cuenta' : 'Crear Cuenta'}
@@ -285,13 +321,13 @@ export function Accounts() {
             </div>
           </form>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full">
             <CustomFieldsForm
               definitions={fieldDefs}
               values={customFields}
               onChange={(key, value) => setCustomFields(prev => ({ ...prev, [key]: value }))}
             />
-            <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+            <div className="flex justify-end gap-3 pt-4 w-full" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
               <Button variant="secondary" type="button" onClick={() => setShowModal(false)}>Cancelar</Button>
               <Button variant="primary" className="btn-primary" onClick={handleSubmit}>
                 {selectedAcc ? 'Actualizar Cuenta' : 'Crear Cuenta'}

@@ -55,7 +55,9 @@ use kodanAPPS\Services\TenantService;
 use kodanAPPS\Services\CustomFieldService;
 use kodanAPPS\Services\EntityOwnerSyncService;
 use kodanAPPS\Services\MentionsParser;
+use kodanAPPS\Services\WorkflowEngine;
 use kodanAPPS\Controllers\MessagingController;
+use kodanAPPS\Controllers\WorkflowController;
 
 // ------------------------------------------------------------
 // Debug endpoint (antes de cualquier init)
@@ -191,6 +193,7 @@ $taskTypeRepo = new TaskTypeRepository($pdo);
 $chatRepo = new ChatRepository($pdo);
 $projectRepo = new ProjectRepository($pdo);
 $notificationRepo = new NotificationRepository($pdo);
+$workflowRepo = new WorkflowRepository($pdo);
 
 // ------------------------------------------------------------
 // Servicios
@@ -199,6 +202,7 @@ $tenantService = new TenantService($tenantRepo, $userRepo);
 $customFieldService = new CustomFieldService($pdo);
 $mentionsParser = new MentionsParser($chatRepo);
 $entityOwnerSyncService = new EntityOwnerSyncService($chatRepo);
+$workflowEngine = new WorkflowEngine($workflowRepo, $taskRepo, $oppRepo, $notificationRepo);
 
 // ------------------------------------------------------------
 // Configuración sensible
@@ -224,16 +228,17 @@ $customFieldController = new CustomFieldController($customFieldService, $pdo);
 $accountController = new AccountController($accountRepo);
 $contactController = new ContactController($contactRepo);
 $pipelineController = new PipelineController($pipelineRepo);
-$oppController = new OpportunityController($oppRepo, $pipelineRepo, $crmController, $notificationRepo);
+$oppController = new OpportunityController($oppRepo, $pipelineRepo, $crmController, $notificationRepo, $workflowEngine);
 $productController = new ProductController($productRepo);
 $quoteController = new QuoteController($quoteRepo);
-$taskController = new CrmTaskController($taskRepo, $notificationRepo);
+$taskController = new CrmTaskController($taskRepo, $notificationRepo, $workflowEngine);
 $taskTypeController = new TaskTypeController($taskTypeRepo);
 $chatController = new ChatController($chatRepo);
 $trackerController = new TrackerController($projectRepo);
 $tenantUserController = new TenantUserController($userRepo, $pdo);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
+$workflowController = new WorkflowController($workflowRepo, $workflowEngine, $oppRepo, $taskRepo, $notificationRepo);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);
@@ -259,12 +264,14 @@ return [
         'taskType' => $taskTypeRepo,
         'chat' => $chatRepo,
         'project' => $projectRepo,
+        'workflow' => $workflowRepo,
         ],
     'services' => [
         'tenant' => $tenantService,
         'customField' => $customFieldService,
         'mentionsParser' => $mentionsParser,
         'entityOwnerSync' => $entityOwnerSyncService,
+        'workflowEngine' => $workflowEngine,
     ],
     'auth' => $authMiddleware,
     'controllers' => [
@@ -286,5 +293,6 @@ return [
         'messaging' => $messagingController,
         'notification' => $notificationController,
         'webLead' => $leadController,
+        'workflow' => $workflowController,
         ],
 ];

@@ -6,13 +6,14 @@ import { CustomFieldsSettings } from '../components/settings/CustomFieldsSetting
 import { UsersSettings } from '../components/settings/UsersSettings'
 import { NotificationsSettings } from '../components/settings/NotificationsSettings'
 import { TasksSettings } from '../components/settings/TasksSettings'
-import { GitBranch, Settings2, Users, BellRing, ListTodo } from 'lucide-react'
+import { WorkflowManager } from '../components/settings/WorkflowManager'
+import { GitBranch, Settings2, Users, BellRing, ListTodo, Workflow } from 'lucide-react'
 
-type SettingsPanel = 'users' | 'pipelines' | 'custom-fields' | 'notifications' | 'task-types'
+type SettingsPanel = 'users' | 'pipelines' | 'custom-fields' | 'notifications' | 'task-types' | 'workflows'
 
 function getSectionFromHash(): SettingsPanel | null {
   const hash = window.location.hash.replace('#', '')
-  if (hash === 'users' || hash === 'pipelines' || hash === 'custom-fields' || hash === 'notifications' || hash === 'task-types') return hash
+  if (hash === 'users' || hash === 'pipelines' || hash === 'custom-fields' || hash === 'notifications' || hash === 'task-types' || hash === 'workflows') return hash
   return null
 }
 
@@ -41,6 +42,7 @@ export function Settings() {
     { key: 'custom-fields', label: 'Campos', icon: <Settings2 size={16} />, href: '#custom-fields' },
     { key: 'notifications', label: 'Alertas', icon: <BellRing size={16} />, href: '#notifications' },
     { key: 'task-types', label: 'Tipos de Tareas', icon: <ListTodo size={16} />, href: '#task-types' },
+    { key: 'workflows', label: 'Workflows', icon: <Workflow size={16} />, href: '#workflows' },
   ]
 
   return (
@@ -50,6 +52,7 @@ export function Settings() {
       {activePanel === 'users' && <UsersSettings />}
       {activePanel === 'notifications' && <NotificationsSettings />}
       {activePanel === 'task-types' && <TasksSettings />}
+      {activePanel === 'workflows' && <WorkflowManager />}
     </AdminLayout>
   )
 }

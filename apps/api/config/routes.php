@@ -558,6 +558,43 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['taskType']->delete($p['id']));
     });
 
+    // Workflows
+    $router->get('/api/crm/workflows', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->listRules());
+    });
+    $router->get('/api/crm/workflows/stats', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->getStats());
+    });
+    $router->post('/api/crm/workflows', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->createRule($input));
+    });
+    $router->get('/api/crm/workflows/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->getRule($p['id']));
+    });
+    $router->patch('/api/crm/workflows/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->updateRule($p['id'], $input));
+    });
+    $router->delete('/api/crm/workflows/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->deleteRule($p['id']));
+    });
+    $router->get('/api/crm/workflows/{id}/executions', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->getExecutionHistory($p['id']));
+    });
+    $router->post('/api/crm/workflows/test', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['workflow']->testRule($input));
+    });
+
     // Chats
     $router->get('/api/crm/chats/unread-mentions', function () use ($app) {
         echo json_encode($app['controllers']['chat']->getUnreadMentionsCount());

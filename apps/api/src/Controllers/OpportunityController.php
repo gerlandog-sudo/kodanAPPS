@@ -8,6 +8,7 @@ use kodanAPPS\Repositories\OpportunityRepository;
 use kodanAPPS\Repositories\PipelineRepository;
 use kodanAPPS\Repositories\NotificationRepository;
 use kodanAPPS\Controllers\CrmController;
+use kodanAPPS\Services\WorkflowEngine;
 use kodanAPPS\DB\TenantContext;
 use InvalidArgumentException;
 use RuntimeException;
@@ -18,17 +19,20 @@ final class OpportunityController
     private PipelineRepository $pipelineRepo;
     private CrmController $crmController;
     private NotificationRepository $notificationRepo;
+    private WorkflowEngine $workflowEngine;
 
     public function __construct(
         OpportunityRepository $opportunityRepo,
         PipelineRepository $pipelineRepo,
         CrmController $crmController,
-        NotificationRepository $notificationRepo
+        NotificationRepository $notificationRepo,
+        WorkflowEngine $workflowEngine
     ) {
         $this->opportunityRepo = $opportunityRepo;
         $this->pipelineRepo = $pipelineRepo;
         $this->crmController = $crmController;
         $this->notificationRepo = $notificationRepo;
+        $this->workflowEngine = $workflowEngine;
     }
 
     /**
@@ -165,6 +169,13 @@ final class OpportunityController
                 $this->opportunityRepo->saveOpportunityLineItems($id, $items);
             }
 
+            $this->workflowEngine->execute('opportunity', 'created', $id, [
+                'owner_user_id' => $data['owner_user_id'],
+                'opportunity_title' => $title,
+                'value' => $value,
+                'currency' => $currency,
+            ]);
+
             return [
                 'success' => true,
                 'id' => $id,
@@ -253,6 +264,63 @@ final class OpportunityController
                     'is_read' => 0
                 ]);
             }
+        }
+
+        // Workflow: disparar triggers según cambios detectados
+        $oldStageId = (int)($opp['pipeline_stage_id'] ?? 0);
+        $oldValue = (float)($opp['value'] ?? 0);
+        $oldCloseDate = $opp['close_date'] ?? null;
+
+        if (isset($data['pipeline_stage_id']) && (int)$data['pipeline_stage_id'] !== $oldStageId) {
+            $this->workflowEngine->execute('opportunity', 'stage_changed', $id, [
+                'old_stage_id' => $oldStageId,
+                'new_stage_id' => (int)$data['pipeline_stage_id'],
+                'pipeline_id' => (int)($opp['pipeline_id'] ?? 0),
+                'owner_user_id' => (int)($data['owner_user_id'] ?? $opp['owner_user_id'] ?? 0),
+                'opportunity_title' => $opp['title'] ?? '',
+                'value' => $data['value'] ?? $opp['value'] ?? 0,
+            ]);
+
+            // Verificar si la etapa nueva es won o lost
+            $newStage = $this->pipelineRepo->findStageById((int)$data['pipeline_stage_id']);
+            if ($newStage !== null) {
+                if ((int)($newStage['is_won_stage'] ?? 0) === 1) {
+                    $this->workflowEngine->execute('opportunity', 'won', $id, [
+                        'opportunity_title' => $opp['title'] ?? '',
+                        'value' => $opp['value'] ?? 0,
+                        'owner_user_id' => $opp['owner_user_id'] ?? 0,
+                    ]);
+                }
+                if ((int)($newStage['is_lost_stage'] ?? 0) === 1) {
+                    $this->workflowEngine->execute('opportunity', 'lost', $id, [
+                        'opportunity_title' => $opp['title'] ?? '',
+                        'value' => $opp['value'] ?? 0,
+                        'owner_user_id' => $opp['owner_user_id'] ?? 0,
+                    ]);
+                }
+            }
+        }
+
+        if (isset($data['owner_user_id']) && (int)$data['owner_user_id'] !== $oldOwnerId) {
+            $this->workflowEngine->execute('opportunity', 'assigned', $id, [
+                'owner_user_id' => (int)$data['owner_user_id'],
+                'opportunity_title' => $opp['title'] ?? '',
+            ]);
+        }
+
+        if (isset($data['value']) && abs((float)$data['value'] - $oldValue) > 0.001) {
+            $this->workflowEngine->execute('opportunity', 'value_changed', $id, [
+                'value' => (float)$data['value'],
+                'opportunity_title' => $opp['title'] ?? '',
+                'owner_user_id' => $opp['owner_user_id'] ?? 0,
+            ]);
+        }
+
+        if (array_key_exists('close_date', $input) && $data['close_date'] !== $oldCloseDate) {
+            $this->workflowEngine->execute('opportunity', 'close_date_changed', $id, [
+                'close_date' => $data['close_date'],
+                'opportunity_title' => $opp['title'] ?? '',
+            ]);
         }
 
         // Si se pasan ítems, guardarlos
@@ -384,6 +452,15 @@ final class OpportunityController
             $closeReason
         );
 
+        $this->workflowEngine->execute('opportunity', 'won', $id, [
+            'opportunity_title' => $opp['title'] ?? '',
+            'value' => $opp['value'] ?? 0,
+            'owner_user_id' => $opp['owner_user_id'] ?? 0,
+            'project_id' => $projectId,
+            'budget_hours' => $budgetHours,
+            'account_name' => $opp['account_name'] ?? '',
+        ]);
+
         return [
             'success' => true,
             'project_id' => $projectId,
@@ -403,6 +480,12 @@ final class OpportunityController
             throw new RuntimeException('Oportunidad no encontrada.', 404);
         }
         $this->opportunityRepo->archiveOpportunity($id, true);
+
+        $this->workflowEngine->execute('opportunity', 'archived', $id, [
+            'opportunity_title' => $opp['title'] ?? '',
+            'owner_user_id' => $opp['owner_user_id'] ?? 0,
+        ]);
+
         return ['success' => true, 'message' => 'Negociación archivada.'];
     }
 
@@ -418,6 +501,12 @@ final class OpportunityController
             throw new RuntimeException('Oportunidad no encontrada.', 404);
         }
         $this->opportunityRepo->archiveOpportunity($id, false);
+
+        $this->workflowEngine->execute('opportunity', 'unarchived', $id, [
+            'opportunity_title' => $opp['title'] ?? '',
+            'owner_user_id' => $opp['owner_user_id'] ?? 0,
+        ]);
+
         return ['success' => true, 'message' => 'Negociación restaurada del archivo.'];
     }
 }

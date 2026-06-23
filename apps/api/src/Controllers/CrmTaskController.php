@@ -6,6 +6,8 @@ namespace kodanAPPS\Controllers;
 
 use kodanAPPS\Repositories\CrmTaskRepository;
 use kodanAPPS\Repositories\NotificationRepository;
+use kodanAPPS\Services\WorkflowEngine;
+use kodanAPPS\DB\TenantContext;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -13,11 +15,16 @@ final class CrmTaskController
 {
     private CrmTaskRepository $taskRepo;
     private NotificationRepository $notificationRepo;
+    private WorkflowEngine $workflowEngine;
 
-    public function __construct(CrmTaskRepository $taskRepo, NotificationRepository $notificationRepo)
-    {
+    public function __construct(
+        CrmTaskRepository $taskRepo,
+        NotificationRepository $notificationRepo,
+        WorkflowEngine $workflowEngine
+    ) {
         $this->taskRepo = $taskRepo;
         $this->notificationRepo = $notificationRepo;
+        $this->workflowEngine = $workflowEngine;
     }
 
     /**
@@ -136,6 +143,14 @@ final class CrmTaskController
             }
         }
 
+        $this->workflowEngine->execute('task', 'task_created', $id, [
+            'opportunity_id' => $opportunityId,
+            'task_title' => $title,
+            'assigned_to' => $assignedTo,
+            'status' => $status,
+            'task_type_id' => $data['task_type_id'] ?? null,
+        ]);
+
         return [
             'success' => true,
             'id' => $id,
@@ -196,7 +211,10 @@ final class CrmTaskController
             $data['task_type_id'] = isset($input['task_type_id']) && is_scalar($input['task_type_id']) && (int)$input['task_type_id'] > 0 ? (int)$input['task_type_id'] : null;
         }
 
+        $oldStatus = $task['status'] ?? 'todo';
         $oldAssignedTo = (int)($task['assigned_to'] ?? 0);
+        $oldDueDate = $task['due_date'] ?? $task['end_date'] ?? null;
+        $oldArchived = $task['status'] === 'archived';
         $affected = 0;
         if (!empty($data)) {
             $affected = $this->taskRepo->updateTask($id, $data);
@@ -213,6 +231,60 @@ final class CrmTaskController
                     'title' => 'Nueva tarea asignada',
                     'message' => "Se te ha asignado la tarea \"{$taskTitle}\".",
                     'is_read' => 0
+                ]);
+            }
+
+            // Workflow: status changed
+            if (isset($data['status']) && $data['status'] !== $oldStatus) {
+                $this->workflowEngine->execute('task', 'task_status_changed', $id, [
+                    'old_status' => $oldStatus,
+                    'new_status' => $data['status'],
+                    'opportunity_id' => $task['opportunity_id'] ?? null,
+                    'task_title' => $task['title'] ?? '',
+                    'task_type_id' => $task['task_type_id'] ?? null,
+                    'assigned_to' => (int)($data['assigned_to'] ?? $task['assigned_to'] ?? 0),
+                ]);
+
+                if ($data['status'] === 'done' && $oldStatus !== 'done') {
+                    $this->workflowEngine->execute('task', 'task_completed', $id, [
+                        'opportunity_id' => $task['opportunity_id'] ?? null,
+                        'task_title' => $task['title'] ?? '',
+                        'task_type_id' => $task['task_type_id'] ?? null,
+                        'assigned_to' => (int)($data['assigned_to'] ?? $task['assigned_to'] ?? 0),
+                    ]);
+                }
+
+                if ($data['status'] === 'archived' && !$oldArchived) {
+                    $this->workflowEngine->execute('task', 'task_archived', $id, [
+                        'opportunity_id' => $task['opportunity_id'] ?? null,
+                        'task_title' => $task['title'] ?? '',
+                    ]);
+                } elseif ($oldStatus === 'archived' && $data['status'] !== 'archived') {
+                    $this->workflowEngine->execute('task', 'task_unarchived', $id, [
+                        'opportunity_id' => $task['opportunity_id'] ?? null,
+                        'task_title' => $task['title'] ?? '',
+                    ]);
+                }
+            }
+
+            // Workflow: assigned
+            if (isset($data['assigned_to']) && (int)$data['assigned_to'] !== $oldAssignedTo) {
+                $this->workflowEngine->execute('task', 'task_assigned', $id, [
+                    'old_assigned_to' => $oldAssignedTo,
+                    'new_assigned_to' => (int)$data['assigned_to'],
+                    'opportunity_id' => $task['opportunity_id'] ?? null,
+                    'task_title' => $task['title'] ?? '',
+                ]);
+            }
+
+            // Workflow: due_date changed
+            $newDueDate = $data['due_date'] ?? $data['end_date'] ?? null;
+            if ($newDueDate !== null && $newDueDate !== $oldDueDate) {
+                $this->workflowEngine->execute('task', 'task_due_date_changed', $id, [
+                    'old_due_date' => $oldDueDate,
+                    'new_due_date' => $newDueDate,
+                    'opportunity_id' => $task['opportunity_id'] ?? null,
+                    'task_title' => $task['title'] ?? '',
                 ]);
             }
         }

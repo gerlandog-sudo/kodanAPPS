@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { exportToExcel } from '../utils/excelExport';
 import { SalesFunnelSVG } from '../components/dashboard/SalesFunnelSVG';
 import { ForecastChart } from '../components/dashboard/ForecastChart';
+import { AutomationDashboard } from '../components/dashboard/AutomationDashboard';
 
 // Componente del Esqueleto de Carga Gris (Grey Skeleton)
 function DashboardSkeleton() {
@@ -1017,6 +1018,10 @@ export function Dashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-8">
+        <AutomationDashboard />
       </div>
 
       {/* SlidePanel lateral para Drill Down interactivo */}

@@ -107,6 +107,16 @@ export const crmApi = {
   getQuoteLineItems: (id: number) => api.get<any[]>(`/api/crm/quotes/${id}/items`),
   saveQuoteLineItems: (id: number, data: any) => api.post(`/api/crm/quotes/${id}/items`, data),
 
+  // Workflows
+  listWorkflowRules: () => api.get<any[]>('/api/crm/workflows'),
+  getWorkflowRule: (id: number) => api.get<any>(`/api/crm/workflows/${id}`),
+  createWorkflowRule: (data: any) => api.post('/api/crm/workflows', data),
+  updateWorkflowRule: (id: number, data: any) => api.patch(`/api/crm/workflows/${id}`, data),
+  deleteWorkflowRule: (id: number) => api.delete(`/api/crm/workflows/${id}`),
+  getWorkflowExecutions: (ruleId: number) => api.get<any[]>(`/api/crm/workflows/${ruleId}/executions`),
+  testWorkflowRule: (data: any) => api.post<any>('/api/crm/workflows/test', data),
+  getWorkflowStats: () => api.get<any>('/api/crm/workflows/stats'),
+
   // Notifications
   listNotifications: () => api.get<any[]>('/api/crm/notifications'),
   markNotificationsRead: (ids?: number[]) => api.post('/api/crm/notifications/mark-read', { ids }),

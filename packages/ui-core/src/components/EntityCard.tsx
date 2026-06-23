@@ -34,7 +34,7 @@ function getInitials(name: string) {
 
 export function EntityCard({
   title, amount, badge, accountName, startDate, closeDate,
-  lineItemsCount, quoteTotal, ownerName, ownerAvatar, isDropped, selected,
+  lineItemsCount, quoteTotal, ownerName, ownerAvatar, stageColor, isDropped, selected,
   onClick, onChat, onCheck, onClone, onEdit, onDelete,
 }: EntityCardProps) {
   const hasActions = !!(onChat || onEdit || onDelete || onCheck || onClone)
@@ -48,10 +48,16 @@ export function EntityCard({
         cursor: onClick ? 'pointer' : 'default',
         display: 'flex', flexDirection: 'column', gap: '0',
         borderRadius: '0.5rem',
-        border: selected ? '2px solid var(--sys-primary)' : '1px solid var(--sys-border-soft)',
+        border: selected 
+          ? '2px solid var(--sys-primary)' 
+          : stageColor 
+            ? `1px solid ${stageColor}` 
+            : '1px solid var(--sys-border-soft)',
         background: selected 
           ? 'color-mix(in srgb, var(--sys-primary-container) 10%, var(--sys-surface-raised))'
-          : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)',
+          : stageColor 
+            ? `color-mix(in srgb, ${stageColor} 6%, var(--sys-surface-raised))`
+            : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)',
         userSelect: 'none',
         transition: 'all 300ms ease',
         position: 'relative',
@@ -59,8 +65,10 @@ export function EntityCard({
       onMouseEnter={(e) => {
         const el = e.currentTarget
         if (!selected) {
-          el.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'
-          el.style.background = 'var(--sys-surface)'
+          el.style.borderColor = stageColor ? stageColor : 'color-mix(in srgb, var(--sys-primary) 45%, var(--sys-border-soft))'
+          el.style.background = stageColor 
+            ? `color-mix(in srgb, ${stageColor} 10%, var(--sys-surface-raised))`
+            : 'var(--sys-surface)'
         } else {
           el.style.borderColor = 'var(--sys-primary)'
         }
@@ -69,12 +77,14 @@ export function EntityCard({
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget
-        el.style.borderColor = selected ? 'var(--sys-primary)' : 'var(--sys-border-soft)'
+        el.style.borderColor = selected ? 'var(--sys-primary)' : stageColor ? stageColor : 'var(--sys-border-soft)'
         el.style.transform = 'translateY(0)'
         el.style.boxShadow = 'none'
         el.style.background = selected 
           ? 'color-mix(in srgb, var(--sys-primary-container) 10%, var(--sys-surface-raised))'
-          : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
+          : stageColor 
+            ? `color-mix(in srgb, ${stageColor} 6%, var(--sys-surface-raised))`
+            : 'color-mix(in srgb, var(--sys-surface) 80%, transparent)'
       }}
     >
       {/* Línea 1: Estimado (izq) + badge (der) */}

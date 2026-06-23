@@ -106,12 +106,7 @@ return function (Router $router, array $app): void {
             error_log('WebLead error: ' . $e->getMessage());
             http_response_code(500);
             header('Content-Type: application/json');
-            echo json_encode([
-                'error' => 'Internal server error',
-                'type' => get_class($e),
-                'message' => $e->getMessage(),
-                'file' => basename($e->getFile()) . ':' . $e->getLine(),
-            ]);
+            echo json_encode(['error' => 'Internal server error']);
         }
     });
 
@@ -542,6 +537,25 @@ return function (Router $router, array $app): void {
     });
     $router->delete('/api/crm/tasks/{id}', function (array $p) use ($app) {
         echo json_encode($app['controllers']['task']->delete($p['id']));
+    });
+
+    // Task Types
+    $router->get('/api/crm/task-types', function () use ($app) {
+        echo json_encode($app['controllers']['taskType']->list());
+    });
+    $router->post('/api/crm/task-types', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        echo json_encode($app['controllers']['taskType']->create($input));
+    });
+    $router->get('/api/crm/task-types/{id}', function (array $p) use ($app) {
+        echo json_encode($app['controllers']['taskType']->get($p['id']));
+    });
+    $router->patch('/api/crm/task-types/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        echo json_encode($app['controllers']['taskType']->update($p['id'], $input));
+    });
+    $router->delete('/api/crm/task-types/{id}', function (array $p) use ($app) {
+        echo json_encode($app['controllers']['taskType']->delete($p['id']));
     });
 
     // Chats

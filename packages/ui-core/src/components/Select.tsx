@@ -144,9 +144,9 @@ export function Select({
 
   const handleSelectOption = (option: SelectOption) => {
     if (multiple) {
-      const isSelected = selectedValues.includes(option.value)
+      const isSelected = selectedValues.some((v) => String(v) === String(option.value))
       const nextValues = isSelected
-        ? selectedValues.filter((v) => v !== option.value)
+        ? selectedValues.filter((v) => String(v) !== String(option.value))
         : [...selectedValues, option.value]
       onChange(nextValues)
     } else {
@@ -158,7 +158,7 @@ export function Select({
   const handleRemoveValue = (e: React.MouseEvent, valToRemove: string | number) => {
     e.stopPropagation()
     if (disabled) return
-    const nextValues = selectedValues.filter((v) => v !== valToRemove)
+    const nextValues = selectedValues.filter((v) => String(v) !== String(valToRemove))
     onChange(nextValues)
   }
 
@@ -203,7 +203,7 @@ export function Select({
 
   // Encontrar las opciones seleccionadas para renderizar en el gatillo
   const selectedOptions = useMemo(() => {
-    return options.filter((opt) => selectedValues.includes(opt.value))
+    return options.filter((opt) => selectedValues.some((v) => String(v) === String(opt.value)))
   }, [options, selectedValues])
 
   const dropdownMenu = isOpen ? (
@@ -239,7 +239,7 @@ export function Select({
           <div className="select-empty">Sin resultados</div>
         ) : (
           filteredOptions.map((option, idx) => {
-            const isSelected = selectedValues.includes(option.value)
+            const isSelected = selectedValues.some((v) => String(v) === String(option.value))
             const isActive = idx === activeIndex
             return (
               <button

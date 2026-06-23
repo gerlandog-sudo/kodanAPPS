@@ -162,5 +162,21 @@ final class NotificationController
                 }
             }
         }
+
+        // 3. Obtener tareas activas y vencidas del usuario
+        $overdueTasks = $this->notificationRepo->getActiveOverdueTasksForUser($userId);
+        foreach ($overdueTasks as $task) {
+            $taskId = (int)$task['id'];
+            $taskTitle = $task['title'];
+            $this->notificationRepo->upsertNotification([
+                'user_id' => $userId,
+                'type' => 'overdue_task',
+                'entity_type' => 'crm_task',
+                'entity_id' => $taskId,
+                'title' => 'Tarea comercial vencida',
+                'message' => "La tarea \"{$taskTitle}\" ha superado su fecha límite ({$task['end_date']}).",
+                'is_read' => 0
+            ]);
+        }
     }
 }

@@ -14,16 +14,51 @@ final class CrmTaskRepository extends BaseRepository
     protected const TABLE = 'tasks';
 
     /**
-     * Lista todas las tareas comerciales del tenant, opcionalmente filtradas por oportunidad
+     * Lista todas las tareas comerciales del tenant, opcionalmente filtradas por oportunidad y archivado,
+     * aplicando aislamiento por usuario para no-administradores.
      * 
      * @return array<int, array<string, mixed>>
      */
-    public function listAll(int $opportunityId = 0): array
+    public function listAll(int $opportunityId = 0, bool $includeArchived = false): array
     {
+        $userId = \kodanAPPS\DB\TenantContext::getUserId();
+        $isAdmin = \kodanAPPS\DB\TenantContext::isSuperAdmin() || \kodanAPPS\DB\TenantContext::hasRole('admin');
+
+        $whereClauses = [];
+        $params = [];
+
         if ($opportunityId > 0) {
-            return $this->findAll(self::TABLE, '*', 'opportunity_id = :opp_id', [':opp_id' => $opportunityId], 'due_date ASC');
+            $whereClauses[] = 't.opportunity_id = :opp_id';
+            $params[':opp_id'] = $opportunityId;
         }
-        return $this->findAll(self::TABLE, '*', '', [], 'due_date ASC');
+
+        if (!$includeArchived) {
+            $whereClauses[] = "t.status != 'archived'";
+        }
+
+        if (!$isAdmin) {
+            $whereClauses[] = '(t.assigned_to = :current_user OR t.id IN (SELECT tp.task_id FROM task_participants tp WHERE tp.user_id = :current_user_p))';
+            $params[':current_user'] = $userId;
+            $params[':current_user_p'] = $userId;
+        }
+
+        $whereSql = '';
+        if (!empty($whereClauses)) {
+            $whereSql = ' WHERE ' . implode(' AND ', $whereClauses);
+        }
+
+        $sql = "SELECT t.*, 
+                      tt.name AS task_type_name, 
+                      tt.color_hex AS task_type_color, 
+                      tt.icon AS task_type_icon,
+                      o.title AS opportunity_name
+               FROM `tasks` t
+               LEFT JOIN `task_types` tt ON tt.id = t.task_type_id
+               LEFT JOIN `opportunities` o ON o.id = t.opportunity_id" . $whereSql;
+        
+        $sql .= " ORDER BY t.end_date ASC, t.id ASC";
+
+        return $this->rawSelect($sql, $params);
     }
 
     /**

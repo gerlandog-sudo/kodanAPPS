@@ -65,10 +65,16 @@ export const crmApi = {
   archiveOpportunity: (id: number) => api.post(`/api/crm/opportunities/${id}/archive`, {}),
   unarchiveOpportunity: (id: number) => api.post(`/api/crm/opportunities/${id}/unarchive`, {}),
 
-  listTasks: () => api.get<any[]>('/api/crm/tasks'),
+  listTasks: (params?: Record<string, string>) => api.get<any[]>('/api/crm/tasks', params),
+  getTask: (id: number) => api.get<any>(`/api/crm/tasks/${id}`),
   createTask: (data: any) => api.post('/api/crm/tasks', data),
   updateTask: (id: number, data: any) => api.patch(`/api/crm/tasks/${id}`, data),
   deleteTask: (id: number) => api.delete(`/api/crm/tasks/${id}`),
+
+  listTaskTypes: () => api.get<any[]>('/api/crm/task-types'),
+  createTaskType: (data: any) => api.post('/api/crm/task-types', data),
+  updateTaskType: (id: number, data: any) => api.patch(`/api/crm/task-types/${id}`, data),
+  deleteTaskType: (id: number) => api.delete(`/api/crm/task-types/${id}`),
 
   listChatsByOpportunity: (oppId: number) => api.get<any[]>(`/api/crm/opportunities/${oppId}/chat`),
   sendMessage: (oppId: number, data: { content: string; thread_id?: number | null; attachments?: any[] }) =>

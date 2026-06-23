@@ -193,6 +193,21 @@ final class NotificationRepository extends BaseRepository
                                AND o.`updated_at` < DATE_SUB(NOW(), INTERVAL :days DAY)
                          )";
         $this->rawExecute($sqlStalled, [':user_id' => $userId, ':sub_user_id' => $userId, ':days' => $days]);
+
+        // 3. Eliminar alertas de fecha vencida de tareas que ya fueron completadas, archivadas o cambiaron de asignación/participante
+        $sqlOverdueTasks = "DELETE FROM `notifications` 
+                            WHERE `user_id` = :user_id 
+                              AND `type` = 'overdue_task' 
+                              AND `entity_type` = 'crm_task' 
+                              AND `entity_id` NOT IN (
+                                  SELECT t.`id` 
+                                  FROM `tasks` t
+                                  WHERE t.`status` NOT IN ('done', 'archived')
+                                    AND (t.`assigned_to` = :sub_user_id OR t.`id` IN (SELECT tp.task_id FROM task_participants tp WHERE tp.user_id = :sub_user_id_p))
+                                    AND t.`end_date` IS NOT NULL 
+                                    AND t.`end_date` < NOW()
+                              )";
+        $this->rawExecute($sqlOverdueTasks, [':user_id' => $userId, ':sub_user_id' => $userId, ':sub_user_id_p' => $userId]);
     }
 
     /**
@@ -213,5 +228,24 @@ final class NotificationRepository extends BaseRepository
                   AND s.`is_lost_stage` = 0
                   AND o.`tenant_id` = :tenant_id";
         return $this->rawSelect($sql, [':user_id' => $userId, ':tenant_id' => TenantContext::getTenantId()]);
+    }
+
+    /**
+     * Obtiene las tareas activas (no completadas/archivadas) y vencidas del usuario o donde es participante
+     * 
+     * @param int $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public function getActiveOverdueTasksForUser(int $userId): array
+    {
+        $sql = "/* BYPASS_TENANT_SCOPE */
+                SELECT t.`id`, t.`title`, t.`end_date`
+                FROM `tasks` t
+                WHERE t.`status` NOT IN ('done', 'archived')
+                  AND (t.`assigned_to` = :user_id OR t.`id` IN (SELECT tp.task_id FROM task_participants tp WHERE tp.user_id = :user_id_p))
+                  AND t.`end_date` IS NOT NULL 
+                  AND t.`end_date` < NOW()
+                  AND t.`tenant_id` = :tenant_id";
+        return $this->rawSelect($sql, [':user_id' => $userId, ':user_id_p' => $userId, ':tenant_id' => TenantContext::getTenantId()]);
     }
 }

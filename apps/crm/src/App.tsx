@@ -160,7 +160,7 @@ function AppContent() {
       { key: 'accounts', label: 'Cuentas B2B', icon: <Building2 size={18} /> },
       { key: 'contacts', label: 'Contactos', icon: <Users size={18} /> },
       { key: 'products', label: 'Catalogo', icon: <Tag size={18} /> },
-      { key: 'tasks', label: 'Agenda', icon: <ListTodo size={18} /> },
+      { key: 'tasks', label: 'Tareas', icon: <ListTodo size={18} /> },
     ]
     return items
   }, [roles])

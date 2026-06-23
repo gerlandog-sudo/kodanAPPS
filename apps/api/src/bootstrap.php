@@ -31,6 +31,7 @@ use kodanAPPS\Controllers\OpportunityController;
 use kodanAPPS\Controllers\ProductController;
 use kodanAPPS\Controllers\QuoteController;
 use kodanAPPS\Controllers\CrmTaskController;
+use kodanAPPS\Controllers\TaskTypeController;
 use kodanAPPS\Controllers\ChatController;
 use kodanAPPS\Controllers\NotificationController;
 use kodanAPPS\Controllers\LeadController;
@@ -45,6 +46,7 @@ use kodanAPPS\Repositories\OpportunityRepository;
 use kodanAPPS\Repositories\ProductRepository;
 use kodanAPPS\Repositories\QuoteRepository;
 use kodanAPPS\Repositories\CrmTaskRepository;
+use kodanAPPS\Repositories\TaskTypeRepository;
 use kodanAPPS\Repositories\ChatRepository;
 use kodanAPPS\Repositories\ProjectRepository;
 use kodanAPPS\Controllers\TrackerController;
@@ -185,6 +187,7 @@ $oppRepo = new OpportunityRepository($pdo);
 $productRepo = new ProductRepository($pdo);
 $quoteRepo = new QuoteRepository($pdo);
 $taskRepo = new CrmTaskRepository($pdo);
+$taskTypeRepo = new TaskTypeRepository($pdo);
 $chatRepo = new ChatRepository($pdo);
 $projectRepo = new ProjectRepository($pdo);
 $notificationRepo = new NotificationRepository($pdo);
@@ -225,6 +228,7 @@ $oppController = new OpportunityController($oppRepo, $pipelineRepo, $crmControll
 $productController = new ProductController($productRepo);
 $quoteController = new QuoteController($quoteRepo);
 $taskController = new CrmTaskController($taskRepo, $notificationRepo);
+$taskTypeController = new TaskTypeController($taskTypeRepo);
 $chatController = new ChatController($chatRepo);
 $trackerController = new TrackerController($projectRepo);
 $tenantUserController = new TenantUserController($userRepo, $pdo);
@@ -252,6 +256,7 @@ return [
         'product' => $productRepo,
         'quote' => $quoteRepo,
         'task' => $taskRepo,
+        'taskType' => $taskTypeRepo,
         'chat' => $chatRepo,
         'project' => $projectRepo,
         ],
@@ -274,6 +279,7 @@ return [
         'product' => $productController,
         'quote' => $quoteController,
         'task' => $taskController,
+        'taskType' => $taskTypeController,
         'chat' => $chatController,
         'tracker' => $trackerController,
         'tenantUser' => $tenantUserController,

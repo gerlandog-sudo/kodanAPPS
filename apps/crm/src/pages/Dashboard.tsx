@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Card, SlidePanel, Table } from '@kodan-apps/ui-core';
+import { Card, SlidePanel, Table, Select } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import { DollarSign, BarChart3, Users, Briefcase, TrendingUp, Sparkles, FolderKanban } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid, RadialBarChart, RadialBar } from 'recharts';
@@ -7,7 +7,77 @@ import { toast } from 'sonner';
 import { SalesFunnelSVG } from '../components/dashboard/SalesFunnelSVG';
 import { ForecastChart } from '../components/dashboard/ForecastChart';
 
+// Componente del Esqueleto de Carga Gris (Grey Skeleton)
+function DashboardSkeleton() {
+  return (
+    <div className="flex flex-col gap-8 animate-pulse">
+      {/* Grid de 4 KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-32 rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-5 flex flex-col justify-between" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }}>
+            <div className="flex justify-between">
+              <div className="flex flex-col gap-2 w-2/3">
+                <div className="h-2.5 bg-border-soft rounded w-1/2" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+                <div className="h-6 bg-border-soft rounded w-3/4" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+                <div className="h-2 bg-border-soft rounded w-1/3" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-border-soft" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* SECCIÓN 2: Metas y Hot Deals */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Metas */}
+        <div className="h-[280px] rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-6 flex flex-col gap-4" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }}>
+          <div className="h-3.5 bg-border-soft rounded w-1/3 mb-2" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex flex-col gap-2.5">
+              <div className="flex justify-between">
+                <div className="h-2.5 bg-border-soft rounded w-1/3" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+                <div className="h-2.5 bg-border-soft rounded w-1/4" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+              </div>
+              <div className="h-2 bg-border-soft rounded-full w-full" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+            </div>
+          ))}
+        </div>
+        {/* Hot Deals */}
+        <div className="lg:col-span-2 h-[280px] rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-6 flex flex-col justify-between" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }}>
+          <div className="flex justify-between mb-4">
+            <div className="h-3.5 bg-border-soft rounded w-1/4" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+            <div className="h-3.5 bg-border-soft rounded w-1/12" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+          </div>
+          <div className="flex-1 flex gap-6">
+            <div className="w-1/2 flex flex-col gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-8 bg-border-soft rounded w-full" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+              ))}
+            </div>
+            <div className="w-1/2 flex flex-col items-center justify-center gap-3">
+              <div className="w-24 h-24 rounded-full border-[6px] border-border-soft/30 flex items-center justify-center" style={{ borderColor: 'var(--sys-border-soft)' }} />
+              <div className="h-2.5 bg-border-soft rounded w-1/3" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid de Gráficos 2x2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-[360px] rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-6 flex flex-col gap-4" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }}>
+            <div className="h-4 bg-border-soft rounded w-1/3 mb-2" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+            <div className="flex-1 bg-border-soft/10 rounded-xl" style={{ backgroundColor: 'color-mix(in srgb, var(--sys-border-soft) 20%, transparent)' }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard() {
+  const [pipelines, setPipelines] = useState<any[]>([]);
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | number>('all');
   const [stats, setStats] = useState({
     totalValue: 0,
     activeDeals: 0,
@@ -26,11 +96,31 @@ export function Dashboard() {
   const [drillDownOpen, setDrillDownOpen] = useState(false);
   const [drillDownType, setDrillDownType] = useState<'pipeline' | 'active' | 'won' | 'accounts' | null>(null);
 
+  // Cargar pipelines inicialmente
+  useEffect(() => {
+    async function loadPipelines() {
+      try {
+        const pps = await crmApi.listPipelines();
+        setPipelines(pps);
+      } catch (err) {
+        console.error('Error al cargar pipelines', err);
+      }
+    }
+    loadPipelines();
+  }, []);
+
+  // Cargar datos del dashboard filtrados dinámicamente
   useEffect(() => {
     async function loadDashboardData() {
+      setLoading(true);
       try {
+        const params: Record<string, string> = {};
+        if (selectedPipelineId !== 'all') {
+          params.pipeline_id = String(selectedPipelineId);
+        }
+
         const [opps, accs] = await Promise.all([
-          crmApi.listOpportunities(),
+          crmApi.listOpportunities(params),
           crmApi.listAccounts()
         ]);
 
@@ -67,11 +157,17 @@ export function Dashboard() {
       } catch (err: any) {
         toast.error('Error al cargar métricas del Dashboard.');
       } finally {
-        setLoading(false);
+        // Retardo estético de 350ms para suavizar la transición del skeleton pulse
+        setTimeout(() => setLoading(false), 350);
       }
     }
     loadDashboardData();
-  }, []);
+  }, [selectedPipelineId]);
+
+  const pipelineSelectOptions = useMemo(() => {
+    const list = pipelines.map(p => ({ value: String(p.id), label: p.name }));
+    return [{ value: 'all', label: 'Todos los Pipelines' }, ...list];
+  }, [pipelines]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
@@ -285,20 +381,6 @@ export function Dashboard() {
     return 'Detalle Analítico';
   }, [drillDownType]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <svg className="animate-spin text-primary" style={{ width: '2rem', height: '2rem' }} viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-          <p className="text-sm" style={{ color: 'var(--sys-text-muted)' }}>Cargando analíticas comerciales...</p>
-        </div>
-      </div>
-    );
-  }
-
   const chartData = stageData.length ? stageData : [
     { name: 'Contacto Inicial', value: 4000, count: 3 },
     { name: 'Calificación', value: 8000, count: 2 },
@@ -308,8 +390,29 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* SECCIÓN 1: KPIs Ejecutivos (Flip Cards con Sparklines) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Cabecera del Dashboard con selector de Pipeline */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0 pb-2 border-b" style={{ borderColor: 'var(--sys-border-soft)' }}>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-montserrat)' }}>Dashboard Comercial</h1>
+          <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Métricas clave y proyecciones comerciales en tiempo real</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select
+            options={pipelineSelectOptions}
+            value={String(selectedPipelineId)}
+            onChange={(val) => setSelectedPipelineId(val === 'all' ? 'all' : Number(val))}
+            className="w-full sm:w-64"
+            placeholder="Seleccionar Pipeline..."
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <DashboardSkeleton />
+      ) : (
+        <>
+          {/* SECCIÓN 1: KPIs Ejecutivos (Flip Cards con Sparklines) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* Card 1: Valor del Pipeline */}
         <Card
@@ -693,6 +796,8 @@ export function Dashboard() {
           {drillDownContent}
         </div>
       </SlidePanel>
+        </>
+      )}
     </div>
   );
 }

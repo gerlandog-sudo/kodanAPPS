@@ -23,7 +23,7 @@ final class NotificationRepository extends BaseRepository
      */
     public function listAllForUser(int $userId): array
     {
-        return $this->findAll(self::TABLE, '*', 'user_id = :user_id', [':user_id' => $userId], 'created_at DESC, id DESC');
+        return $this->findAll(self::TABLE, '*', 'user_id = :user_id AND is_read = 0', [':user_id' => $userId], 'created_at DESC, id DESC');
     }
 
     /**

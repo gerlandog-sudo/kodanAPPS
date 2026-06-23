@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select, Table } from '@kodan-apps/ui-core';
+import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
@@ -12,6 +13,12 @@ import {
   Archive,
   ArchiveRestore,
   FileText,
+  LayoutGrid,
+  Table as TableIcon,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -93,6 +100,16 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [viewMode, setViewMode] = useState<'kanban' | 'table' | 'calendar'>('kanban');
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Helper para formatear fechas a YYYY-MM-DD local
+  const getLocalDateString = useCallback((d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }, []);
 
   // Modals / Drawers
   const [showOppModal, setShowOppModal] = useState(false);
@@ -474,11 +491,275 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       }
     }
   }, [autoOpenOppId, opportunities, onClearAutoOpen, handleEditOpp]);
+  const tableColumns = useMemo<TableColumn<Opportunity>[]>(() => [
+    {
+      key: 'name',
+      header: 'Nombre de la Negociación',
+      sortable: true,
+      render: (opp) => (
+        <span className="font-semibold cursor-pointer hover:underline text-[13px] text-text" onClick={() => handleEditOpp(opp)}>
+          {opp.name}
+        </span>
+      ),
+    },
+    {
+      key: 'account_name',
+      header: 'Cuenta',
+      sortable: true,
+      render: (opp) => opp.account_name || <span className="text-text-muted opacity-60">—</span>,
+    },
+    {
+      key: 'contact_name',
+      header: 'Contacto',
+      sortable: true,
+      render: (opp) => opp.contact_name || <span className="text-text-muted opacity-60">—</span>,
+    },
+    {
+      key: 'pipeline_stage_id',
+      header: 'Etapa',
+      sortable: true,
+      render: (opp) => {
+        const stage = stages.find(s => s.id === opp.pipeline_stage_id);
+        const stageName = stage?.name || opp.stage_name || 'Sin etapa';
+        const stageColor = stage?.color_hex || '#e2e8f0';
+        return (
+          <span 
+            className="px-2 py-0.5 rounded text-[10px] font-medium border"
+            style={{ 
+              background: `color-mix(in srgb, ${stageColor} 12%, var(--sys-surface))`, 
+              borderColor: `color-mix(in srgb, ${stageColor} 30%, transparent)`,
+              color: stageColor
+            }}
+          >
+            {stageName}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'value',
+      header: 'Valor',
+      sortable: true,
+      align: 'right' as const,
+      render: (opp) => (
+        <span className="font-bold text-primary">
+          {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(parseFloat(opp.value) || 0)}
+        </span>
+      ),
+    },
+    {
+      key: 'close_date',
+      header: 'Fecha Cierre',
+      sortable: true,
+      render: (opp) => {
+        if (!opp.close_date) return <span className="text-text-muted opacity-60">—</span>;
+        const parts = opp.close_date.split('-');
+        if (parts.length === 3) {
+          return <span>{`${parts[2]}/${parts[1]}/${parts[0]}`}</span>;
+        }
+        return <span>{opp.close_date}</span>;
+      },
+    },
+  ], [stages, handleEditOpp]);
+
+  const tableActions = useMemo(() => [
+    {
+      icon: <MessageSquare size={14} />,
+      label: 'Chatear',
+      onClick: handleChatOpp,
+    }
+  ], [handleChatOpp]);
+
+  const handlePrevMonth = useCallback(() => {
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  }, []);
+
+  const handleNextMonth = useCallback(() => {
+    setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  }, []);
+
+  const handleDayClick = useCallback((date: Date) => {
+    const dateStr = getLocalDateString(date);
+    setEditingOppId(null);
+    setOppFormData({
+      name: '',
+      value: '0',
+      close_date: dateStr,
+      account_id: '',
+      contact_id: '',
+      pipeline_stage_id: String(stages[0]?.id || '')
+    });
+    setOppFormLineItems([]);
+    setOppQuoteId(null);
+    setCustomFields({});
+    setModalTab('general');
+    setShowOppModal(true);
+  }, [stages, getLocalDateString]);
+
+  const calendarCells = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const dayOfWeek = firstDayOfMonth.getDay(); 
+    const startPadding = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+
+    const cells = [];
+
+    for (let i = startPadding - 1; i >= 0; i--) {
+      cells.push({
+        day: prevMonthDays - i,
+        isCurrentMonth: false,
+        date: new Date(year, month - 1, prevMonthDays - i),
+      });
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      cells.push({
+        day: i,
+        isCurrentMonth: true,
+        date: new Date(year, month, i),
+      });
+    }
+
+    const nextPaddingCount = cells.length % 7 === 0 ? 0 : 7 - (cells.length % 7);
+    for (let i = 1; i <= nextPaddingCount; i++) {
+      cells.push({
+        day: i,
+        isCurrentMonth: false,
+        date: new Date(year, month + 1, i),
+      });
+    }
+
+    return cells;
+  }, [currentDate]);
+
+  const todayStr = useMemo(() => getLocalDateString(new Date()), [getLocalDateString]);
+  const monthNames = useMemo(() => [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ], []);
+
+  const renderCalendarView = () => {
+    const daysOfWeekLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    return (
+      <div className="flex flex-col flex-1 min-h-0 bg-surface-raised border border-border-soft rounded-lg overflow-hidden p-4">
+        {/* Header del Calendario */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-text">
+            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+          </h2>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handlePrevMonth}
+              className="bg-transparent border border-border-soft hover:bg-surface hover:text-text rounded-md p-1.5 cursor-pointer text-text-muted transition-colors active:scale-95 flex items-center justify-center"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => setCurrentDate(new Date())}
+              className="bg-transparent border border-border-soft hover:bg-surface hover:text-text rounded-md px-3 py-1.5 cursor-pointer text-xs font-semibold text-text-muted transition-colors active:scale-95"
+            >
+              Hoy
+            </button>
+            <button
+              onClick={handleNextMonth}
+              className="bg-transparent border border-border-soft hover:bg-surface hover:text-text rounded-md p-1.5 cursor-pointer text-text-muted transition-colors active:scale-95 flex items-center justify-center"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Rejilla del Calendario */}
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Cabecera días de la semana */}
+          <div className="grid grid-cols-7 border-b border-border-soft pb-2 mb-1">
+            {daysOfWeekLabels.map((lbl) => (
+              <div key={lbl} className="text-center text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                {lbl}
+              </div>
+            ))}
+          </div>
+
+          {/* Rejilla de días */}
+          <div className="grid grid-cols-7 flex-1 min-h-0 divide-x divide-y divide-border-soft/60 border-t border-l border-border-soft/60" style={{ gridAutoRows: '1fr' }}>
+            {calendarCells.map((cell, idx) => {
+              const cellDateStr = getLocalDateString(cell.date);
+              const isToday = cellDateStr === todayStr;
+              const dayOpps = opportunities.filter((opp) => opp.close_date === cellDateStr);
+
+              return (
+                <div
+                  key={idx}
+                  onClick={() => handleDayClick(cell.date)}
+                  className={`p-2 flex flex-col gap-1 min-h-[90px] overflow-hidden select-none transition-colors border-r border-b border-border-soft/60 cursor-pointer ${
+                    cell.isCurrentMonth ? 'bg-surface-raised hover:bg-surface-hover/20' : 'bg-surface/30 opacity-40'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span />
+                    <span
+                      className={`text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full ${
+                        isToday
+                          ? 'bg-primary text-on-primary'
+                          : 'text-text-muted'
+                      }`}
+                    >
+                      {cell.day}
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto pr-0.5 flex flex-col gap-1 max-h-[120px] scrollbar-none">
+                    {dayOpps.map((opp) => {
+                      const stage = stages.find((s) => s.id === opp.pipeline_stage_id);
+                      const stageColor = stage?.color_hex || 'var(--sys-primary)';
+                      return (
+                        <div
+                          key={opp.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditOpp(opp);
+                          }}
+                          className="w-full text-left p-1 rounded text-[10px] font-medium transition-all hover:scale-[1.01] truncate flex flex-col border"
+                          style={{
+                            background: `color-mix(in srgb, ${stageColor} 8%, var(--sys-surface))`,
+                            borderColor: `color-mix(in srgb, ${stageColor} 20%, transparent)`,
+                            borderLeftWidth: '3px',
+                            borderLeftColor: stageColor,
+                            color: 'var(--sys-text)',
+                            cursor: 'pointer',
+                          }}
+                          title={`${opp.name} - ${stage?.name || ''}`}
+                        >
+                          <span className="font-semibold truncate leading-tight">{opp.name}</span>
+                          <span className="text-[9px] text-primary font-bold mt-0.5">
+                            {new Intl.NumberFormat('es-AR', {
+                              style: 'currency',
+                              currency: 'ARS',
+                              maximumFractionDigits: 0,
+                            }).format(parseFloat(opp.value) || 0)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Top Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-3 shrink-0 pb-3 w-full sticky top-0 z-10" style={{ background: 'var(--sys-bg)' }}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0 pb-3 w-full sticky top-0 z-10" style={{ background: 'var(--sys-bg)' }}>
         <div className="flex items-center gap-3">
           <Select
             options={pipelineSelectOptions}
@@ -498,6 +779,43 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           >
             {showArchived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
           </button>
+
+          {/* Selector de Vistas */}
+          <div className="flex items-center gap-0.5 p-0.5 rounded-lg border border-border-soft" style={{ background: 'var(--sys-surface)' }}>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className="bg-transparent border-none px-2.5 py-1.5 rounded-md cursor-pointer flex items-center justify-center transition-all"
+              style={{
+                background: viewMode === 'kanban' ? 'var(--sys-surface-hover)' : 'transparent',
+                color: viewMode === 'kanban' ? 'var(--sys-text)' : 'var(--sys-text-muted)',
+              }}
+              title="Vista Kanban"
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className="bg-transparent border-none px-2.5 py-1.5 rounded-md cursor-pointer flex items-center justify-center transition-all"
+              style={{
+                background: viewMode === 'table' ? 'var(--sys-surface-hover)' : 'transparent',
+                color: viewMode === 'table' ? 'var(--sys-text)' : 'var(--sys-text-muted)',
+              }}
+              title="Vista de Tabla"
+            >
+              <TableIcon size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className="bg-transparent border-none px-2.5 py-1.5 rounded-md cursor-pointer flex items-center justify-center transition-all"
+              style={{
+                background: viewMode === 'calendar' ? 'var(--sys-surface-hover)' : 'transparent',
+                color: viewMode === 'calendar' ? 'var(--sys-text)' : 'var(--sys-text-muted)',
+              }}
+              title="Vista de Calendario"
+            >
+              <CalendarIcon size={16} />
+            </button>
+          </div>
         </div>
         <Button
           className="btn-primary"
@@ -515,16 +833,39 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         </Button>
       </div>
 
-      {/* KanbanBoard */}
-      <div className="flex-1 min-h-0">
-        <KanbanBoard
-          columns={columns}
-          itemsByStage={itemsByStage}
-          onDrop={handleDrop}
-          renderCard={renderCard}
-          renderColumnExtra={renderColumnExtra}
-          className="h-full"
-        />
+      {/* Vistas condicionales */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {viewMode === 'kanban' && (
+          <KanbanBoard
+            columns={columns}
+            itemsByStage={itemsByStage}
+            onDrop={handleDrop}
+            renderCard={renderCard}
+            renderColumnExtra={renderColumnExtra}
+            className="h-full"
+          />
+        )}
+
+        {viewMode === 'table' && (
+          <div className="flex-1 overflow-auto pb-4">
+            <Table
+              data={opportunities}
+              columns={tableColumns}
+              keyExtractor={(opp) => opp.id}
+              editable={{ onClick: handleEditOpp }}
+              deletable={{ onClick: handleDeleteOpp }}
+              actions={tableActions}
+              pageSize={15}
+              emptyState={{
+                icon: <LayoutGrid size={40} className="text-text-muted opacity-30" />,
+                title: 'No hay negociaciones',
+                description: 'Crea una negociación para verla en la lista.',
+              }}
+            />
+          </div>
+        )}
+
+        {viewMode === 'calendar' && renderCalendarView()}
       </div>
 
       {/* Won Modal Integration */}

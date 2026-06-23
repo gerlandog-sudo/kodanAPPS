@@ -24,7 +24,7 @@ final class CrmTaskRepository extends BaseRepository
         $userId = \kodanAPPS\DB\TenantContext::getUserId();
         $isAdmin = \kodanAPPS\DB\TenantContext::isSuperAdmin() || \kodanAPPS\DB\TenantContext::hasRole('admin');
 
-        $whereClauses = [];
+        $whereClauses = ['t.tenant_id = :tenant_id'];
         $params = [];
 
         if ($opportunityId > 0) {
@@ -42,10 +42,7 @@ final class CrmTaskRepository extends BaseRepository
             $params[':current_user_p'] = $userId;
         }
 
-        $whereSql = '';
-        if (!empty($whereClauses)) {
-            $whereSql = ' WHERE ' . implode(' AND ', $whereClauses);
-        }
+        $whereSql = ' WHERE ' . implode(' AND ', $whereClauses);
 
         $sql = "SELECT t.*, 
                       tt.name AS task_type_name, 

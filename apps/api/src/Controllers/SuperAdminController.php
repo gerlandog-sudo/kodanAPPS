@@ -94,6 +94,9 @@ final class SuperAdminController
         } catch (InvalidArgumentException $e) {
             $errors = json_decode($e->getMessage(), true) ?? ['general' => $e->getMessage()];
             throw new InvalidArgumentException(json_encode($errors, JSON_UNESCAPED_UNICODE));
+        } catch (\RuntimeException $e) {
+            error_log('SuperAdminController::createTenant - ' . $e->getMessage());
+            throw $e;
         }
     }
 

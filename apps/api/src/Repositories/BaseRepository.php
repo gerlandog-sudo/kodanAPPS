@@ -61,6 +61,15 @@ abstract class BaseRepository
         }
 
         $tenantId = TenantContext::getTenantId();
+
+        // Si el query ya tiene una condición tenant_id (con = o IN), no duplicar
+        if (preg_match('/\btenant_id\s*(=|IN\s*\()/i', $sql)) {
+            // Si usa :tenant_id como placeholder, asegurar que el valor esté en params
+            if (str_contains($sql, ':tenant_id')) {
+                $params[':tenant_id'] = $tenantId;
+            }
+            return;
+        }
         
         // Para prepared statements: agregar tenant_id como parámetro
         if (str_contains($sql, ':tenant_id')) {

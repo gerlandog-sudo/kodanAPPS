@@ -100,11 +100,11 @@ final class TenantService
             ]);
 
             foreach ($planModules as $module) {
-                $this->tenantRepo->rawExecute(
-                    "UPDATE tenant_plan_usage SET current_value = current_value + 1
-                     WHERE tenant_id = ? AND module = ? AND metric = 'users_max'",
-                    [$tenantId, $module]
-                );
+            $this->tenantRepo->rawExecute(
+                "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage SET current_value = current_value + 1
+                 WHERE tenant_id = ? AND module = ? AND metric = 'users_max'",
+                [$tenantId, $module]
+            );
             }
 
             // ------------------------------------------------------------

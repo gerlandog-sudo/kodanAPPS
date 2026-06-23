@@ -184,9 +184,29 @@ return function (Router $router, array $app): void {
     });
 
     $router->post('/api/super-admin/tenants', function () use ($app) {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        header('Content-Type: application/json');
-        echo json_encode($app['controllers']['superAdmin']->createTenant($input));
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['superAdmin']->createTenant($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'message' => 'Error de validación',
+                'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
+            ]);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Create tenant error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
     });
 
     $router->patch('/api/super-admin/tenants/{id}', function (array $p) use ($app) {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Button, Input, Modal, Table, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
-import { Plus, Tag, PackageOpen } from 'lucide-react';
+import { Plus, Tag, PackageOpen, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportToExcel } from '../utils/excelExport';
 
 export function Products() {
   const [products, setProducts] = useState<any[]>([]);
@@ -119,9 +120,40 @@ export function Products() {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(String(val)) || 0);
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const dataToExport = products.map(p => ({
+        name: p.name,
+        sku: p.sku || 'Sin SKU',
+        description: p.description || 'Sin descripción',
+        price: parseFloat(p.price) || 0,
+        status: p.is_active ? 'Activo' : 'Inactivo'
+      }));
+
+      await exportToExcel({
+        data: dataToExport,
+        columns: [
+          { key: 'name', header: 'Producto / Servicio' },
+          { key: 'sku', header: 'Código SKU', align: 'center' },
+          { key: 'description', header: 'Descripción' },
+          { key: 'price', header: 'Precio (ARS)', align: 'right', numFmt: '$#,##0' },
+          { key: 'status', header: 'Estado', align: 'center' }
+        ],
+        filename: `catalogo_productos_${new Date().toISOString().split('T')[0]}`,
+        sheetName: 'Catálogo'
+      });
+      toast.success('Catálogo exportado a Excel con éxito');
+    } catch {
+      toast.error('Error al exportar catálogo a Excel');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 w-full no-print">
+        <Button variant="secondary" onClick={handleExportExcel} className="inline-flex items-center gap-1.5 cursor-pointer">
+          <Download size={14} /> Exportar Excel
+        </Button>
         <Button className="btn-primary" onClick={handleOpenCreate}>
           <Plus size={16} /> Nuevo Producto
         </Button>

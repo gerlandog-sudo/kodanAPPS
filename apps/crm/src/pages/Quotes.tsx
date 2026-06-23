@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button, Table, ConfirmDialog } from '@kodan-apps/ui-core'
-import { Plus, FileText, Search } from 'lucide-react'
+import { Plus, FileText, Search, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { crmApi } from '../api/client'
 import { QuoteStatusBadge } from '../components/quotes/QuoteStatusBadge'
@@ -56,6 +56,10 @@ export function Quotes() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePrintQuote = (quote: Quote) => {
+    window.open(`/quotes/${quote.id}/print`, '_blank')
   }
 
   const handleOpenCreate = () => {
@@ -195,6 +199,13 @@ export function Quotes() {
           }}
           editable={{ onClick: (q: any) => handleOpenEdit(q) }}
           deletable={{ onClick: (q: any) => handleDeleteClick(q) }}
+          actions={[
+            {
+              icon: <Printer size={14} />,
+              label: 'Imprimir PDF',
+              onClick: (q: any) => handlePrintQuote(q)
+            }
+          ]}
           onRowClick={(q: any) => handleRowClick(q)}
           pageSize={15}
         />

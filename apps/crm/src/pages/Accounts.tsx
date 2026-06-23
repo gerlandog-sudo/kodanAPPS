@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Button, Input, Modal, CustomFieldsForm, Table, ConfirmDialog } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
-import { Plus, Building2, Settings2 } from 'lucide-react';
+import { Plus, Building2, Settings2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportToExcel } from '../utils/excelExport';
 
 export function Accounts() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -126,9 +127,42 @@ export function Accounts() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const dataToExport = accounts.map(acc => ({
+        name: acc.name,
+        legal_name: acc.legal_name || 'Sin razón social',
+        tax_id: acc.tax_id || 'Sin TAX ID',
+        website: acc.website || 'Sin web',
+        phone: acc.phone || 'Sin teléfono',
+        address: acc.address || 'Sin dirección',
+      }));
+
+      await exportToExcel({
+        data: dataToExport,
+        columns: [
+          { key: 'name', header: 'Empresa / Nombre Comercial' },
+          { key: 'legal_name', header: 'Razón Social' },
+          { key: 'tax_id', header: 'TAX ID', align: 'center' },
+          { key: 'website', header: 'Sitio Web' },
+          { key: 'phone', header: 'Teléfono' },
+          { key: 'address', header: 'Dirección' }
+        ],
+        filename: `cuentas_b2b_${new Date().toISOString().split('T')[0]}`,
+        sheetName: 'Empresas'
+      });
+      toast.success('Empresas exportadas a Excel con éxito');
+    } catch {
+      toast.error('Error al exportar empresas a Excel');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 w-full no-print">
+        <Button variant="secondary" onClick={handleExportExcel} className="inline-flex items-center gap-1.5 cursor-pointer">
+          <Download size={14} /> Exportar Excel
+        </Button>
         <Button className="btn-primary" onClick={handleOpenCreate}>
           <Plus size={16} /> Nueva Empresa
         </Button>

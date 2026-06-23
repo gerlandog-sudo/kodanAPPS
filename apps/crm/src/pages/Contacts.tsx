@@ -2,8 +2,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { Button, Input, Modal, CustomFieldsForm, Table, ConfirmDialog, Select } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
-import { Plus, User2, Settings2 } from 'lucide-react';
+import { Plus, User2, Settings2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportToExcel } from '../utils/excelExport';
 
 export function Contacts() {
   const [contacts, setContacts] = useState<any[]>([]);
@@ -138,9 +139,40 @@ export function Contacts() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const dataToExport = contacts.map(c => ({
+        name: `${c.first_name} ${c.last_name}`,
+        account: c.account_name || 'Sin empresa',
+        email: c.email || 'Sin email',
+        phone: c.phone || 'Sin teléfono',
+        mobile: c.mobile || 'Sin móvil'
+      }));
+
+      await exportToExcel({
+        data: dataToExport,
+        columns: [
+          { key: 'name', header: 'Nombre del Contacto' },
+          { key: 'account', header: 'Empresa / Cuenta Asociada' },
+          { key: 'email', header: 'Email' },
+          { key: 'phone', header: 'Teléfono Fijo', align: 'center' },
+          { key: 'mobile', header: 'Celular / Móvil', align: 'center' }
+        ],
+        filename: `contactos_${new Date().toISOString().split('T')[0]}`,
+        sheetName: 'Contactos'
+      });
+      toast.success('Contactos exportados a Excel con éxito');
+    } catch {
+      toast.error('Error al exportar contactos a Excel');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 w-full no-print">
+        <Button variant="secondary" onClick={handleExportExcel} className="inline-flex items-center gap-1.5 cursor-pointer">
+          <Download size={14} /> Exportar Excel
+        </Button>
         <Button className="btn-primary" onClick={handleOpenCreate}>
           <Plus size={16} /> Nuevo Contacto
         </Button>

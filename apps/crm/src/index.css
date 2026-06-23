@@ -316,3 +316,51 @@ body {
   }
 }
 
+
+/* =========================================================================
+   Estilos de Impresión (PDF y Reportes)
+   ========================================================================= */
+@media print {
+  /* Ocultar navegación, cabeceras, pies de página, botones y controles de filtrado */
+  header, footer, nav, aside,
+  .sidebar, .topbar, .no-print,
+  button, select, input, .select-container,
+  div[class*="TopControls"], div[class*="ViewSelector"],
+  .sticky, .fixed {
+    display: none !important;
+    position: static !important;
+  }
+
+  /* Expandir contenedor principal y resetear estilos a fondo blanco impreso */
+  body, html, main, #root, .flex-1, .min-h-0 {
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Asegurar que el contenido ocupe el ancho completo */
+  .table-wrapper, .table-container, table, .print-full-width, .w-full {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Evitar saltos de página a mitad de tablas y elementos de gráficos */
+  tr, td, th, .chart-container, .card, .double-bevel-card {
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Asegurar legibilidad del texto en blanco y negro */
+  h1, h2, h3, h4, h5, h6, p, span, td, th {
+    color: #000000 !important;
+  }
+}

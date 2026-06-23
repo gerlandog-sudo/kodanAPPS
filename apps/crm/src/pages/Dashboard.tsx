@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Card, SlidePanel, Table, Select } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
-import { DollarSign, BarChart3, Users, Briefcase, TrendingUp, Sparkles, FolderKanban } from 'lucide-react';
+import { DollarSign, BarChart3, Users, Briefcase, TrendingUp, Sparkles, FolderKanban, Download, FileDown } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid, RadialBarChart, RadialBar } from 'recharts';
 import { toast } from 'sonner';
+import { exportToExcel } from '../utils/excelExport';
 import { SalesFunnelSVG } from '../components/dashboard/SalesFunnelSVG';
 import { ForecastChart } from '../components/dashboard/ForecastChart';
 
@@ -388,6 +389,36 @@ export function Dashboard() {
     { name: 'Negociación', value: 25000, count: 2 },
   ];
 
+  const handleExportDashboardExcel = async () => {
+    try {
+      const dataToExport = opportunities.map(opp => ({
+        title: opp.title || opp.name,
+        stage: opp.stage_name || 'Sin etapa',
+        value: parseFloat(opp.value) || 0,
+        status: opp.status === 'open' ? 'Activo' : opp.status === 'won' ? 'Ganado' : 'Perdido',
+        close_date: opp.close_date || 'Sin fecha',
+        created_at: opp.created_at ? new Date(opp.created_at).toLocaleDateString('es-AR') : 'Sin fecha'
+      }));
+
+      await exportToExcel({
+        data: dataToExport,
+        columns: [
+          { key: 'title', header: 'Negociación / Oportunidad' },
+          { key: 'stage', header: 'Etapa' },
+          { key: 'value', header: 'Valor (ARS)', align: 'right', numFmt: '$#,##0' },
+          { key: 'status', header: 'Estado', align: 'center' },
+          { key: 'close_date', header: 'Fecha de Cierre', align: 'center' },
+          { key: 'created_at', header: 'Fecha de Registro', align: 'center' }
+        ],
+        filename: `reporte_comercial_${new Date().toISOString().split('T')[0]}`,
+        sheetName: 'Oportunidades'
+      });
+      toast.success('Métricas exportadas a Excel con éxito');
+    } catch (err) {
+      toast.error('Error al exportar a Excel');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       {/* Cabecera del Dashboard con selector de Pipeline */}
@@ -404,6 +435,22 @@ export function Dashboard() {
             className="w-full sm:w-64"
             placeholder="Seleccionar Pipeline..."
           />
+          <div className="flex items-center gap-1.5 no-print">
+            <button
+              onClick={() => window.print()}
+              className="bg-transparent border border-border-soft hover:bg-surface hover:text-text rounded-lg px-3 py-2 cursor-pointer inline-flex items-center gap-1.5 transition-colors text-xs font-semibold text-text-muted active:scale-95"
+              title="Exportar Dashboard a PDF"
+            >
+              <FileDown size={14} /> PDF
+            </button>
+            <button
+              onClick={handleExportDashboardExcel}
+              className="bg-transparent border border-border-soft hover:bg-surface hover:text-text rounded-lg px-3 py-2 cursor-pointer inline-flex items-center gap-1.5 transition-colors text-xs font-semibold text-text-muted active:scale-95"
+              title="Exportar Datos a Excel"
+            >
+              <Download size={14} /> Excel
+            </button>
+          </div>
         </div>
       </div>
 

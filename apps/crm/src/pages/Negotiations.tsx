@@ -19,8 +19,10 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
+  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportToExcel } from '../utils/excelExport';
 
 interface Opportunity {
   id: number;
@@ -570,6 +572,38 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
     }
   ], [handleChatOpp]);
 
+  const handleExportExcel = async () => {
+    try {
+      const dataToExport = opportunities.map(opp => ({
+        name: opp.name,
+        account: opp.account_name || 'Sin cuenta',
+        contact: opp.contact_name || 'Sin contacto',
+        stage: stages.find(s => s.id === opp.pipeline_stage_id)?.name || opp.stage_name || 'Sin etapa',
+        value: parseFloat(opp.value) || 0,
+        close_date: opp.close_date || 'Sin fecha',
+        status: opp.status === 'open' ? 'Activa' : opp.status === 'won' ? 'Ganada' : 'Perdida'
+      }));
+
+      await exportToExcel({
+        data: dataToExport,
+        columns: [
+          { key: 'name', header: 'Negociación' },
+          { key: 'account', header: 'Cuenta' },
+          { key: 'contact', header: 'Contacto' },
+          { key: 'stage', header: 'Etapa' },
+          { key: 'value', header: 'Valor (ARS)', align: 'right', numFmt: '$#,##0' },
+          { key: 'close_date', header: 'Fecha de Cierre', align: 'center' },
+          { key: 'status', header: 'Estado', align: 'center' }
+        ],
+        filename: `negociaciones_${new Date().toISOString().split('T')[0]}`,
+        sheetName: 'Pipeline'
+      });
+      toast.success('Pipeline exportado a Excel con éxito');
+    } catch {
+      toast.error('Error al exportar a Excel');
+    }
+  };
+
   const handlePrevMonth = useCallback(() => {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   }, []);
@@ -816,6 +850,14 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
               <CalendarIcon size={16} />
             </button>
           </div>
+
+          <button
+            onClick={handleExportExcel}
+            className="bg-transparent border border-border-soft hover:bg-surface hover:text-text rounded-lg px-3 py-2 cursor-pointer inline-flex items-center justify-center transition-colors text-text-muted active:scale-95 no-print"
+            title="Exportar a Excel"
+          >
+            <Download size={16} />
+          </button>
         </div>
         <Button
           className="btn-primary"

@@ -21,8 +21,8 @@ export function LogoTRACKER3D({ size = 48, theme }: LogoTRACKER3DProps) {
     const height = size;
 
     const isLight = theme === 'light';
-    const primary = isLight ? '#0059ba' : '#acc7ff';
-    const secondary = isLight ? '#2372df' : '#0059ba';
+    const primary = isLight ? '#00694e' : '#83d7b5';
+    const secondary = isLight ? '#008563' : '#00694e';
 
     // 1. Escena, cámara y renderizador
     const scene = new THREE.Scene();

@@ -153,7 +153,7 @@ export function PipelineManager() {
       const data = await crmApi.listPipelines()
       setPipelines(data)
       if (!selectedPipelineId && data.length > 0) selectPipeline(data[0].id)
-    } catch { toast.error('Error al cargar pipelines') }
+    } catch { toast.error('Error al cargar canales') }
     finally { setLoading(false) }
   }, [selectedPipelineId])
 
@@ -170,14 +170,14 @@ export function PipelineManager() {
   const handleSavePipeline = async () => {
     if (!pipelineName.trim()) return toast.error('El nombre es requerido')
     try {
-      if (editingPipeline) { await crmApi.updatePipeline(editingPipeline.id, { name: pipelineName }); toast.success('Pipeline actualizado') }
-      else { await crmApi.createPipeline({ name: pipelineName }); toast.success('Pipeline creado') }
+      if (editingPipeline) { await crmApi.updatePipeline(editingPipeline.id, { name: pipelineName }); toast.success('Canal actualizado') }
+      else { await crmApi.createPipeline({ name: pipelineName }); toast.success('Canal creado') }
       setShowPipelineModal(false); setEditingPipeline(null); setPipelineName(''); loadPipelines()
     } catch { toast.error('Error al guardar') }
   }
 
   const handleDeletePipeline = async (id: number) => {
-    try { await crmApi.deletePipeline(id); toast.success('Pipeline eliminado'); if (selectedPipelineId === id) selectPipeline(0); loadPipelines() }
+    try { await crmApi.deletePipeline(id); toast.success('Canal eliminado'); if (selectedPipelineId === id) selectPipeline(0); loadPipelines() }
     catch { toast.error('Error al eliminar') }
   }
 
@@ -238,7 +238,7 @@ export function PipelineManager() {
         name: s.name, color_hex: s.color_hex, probability: s.probability,
         is_won_stage: s.is_won_stage, is_lost_stage: s.is_lost_stage, sort_order: s.sort_order,
       })))
-      toast.success('Pipeline clonado'); setShowCloneModal(false); setCloneName(''); loadPipelines(); selectPipeline(newPipeline.id)
+      toast.success('Canal clonado'); setShowCloneModal(false); setCloneName(''); loadPipelines(); selectPipeline(newPipeline.id)
     } catch { toast.error('Error al clonar') }
   }
 
@@ -392,7 +392,7 @@ export function PipelineManager() {
         </div>
       </Modal>
 
-      <Modal open={showCloneModal} onClose={() => setShowCloneModal(false)} title="Clonar Pipeline">
+      <Modal open={showCloneModal} onClose={() => setShowCloneModal(false)} title="Clonar Canal">
         <form onSubmit={e => { e.preventDefault(); clonePipeline() }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
           <div><label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--sys-text-muted)' }}>NOMBRE DEL NUEVO CANAL *</label>
             <Input value={cloneName} onChange={e => setCloneName(e.target.value)} placeholder="Nombre" required /></div>

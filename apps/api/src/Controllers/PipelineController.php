@@ -38,7 +38,7 @@ final class PipelineController
     {
         $pipeline = $this->pipelineRepo->findPipelineById($id);
         if ($pipeline === null) {
-            throw new RuntimeException('Pipeline no encontrado.', 404);
+            throw new RuntimeException('Canal no encontrado.', 404);
         }
         return $this->decodeUiConfig($pipeline);
     }
@@ -69,7 +69,7 @@ final class PipelineController
         if ($name === '') {
             throw new InvalidArgumentException((string)json_encode([
                 'message' => 'Campos requeridos faltantes',
-                'errors' => ['name' => 'El nombre del pipeline es requerido.']
+                'errors' => ['name' => 'El nombre del canal es requerido.']
             ], JSON_UNESCAPED_UNICODE));
         }
 
@@ -84,7 +84,7 @@ final class PipelineController
         return [
             'success' => true,
             'id' => $id,
-            'message' => 'Pipeline creado exitosamente.'
+            'message' => 'Canal creado exitosamente.'
         ];
     }
 
@@ -98,7 +98,7 @@ final class PipelineController
     {
         $pipeline = $this->pipelineRepo->findPipelineById($id);
         if ($pipeline === null) {
-            throw new RuntimeException('Pipeline no encontrado.', 404);
+            throw new RuntimeException('Canal no encontrado.', 404);
         }
 
         $data = [];
@@ -134,7 +134,7 @@ final class PipelineController
         return [
             'success' => true,
             'affected' => $affected,
-            'message' => 'Pipeline actualizado exitosamente.'
+            'message' => 'Canal actualizado exitosamente.'
         ];
     }
 
@@ -147,14 +147,14 @@ final class PipelineController
     {
         $pipeline = $this->pipelineRepo->findPipelineById($id);
         if ($pipeline === null) {
-            throw new RuntimeException('Pipeline no encontrado.', 404);
+            throw new RuntimeException('Canal no encontrado.', 404);
         }
 
         $this->pipelineRepo->deletePipeline($id);
 
         return [
             'success' => true,
-            'message' => 'Pipeline eliminado exitosamente.'
+            'message' => 'Canal eliminado exitosamente.'
         ];
     }
 
@@ -177,7 +177,7 @@ final class PipelineController
     {
         $stage = $this->pipelineRepo->findStageById($id);
         if ($stage === null) {
-            throw new RuntimeException('Etapa de pipeline no encontrada.', 404);
+            throw new RuntimeException('Etapa del canal no encontrada.', 404);
         }
         return $stage;
     }
@@ -192,7 +192,7 @@ final class PipelineController
     {
         $pipeline = $this->pipelineRepo->findPipelineById($pipelineId);
         if ($pipeline === null) {
-            throw new RuntimeException('Pipeline no encontrado.', 404);
+            throw new RuntimeException('Canal no encontrado.', 404);
         }
 
         $name = isset($input['name']) && is_scalar($input['name']) ? trim((string)$input['name']) : '';
@@ -217,7 +217,7 @@ final class PipelineController
         return [
             'success' => true,
             'id' => $id,
-            'message' => 'Etapa de pipeline creada exitosamente.'
+            'message' => 'Etapa del canal creada exitosamente.'
         ];
     }
 
@@ -231,7 +231,7 @@ final class PipelineController
     {
         $stage = $this->pipelineRepo->findStageById($id);
         if ($stage === null) {
-            throw new RuntimeException('Etapa de pipeline no encontrada.', 404);
+            throw new RuntimeException('Etapa del canal no encontrada.', 404);
         }
 
         $data = [];
@@ -269,7 +269,7 @@ final class PipelineController
         return [
             'success' => true,
             'affected' => $affected,
-            'message' => 'Etapa de pipeline actualizada exitosamente.'
+            'message' => 'Etapa del canal actualizada exitosamente.'
         ];
     }
 
@@ -282,14 +282,14 @@ final class PipelineController
     {
         $stage = $this->pipelineRepo->findStageById($id);
         if ($stage === null) {
-            throw new RuntimeException('Etapa de pipeline no encontrada.', 404);
+            throw new RuntimeException('Etapa del canal no encontrada.', 404);
         }
 
         $this->pipelineRepo->deleteStage($id);
 
         return [
             'success' => true,
-            'message' => 'Etapa de pipeline eliminada exitosamente.'
+            'message' => 'Etapa del canal eliminada exitosamente.'
         ];
     }
 
@@ -315,7 +315,7 @@ final class PipelineController
 
         $pipeline = $this->pipelineRepo->findPipelineById($pipelineId);
         if ($pipeline === null) {
-            throw new RuntimeException('Pipeline no encontrado.', 404);
+            throw new RuntimeException('Canal no encontrado.', 404);
         }
 
         // Validar: exactamente 1 Won + exactamente 1 Lost, no pueden ser la misma

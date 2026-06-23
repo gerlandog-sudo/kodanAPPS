@@ -188,7 +188,7 @@ function AppContent() {
   }
 
   if (!authenticated) {
-    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y pipelines de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<LogoCRM3DPlaceholder size={48} />}><LogoCRM3D size={48} theme={theme} /></Suspense>} onLoginSuccess={(data) => { setAuthenticated(data); setView('app'); loadUserTheme(); }} onGoToSetPassword={() => setView('set-password')} />;
+    return <Login appId="crm" title="kodanCRM" subtitle="Plataforma integrada de gestion de clientes y canales de ventas" cardClassName="p-8 double-bevel-card" labelClassName="text-xs font-semibold" logoIcon={<Suspense fallback={<LogoCRM3DPlaceholder size={48} />}><LogoCRM3D size={48} theme={theme} /></Suspense>} onLoginSuccess={(data) => { setAuthenticated(data); setView('app'); loadUserTheme(); }} onGoToSetPassword={() => setView('set-password')} />;
   }
 
   return (

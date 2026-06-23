@@ -61,18 +61,18 @@ export function ConditionsBuilder({ conditions, onChange, triggerEntity, trigger
     }
     availableFields.push({
       value: 'pipeline_id',
-      label: 'Pipeline',
+      label: 'Canal',
       operators: [{ value: 'eq', label: '=' }],
       renderValue: (row, onChange) => (
-        <Select options={pipelineOpts} value={row.value} onChange={onChange} placeholder="Seleccionar pipeline" />
+        <Select options={pipelineOpts} value={row.value} onChange={onChange} placeholder="Seleccionar canal" />
       ),
     })
     availableFields.push({
       value: 'pipeline_ids',
-      label: 'Pipelines (múltiple)',
+      label: 'Canales (múltiple)',
       operators: [{ value: 'in', label: 'in' }],
       renderValue: (row, onChange) => (
-        <Select options={pipelineOpts} value={row.value || []} onChange={onChange} multiple placeholder="Seleccionar pipelines" />
+        <Select options={pipelineOpts} value={row.value || []} onChange={onChange} multiple placeholder="Seleccionar canales" />
       ),
     })
     availableFields.push({

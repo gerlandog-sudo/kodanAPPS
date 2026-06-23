@@ -168,7 +168,7 @@ export function Dashboard() {
 
   const pipelineSelectOptions = useMemo(() => {
     const list = pipelines.map(p => ({ value: String(p.id), label: p.name }));
-    return [{ value: 'all', label: 'Todos los Pipelines' }, ...list];
+    return [{ value: 'all', label: 'Todos los Canales' }, ...list];
   }, [pipelines]);
 
   const formatCurrency = (val: number) => {
@@ -196,7 +196,7 @@ export function Dashboard() {
         color: 'var(--sys-primary)',
       },
       {
-        label: 'Pipeline Activo',
+        label: 'Canal Activo',
         current: stats.totalValue,
         target: pipelineTarget,
         isCurrency: true,
@@ -376,9 +376,9 @@ export function Dashboard() {
   }, [drillDownType, opportunities, accounts]);
 
   const drillDownTitle = useMemo(() => {
-    if (drillDownType === 'pipeline') return 'Desglose: Valor del Pipeline';
+    if (drillDownType === 'pipeline') return 'Desglose: Valor del Canal';
     if (drillDownType === 'active') return 'Desglose: Negociaciones Activas';
-    if (drillDownType === 'won') return 'Desglose: Oportunidades Ganadas';
+    if (drillDownType === 'won') return 'Desglose: Negociaciones Ganadas';
     if (drillDownType === 'accounts') return 'Desglose: Cuentas Activas';
     return 'Detalle Analítico';
   }, [drillDownType]);
@@ -488,7 +488,7 @@ export function Dashboard() {
           { key: 'created_at', header: 'Fecha de Registro', align: 'center' }
         ],
         filename: `reporte_comercial_${new Date().toISOString().split('T')[0]}`,
-        sheetName: 'Oportunidades'
+        sheetName: 'Negociaciones'
       });
       toast.success('Métricas exportadas a Excel con éxito');
     } catch (err) {
@@ -510,7 +510,7 @@ export function Dashboard() {
             value={String(selectedPipelineId)}
             onChange={(val) => setSelectedPipelineId(val === 'all' ? 'all' : Number(val))}
             className="w-full sm:w-64"
-            placeholder="Seleccionar Pipeline..."
+            placeholder="Seleccionar canal..."
           />
           <div className="flex items-center gap-1.5 no-print">
             <button
@@ -620,14 +620,14 @@ export function Dashboard() {
           }
         />
 
-        {/* Card 3: Oportunidades Ganadas */}
+        {/* Card 3: Negociaciones Ganadas */}
         <Card
           variant="flip"
           front={
             <div className="p-5 flex flex-col justify-between h-full">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted" style={{ color: 'var(--sys-text-muted)' }}>Oportunidades Ganadas</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted" style={{ color: 'var(--sys-text-muted)' }}>Negociaciones Ganadas</span>
                   <span className="text-2xl font-bold tracking-tight">{stats.wonDeals}</span>
                   <span className="text-[10px] text-emerald-500 font-medium">Proyectos activos creados</span>
                 </div>
@@ -817,7 +817,7 @@ export function Dashboard() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold text-muted" style={{ color: 'var(--sys-text-muted)' }}>Concentración Pipeline</span>
+                  <span className="text-[10px] font-semibold text-muted" style={{ color: 'var(--sys-text-muted)' }}>Concentración del Canal</span>
                   <span className="text-xs font-bold text-tertiary">{pipelinePercentage.toFixed(1)}%</span>
                   <div className="w-full h-1.5 rounded-full" style={{ background: 'var(--sys-border-soft)' }}>
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, pipelinePercentage)}%`, background: 'var(--sys-tertiary)' }} />
@@ -832,11 +832,11 @@ export function Dashboard() {
       {/* SECCIÓN 3: Grid Analítico 2x2 (Gráficos) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Gráfico 1: Oportunidades por Etapa */}
+        {/* Gráfico 1: Negociaciones por Etapa */}
         <div className="glass-panel p-6" style={{ borderRadius: 'var(--radius-lg)' }}>
           <div className="flex items-center gap-2 mb-6">
             <BarChart3 size={18} style={{ color: 'var(--sys-primary)' }} />
-            <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-montserrat)' }}>Valor de Oportunidades por Etapa</h2>
+            <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-montserrat)' }}>Valor de Negociaciones por Etapa</h2>
           </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -883,7 +883,7 @@ export function Dashboard() {
             <div className="flex flex-col items-center justify-center h-80 text-center gap-2">
               <Briefcase className="text-3xl opacity-20 animate-pulse" style={{ color: 'var(--sys-text-muted)' }} />
               <span className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>Sin motivos de cierre</span>
-              <span className="text-[10px] px-4" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }}>Aún no se han registrado motivos de ganada/pérdida para las oportunidades en este pipeline.</span>
+              <span className="text-[10px] px-4" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }}>Aún no se han registrado motivos de ganada/pérdida para las negociaciones en este canal.</span>
             </div>
           ) : (
             <div className="flex flex-col gap-6 h-80 overflow-y-auto pr-1 scrollbar-none">

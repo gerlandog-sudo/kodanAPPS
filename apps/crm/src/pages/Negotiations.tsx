@@ -187,7 +187,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         setSelectedPipelineId(def.id);
       }
     } catch {
-      toast.error('Error al cargar los pipelines.');
+      toast.error('Error al cargar los canales.');
     }
   };
 
@@ -213,7 +213,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       const oppsList = await crmApi.listOpportunities(params);
       setOpportunities(oppsList);
     } catch {
-      toast.error('Error al cargar datos del pipeline.');
+      toast.error('Error al cargar datos del canal.');
     }
   };
 
@@ -639,9 +639,9 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           { key: 'status', header: 'Estado', align: 'center' }
         ],
         filename: `negociaciones_${new Date().toISOString().split('T')[0]}`,
-        sheetName: 'Pipeline'
+        sheetName: 'Canal'
       });
-      toast.success('Pipeline exportado a Excel con éxito');
+      toast.success('Canal exportado a Excel con éxito');
     } catch {
       toast.error('Error al exportar a Excel');
     }
@@ -843,7 +843,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
             value={selectedPipelineId || ''}
             onChange={(val) => setSelectedPipelineId(Number(val))}
             className="w-full max-w-xs"
-            placeholder="Seleccionar Pipeline..."
+            placeholder="Seleccionar canal..."
           />
           <button
             onClick={() => setShowArchived(!showArchived)}

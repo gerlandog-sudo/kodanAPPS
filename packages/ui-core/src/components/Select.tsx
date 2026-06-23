@@ -80,15 +80,30 @@ export function Select({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Posicionar dinámicamente el dropdown usando position: fixed
+  // Posicionar dinámicamente el dropdown usando position: fixed con detección de colisiones
   useEffect(() => {
     if (!isOpen) return
 
     const updatePosition = () => {
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
+        const dropdownEl = dropdownRef.current
+        const dropdownHeight = dropdownEl ? dropdownEl.offsetHeight : 250
+
+        // Margen de seguridad para evitar desbordes
+        const spaceBelow = viewportHeight - rect.bottom - 12
+        const spaceAbove = rect.top - 12
+
+        let top = rect.bottom + 4 // Por defecto abajo con 4px de separación
+
+        // Si no hay suficiente espacio abajo y hay más espacio arriba, abrir hacia arriba
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+          top = rect.top - dropdownHeight - 4
+        }
+
         setCoords({
-          top: rect.bottom,
+          top,
           left: rect.left,
           width: rect.width,
         })
@@ -101,11 +116,27 @@ export function Select({
     window.addEventListener('scroll', updatePosition, true)
     window.addEventListener('resize', updatePosition)
     
+    // Observar cambios de tamaño en el dropdown para ajustar posición dinámicamente
+    let resizeObserver: ResizeObserver | null = null
+    if (dropdownRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        updatePosition()
+      })
+      resizeObserver.observe(dropdownRef.current)
+    }
+
+    // Intervalo de seguridad por si hay cambios asíncronos en el DOM
+    const timer = setTimeout(updatePosition, 0)
+    
     return () => {
       window.removeEventListener('scroll', updatePosition, true)
       window.removeEventListener('resize', updatePosition)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+      clearTimeout(timer)
     }
-  }, [isOpen])
+  }, [isOpen, filteredOptions])
 
   // Mostrar el buscador solo si searchable está activo Y la lista tiene más de 5 opciones
   const showSearch = useMemo(() => {
@@ -213,7 +244,7 @@ export function Select({
       role="listbox"
       style={{
         position: 'fixed',
-        top: `${coords.top + 4}px`,
+        top: `${coords.top}px`,
         left: `${coords.left}px`,
         width: `${Math.max(coords.width, 300)}px`,
         maxWidth: 'calc(100vw - 32px)',

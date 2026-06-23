@@ -113,7 +113,7 @@ final class OpportunityController
             $errors['account_id'] = 'La cuenta asociada es requerida.';
         }
         if ($pipelineStageId <= 0) {
-            $errors['pipeline_stage_id'] = 'La etapa del pipeline es requerida.';
+            $errors['pipeline_stage_id'] = 'La etapa del canal es requerida.';
         }
         if ($title === '') {
             $errors['title'] = 'El título de la oportunidad es requerido.';
@@ -414,7 +414,7 @@ final class OpportunityController
             [$pipelineStageId]
         );
         if (empty($pipelineIdResult)) {
-            throw new RuntimeException('No se pudo determinar el pipeline de esta negociación.', 400);
+            throw new RuntimeException('No se pudo determinar el canal de esta negociación.', 400);
         }
         $pipelineId = isset($pipelineIdResult[0]['pipeline_id']) && is_scalar($pipelineIdResult[0]['pipeline_id']) ? (int)$pipelineIdResult[0]['pipeline_id'] : 0;
 
@@ -424,7 +424,7 @@ final class OpportunityController
             [$pipelineId]
         );
         if (empty($wonStageResult)) {
-            throw new RuntimeException('No se ha configurado ninguna etapa de tipo "Ganada" (is_won_stage = 1) en este pipeline.', 400);
+            throw new RuntimeException('No se ha configurado ninguna etapa de tipo "Ganada" (is_won_stage = 1) en este canal.', 400);
         }
         $wonStageId = isset($wonStageResult[0]['id']) && is_scalar($wonStageResult[0]['id']) ? (int)$wonStageResult[0]['id'] : 0;
 

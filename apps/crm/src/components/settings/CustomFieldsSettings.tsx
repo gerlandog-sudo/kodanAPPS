@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 const ENTITY_TABS: { key: EntityType; label: string; icon: React.ReactNode }[] = [
   { key: 'account', label: 'Cuentas', icon: <Building2 size={14} /> },
   { key: 'contact', label: 'Contactos', icon: <Users size={14} /> },
-  { key: 'opportunity', label: 'Oportunidades', icon: <Briefcase size={14} /> },
+  { key: 'opportunity', label: 'Negociaciones', icon: <Briefcase size={14} /> },
 ]
 
 const FIELD_TYPE_OPTIONS = [

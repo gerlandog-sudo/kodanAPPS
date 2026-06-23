@@ -54,7 +54,7 @@ final class LeadController
             [self::TENANT_ID]
         );
         if (empty($pipelines)) {
-            throw new RuntimeException('No pipeline configured for this tenant', 500);
+            throw new RuntimeException('No hay canal configurado para este tenant', 500);
         }
 
         $stages = $this->pipelineRepo->rawSelect(
@@ -62,7 +62,7 @@ final class LeadController
             [(int)$pipelines[0]['id']]
         );
         if (empty($stages)) {
-            throw new RuntimeException('No stages in default pipeline', 500);
+            throw new RuntimeException('No hay etapas en el canal por defecto', 500);
         }
 
         $companyPhone = isset($input['company']['phone']) && is_scalar($input['company']['phone'])

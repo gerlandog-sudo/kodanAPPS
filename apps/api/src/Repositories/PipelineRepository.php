@@ -121,7 +121,7 @@ final class PipelineRepository extends BaseRepository
         // Validar que el pipeline pertenece al tenant
         $pipeline = $this->findPipelineById((int)$data['pipeline_id']);
         if ($pipeline === null) {
-            throw new \RuntimeException('Pipeline no encontrado o acceso denegado', 403);
+            throw new \RuntimeException('Canal no encontrado o acceso denegado', 403);
         }
         
         // Las etapas no tienen tenant_id físicamente, usamos inserción directa sin tenant_id en datos

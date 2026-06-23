@@ -127,7 +127,7 @@ export function ForecastChart({ opportunities }: ForecastChartProps) {
               }}
             />
 
-            {/* Columnas para el Valor Bruto del pipeline */}
+            {/* Columnas para el Valor Bruto del canal */}
             <Bar
               dataKey="grossValue"
               fill="var(--sys-primary)"

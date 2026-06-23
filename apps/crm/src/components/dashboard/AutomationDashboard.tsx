@@ -64,89 +64,108 @@ export function AutomationDashboard() {
         </h3>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards — matching Dashboard.tsx pattern */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card variant="flip"
           front={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '100%' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Reglas</span>
-                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--sys-text)' }}>{stats.rules.total}</span>
-                <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>
-                  <span style={{ color: 'var(--sys-success)', fontWeight: 600 }}>{stats.rules.active} activas</span>
-                  {' · '}
-                  <span style={{ color: 'var(--sys-text-muted)', fontWeight: 600 }}>{stats.rules.inactive} inactivas</span>
-                </span>
-              </div>
-              <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'color-mix(in srgb, var(--sys-primary) 10%, transparent)' }}>
-                <Workflow size={18} style={{ color: 'var(--sys-primary)' }} />
+            <div className="p-5 flex flex-col justify-between h-full">
+              <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-1">
+                  <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Reglas</span>
+                  <span className="text-2xl font-bold tracking-tight">{stats.rules.total}</span>
+                  <div style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>
+                    <span style={{ color: 'var(--sys-success)', fontWeight: 600 }}>{stats.rules.active} activas</span>
+                    {' · '}
+                    <span style={{ fontWeight: 600 }}>{stats.rules.inactive} inactivas</span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                     style={{ background: 'color-mix(in srgb, var(--sys-primary) 12%, transparent)', color: 'var(--sys-primary)' }}>
+                  <Workflow size={20} />
+                </div>
               </div>
             </div>
           }
           back={
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', gap: '0.25rem' }}>
+            <div className="p-5 flex flex-col justify-center items-center h-full gap-1">
               <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>Total reglas configuradas</span>
-              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--sys-text)' }}>{stats.rules.active} activas de {stats.rules.total}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--sys-text)' }}>{stats.rules.active} activas de {stats.rules.total}</span>
             </div>
           }
         />
 
         <Card variant="flip"
           front={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '100%' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Hoy</span>
-                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--sys-text)' }}>{stats.executions.today}</span>
-                <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>ejecuciones hoy</span>
-              </div>
-              <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'color-mix(in srgb, var(--sys-primary) 10%, transparent)' }}>
-                <Activity size={18} style={{ color: 'var(--sys-primary)' }} />
-              </div>
-            </div>
-          }
-          back={
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', gap: '0.25rem' }}>
-              <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>vs. {stats.executions.this_week} esta semana</span>
-            </div>
-          }
-        />
-
-        <Card variant="flip"
-          front={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '100%' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Semana</span>
-                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--sys-text)' }}>{stats.executions.this_week}</span>
-                <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>ejecuciones esta semana</span>
-              </div>
-              <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'color-mix(in srgb, var(--sys-primary) 10%, transparent)' }}>
-                <Activity size={18} style={{ color: 'var(--sys-primary)' }} />
+            <div className="p-5 flex flex-col justify-between h-full">
+              <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-1">
+                  <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Ejecuciones Hoy</span>
+                  <span className="text-2xl font-bold tracking-tight">{stats.executions.today}</span>
+                  <div style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>
+                    vs. <span style={{ fontWeight: 600 }}>{stats.executions.this_week}</span> esta semana
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                     style={{ background: 'color-mix(in srgb, var(--sys-tertiary) 12%, transparent)', color: 'var(--sys-tertiary)' }}>
+                  <Activity size={20} />
+                </div>
               </div>
             </div>
           }
           back={
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', gap: '0.25rem' }}>
+            <div className="p-5 flex flex-col justify-center items-center h-full gap-1">
               <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>Total acumulado</span>
-              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--sys-text)' }}>{stats.executions.total}</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--sys-text)' }}>{stats.executions.total}</span>
             </div>
           }
         />
 
         <Card variant="flip"
           front={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '100%' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Tasa de Éxito</span>
-                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--sys-success)' }}>{successRate}%</span>
-                <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>ejecuciones exitosas</span>
-              </div>
-              <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'color-mix(in srgb, var(--sys-success) 10%, transparent)' }}>
-                <CheckCircle size={18} style={{ color: 'var(--sys-success)' }} />
+            <div className="p-5 flex flex-col justify-between h-full">
+              <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-1">
+                  <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Ejecuciones</span>
+                  <span className="text-2xl font-bold tracking-tight">{stats.executions.total}</span>
+                  <div style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>
+                    <span style={{ fontWeight: 600 }}>{stats.executions.today}</span> hoy · <span style={{ fontWeight: 600 }}>{stats.executions.this_week}</span> esta sem.
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                     style={{ background: 'color-mix(in srgb, var(--sys-primary) 12%, transparent)', color: 'var(--sys-primary)' }}>
+                  <Activity size={20} />
+                </div>
               </div>
             </div>
           }
           back={
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', gap: '0.25rem' }}>
+            <div className="p-5 flex flex-col justify-center items-center h-full gap-1">
+              <span style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>Total acumulado de ejecuciones</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--sys-text)' }}>{stats.executions.total}</span>
+            </div>
+          }
+        />
+
+        <Card variant="flip"
+          front={
+            <div className="p-5 flex flex-col justify-between h-full">
+              <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-1">
+                  <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--sys-text-muted)' }}>Tasa de Éxito</span>
+                  <span className="text-2xl font-bold tracking-tight" style={{ color: 'var(--sys-success)' }}>{successRate}%</span>
+                  <div style={{ fontSize: '10px', color: 'var(--sys-text-muted)' }}>
+                    ejecuciones exitosas
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                     style={{ background: 'color-mix(in srgb, var(--sys-success) 12%, transparent)', color: 'var(--sys-success)' }}>
+                  <CheckCircle size={20} />
+                </div>
+              </div>
+            </div>
+          }
+          back={
+            <div className="p-5 flex flex-col justify-center items-center h-full gap-1">
               {donutData.length > 0 && (
                 <div style={{ width: '80%', height: 60 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -158,7 +177,7 @@ export function AutomationDashboard() {
                   </ResponsiveContainer>
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '0.5rem', fontSize: '9px', fontWeight: 600 }}>
+              <div className="flex gap-2" style={{ fontSize: '9px', fontWeight: 600 }}>
                 {donutData.map(d => (
                   <span key={d.name} style={{ color: STATUS_COLORS[d.name] }}>
                     {d.name}: {d.value}

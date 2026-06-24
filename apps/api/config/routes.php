@@ -711,6 +711,11 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['messaging']->getUnreadCount());
     });
 
+    $router->get('/api/messages/last-unread', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['messaging']->getLastUnreadConversation());
+    });
+
     $router->get('/api/messages/users', function () use ($app) {
         $tenantId = \kodanAPPS\DB\TenantContext::getTenantId();
         $stmt = $app['pdo']->prepare(

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace kodanAPPS\Repositories;
 
+use kodanAPPS\DB\TenantContext;
+
 /**
  * OpportunityRepository - Gestión de Oportunidades (Negociaciones) comerciales
  * 
@@ -20,6 +22,7 @@ final class OpportunityRepository extends BaseRepository
      */
     public function findById(int $id): ?array
     {
+        $userId = TenantContext::getUserId();
         $sql = "SELECT o.*, 
             ps.name AS stage_name, ps.color_hex AS stage_color, ps.probability AS stage_probability, ps.is_won_stage, ps.is_lost_stage, 
             a.name AS account_name,
@@ -27,7 +30,18 @@ final class OpportunityRepository extends BaseRepository
             u.display_name AS owner_name,
             uc.avatar_url AS owner_avatar,
             (SELECT COUNT(*) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
-            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total
+            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total,
+            (
+                SELECT COUNT(m.id)
+                FROM conversations c
+                JOIN conversation_participants cp ON cp.conversation_id = c.id
+                JOIN messages m ON m.conversation_id = c.id
+                WHERE c.entity_type = 'crm_opportunity'
+                  AND c.entity_id = o.id
+                  AND cp.user_id = {$userId}
+                  AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
+                  AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
+            ) AS chat_unread_count
          FROM opportunities o
          JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
          JOIN accounts a ON a.account_id = o.account_id
@@ -48,6 +62,7 @@ final class OpportunityRepository extends BaseRepository
      */
     public function listAll(int $pipelineId = 0, bool $includeArchived = false): array
     {
+        $userId = TenantContext::getUserId();
         $archivedFilter = $includeArchived ? '' : ' AND o.archived_at IS NULL';
 
         $select = "SELECT o.*, 
@@ -57,7 +72,18 @@ final class OpportunityRepository extends BaseRepository
             u.display_name AS owner_name,
             uc.avatar_url AS owner_avatar,
             (SELECT COUNT(*) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
-            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total
+            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total,
+            (
+                SELECT COUNT(m.id)
+                FROM conversations c
+                JOIN conversation_participants cp ON cp.conversation_id = c.id
+                JOIN messages m ON m.conversation_id = c.id
+                WHERE c.entity_type = 'crm_opportunity'
+                  AND c.entity_id = o.id
+                  AND cp.user_id = {$userId}
+                  AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
+                  AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
+            ) AS chat_unread_count
          FROM opportunities o
          JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
          JOIN accounts a ON a.account_id = o.account_id

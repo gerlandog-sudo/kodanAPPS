@@ -9,6 +9,7 @@ export interface TableAction<T> {
   label: string
   onClick: (item: T) => void
   variant?: 'default' | 'danger'
+  badge?: (item: T) => number | boolean | undefined
 }
 
 export interface BulkAction<T> {
@@ -395,8 +396,27 @@ export function Table<T>({
                             title={action.label}
                             aria-label={action.label}
                             onClick={e => { e.stopPropagation(); action.onClick(item) }}
+                            style={{ position: 'relative' }}
                           >
                             {action.icon}
+                            {action.badge && action.badge(item) ? (
+                              <span style={{
+                                position: 'absolute',
+                                top: '-2px',
+                                right: '-2px',
+                                backgroundColor: 'var(--sys-error)',
+                                color: 'white',
+                                borderRadius: '999px',
+                                fontSize: '8px',
+                                fontWeight: 700,
+                                height: '10px',
+                                minWidth: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid var(--sys-bg)'
+                              }} />
+                            ) : null}
                           </button>
                         ))}
                       </div>

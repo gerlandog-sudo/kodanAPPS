@@ -40,6 +40,50 @@ final class WorkflowEngine
      */
     public function execute(string $entity, string $event, int $entityId, array $context = []): array
     {
+        // Carga perezosa (lazy-loading) de parámetros omitidos en el contexto del trigger
+        if ($entity === 'opportunity' && $entityId > 0) {
+            $opp = null;
+            if (!isset($context['pipeline_id']) || !isset($context['owner_user_id']) || !isset($context['value']) || !isset($context['opportunity_title'])) {
+                $opp = $this->opportunityRepo->findById($entityId);
+            }
+            if ($opp !== null) {
+                if (!isset($context['pipeline_id']) && isset($opp['pipeline_id'])) {
+                    $context['pipeline_id'] = (int)$opp['pipeline_id'];
+                }
+                if (!isset($context['owner_user_id']) && isset($opp['owner_user_id'])) {
+                    $context['owner_user_id'] = (int)$opp['owner_user_id'];
+                }
+                if (!isset($context['value']) && isset($opp['value'])) {
+                    $context['value'] = (float)$opp['value'];
+                }
+                if (!isset($context['opportunity_title']) && isset($opp['title'])) {
+                    $context['opportunity_title'] = $opp['title'];
+                }
+            }
+        } elseif ($entity === 'task' && $entityId > 0) {
+            $task = null;
+            if (!isset($context['opportunity_id']) || !isset($context['task_type_id']) || !isset($context['task_title']) || !isset($context['assigned_to']) || !isset($context['status'])) {
+                $task = $this->taskRepo->findById($entityId);
+            }
+            if ($task !== null) {
+                if (!isset($context['opportunity_id']) && isset($task['opportunity_id'])) {
+                    $context['opportunity_id'] = (int)$task['opportunity_id'];
+                }
+                if (!isset($context['task_type_id']) && isset($task['task_type_id'])) {
+                    $context['task_type_id'] = (int)$task['task_type_id'];
+                }
+                if (!isset($context['task_title']) && isset($task['title'])) {
+                    $context['task_title'] = $task['title'];
+                }
+                if (!isset($context['assigned_to']) && isset($task['assigned_to'])) {
+                    $context['assigned_to'] = (int)$task['assigned_to'];
+                }
+                if (!isset($context['status']) && isset($task['status'])) {
+                    $context['status'] = $task['status'];
+                }
+            }
+        }
+
         $rules = $this->workflowRepo->listActiveRulesByTrigger($entity, $event);
         if (empty($rules)) {
             return ['executed' => 0, 'failed' => 0, 'details' => []];
@@ -434,7 +478,7 @@ final class WorkflowEngine
      */
     private function executeSendNotification(array $params, string $entity, int $entityId, array $context): void
     {
-        $rawUserId = $params['user_id'] ?? null;
+        $rawUserId = $params['user_id'] ?? $params['assigned_to'] ?? null;
         $userIdSpec = is_array($rawUserId) || is_string($rawUserId) || is_int($rawUserId) || $rawUserId === null ? $rawUserId : null;
         $userIds = $this->resolveUserIds($userIdSpec, $context);
         if (empty($userIds)) {

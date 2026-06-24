@@ -127,4 +127,7 @@ export const crmApi = {
   // Theme
   getTheme: () => api.get<{ theme: 'light' | 'dark' }>('/api/crm/theme'),
   updateTheme: (theme: 'light' | 'dark') => api.put('/api/crm/theme', { theme }),
+
+  // Messaging Extra
+  getLastUnreadChat: () => api.get<{ type: string; id: number; title: string | null } | null>('/api/messages/last-unread'),
 };

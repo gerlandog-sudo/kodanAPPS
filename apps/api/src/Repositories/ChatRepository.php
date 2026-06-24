@@ -269,4 +269,53 @@ final class ChatRepository extends BaseRepository
         $qty = $results[0]['qty'] ?? 0;
         return is_numeric($qty) ? (int)$qty : 0;
     }
+
+    /**
+     * Obtiene la última conversación con mensajes no leídos para el usuario.
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function getLastUnreadConversation(int $userId): ?array
+    {
+        $results = $this->rawSelect(
+            "/* BYPASS_TENANT_SCOPE */
+             SELECT c.id, c.entity_type, c.entity_id, m.id AS message_id
+             FROM conversation_participants cp
+             JOIN conversations c ON c.id = cp.conversation_id
+             JOIN messages m ON m.conversation_id = cp.conversation_id
+             WHERE cp.user_id = ?
+               AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
+               AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
+             ORDER BY m.id DESC
+             LIMIT 1",
+            [$userId]
+        );
+
+        if (empty($results)) {
+            return null;
+        }
+
+        $conv = $results[0];
+        $entityType = $conv['entity_type'] ?? '';
+        $entityId = isset($conv['entity_id']) ? (int)$conv['entity_id'] : 0;
+
+        $title = null;
+        if ($entityType === 'crm_opportunity' && $entityId > 0) {
+            $opp = $this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT title FROM opportunities WHERE id = ?", [$entityId]);
+            if (!empty($opp)) {
+                $title = $opp[0]['title'] ?? null;
+            }
+        } elseif ($entityType === 'tracker_task' && $entityId > 0) {
+            $task = $this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT title FROM tasks WHERE id = ?", [$entityId]);
+            if (!empty($task)) {
+                $title = $task[0]['title'] ?? null;
+            }
+        }
+
+        return [
+            'type' => $entityType,
+            'id' => $entityId,
+            'title' => $title
+        ];
+    }
 }

@@ -49,6 +49,7 @@ interface Opportunity {
   line_items_count?: number;
   quote_total?: number;
   close_reason?: string | null;
+  chat_unread_count?: number;
 }
 
 interface Stage {
@@ -93,6 +94,7 @@ function OppCard({ opp, isDropped, onEdit, onDelete, onChat }: CardProps) {
       ownerAvatar={opp.owner_avatar}
       isDropped={isDropped}
       onChat={() => onChat(opp)}
+      chatUnreadCount={opp.chat_unread_count}
       onEdit={() => onEdit(opp)}
       onDelete={() => onDelete(opp)}
     />
@@ -612,6 +614,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       icon: <MessageSquare size={14} />,
       label: 'Chatear',
       onClick: handleChatOpp,
+      badge: (opp: Opportunity) => opp.chat_unread_count && opp.chat_unread_count > 0 ? opp.chat_unread_count : undefined
     }
   ], [handleChatOpp]);
 

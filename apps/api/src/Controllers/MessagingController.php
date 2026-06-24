@@ -144,6 +144,18 @@ final class MessagingController
     }
 
     /**
+     * GET /api/messages/last-unread
+     * Devuelve la información de la última conversación no leída por el usuario.
+     * 
+     * @return array<string, mixed>|null
+     */
+    public function getLastUnreadConversation(): ?array
+    {
+        $userId = TenantContext::getUserId();
+        return $this->chatRepo->getLastUnreadConversation($userId);
+    }
+
+    /**
      * GET /api/messages/stream
      * Endpoint SSE de tiempo real optimizado.
      * 

@@ -353,15 +353,22 @@ final class WorkflowController
         $fromStageId = isset($conditions['from_stage_id']) && is_numeric($conditions['from_stage_id']) ? (int)$conditions['from_stage_id'] : null;
         $toStageId = isset($conditions['to_stage_id']) && is_numeric($conditions['to_stage_id']) ? (int)$conditions['to_stage_id'] : null;
         $pipelineId = isset($conditions['pipeline_id']) && is_numeric($conditions['pipeline_id']) ? (int)$conditions['pipeline_id'] : null;
+        $rawPipelineIds = isset($conditions['pipeline_ids']) && is_array($conditions['pipeline_ids']) ? $conditions['pipeline_ids'] : [];
         $fromStatus = isset($conditions['from_status']) && is_string($conditions['from_status']) ? $conditions['from_status'] : null;
         $toStatus = isset($conditions['to_status']) && is_string($conditions['to_status']) ? $conditions['to_status'] : null;
+        $rawTaskTypeIds = isset($conditions['task_type_ids']) && is_array($conditions['task_type_ids']) ? $conditions['task_type_ids'] : [];
         $valueMin = isset($conditions['value_min']) && is_numeric($conditions['value_min']) ? (float)$conditions['value_min'] : null;
+        
         $oldStageId = isset($context['old_stage_id']) && is_numeric($context['old_stage_id']) ? (int)$context['old_stage_id'] : null;
         $newStageId = isset($context['new_stage_id']) && is_numeric($context['new_stage_id']) ? (int)$context['new_stage_id'] : null;
         $ctxPipelineId = isset($context['pipeline_id']) && is_numeric($context['pipeline_id']) ? (int)$context['pipeline_id'] : null;
         $oldStatus = isset($context['old_status']) && is_string($context['old_status']) ? $context['old_status'] : null;
         $newStatus = isset($context['new_status']) && is_string($context['new_status']) ? $context['new_status'] : null;
+        $ctxTaskTypeId = isset($context['task_type_id']) && is_numeric($context['task_type_id']) ? (int)$context['task_type_id'] : null;
         $ctxValue = isset($context['value']) && is_numeric($context['value']) ? (float)$context['value'] : null;
+
+        $pipelineIds = array_filter($rawPipelineIds, fn($v) => is_numeric($v));
+        $taskTypeIds = array_filter($rawTaskTypeIds, fn($v) => is_numeric($v));
 
         if ($fromStageId !== null && ($oldStageId === null || $fromStageId !== $oldStageId)) {
             return false;
@@ -372,10 +379,16 @@ final class WorkflowController
         if ($pipelineId !== null && ($ctxPipelineId === null || $pipelineId !== $ctxPipelineId)) {
             return false;
         }
+        if (!empty($pipelineIds) && $ctxPipelineId !== null && !in_array($ctxPipelineId, $pipelineIds, true)) {
+            return false;
+        }
         if ($fromStatus !== null && ($oldStatus === null || $fromStatus !== $oldStatus)) {
             return false;
         }
         if ($toStatus !== null && ($newStatus === null || $toStatus !== $newStatus)) {
+            return false;
+        }
+        if (!empty($taskTypeIds) && $ctxTaskTypeId !== null && !in_array($ctxTaskTypeId, $taskTypeIds, true)) {
             return false;
         }
         if ($valueMin !== null && ($ctxValue === null || $valueMin > $ctxValue)) {

@@ -85,20 +85,22 @@ function AppContent() {
   }, [notifications]);
 
   const handleMarkAllRead = async () => {
+    setNotifications([]);
     try {
       await crmApi.markNotificationsRead();
-      fetchNotifications();
     } catch (err) {
       console.error('Error marking all read:', err);
+      fetchNotifications();
     }
   };
 
   const handleMarkRead = async (id: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
     try {
       await crmApi.markNotificationsRead([id]);
-      fetchNotifications();
     } catch (err) {
       console.error('Error marking read:', err);
+      fetchNotifications();
     }
   };
 
@@ -227,7 +229,28 @@ function AppContent() {
             fetchNotifications();
           }}
           chatCount={unreadCount}
-          onChatClick={() => setChatOpen(true)}
+          onChatClick={async () => {
+            if (unreadCount > 0) {
+              try {
+                const lastUnread = await crmApi.getLastUnreadChat();
+                if (lastUnread) {
+                  setChatEntity({
+                    type: lastUnread.type,
+                    id: lastUnread.id,
+                    title: lastUnread.title ?? undefined
+                  });
+                } else {
+                  setChatEntity(null);
+                }
+              } catch (err) {
+                console.error('Error fetching last unread chat:', err);
+                setChatEntity(null);
+              }
+            } else {
+              setChatEntity(null);
+            }
+            setChatOpen(true);
+          }}
         />
         <main className="flex flex-col flex-1 p-4 lg:p-6 min-w-0" style={{ background: 'var(--sys-bg)', overflow: 'hidden' }}>
           <div className="flex flex-col flex-1" style={{ overflow: 'hidden' }}>

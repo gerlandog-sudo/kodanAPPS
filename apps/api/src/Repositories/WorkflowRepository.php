@@ -78,7 +78,10 @@ final class WorkflowRepository extends BaseRepository
                 WHERE we.rule_id = :rule_id AND we.tenant_id = :tenant_id
                 ORDER BY we.executed_at DESC
                 LIMIT " . (int)$limit;
-        return $this->rawSelect($sql, [':rule_id' => $ruleId]);
+        return $this->rawSelect($sql, [
+            ':rule_id' => $ruleId,
+            ':tenant_id' => TenantContext::getTenantId()
+        ]);
     }
 
     public function countActiveRules(): int

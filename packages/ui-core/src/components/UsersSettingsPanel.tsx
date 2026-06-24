@@ -32,19 +32,10 @@ export interface RoleOption {
   description?: string;
 }
 
-export interface PlanLimit {
-  module: string;
-  metric: string;
-  limit_value: number;
-  current_usage: number;
-  has_capacity: number;
-}
-
 export function UsersSettingsPanel() {
   const { user: currentUser } = useAuth('crm')
   const [users, setUsers] = useState<TenantUser[]>([])
   const [roles, setRoles] = useState<Record<string, RoleOption[]>>({})
-  const [planLimits, setPlanLimits] = useState<PlanLimit[]>([])
   const [loading, setLoading] = useState(true)
   const [saveLoading, setSaveLoading] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState<(string | number)[]>([])
@@ -70,16 +61,14 @@ export function UsersSettingsPanel() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [usersData, rolesData, planData] = await Promise.all([
+      const [usersData, rolesData] = await Promise.all([
         api.get<TenantUser[]>('/api/tenant-users'),
         api.get<Record<string, RoleOption[]>>('/api/tenant-users/roles'),
-        api.get<PlanLimit[]>('/api/tenant-users/plan-status'),
       ])
       setUsers(usersData)
       setRoles(rolesData)
-      setPlanLimits(planData)
     } catch {
-      toast.error('Error al cargar datos de usuarios y planes')
+      toast.error('Error al cargar datos de usuarios')
     } finally {
       setLoading(false)
     }
@@ -384,49 +373,6 @@ export function UsersSettingsPanel() {
           <UserPlus size={14} /> Nuevo Operador
         </Button>
       </div>
-
-      {/* Utilización de Cuotas del Plan */}
-      {!loading && planLimits.length > 0 && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.5rem',
-          padding: '1rem',
-          borderRadius: '0.5rem',
-          border: '1px solid var(--sys-border-soft)',
-          background: 'color-mix(in srgb, var(--sys-surface-raised) 70%, transparent)',
-        }}>
-          {planLimits.map(limit => {
-            const usagePercent = limit.limit_value > 0 
-              ? Math.min(100, (limit.current_usage / limit.limit_value) * 100) 
-              : 0;
-            return (
-              <div key={limit.module} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--sys-text)' }}>
-                    Cupo de Operadores en {limit.module.toUpperCase()}
-                  </span>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sys-text-muted)' }}>
-                    {limit.current_usage} / {limit.limit_value > 0 ? limit.limit_value : 'Sin límite'}
-                  </span>
-                </div>
-                {limit.limit_value > 0 && (
-                  <div style={{ width: '100%', height: '6px', background: 'var(--sys-border-soft)', borderRadius: '999px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${usagePercent}%`,
-                      height: '100%',
-                      background: usagePercent >= 90 ? 'var(--sys-error)' : 'var(--sys-primary)',
-                      borderRadius: '999px',
-                      transition: 'width 300ms ease',
-                    }} />
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
 
       {/* Tabla Principal */}
       <Table<TenantUser>

@@ -224,7 +224,7 @@ export function EmailTemplateBuilder({
               background: 'var(--sys-surface)',
               fontFamily: 'sans-serif',
               lineHeight: '1.6',
-              maxHeight: '380px',
+              maxHeight: '280px',
             }}
             data-placeholder="Escribe el cuerpo de tu correo aquí..."
           />
@@ -239,7 +239,7 @@ export function EmailTemplateBuilder({
           <p style={{ margin: 0, fontSize: '11px', color: 'var(--sys-text-muted)', lineHeight: '1.4' }}>
             Haz clic en una variable para insertarla en la posición del cursor de tu correo.
           </p>
-          <div className="flex flex-col gap-2 overflow-y-auto flex-1" style={{ maxHeight: '380px' }}>
+          <div className="flex flex-col gap-2 overflow-y-auto flex-1" style={{ maxHeight: '280px' }}>
             {variables.map((v) => (
               <button
                 key={v.key}

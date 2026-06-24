@@ -167,7 +167,7 @@ export function EmailTemplatesSettingsPanel({ moduleContext = 'crm' }: EmailTemp
           </div>
         </div>
 
-        <div className="bg-surface-raised border border-solid border-border-soft rounded-lg p-6">
+        <div className="bg-surface-raised border border-solid border-border-soft rounded-lg p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 215px)' }}>
           <EmailTemplateBuilder
             initialData={editingTemplate ? {
               name: editingTemplate.name,

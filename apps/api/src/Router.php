@@ -130,7 +130,26 @@ class Router
                             $params[$name] = $val;
                         }
                     }
+                    ob_start();
                     ($route['handler'])($params, $this);
+                    $output = ob_get_clean();
+
+                    if (class_exists('\kodanAPPS\Services\WorkflowEngine')) {
+                        $logs = \kodanAPPS\Services\WorkflowEngine::getDebugLogs();
+                        if (!empty($logs) && is_string($output)) {
+                            $trimmed = trim($output);
+                            if (str_starts_with($trimmed, '{') && str_ends_with($trimmed, '}')) {
+                                $data = json_decode($trimmed, true);
+                                if (is_array($data)) {
+                                    $data['workflow_debug_logs'] = $logs;
+                                    $output = json_encode($data, JSON_UNESCAPED_UNICODE);
+                                }
+                            }
+                        }
+                        \kodanAPPS\Services\WorkflowEngine::clearDebugLogs();
+                    }
+
+                    echo $output;
                     return;
                 }
             }
@@ -143,14 +162,30 @@ class Router
         } catch (ApiException $e) {
             http_response_code($e->getCode());
             header('Content-Type: application/json');
-            echo json_encode($e->toArray());
+            $data = $e->toArray();
+            if (class_exists('\kodanAPPS\Services\WorkflowEngine')) {
+                $logs = \kodanAPPS\Services\WorkflowEngine::getDebugLogs();
+                if (!empty($logs)) {
+                    $data['workflow_debug_logs'] = $logs;
+                }
+                \kodanAPPS\Services\WorkflowEngine::clearDebugLogs();
+            }
+            echo json_encode($data);
         } catch (\InvalidArgumentException $e) {
             http_response_code(422);
             header('Content-Type: application/json');
-            echo json_encode([
+            $data = [
                 'message' => 'Validation error',
                 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
-            ]);
+            ];
+            if (class_exists('\kodanAPPS\Services\WorkflowEngine')) {
+                $logs = \kodanAPPS\Services\WorkflowEngine::getDebugLogs();
+                if (!empty($logs)) {
+                    $data['workflow_debug_logs'] = $logs;
+                }
+                \kodanAPPS\Services\WorkflowEngine::clearDebugLogs();
+            }
+            echo json_encode($data);
         } catch (\RuntimeException $e) {
             $code = (int)$e->getCode();
             if ($code < 400 || $code > 599) {
@@ -158,13 +193,27 @@ class Router
             }
             http_response_code($code);
             header('Content-Type: application/json');
-            echo json_encode(['error' => $e->getMessage()]);
+            $data = ['error' => $e->getMessage()];
+            if (class_exists('\kodanAPPS\Services\WorkflowEngine')) {
+                $logs = \kodanAPPS\Services\WorkflowEngine::getDebugLogs();
+                if (!empty($logs)) {
+                    $data['workflow_debug_logs'] = $logs;
+                }
+                \kodanAPPS\Services\WorkflowEngine::clearDebugLogs();
+            }
+            echo json_encode($data);
         } catch (\Throwable $e) {
             http_response_code(500);
             header('Content-Type: application/json');
-            echo json_encode([
-                'error' => 'Internal server error',
-            ]);
+            $data = ['error' => 'Internal server error'];
+            if (class_exists('\kodanAPPS\Services\WorkflowEngine')) {
+                $logs = \kodanAPPS\Services\WorkflowEngine::getDebugLogs();
+                if (!empty($logs)) {
+                    $data['workflow_debug_logs'] = $logs;
+                }
+                \kodanAPPS\Services\WorkflowEngine::clearDebugLogs();
+            }
+            echo json_encode($data);
         }
     }
 

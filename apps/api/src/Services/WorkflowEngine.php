@@ -12,6 +12,27 @@ use kodanAPPS\DB\TenantContext;
 
 final class WorkflowEngine
 {
+    /** @var list<string> */
+    private static array $debugLogs = [];
+
+    public static function logDebug(string $message): void
+    {
+        self::$debugLogs[] = $message;
+        error_log($message);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function getDebugLogs(): array
+    {
+        return self::$debugLogs;
+    }
+
+    public static function clearDebugLogs(): void
+    {
+        self::$debugLogs = [];
+    }
     private const ACTION_HANDLERS = [
         'create_task' => 'executeCreateTask',
         'update_task_status' => 'executeUpdateTaskStatus',
@@ -40,10 +61,13 @@ final class WorkflowEngine
      */
     public function execute(string $entity, string $event, int $entityId, array $context = []): array
     {
+        self::logDebug("[WorkflowEngine] Starting execution: entity={$entity}, event={$event}, entityId={$entityId}");
+        
         // Carga perezosa (lazy-loading) de parámetros omitidos en el contexto del trigger
         if ($entity === 'opportunity' && $entityId > 0) {
             $opp = null;
             if (!isset($context['pipeline_id']) || !isset($context['owner_user_id']) || !isset($context['value']) || !isset($context['opportunity_title'])) {
+                self::logDebug("[WorkflowEngine] Lazy-loading opportunity #{$entityId}");
                 $opp = $this->opportunityRepo->findById($entityId);
             }
             if ($opp !== null) {
@@ -63,6 +87,7 @@ final class WorkflowEngine
         } elseif ($entity === 'task' && $entityId > 0) {
             $task = null;
             if (!isset($context['opportunity_id']) || !isset($context['task_type_id']) || !isset($context['task_title']) || !isset($context['assigned_to']) || !isset($context['status'])) {
+                self::logDebug("[WorkflowEngine] Lazy-loading task #{$entityId}");
                 $task = $this->taskRepo->findById($entityId);
             }
             if ($task !== null) {
@@ -84,7 +109,10 @@ final class WorkflowEngine
             }
         }
 
+        self::logDebug("[WorkflowEngine] Context: " . json_encode($context));
+
         $rules = $this->workflowRepo->listActiveRulesByTrigger($entity, $event);
+        self::logDebug("[WorkflowEngine] Found " . count($rules) . " active rules for trigger {$entity}.{$event}");
         if (empty($rules)) {
             return ['executed' => 0, 'failed' => 0, 'details' => []];
         }
@@ -92,16 +120,20 @@ final class WorkflowEngine
         $results = ['executed' => 0, 'failed' => 0, 'details' => []];
 
         foreach ($rules as $rule) {
+            self::logDebug("[WorkflowEngine] Processing rule ID={$rule['id']} ('{$rule['name']}')");
             $rawConditions = isset($rule['trigger_conditions']) && is_string($rule['trigger_conditions']) ? json_decode($rule['trigger_conditions'], true) : null;
             $conditions = is_array($rawConditions) ? $rawConditions : [];
             $rawActions = isset($rule['actions']) && is_string($rule['actions']) ? json_decode($rule['actions'], true) : null;
             $actions = is_array($rawActions) ? $rawActions : [];
 
-            if (!$this->matchConditions($conditions, $entity, $entityId, $context)) {
+            $matched = $this->matchConditions($conditions, $entity, $entityId, $context);
+            self::logDebug("[WorkflowEngine] Rule ID={$rule['id']}: matchConditions returned " . ($matched ? "TRUE" : "FALSE") . ". Conditions evaluated: " . json_encode($conditions));
+            if (!$matched) {
                 continue;
             }
 
             if (empty($actions)) {
+                self::logDebug("[WorkflowEngine] Rule ID={$rule['id']}: no actions defined");
                 continue;
             }
 
@@ -112,6 +144,7 @@ final class WorkflowEngine
             foreach ($actions as $action) {
                 $actionType = is_array($action) && isset($action['type']) && is_string($action['type']) ? $action['type'] : null;
                 if ($actionType === null || !isset(self::ACTION_HANDLERS[$actionType])) {
+                    self::logDebug("[WorkflowEngine] Rule ID={$rule['id']}: Unknown action type '{$actionType}'");
                     $ruleResult['actions'][] = ['type' => $actionType ?? 'unknown', 'status' => 'failed', 'error' => 'Unknown action type'];
                     $results['failed']++;
                     $overallStatus = 'partial';
@@ -121,10 +154,13 @@ final class WorkflowEngine
                 try {
                     $handler = self::ACTION_HANDLERS[$actionType];
                     $params = isset($action['params']) && is_array($action['params']) ? $action['params'] : [];
+                    self::logDebug("[WorkflowEngine] Rule ID={$rule['id']}: Executing action '{$actionType}' with params: " . json_encode($params));
                     $this->$handler($params, $entity, $entityId, $context);
+                    self::logDebug("[WorkflowEngine] Rule ID={$rule['id']}: Action '{$actionType}' executed successfully");
                     $ruleResult['actions'][] = ['type' => $actionType, 'status' => 'success'];
                     $results['executed']++;
                 } catch (\Throwable $e) {
+                    self::logDebug("[WorkflowEngine] Rule ID={$rule['id']}: Action '{$actionType}' failed: " . $e->getMessage() . " in " . basename($e->getFile()) . ":" . $e->getLine());
                     $ruleResult['actions'][] = ['type' => $actionType, 'status' => 'failed', 'error' => $e->getMessage()];
                     $results['failed']++;
                     $overallStatus = 'partial';
@@ -482,8 +518,11 @@ final class WorkflowEngine
     {
         $rawUserId = $params['user_id'] ?? $params['assigned_to'] ?? 'owner';
         $userIdSpec = is_array($rawUserId) || is_string($rawUserId) || is_int($rawUserId) ? $rawUserId : null;
+        self::logDebug("[WorkflowEngine] executeSendNotification: rawUserId=" . json_encode($rawUserId) . ", userIdSpec=" . json_encode($userIdSpec));
         $userIds = $this->resolveUserIds($userIdSpec, $context);
+        self::logDebug("[WorkflowEngine] executeSendNotification: resolved userIds=" . json_encode($userIds));
         if (empty($userIds)) {
+            self::logDebug("[WorkflowEngine] executeSendNotification: No user IDs resolved, aborting notification dispatch");
             return;
         }
         $rawTitle = isset($params['title']) && is_string($params['title']) ? $params['title'] : 'Notificación automática';
@@ -493,6 +532,7 @@ final class WorkflowEngine
         $notifType = isset($params['type']) && is_string($params['type']) ? $params['type'] : 'workflow_auto';
 
         foreach ($userIds as $userId) {
+            self::logDebug("[WorkflowEngine] executeSendNotification: Upserting notification for userId={$userId}, type={$notifType}, title='{$title}'");
             $this->notificationRepo->upsertNotification([
                 'user_id' => $userId,
                 'type' => $notifType,

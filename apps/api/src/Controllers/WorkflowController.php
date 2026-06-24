@@ -314,6 +314,16 @@ final class WorkflowController
                 'task_type_id' => isset($task['task_type_id']) && is_numeric($task['task_type_id']) ? (int)$task['task_type_id'] : null,
                 'task_title' => isset($task['title']) && is_string($task['title']) ? $task['title'] : '',
             ];
+            // Cargar contexto de la oportunidad padre para el dry-run del test
+            $oppId = $context['opportunity_id'] ?? null;
+            if ($oppId !== null && (int)$oppId > 0) {
+                $opp = $this->opportunityRepo->findById((int)$oppId);
+                if ($opp !== null) {
+                    $context['owner_user_id'] = isset($opp['owner_user_id']) ? (int)$opp['owner_user_id'] : null;
+                    $context['opportunity_title'] = $opp['title'] ?? '';
+                    $context['owner_name'] = $opp['owner_name'] ?? '';
+                }
+            }
         }
 
         $rules = $this->workflowRepo->listActiveRulesByTrigger($entity, $event);

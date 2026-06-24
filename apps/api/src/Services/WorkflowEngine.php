@@ -107,6 +107,25 @@ final class WorkflowEngine
                     $context['status'] = $task['status'];
                 }
             }
+            // Si la tarea está vinculada a una oportunidad, cargar también el contexto de la oportunidad (incluyendo su dueño)
+            $oppId = $context['opportunity_id'] ?? null;
+            if ($oppId !== null && (int)$oppId > 0) {
+                if (!isset($context['owner_user_id']) || !isset($context['opportunity_title']) || !isset($context['owner_name'])) {
+                    self::logDebug("[WorkflowEngine] Lazy-loading opportunity #{$oppId} for task context");
+                    $opp = $this->opportunityRepo->findById((int)$oppId);
+                    if ($opp !== null) {
+                        if (!isset($context['owner_user_id']) && isset($opp['owner_user_id'])) {
+                            $context['owner_user_id'] = (int)$opp['owner_user_id'];
+                        }
+                        if (!isset($context['opportunity_title']) && isset($opp['title'])) {
+                            $context['opportunity_title'] = $opp['title'];
+                        }
+                        if (!isset($context['owner_name']) && isset($opp['owner_name'])) {
+                            $context['owner_name'] = $opp['owner_name'];
+                        }
+                    }
+                }
+            }
         }
 
         self::logDebug("[WorkflowEngine] Context: " . json_encode($context));

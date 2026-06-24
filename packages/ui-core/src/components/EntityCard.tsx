@@ -18,6 +18,7 @@ export interface EntityCardProps {
   onClick?: () => void
   onChat?: () => void
   chatUnreadCount?: number
+  onMail?: () => void
   onCheck?: () => void
   onClone?: () => void
   onEdit?: () => void
@@ -36,9 +37,9 @@ function getInitials(name: string) {
 export function EntityCard({
   title, amount, badge, accountName, startDate, closeDate,
   lineItemsCount, quoteTotal, ownerName, ownerAvatar, stageColor, isDropped, selected,
-  onClick, onChat, chatUnreadCount, onCheck, onClone, onEdit, onDelete,
+  onClick, onChat, chatUnreadCount, onMail, onCheck, onClone, onEdit, onDelete,
 }: EntityCardProps) {
-  const hasActions = !!(onChat || onEdit || onDelete || onCheck || onClone)
+  const hasActions = !!(onChat || onMail || onEdit || onDelete || onCheck || onClone)
 
   return (
     <div
@@ -253,6 +254,15 @@ export function EntityCard({
                   {chatUnreadCount}
                 </span>
               ) : null}
+            </button>
+          )}
+          {onMail && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onMail() }}
+              title="Enviar Correo Electrónico"
+              style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-primary)'; b.style.background = 'color-mix(in srgb, var(--sys-primary) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </button>
           )}
           {onCheck && (

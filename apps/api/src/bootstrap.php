@@ -197,6 +197,7 @@ $chatRepo = new ChatRepository($pdo);
 $projectRepo = new ProjectRepository($pdo);
 $notificationRepo = new NotificationRepository($pdo);
 $workflowRepo = new WorkflowRepository($pdo);
+$emailTemplateRepo = new \kodanAPPS\Repositories\EmailTemplateRepository($pdo);
 
 // ------------------------------------------------------------
 // Servicios
@@ -206,6 +207,7 @@ $customFieldService = new CustomFieldService($pdo);
 $mentionsParser = new MentionsParser($chatRepo);
 $entityOwnerSyncService = new EntityOwnerSyncService($chatRepo);
 $workflowEngine = new WorkflowEngine($workflowRepo, $taskRepo, $oppRepo, $notificationRepo);
+$mailService = new \kodanAPPS\Services\MailService($pdo);
 
 // ------------------------------------------------------------
 // Configuración sensible
@@ -273,6 +275,7 @@ $tenantUserController = new TenantUserController($userRepo, $pdo);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
 $workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo);
+$mailController = new \kodanAPPS\Controllers\MailController($emailTemplateRepo, $mailService);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);
@@ -299,6 +302,7 @@ return [
         'chat' => $chatRepo,
         'project' => $projectRepo,
         'workflow' => $workflowRepo,
+        'emailTemplate' => $emailTemplateRepo,
         ],
     'services' => [
         'tenant' => $tenantService,
@@ -306,6 +310,7 @@ return [
         'mentionsParser' => $mentionsParser,
         'entityOwnerSync' => $entityOwnerSyncService,
         'workflowEngine' => $workflowEngine,
+        'mail' => $mailService,
     ],
     'auth' => $authMiddleware,
     'controllers' => [
@@ -328,5 +333,6 @@ return [
         'notification' => $notificationController,
         'webLead' => $leadController,
         'workflow' => $workflowController,
+        'mail' => $mailController,
         ],
 ];

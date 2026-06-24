@@ -78,9 +78,10 @@ interface CardProps {
   onEdit: (opp: Opportunity) => void;
   onDelete: (opp: Opportunity) => void;
   onChat: (opp: Opportunity) => void;
+  onMail: (opp: Opportunity) => void;
 }
 
-function OppCard({ opp, isDropped, onEdit, onDelete, onChat }: CardProps) {
+function OppCard({ opp, isDropped, onEdit, onDelete, onChat, onMail }: CardProps) {
   return (
     <EntityCard
       title={opp.name}
@@ -95,6 +96,7 @@ function OppCard({ opp, isDropped, onEdit, onDelete, onChat }: CardProps) {
       isDropped={isDropped}
       onChat={() => onChat(opp)}
       chatUnreadCount={opp.chat_unread_count}
+      onMail={() => onMail(opp)}
       onEdit={() => onEdit(opp)}
       onDelete={() => onDelete(opp)}
     />
@@ -103,12 +105,13 @@ function OppCard({ opp, isDropped, onEdit, onDelete, onChat }: CardProps) {
 
 interface NegotiationsProps {
   onOpenChat?: (entityType: string, entityId: number, title?: string) => void;
+  onOpenMail?: (entityType: string, entityId: number, recipientEmail?: string, entityData?: Record<string, any>) => void;
   onNavigate?: (route: string) => void;
   autoOpenOppId?: number | null;
   onClearAutoOpen?: () => void;
 }
 
-export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: NegotiationsProps) {
+export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAutoOpen }: NegotiationsProps) {
   const { user: currentUser } = useAuth('crm');
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null);
@@ -533,6 +536,17 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
     }
   }, [onOpenChat]);
 
+  const handleMailOpp = useCallback((opp: Opportunity) => {
+    if (onOpenMail) {
+      onOpenMail('crm_opportunity', opp.id, undefined, {
+        contact_name: opp.contact_name || '',
+        account_name: opp.account_name || '',
+        opportunity_name: opp.name || '',
+        opportunity_value: opp.value || '',
+      });
+    }
+  }, [onOpenMail]);
+
   const renderCard = useCallback(
     (opp: Opportunity) => (
       <OppCard
@@ -541,9 +555,10 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         onEdit={handleEditOpp}
         onDelete={handleDeleteOpp}
         onChat={handleChatOpp}
+        onMail={handleMailOpp}
       />
     ),
-    [justDroppedId, handleEditOpp, handleDeleteOpp, handleChatOpp]
+    [justDroppedId, handleEditOpp, handleDeleteOpp, handleChatOpp, handleMailOpp]
   );
 
   // Auto-open negotiation if autoOpenOppId is provided from notification click

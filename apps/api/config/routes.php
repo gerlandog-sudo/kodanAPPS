@@ -667,6 +667,43 @@ return function (Router $router, array $app): void {
     });
 
     // ============================================================
+    // Middleware: Mail (JWT)
+    // ============================================================
+    $router->use('/api/mail', function (Router $router) use ($app) {
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
+    });
+
+    // Mail (Templates & Send)
+    $router->get('/api/mail/templates', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->listTemplates());
+    });
+    $router->get('/api/mail/templates/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->getTemplate($p));
+    });
+    $router->post('/api/mail/templates', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->createTemplate($input));
+    });
+    $router->patch('/api/mail/templates/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->updateTemplate($p, $input));
+    });
+    $router->delete('/api/mail/templates/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->deleteTemplate($p));
+    });
+    $router->post('/api/mail/send', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->sendMail($input));
+    });
+
+    // ============================================================
     // Middleware: Tracker (JWT)
     // ============================================================
     $router->use('/api/tracker', function (Router $router) use ($app) {

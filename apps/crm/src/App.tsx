@@ -1,4 +1,4 @@
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, SlidePanel } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, SlidePanel, EmailComposer } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -56,6 +56,8 @@ function AppContent() {
   const printQuoteId = printMatch ? parseInt(printMatch[1], 10) : null
   const [chatOpen, setChatOpen] = useState(false);
   const [chatEntity, setChatEntity] = useState<{ type: string; id: number; title?: string } | null>(null);
+  const [emailComposerOpen, setEmailComposerOpen] = useState(false);
+  const [emailEntity, setEmailEntity] = useState<{ type: string; id: number; recipientEmail?: string; entityData?: Record<string, any> } | null>(null);
 
   // States for Smart Notifications
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -268,6 +270,10 @@ function AppContent() {
                     setChatEntity({ type, id, title });
                     setChatOpen(true);
                   }}
+                  onOpenMail={(type, id, email, data) => {
+                    setEmailEntity({ type, id, recipientEmail: email, entityData: data });
+                    setEmailComposerOpen(true);
+                  }}
                   onNavigate={(r) => setRoute(r as Route)}
                 />
               )}
@@ -294,6 +300,19 @@ function AppContent() {
         sseMessages={sseMessages}
         title={chatEntity?.title}
         onMessagesRead={refetchUnreadCount}
+      />
+
+      <EmailComposer
+        open={emailComposerOpen}
+        onClose={() => {
+          setEmailComposerOpen(false);
+          setEmailEntity(null);
+        }}
+        entityType={emailEntity?.type}
+        entityId={emailEntity?.id}
+        recipientEmail={emailEntity?.recipientEmail}
+        entityData={emailEntity?.entityData}
+        moduleContext="crm"
       />
 
       <SlidePanel

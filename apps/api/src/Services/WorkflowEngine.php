@@ -212,7 +212,9 @@ final class WorkflowEngine
         }
         if (is_string($spec)) {
             return match ($spec) {
-                'owner' => isset($context['owner_user_id']) && is_numeric($context['owner_user_id']) ? (int)$context['owner_user_id'] : null,
+                'owner' => isset($context['owner_user_id']) && is_numeric($context['owner_user_id']) 
+                    ? (int)$context['owner_user_id'] 
+                    : (isset($context['assigned_to']) && is_numeric($context['assigned_to']) ? (int)$context['assigned_to'] : null),
                 'creator' => isset($context['created_by']) && is_numeric($context['created_by']) ? (int)$context['created_by'] : TenantContext::getUserId(),
                 'trigger_user' => TenantContext::getUserId(),
                 default => is_numeric($spec) ? (int)$spec : null,
@@ -478,8 +480,8 @@ final class WorkflowEngine
      */
     private function executeSendNotification(array $params, string $entity, int $entityId, array $context): void
     {
-        $rawUserId = $params['user_id'] ?? $params['assigned_to'] ?? null;
-        $userIdSpec = is_array($rawUserId) || is_string($rawUserId) || is_int($rawUserId) || $rawUserId === null ? $rawUserId : null;
+        $rawUserId = $params['user_id'] ?? $params['assigned_to'] ?? 'owner';
+        $userIdSpec = is_array($rawUserId) || is_string($rawUserId) || is_int($rawUserId) ? $rawUserId : null;
         $userIds = $this->resolveUserIds($userIdSpec, $context);
         if (empty($userIds)) {
             return;

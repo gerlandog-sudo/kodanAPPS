@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select, Table, DatePicker } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select, Table, DatePicker, useAuth } from '@kodan-apps/ui-core';
 import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
@@ -109,6 +109,7 @@ interface NegotiationsProps {
 }
 
 export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: NegotiationsProps) {
+  const { user: currentUser } = useAuth('crm');
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<number | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -393,7 +394,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       toast.success(isEdit ? 'Negociación y cotización guardadas con éxito.' : 'Oportunidad creada con éxito.');
 
       // Reset
-      setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '', owner_user_id: '' });
+      setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '', owner_user_id: currentUser?.id ? String(currentUser.id) : '' });
       setOppFormLineItems([]);
       setOppQuoteId(null);
       setCustomFields({});
@@ -469,7 +470,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       account_id: String(opp.account_id ?? ''),
       contact_id: String(opp.contact_id ?? ''),
       pipeline_stage_id: String(opp.pipeline_stage_id),
-      owner_user_id: String(opp.owner_user_id ?? ''),
+      owner_user_id: opp.owner_user_id ? String(opp.owner_user_id) : (currentUser?.id ? String(currentUser.id) : ''),
     });
     setCustomFields(opp.custom_fields || {});
     setModalTab('general');
@@ -691,7 +692,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       account_id: '',
       contact_id: '',
       pipeline_stage_id: String(stages[0]?.id || ''),
-      owner_user_id: '',
+      owner_user_id: currentUser?.id ? String(currentUser.id) : '',
     });
     setOppFormLineItems([]);
     setOppQuoteId(null);
@@ -933,7 +934,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           className="btn-primary"
           onClick={() => {
             setEditingOppId(null);
-            setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: String(stages[0]?.id || ''), owner_user_id: '' });
+            setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: String(stages[0]?.id || ''), owner_user_id: currentUser?.id ? String(currentUser.id) : '' });
             setOppFormLineItems([]);
             setOppQuoteId(null);
             setCustomFields({});

@@ -630,26 +630,38 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['customField']->delete($p['id']));
     });
 
-    // Tenant Users (CRM Operators)
-    $router->get('/api/crm/users', function () use ($app) {
+    // ============================================================
+    // Middleware: Tenant Users (JWT)
+    // ============================================================
+    $router->use('/api/tenant-users', function (Router $router) use ($app) {
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
+    });
+
+    // Tenant Users (Centralized Operators Management)
+    $router->get('/api/tenant-users', function () use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['tenantUser']->listUsers());
     });
-    $router->get('/api/crm/users/roles', function () use ($app) {
+    $router->get('/api/tenant-users/roles', function () use ($app) {
         header('Content-Type: application/json');
-        echo json_encode($app['controllers']['tenantUser']->listCrmRoles());
+        echo json_encode($app['controllers']['tenantUser']->listAllRoles());
     });
-    $router->post('/api/crm/users', function () use ($app) {
+    $router->get('/api/tenant-users/plan-status', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->getPlanStatus());
+    });
+    $router->post('/api/tenant-users', function () use ($app) {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['tenantUser']->createUser($input));
     });
-    $router->put('/api/crm/users/{id}', function (array $p) use ($app) {
+    $router->put('/api/tenant-users/{id}', function (array $p) use ($app) {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['tenantUser']->updateUser($p['id'], $input));
     });
-    $router->delete('/api/crm/users/{id}', function (array $p) use ($app) {
+    $router->delete('/api/tenant-users/{id}', function (array $p) use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['tenantUser']->deleteUser($p['id']));
     });

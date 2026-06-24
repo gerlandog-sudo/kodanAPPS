@@ -3,7 +3,7 @@ import { AdminLayout } from '@kodan-apps/ui-core'
 import type { AdminSection } from '@kodan-apps/ui-core'
 import { PipelineManager } from '../components/settings/PipelineManager'
 import { CustomFieldsSettings } from '../components/settings/CustomFieldsSettings'
-import { UsersSettings } from '../components/settings/UsersSettings'
+import { UsersSettingsPanel } from '@kodan-apps/ui-core'
 import { NotificationsSettings } from '../components/settings/NotificationsSettings'
 import { TasksSettings } from '../components/settings/TasksSettings'
 import { WorkflowManager } from '../components/settings/WorkflowManager'
@@ -49,7 +49,7 @@ export function Settings() {
     <AdminLayout sections={SETTINGS_SECTIONS} activeSection={activePanel} onNavigate={navigate}>
       {activePanel === 'pipelines' && <PipelineManager />}
       {activePanel === 'custom-fields' && <CustomFieldsSettings />}
-      {activePanel === 'users' && <UsersSettings />}
+      {activePanel === 'users' && <UsersSettingsPanel />}
       {activePanel === 'notifications' && <NotificationsSettings />}
       {activePanel === 'task-types' && <TasksSettings />}
       {activePanel === 'workflows' && <WorkflowManager />}

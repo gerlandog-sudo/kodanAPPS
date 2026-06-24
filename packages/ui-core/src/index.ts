@@ -43,6 +43,8 @@ export { Breadcrumb } from './components/Breadcrumb'
 export type { BreadcrumbItem } from './components/Breadcrumb'
 export { AdminLayout } from './components/AdminLayout'
 export type { AdminSection, AdminLayoutProps } from './components/AdminLayout'
+export { UsersSettingsPanel } from './components/UsersSettingsPanel'
+export type { TenantUser, AppRoleInfo, RoleOption } from './components/UsersSettingsPanel'
 
 export { useSSE } from './hooks/useSSE'
 export type { SSEMessage } from './hooks/useSSE'

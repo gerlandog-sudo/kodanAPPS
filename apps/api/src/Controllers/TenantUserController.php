@@ -22,8 +22,8 @@ final class TenantUserController
     }
 
     /**
-     * GET /api/crm/users
-     * Lista de usuarios en el tenant actual con su rol en crm
+     * GET /api/tenant-users
+     * Lista de usuarios en el tenant actual con sus roles en todas las aplicaciones
      * 
      * @return array<int, array<string, mixed>>
      */
@@ -31,40 +31,120 @@ final class TenantUserController
     {
         $tenantId = TenantContext::getTenantId();
 
+        // 1. Obtener todos los usuarios del tenant
         $stmt = $this->pdo->prepare(
-            "SELECT u.id, u.email, u.display_name, u.is_active, u.created_at, 
-                    ur.role_id, r.name AS role_name, r.description AS role_description
-             FROM users u
-             LEFT JOIN user_roles ur ON ur.user_id = u.id AND ur.app_id = 'crm'
-             LEFT JOIN roles r ON r.id = ur.role_id
-             WHERE u.tenant_id = :tid
-             ORDER BY u.id ASC"
+            "SELECT id, email, display_name, is_active, created_at
+             FROM users
+             WHERE tenant_id = :tid
+             ORDER BY id ASC"
         );
         $stmt->execute([':tid' => $tenantId]);
-        return $stmt->fetchAll();
+        $users = $stmt->fetchAll();
+
+        if (empty($users)) {
+            return [];
+        }
+
+        // 2. Obtener todas las asignaciones de roles para los usuarios del tenant
+        $userIds = array_column($users, 'id');
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        
+        $stmtRoles = $this->pdo->prepare(
+            "/* BYPASS_TENANT_SCOPE */
+             SELECT ur.user_id, ur.app_id, ur.role_id, r.name AS role_name, r.description AS role_description
+             FROM user_roles ur
+             JOIN roles r ON r.id = ur.role_id
+             WHERE ur.user_id IN ($placeholders) AND r.is_active = 1"
+        );
+        $stmtRoles->execute($userIds);
+        $allRoles = $stmtRoles->fetchAll();
+
+        // Agrupar roles por usuario
+        $rolesByUser = [];
+        foreach ($allRoles as $role) {
+            $uid = (int)$role['user_id'];
+            $rolesByUser[$uid][$role['app_id']] = [
+                'role_id' => (int)$role['role_id'],
+                'role_name' => $role['role_name'],
+                'role_description' => $role['role_description'],
+            ];
+        }
+
+        // Estructurar la respuesta final
+        foreach ($users as &$user) {
+            $uid = (int)$user['id'];
+            $user['id'] = $uid;
+            $user['is_active'] = (int)$user['is_active'];
+            $user['apps'] = $rolesByUser[$uid] ?? new \stdClass();
+        }
+
+        return $users;
     }
 
     /**
-     * GET /api/crm/users/roles
-     * Obtiene el catálogo de roles para la app crm
+     * GET /api/tenant-users/roles
+     * Obtiene el catálogo de todos los roles activos agrupados por app
+     * 
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    public function listAllRoles(): array
+    {
+        $tenantId = TenantContext::getTenantId();
+
+        // Obtener las apps contratadas (tienen métrica users_max en su plan actual)
+        $stmtApps = $this->pdo->prepare(
+            "SELECT DISTINCT module FROM v_tenant_plan_limits WHERE tenant_id = :tid AND metric = 'users_max'"
+        );
+        $stmtApps->execute([':tid' => $tenantId]);
+        $contractedApps = $stmtApps->fetchAll(PDO::FETCH_COLUMN);
+
+        if (empty($contractedApps)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($contractedApps), '?'));
+        $stmt = $this->pdo->prepare(
+            "/* BYPASS_TENANT_SCOPE */ 
+             SELECT id, app_id, name, description 
+             FROM roles 
+             WHERE app_id IN ($placeholders) AND is_active = 1 
+             ORDER BY app_id ASC, id ASC"
+        );
+        $stmt->execute($contractedApps);
+        $roles = $stmt->fetchAll();
+
+        $grouped = [];
+        foreach ($roles as $role) {
+            $grouped[$role['app_id']][] = [
+                'id' => (int)$role['id'],
+                'name' => $role['name'],
+                'description' => $role['description'],
+            ];
+        }
+        return $grouped;
+    }
+
+    /**
+     * GET /api/tenant-users/plan-status
+     * Obtiene el estado actual de los límites y consumo de usuarios por módulo para el tenant
      * 
      * @return array<int, array<string, mixed>>
      */
-    public function listCrmRoles(): array
+    public function getPlanStatus(): array
     {
-        $stmt = $this->pdo->query(
-            "/* BYPASS_TENANT_SCOPE */ 
-             SELECT id, name, description 
-             FROM roles 
-             WHERE app_id = 'crm' AND is_active = 1 
-             ORDER BY id ASC"
-        );
+        $tenantId = TenantContext::getTenantId();
+        $stmt = $this->pdo->prepare("
+            SELECT module, metric, limit_value, current_usage, has_capacity
+            FROM v_tenant_plan_limits
+            WHERE tenant_id = ? AND metric = 'users_max'
+        ");
+        $stmt->execute([$tenantId]);
         return $stmt->fetchAll();
     }
 
     /**
-     * POST /api/crm/users
-     * Crea un usuario y le asigna el rol en crm
+     * POST /api/tenant-users
+     * Crea un usuario y le asigna roles en las aplicaciones
      * 
      * @param array<string, mixed> $input
      * @return array<string, mixed>
@@ -74,9 +154,9 @@ final class TenantUserController
         $email = isset($input['email']) ? strtolower(trim((string)$input['email'])) : '';
         $displayName = isset($input['display_name']) ? trim((string)$input['display_name']) : '';
         $password = isset($input['password']) ? (string)$input['password'] : '';
-        $roleId = isset($input['role_id']) ? (int)$input['role_id'] : 0;
+        $apps = isset($input['apps']) && is_array($input['apps']) ? $input['apps'] : [];
 
-        // Validaciones
+        // Validaciones básicas
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException('El email proporcionado no es válido.');
         }
@@ -86,40 +166,48 @@ final class TenantUserController
         if (strlen($password) < 8) {
             throw new InvalidArgumentException('La contraseña debe tener al menos 8 caracteres.');
         }
-        if ($roleId <= 0) {
-            throw new InvalidArgumentException('Debe seleccionar un rol de CRM válido.');
+        if (empty($apps)) {
+            throw new InvalidArgumentException('Debe asignar acceso a al menos una aplicación.');
         }
 
         $tenantId = TenantContext::getTenantId();
 
-        // Verificar si el rol existe en CRM
-        $roleCheck = $this->pdo->prepare(
-            "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM roles WHERE id = :rid AND app_id = 'crm' AND is_active = 1 LIMIT 1"
-        );
-        $roleCheck->execute([':rid' => $roleId]);
-        if (!$roleCheck->fetch()) {
-            throw new InvalidArgumentException('El rol seleccionado no es válido o está inactivo.');
-        }
-
-        // Verificar email duplicado en toda la base de datos (email único global)
+        // Verificar email duplicado en toda la base de datos
         if ($this->userRepo->emailExists($email)) {
             throw new InvalidArgumentException('El correo electrónico ya se encuentra registrado.');
         }
 
-        // Verificar capacidad del plan (users_max)
-        $capacityCheck = $this->pdo->prepare(
-            "SELECT limit_value, current_usage, has_capacity 
-             FROM v_tenant_plan_limits 
-             WHERE tenant_id = :tid AND module = 'crm' AND metric = 'users_max' LIMIT 1"
-        );
-        $capacityCheck->execute([':tid' => $tenantId]);
-        $capacity = $capacityCheck->fetch();
+        // Validar roles y límites de plan para cada app a la que se solicita acceso
+        foreach ($apps as $appId => $roleId) {
+            $appIdStr = (string)$appId;
+            $roleIdInt = (int)$roleId;
 
-        if ($capacity) {
+            // 1. Verificar si el rol existe en esa app
+            $roleCheck = $this->pdo->prepare(
+                "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM roles WHERE id = :rid AND app_id = :app AND is_active = 1 LIMIT 1"
+            );
+            $roleCheck->execute([':rid' => $roleIdInt, ':app' => $appIdStr]);
+            if (!$roleCheck->fetch()) {
+                throw new InvalidArgumentException("El rol seleccionado para la aplicación '{$appIdStr}' no es válido.");
+            }
+
+            // 2. Verificar cupo en el plan actual del tenant para la app específica
+            $capacityCheck = $this->pdo->prepare(
+                "SELECT limit_value, current_usage, has_capacity 
+                 FROM v_tenant_plan_limits 
+                 WHERE tenant_id = :tid AND module = :app AND metric = 'users_max' LIMIT 1"
+            );
+            $capacityCheck->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+            $capacity = $capacityCheck->fetch();
+
+            if (!$capacity) {
+                throw new RuntimeException("La aplicación '{$appIdStr}' no está habilitada en el plan de su suscripción.", 403);
+            }
+
             $limitValue = (int)$capacity['limit_value'];
             $currentUsage = (int)$capacity['current_usage'];
             if ($limitValue > 0 && $currentUsage >= $limitValue) {
-                throw new RuntimeException('Se ha alcanzado el límite de usuarios permitidos en el plan actual.', 403);
+                throw new RuntimeException("Se ha alcanzado el límite de usuarios permitidos para la aplicación '{$appIdStr}' en su plan actual.", 403);
             }
         }
 
@@ -132,10 +220,10 @@ final class TenantUserController
 
         $newUserId = 0;
 
-        // Ejecutar inserción en transacción
+        // Ejecutar creación transaccional
         $this->pdo->beginTransaction();
         try {
-            // 1. Insertar usuario
+            // 1. Insertar usuario base
             $newUserId = $this->userRepo->createUser([
                 'tenant_id' => $tenantId,
                 'email' => $email,
@@ -145,25 +233,31 @@ final class TenantUserController
                 'is_active' => 1,
             ]);
 
-            // 2. Asignar rol
-            $this->userRepo->assignRoleToApp($newUserId, 'crm', $roleId);
+            // 2. Asignar accesos, incrementar contadores y crear configuraciones básicas
+            foreach ($apps as $appId => $roleId) {
+                $appIdStr = (string)$appId;
+                $roleIdInt = (int)$roleId;
 
-            // 3. Incrementar contador en tenant_plan_usage
-            $updateUsage = $this->pdo->prepare(
-                "UPDATE tenant_plan_usage 
-                 SET current_value = current_value + 1 
-                 WHERE tenant_id = :tid AND module = 'crm' AND metric = 'users_max'"
-            );
-            $updateUsage->execute([':tid' => $tenantId]);
+                // Asignar rol
+                $this->userRepo->assignRoleToApp($newUserId, $appIdStr, $roleIdInt);
 
-            // 4. Guardar tema por defecto en user_configs
-            $themeJson = json_encode(['theme' => 'light']);
-            $insertTheme = $this->pdo->prepare(
-                "INSERT INTO user_configs (user_id, app_id, theme_colors) /* BYPASS_TENANT_SCOPE */
-                 VALUES (:uid, 'crm', :theme)
-                 ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)"
-            );
-            $insertTheme->execute([':uid' => $newUserId, ':theme' => $themeJson]);
+                // Incrementar uso de plan
+                $updateUsage = $this->pdo->prepare(
+                    "UPDATE tenant_plan_usage 
+                     SET current_value = current_value + 1 
+                     WHERE tenant_id = :tid AND module = :app AND metric = 'users_max'"
+                );
+                $updateUsage->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+
+                // Guardar tema por defecto
+                $themeJson = json_encode(['theme' => 'light']);
+                $insertTheme = $this->pdo->prepare(
+                    "INSERT INTO user_configs (user_id, app_id, theme_colors) /* BYPASS_TENANT_SCOPE */
+                     VALUES (:uid, :app, :theme)
+                     ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)"
+                );
+                $insertTheme->execute([':uid' => $newUserId, ':app' => $appIdStr, ':theme' => $themeJson]);
+            }
 
             $this->pdo->commit();
         } catch (\Throwable $e) {
@@ -174,13 +268,13 @@ final class TenantUserController
         return [
             'success' => true,
             'id' => $newUserId,
-            'message' => 'Usuario registrado y configurado con éxito.',
+            'message' => 'Usuario registrado con éxito en todas las aplicaciones solicitadas.',
         ];
     }
 
     /**
-     * PUT /api/crm/users/{id}
-     * Actualiza un usuario del tenant
+     * PUT /api/tenant-users/{id}
+     * Actualiza un usuario del tenant y sus accesos
      * 
      * @param array<string, mixed> $input
      * @return array<string, mixed>
@@ -190,7 +284,7 @@ final class TenantUserController
         $tenantId = TenantContext::getTenantId();
         $currentUserId = TenantContext::getUserId();
 
-        // Buscar el usuario en el tenant actual para verificar que pertenece a él
+        // 1. Obtener usuario actual en la base de datos
         $userCheck = $this->pdo->prepare(
             "SELECT id, email, display_name, is_active FROM users WHERE id = :id AND tenant_id = :tid LIMIT 1"
         );
@@ -202,29 +296,81 @@ final class TenantUserController
         }
 
         $displayName = isset($input['display_name']) ? trim((string)$input['display_name']) : '';
-        $roleId = isset($input['role_id']) ? (int)$input['role_id'] : 0;
         $isActive = isset($input['is_active']) ? (int)$input['is_active'] : -1;
+        $appsInput = isset($input['apps']) && is_array($input['apps']) ? $input['apps'] : null;
 
         if ($displayName === '') {
             throw new InvalidArgumentException('El nombre visible es requerido.');
         }
 
-        // Bloquear auto-desactivación
+        // Bloquear auto-desactivación del usuario que ejecuta la petición
         if ($id === $currentUserId && $isActive === 0) {
             throw new InvalidArgumentException('No puedes desactivar tu propio usuario administrador.');
         }
 
-        // Si se cambia el rol, validar que sea de CRM
-        if ($roleId > 0) {
-            $roleCheck = $this->pdo->prepare(
-                "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM roles WHERE id = :rid AND app_id = 'crm' AND is_active = 1 LIMIT 1"
-            );
-            $roleCheck->execute([':rid' => $roleId]);
-            if (!$roleCheck->fetch()) {
-                throw new InvalidArgumentException('El rol seleccionado no es válido.');
+        // Obtener roles actuales del usuario
+        $stmtCurrentRoles = $this->pdo->prepare(
+            "/* BYPASS_TENANT_SCOPE */ SELECT app_id, role_id FROM user_roles WHERE user_id = :uid"
+        );
+        $stmtCurrentRoles->execute([':uid' => $id]);
+        $currentRolesList = $stmtCurrentRoles->fetchAll();
+        $currentRoles = [];
+        foreach ($currentRolesList as $r) {
+            $currentRoles[$r['app_id']] = (int)$r['role_id'];
+        }
+
+        $wasActive = (int)$user['is_active'] === 1;
+        $willBeActive = $isActive !== -1 ? ($isActive === 1) : $wasActive;
+
+        // Si se provee la lista de aplicaciones, evaluar cambios
+        $appsToAssign = $appsInput !== null ? $appsInput : $currentRoles;
+
+        if ($willBeActive && empty($appsToAssign)) {
+            throw new InvalidArgumentException('El usuario activo debe poseer acceso a al menos una aplicación.');
+        }
+
+        // Validaciones de roles y límites para los accesos finales si el usuario estará activo
+        if ($willBeActive) {
+            foreach ($appsToAssign as $appId => $roleId) {
+                $appIdStr = (string)$appId;
+                $roleIdInt = (int)$roleId;
+
+                // Validar rol
+                $roleCheck = $this->pdo->prepare(
+                    "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM roles WHERE id = :rid AND app_id = :app AND is_active = 1 LIMIT 1"
+                );
+                $roleCheck->execute([':rid' => $roleIdInt, ':app' => $appIdStr]);
+                if (!$roleCheck->fetch()) {
+                    throw new InvalidArgumentException("El rol seleccionado para la aplicación '{$appIdStr}' no es válido.");
+                }
+
+                // Si la app es nueva, o el usuario pasa de inactivo a activo, validar capacidad
+                $isNewApp = !isset($currentRoles[$appIdStr]);
+                $reActivating = !$wasActive;
+
+                if ($isNewApp || $reActivating) {
+                    $capacityCheck = $this->pdo->prepare(
+                        "SELECT limit_value, current_usage, has_capacity 
+                         FROM v_tenant_plan_limits 
+                         WHERE tenant_id = :tid AND module = :app AND metric = 'users_max' LIMIT 1"
+                    );
+                    $capacityCheck->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+                    $capacity = $capacityCheck->fetch();
+
+                    if (!$capacity) {
+                        throw new RuntimeException("La aplicación '{$appIdStr}' no está habilitada en el plan de su suscripción.", 403);
+                    }
+
+                    $limitValue = (int)$capacity['limit_value'];
+                    $currentUsage = (int)$capacity['current_usage'];
+                    if ($limitValue > 0 && $currentUsage >= $limitValue) {
+                        throw new RuntimeException("Se ha alcanzado el límite de usuarios permitidos para la aplicación '{$appIdStr}' en su plan actual.", 403);
+                    }
+                }
             }
         }
 
+        // Ejecutar actualización transaccional
         $this->pdo->beginTransaction();
         try {
             // 1. Actualizar datos básicos de usuario
@@ -240,20 +386,98 @@ final class TenantUserController
             $stmt = $this->pdo->prepare($updateUserSql);
             $stmt->execute($updateParams);
 
-            // 2. Si se cambió el estado activo/inactivo, ajustar contadores en tenant_plan_usage
-            if ($isActive !== -1 && (int)$user['is_active'] !== $isActive) {
-                $adjust = $isActive === 1 ? "+ 1" : "- 1";
-                $adjustUsage = $this->pdo->prepare(
-                    "UPDATE tenant_plan_usage 
-                     SET current_value = GREATEST(0, current_value {$adjust}) 
-                     WHERE tenant_id = :tid AND module = 'crm' AND metric = 'users_max'"
-                );
-                $adjustUsage->execute([':tid' => $tenantId]);
-            }
+            // 2. Gestionar cambios de roles y contadores de uso de plan
+            if ($wasActive && !$willBeActive) {
+                // De Activo a Inactivo: Descontar de todos los contadores de apps que tenía
+                foreach ($currentRoles as $appIdStr => $roleIdInt) {
+                    $adjustUsage = $this->pdo->prepare(
+                        "UPDATE tenant_plan_usage 
+                         SET current_value = GREATEST(0, current_value - 1) 
+                         WHERE tenant_id = :tid AND module = :app AND metric = 'users_max'"
+                    );
+                    $adjustUsage->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+                }
+            } 
+            elseif (!$wasActive && $willBeActive) {
+                // De Inactivo a Activo: Asignar nuevos roles y sumar a los contadores
+                // Limpiar roles previos para evitar inconsistencias
+                $stmtClear = $this->pdo->prepare("/* BYPASS_TENANT_SCOPE */ DELETE FROM user_roles WHERE user_id = :uid");
+                $stmtClear->execute([':uid' => $id]);
 
-            // 3. Actualizar rol en CRM si se provee
-            if ($roleId > 0) {
-                $this->userRepo->assignRoleToApp($id, 'crm', $roleId);
+                foreach ($appsToAssign as $appIdStr => $roleIdInt) {
+                    $appIdStr = (string)$appIdStr;
+                    $roleIdInt = (int)$roleIdInt;
+
+                    $this->userRepo->assignRoleToApp($id, $appIdStr, $roleIdInt);
+
+                    $adjustUsage = $this->pdo->prepare(
+                        "UPDATE tenant_plan_usage 
+                         SET current_value = current_value + 1 
+                         WHERE tenant_id = :tid AND module = :app AND metric = 'users_max'"
+                    );
+                    $adjustUsage->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+
+                    // Guardar tema por defecto
+                    $themeJson = json_encode(['theme' => 'light']);
+                    $insertTheme = $this->pdo->prepare(
+                        "INSERT INTO user_configs (user_id, app_id, theme_colors) /* BYPASS_TENANT_SCOPE */
+                         VALUES (:uid, :app, :theme)
+                         ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)"
+                    );
+                    $insertTheme->execute([':uid' => $id, ':app' => $appIdStr, ':theme' => $themeJson]);
+                }
+            } 
+            elseif ($appsInput !== null) {
+                // Continuaba activo y se modificó la lista de apps
+                
+                // Determinar apps revocadas
+                foreach ($currentRoles as $appIdStr => $roleIdInt) {
+                    if (!isset($appsToAssign[$appIdStr])) {
+                        // Eliminar asignación de rol
+                        $stmtRevoke = $this->pdo->prepare(
+                            "/* BYPASS_TENANT_SCOPE */ DELETE FROM user_roles WHERE user_id = :uid AND app_id = :app"
+                        );
+                        $stmtRevoke->execute([':uid' => $id, ':app' => $appIdStr]);
+
+                        // Descontar uso de plan
+                        $adjustUsage = $this->pdo->prepare(
+                            "UPDATE tenant_plan_usage 
+                             SET current_value = GREATEST(0, current_value - 1) 
+                             WHERE tenant_id = :tid AND module = :app AND metric = 'users_max'"
+                        );
+                        $adjustUsage->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+                    }
+                }
+
+                // Determinar apps añadidas o modificadas
+                foreach ($appsToAssign as $appIdStr => $roleIdInt) {
+                    $appIdStr = (string)$appIdStr;
+                    $roleIdInt = (int)$roleIdInt;
+
+                    $isNewApp = !isset($currentRoles[$appIdStr]);
+
+                    // Asignar o actualizar rol
+                    $this->userRepo->assignRoleToApp($id, $appIdStr, $roleIdInt);
+
+                    if ($isNewApp) {
+                        // Incrementar uso de plan
+                        $adjustUsage = $this->pdo->prepare(
+                            "UPDATE tenant_plan_usage 
+                             SET current_value = current_value + 1 
+                             WHERE tenant_id = :tid AND module = :app AND metric = 'users_max'"
+                        );
+                        $adjustUsage->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+
+                        // Configuración inicial de UI
+                        $themeJson = json_encode(['theme' => 'light']);
+                        $insertTheme = $this->pdo->prepare(
+                            "INSERT INTO user_configs (user_id, app_id, theme_colors) /* BYPASS_TENANT_SCOPE */
+                             VALUES (:uid, :app, :theme)
+                             ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)"
+                        );
+                        $insertTheme->execute([':uid' => $id, ':app' => $appIdStr, ':theme' => $themeJson]);
+                    }
+                }
             }
 
             $this->pdo->commit();
@@ -264,12 +488,12 @@ final class TenantUserController
 
         return [
             'success' => true,
-            'message' => 'Usuario actualizado con éxito.',
+            'message' => 'Usuario actualizado con éxito en todas las aplicaciones.',
         ];
     }
 
     /**
-     * DELETE /api/crm/users/{id}
+     * DELETE /api/tenant-users/{id}
      * Da de baja lógicamente a un usuario del tenant
      * 
      * @return array<string, mixed>
@@ -283,7 +507,7 @@ final class TenantUserController
             throw new InvalidArgumentException('No puedes eliminar tu propio usuario administrador.');
         }
 
-        // Verificar existencia y estado del usuario en el tenant actual
+        // Verificar existencia del usuario en el tenant actual
         $userCheck = $this->pdo->prepare(
             "SELECT id, is_active FROM users WHERE id = :id AND tenant_id = :tid LIMIT 1"
         );
@@ -294,9 +518,16 @@ final class TenantUserController
             throw new RuntimeException('Usuario no encontrado.', 404);
         }
 
+        // Obtener roles activos para el decremento de los contadores
+        $stmtCurrentRoles = $this->pdo->prepare(
+            "/* BYPASS_TENANT_SCOPE */ SELECT app_id FROM user_roles WHERE user_id = :uid"
+        );
+        $stmtCurrentRoles->execute([':uid' => $id]);
+        $currentApps = $stmtCurrentRoles->fetchAll(PDO::FETCH_COLUMN);
+
         $this->pdo->beginTransaction();
         try {
-            // Desactivación lógica
+            // Desactivación lógica global
             $stmt = $this->pdo->prepare(
                 "UPDATE users SET is_active = 0 WHERE id = :id AND tenant_id = :tid"
             );
@@ -304,12 +535,14 @@ final class TenantUserController
 
             // Decrementar uso en tenant_plan_usage si el usuario estaba activo
             if ((int)$user['is_active'] === 1) {
-                $updateUsage = $this->pdo->prepare(
-                    "UPDATE tenant_plan_usage 
-                     SET current_value = GREATEST(0, current_value - 1) 
-                     WHERE tenant_id = :tid AND module = 'crm' AND metric = 'users_max'"
-                );
-                $updateUsage->execute([':tid' => $tenantId]);
+                foreach ($currentApps as $appIdStr) {
+                    $updateUsage = $this->pdo->prepare(
+                        "UPDATE tenant_plan_usage 
+                         SET current_value = GREATEST(0, current_value - 1) 
+                         WHERE tenant_id = :tid AND module = :app AND metric = 'users_max'"
+                    );
+                    $updateUsage->execute([':tid' => $tenantId, ':app' => $appIdStr]);
+                }
             }
 
             $this->pdo->commit();

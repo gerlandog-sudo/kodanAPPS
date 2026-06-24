@@ -44,6 +44,7 @@ final class NotificationRepository extends BaseRepository
                 ) ON DUPLICATE KEY UPDATE 
                     `title` = VALUES(`title`), 
                     `message` = VALUES(`message`), 
+                    `is_read` = VALUES(`is_read`),
                     `created_at` = VALUES(`created_at`)";
 
         $this->rawExecute($sql, $data);

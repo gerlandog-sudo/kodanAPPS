@@ -246,8 +246,9 @@ final class WorkflowEngine
         if ($spec === null || $spec === '') {
             return TenantContext::getUserId();
         }
+        $resolved = null;
         if (is_string($spec)) {
-            return match ($spec) {
+            $resolved = match ($spec) {
                 'owner' => isset($context['owner_user_id']) && is_numeric($context['owner_user_id']) 
                     ? (int)$context['owner_user_id'] 
                     : (isset($context['assigned_to']) && is_numeric($context['assigned_to']) ? (int)$context['assigned_to'] : null),
@@ -255,8 +256,10 @@ final class WorkflowEngine
                 'trigger_user' => TenantContext::getUserId(),
                 default => is_numeric($spec) ? (int)$spec : null,
             };
+        } else {
+            $resolved = is_numeric($spec) ? (int)$spec : null;
         }
-        return is_numeric($spec) ? (int)$spec : null;
+        return $resolved !== null && $resolved > 0 ? $resolved : null;
     }
 
     /**

@@ -147,6 +147,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
     account_id: '',
     contact_id: '',
     pipeline_stage_id: '',
+    owner_user_id: '',
   });
   const [oppFormLineItems, setOppFormLineItems] = useState<QuoteLineItem[]>([]);
   const [oppQuoteId, setOppQuoteId] = useState<number | null>(null);
@@ -162,6 +163,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
 
   // Custom Fields
   const [fieldDefs, setFieldDefs] = useState<CustomFieldDef[]>([]);
@@ -195,12 +197,14 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
 
   const loadAccountsAndContacts = async () => {
     try {
-      const [accs, conts] = await Promise.all([
+      const [accs, conts, userList] = await Promise.all([
         crmApi.listAccounts(),
         crmApi.listContacts(),
+        crmApi.listTenantUsers(),
       ]);
       setAccounts(accs);
       setContacts(conts);
+      setUsers(userList);
     } catch {}
   };
 
@@ -349,6 +353,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         pipeline_stage_id: oppFormData.pipeline_stage_id
           ? parseInt(oppFormData.pipeline_stage_id, 10)
           : stages[0]?.id,
+        owner_user_id: oppFormData.owner_user_id ? parseInt(oppFormData.owner_user_id, 10) : null,
         custom_fields: customFields,
       };
 
@@ -388,7 +393,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       toast.success(isEdit ? 'Negociación y cotización guardadas con éxito.' : 'Oportunidad creada con éxito.');
 
       // Reset
-      setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '' });
+      setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '', owner_user_id: '' });
       setOppFormLineItems([]);
       setOppQuoteId(null);
       setCustomFields({});
@@ -398,7 +403,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
 
       // Si era creación: auto-abrir edición
       if (!isEdit) {
-        const newOpp: Opportunity = { id: currentOppId, name: oppFormData.name, value: String(payload.value), close_date: payload.close_date || '', status: 'open', pipeline_stage_id: payload.pipeline_stage_id!, account_id: payload.account_id, contact_id: payload.contact_id, line_items_count: 0 };
+        const newOpp: Opportunity = { id: currentOppId, name: oppFormData.name, value: String(payload.value), close_date: payload.close_date || '', status: 'open', pipeline_stage_id: payload.pipeline_stage_id!, account_id: payload.account_id, contact_id: payload.contact_id, line_items_count: 0, owner_user_id: payload.owner_user_id };
         handleEditOpp(newOpp);
       } else {
         setEditingOppId(null);
@@ -430,6 +435,17 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
     return stages.map(s => ({ value: s.id, label: s.name }));
   }, [stages]);
 
+  const userSelectOptions = useMemo(() => {
+    const list = users.map((u) => ({
+      value: String(u.id),
+      label: u.display_name || u.email,
+    }));
+    return [
+      { value: '', label: 'Sin Asignar / Ninguno' },
+      ...list
+    ];
+  }, [users]);
+
   // Render extra content in column header (total value)
   const renderColumnExtra = useCallback(
     (_stage: string, items: Opportunity[]) => {
@@ -453,6 +469,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       account_id: String(opp.account_id ?? ''),
       contact_id: String(opp.contact_id ?? ''),
       pipeline_stage_id: String(opp.pipeline_stage_id),
+      owner_user_id: String(opp.owner_user_id ?? ''),
     });
     setCustomFields(opp.custom_fields || {});
     setModalTab('general');
@@ -562,6 +579,12 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       render: (opp) => opp.contact_name || <span className="text-text-muted opacity-60">—</span>,
     },
     {
+      key: 'owner_name',
+      header: 'Asesor',
+      sortable: true,
+      render: (opp) => opp.owner_name || <span className="text-text-muted opacity-60">—</span>,
+    },
+    {
       key: 'pipeline_stage_id',
       header: 'Etapa',
       sortable: true,
@@ -667,7 +690,8 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
       close_date: dateStr,
       account_id: '',
       contact_id: '',
-      pipeline_stage_id: String(stages[0]?.id || '')
+      pipeline_stage_id: String(stages[0]?.id || ''),
+      owner_user_id: '',
     });
     setOppFormLineItems([]);
     setOppQuoteId(null);
@@ -909,7 +933,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
           className="btn-primary"
           onClick={() => {
             setEditingOppId(null);
-            setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: String(stages[0]?.id || '') });
+            setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: String(stages[0]?.id || ''), owner_user_id: '' });
             setOppFormLineItems([]);
             setOppQuoteId(null);
             setCustomFields({});
@@ -985,7 +1009,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
         onClose={() => { 
           setShowOppModal(false); 
           setEditingOppId(null); 
-          setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '' }); 
+          setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '', owner_user_id: '' }); 
           setOppFormLineItems([]); 
           setOppQuoteId(null); 
           setCustomFields({});
@@ -1102,7 +1126,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   disabled={isReadOnly}
                 />
               </div>
-              <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
+              <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
                   ETAPA
                 </label>
@@ -1111,6 +1135,19 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
                   value={oppFormData.pipeline_stage_id}
                   onChange={(val) => setOppFormData((prev) => ({ ...prev, pipeline_stage_id: String(val) }))}
                   placeholder="Selecciona una etapa"
+                  disabled={isReadOnly}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold" style={{ color: 'var(--sys-text-muted)' }}>
+                  ASESOR COMERCIAL (DUEÑO)
+                </label>
+                <Select
+                  options={userSelectOptions}
+                  value={oppFormData.owner_user_id}
+                  onChange={(val) => setOppFormData((prev) => ({ ...prev, owner_user_id: String(val) }))}
+                  placeholder="Selecciona un asesor"
+                  searchable={true}
                   disabled={isReadOnly}
                 />
               </div>
@@ -1172,7 +1209,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
               className="flex justify-end gap-3 mt-2 pt-3 sticky bottom-0"
               style={{ borderTop: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)' }}
             >
-              <Button variant="secondary" type="button" onClick={() => { setShowOppModal(false); setEditingOppId(null); setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '' }); setOppFormLineItems([]); setOppQuoteId(null); setCustomFields({}); setModalTab('general'); }}>
+              <Button variant="secondary" type="button" onClick={() => { setShowOppModal(false); setEditingOppId(null); setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '', owner_user_id: '' }); setOppFormLineItems([]); setOppQuoteId(null); setCustomFields({}); setModalTab('general'); }}>
                 {isReadOnly ? 'Cerrar' : 'Cancelar'}
               </Button>
               {!isReadOnly && (
@@ -1194,7 +1231,7 @@ export function Negotiations({ onOpenChat, autoOpenOppId, onClearAutoOpen }: Neg
               className="flex justify-end gap-3 mt-2 pt-3 sticky bottom-0"
               style={{ borderTop: '1px solid var(--sys-border-soft)', background: 'var(--sys-surface)' }}
             >
-              <Button variant="secondary" type="button" onClick={() => { setShowOppModal(false); setEditingOppId(null); setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '' }); setOppFormLineItems([]); setOppQuoteId(null); setCustomFields({}); setModalTab('general'); }}>
+              <Button variant="secondary" type="button" onClick={() => { setShowOppModal(false); setEditingOppId(null); setOppFormData({ name: '', value: '0', close_date: '', account_id: '', contact_id: '', pipeline_stage_id: '', owner_user_id: '' }); setOppFormLineItems([]); setOppQuoteId(null); setCustomFields({}); setModalTab('general'); }}>
                 {isReadOnly ? 'Cerrar' : 'Cancelar'}
               </Button>
               {!isReadOnly && (

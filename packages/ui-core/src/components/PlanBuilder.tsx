@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Plus, AlertCircle, Infinity } from 'lucide-react';
-import { SlidePanel } from './SlidePanel';
+import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Button } from './Button';
 import { Table } from './Table';
@@ -46,7 +46,7 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDelete, onRefresh }: PlanBuilderProps) {
-  const [showPanel, setShowPanel] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
@@ -87,7 +87,7 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
   }, [editingPlan]);
 
   useEffect(() => {
-    if (showPanel && !editingPlan && formData.limits.length === 0) {
+    if (showModal && !editingPlan && formData.limits.length === 0) {
       const defaults: PlanLimit[] = [];
       modules.forEach(mod => {
         (metricsByModule[mod] || []).forEach(m => {
@@ -96,7 +96,7 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
       });
       setFormData(prev => ({ ...prev, limits: defaults }));
     }
-  }, [showPanel]);
+  }, [showModal]);
 
   const handleLimitChange = (index: number, value: number) => {
     setFormData(prev => ({
@@ -141,7 +141,7 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
         });
         toast.success('Plan creado');
       }
-      setShowPanel(false);
+      setShowModal(false);
       setEditingPlan(null);
       resetForm();
       await onRefresh();
@@ -188,7 +188,7 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
   return (
     <div>
       <div className="flex items-center justify-end mb-4">
-        <Button variant="primary" onClick={() => { setEditingPlan(null); setShowPanel(true); }}>
+        <Button variant="primary" onClick={() => { setEditingPlan(null); setShowModal(true); }}>
           <Plus size={16} />
           Nuevo Plan
         </Button>
@@ -255,12 +255,17 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
           title: 'No hay planes configurados',
           description: 'Crea el primer plan de suscripción',
         }}
-        editable={{ onClick: plan => { setEditingPlan(plan); setShowPanel(true); } }}
+        editable={{ onClick: plan => { setEditingPlan(plan); setShowModal(true); } }}
         deletable={{ onClick: handleDeleteClick }}
       />
 
-      <SlidePanel open={showPanel || !!editingPlan} onClose={() => { setShowPanel(false); setEditingPlan(null); }} title={editingPlan ? 'Editar Plan' : 'Nuevo Plan'}>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6" style={{ minHeight: 'calc(100vh - 120px)' }}>
+      <Modal
+        open={showModal || !!editingPlan}
+        onClose={() => { setShowModal(false); setEditingPlan(null); }}
+        title={editingPlan ? 'Editar Plan' : 'Nuevo Plan'}
+        className="max-w-3xl"
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto pr-1">
           {errors.general && (
             <div className="p-3 rounded-lg text-sm flex items-center gap-2" style={{ background: 'var(--sys-error-container)', color: 'var(--color-on-error-container)' }}>
               <AlertCircle size={14} />
@@ -331,14 +336,14 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
             {errors.limits && <p className="text-xs mt-3" style={{ color: 'var(--sys-error)' }}>{errors.limits}</p>}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 mt-auto" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
-            <Button variant="secondary" onClick={() => { setShowPanel(false); setEditingPlan(null); }}>Cancelar</Button>
+          <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+            <Button variant="secondary" onClick={() => { setShowModal(false); setEditingPlan(null); }}>Cancelar</Button>
             <Button variant="primary" type="submit" disabled={submitting}>
               {submitting ? 'Guardando...' : (editingPlan ? 'Actualizar Plan' : 'Crear Plan')}
             </Button>
           </div>
         </form>
-      </SlidePanel>
+      </Modal>
 
       <ConfirmDialog
         open={deleteConfirmOpen}

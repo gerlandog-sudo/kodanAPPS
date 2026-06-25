@@ -7,6 +7,8 @@ namespace kodanAPPS\Controllers;
 use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\DB\TenantContext;
 use kodanAPPS\Repositories\UserRepository;
+use kodanAPPS\Services\PlanAccessValidator;
+use kodanAPPS\Services\UsageTrackerInterface;
 use InvalidArgumentException;
 use RuntimeException;
 use DateTime;
@@ -18,18 +20,24 @@ final class AuthController
     private int $systemTenantId;
     private string $cookieDomain;
     private TenantAwarePDO $pdo;
+    private PlanAccessValidator $planAccessValidator;
+    private UsageTrackerInterface $usageTracker;
 
     public function __construct(
         UserRepository $userRepo,
         string $jwtSecret,
         int $systemTenantId,
         TenantAwarePDO $pdo,
+        PlanAccessValidator $planAccessValidator,
+        UsageTrackerInterface $usageTracker,
         string $cookieDomain = ''
     ) {
         $this->userRepo = $userRepo;
         $this->jwtSecret = $jwtSecret;
         $this->systemTenantId = $systemTenantId;
         $this->pdo = $pdo;
+        $this->planAccessValidator = $planAccessValidator;
+        $this->usageTracker = $usageTracker;
         $this->cookieDomain = $cookieDomain;
     }
 
@@ -79,31 +87,13 @@ final class AuthController
             return $this->buildLoginResponse($user, $appId, []);
         }
 
-        // Validar que el plan del tenant incluya esta app (plan_limits.module)
-        $tenantPlanId = $this->userRepo->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT subscription_plan_id FROM tenants WHERE tenant_id = ? AND is_active = 1",
-            [(int)$user['tenant_id']]
+        // Validar acceso al plan + roles usando PlanAccessValidator
+        $appAccess = $this->planAccessValidator->validateAppAccess(
+            (int)$user['tenant_id'],
+            $appId,
+            (int)$user['id']
         );
-        if (empty($tenantPlanId) || $tenantPlanId[0]['subscription_plan_id'] === null) {
-            throw new RuntimeException('Acceso denegado: tenant sin plan asignado.', 403);
-        }
-        $planId = (int)$tenantPlanId[0]['subscription_plan_id'];
-        $appAvailable = $this->userRepo->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT 1 FROM plan_limits WHERE plan_id = ? AND module = ? LIMIT 1",
-            [$planId, $appId]
-        );
-        if (empty($appAvailable)) {
-            throw new RuntimeException('Acceso denegado: la aplicación no está incluida en el plan del tenant.', 403);
-        }
-
-        // Obtener roles en la app especificada (user_roles + roles)
-        $allRoles = $this->userRepo->getUserRoles((int)$user['id']);
-        $roles = [];
-        foreach ($allRoles as $roleRow) {
-            if ($roleRow['app_id'] === $appId) {
-                $roles[] = $roleRow['role'];
-            }
-        }
+        $roles = $appAccess['roles'];
 
         return $this->buildLoginResponse($user, $appId, $roles);
     }
@@ -254,13 +244,7 @@ final class AuthController
             throw new RuntimeException('Usuario no encontrado', 401);
         }
 
-        $stmt = $this->pdo->prepare("
-            SELECT module, metric, limit_value, current_usage, has_capacity
-            FROM v_tenant_plan_limits
-            WHERE tenant_id = ? AND module = ?
-        ");
-        $stmt->execute([$tenantId, $appId]);
-        $planStatus = $stmt->fetchAll();
+        $planStatus = $this->usageTracker->getUsageStatus($appId);
 
         $planStmt = $this->pdo->prepare("
             SELECT sp.name

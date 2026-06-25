@@ -15,6 +15,11 @@ final class OpportunityRepository extends BaseRepository
 {
     protected const TABLE = 'opportunities';
 
+    protected function getLimitConfig(): ?array
+    {
+        return ['module' => 'crm', 'metric' => 'negotiations_max'];
+    }
+
     /**
      * Obtiene una oportunidad por su ID
      * 
@@ -280,7 +285,9 @@ final class OpportunityRepository extends BaseRepository
             );
             $accountId = isset($oppResult[0]['account_id']) && is_scalar($oppResult[0]['account_id']) ? (int)$oppResult[0]['account_id'] : 0;
 
-            // 2. Crear proyecto en Tracker
+            // 2. Verificar límite de proyectos antes de crear
+            $this->enforceUsageLimit('crm', 'projects_max');
+
             $projectId = $this->create('projects', [
                 'account_id' => $accountId,
                 'opportunity_id' => $opportunityId,
@@ -288,6 +295,8 @@ final class OpportunityRepository extends BaseRepository
                 'budget_hours' => $budgetHours,
                 'status' => 'active'
             ]);
+
+            $this->incrementUsage('crm', 'projects_max');
             
             return $projectId;
         });

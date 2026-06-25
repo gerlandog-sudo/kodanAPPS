@@ -72,6 +72,11 @@ final class TenantContext
         return self::hasRole('super_admin') || in_array('admin', self::$roles ?? [], true);
     }
 
+    public static function hasTenant(): bool
+    {
+        return self::$tenantId !== null;
+    }
+
     public static function clear(): void
     {
         self::$tenantId = null;

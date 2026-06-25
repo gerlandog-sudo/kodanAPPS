@@ -49,4 +49,21 @@ export const superAdminApi = {
   deleteRole: (id: number) => api.delete(`/api/super-admin/roles/${id}`),
 
   getCsrfToken: () => api.get('/api/csrf-token'),
+
+  // App Metrics
+  listAppMetrics: () => api.get('/api/super-admin/app-metrics'),
+  createAppMetric: (app: string, data: { metric: string; label: string; description?: string; metric_type?: string; default_value?: number; sort_order?: number }) =>
+    api.post(`/api/super-admin/app-metrics/${app}`, data),
+  updateAppMetric: (app: string, metric: string, data: { label?: string; description?: string; metric_type?: string; default_value?: number; is_active?: boolean; sort_order?: number }) =>
+    api.patch(`/api/super-admin/app-metrics/${app}/${metric}`, data),
+  deleteAppMetric: (app: string, metric: string) =>
+    api.delete(`/api/super-admin/app-metrics/${app}/${metric}`),
+
+  // Tenant Usage & Overrides
+  getTenantUsage: (tenantId: number) =>
+    api.get(`/api/super-admin/tenants/${tenantId}/usage`),
+  setTenantOverride: (tenantId: number, data: { module: string; metric: string; custom_value: number }) =>
+    api.post(`/api/super-admin/tenants/${tenantId}/overrides`, data),
+  clearTenantOverride: (tenantId: number, module: string, metric: string) =>
+    api.delete(`/api/super-admin/tenants/${tenantId}/overrides/${module}/${metric}`),
 };

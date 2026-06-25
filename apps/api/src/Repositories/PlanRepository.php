@@ -18,6 +18,11 @@ final class PlanRepository extends BaseRepository
 {
     protected const TABLE = 'subscription_plans';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     public function __construct(TenantAwarePDO $pdo)
     {
         parent::__construct($pdo);

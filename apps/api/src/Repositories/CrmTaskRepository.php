@@ -13,6 +13,11 @@ final class CrmTaskRepository extends BaseRepository
 {
     protected const TABLE = 'tasks';
 
+    protected function getLimitConfig(): ?array
+    {
+        return ['module' => 'crm', 'metric' => 'tasks_max'];
+    }
+
     /**
      * Lista todas las tareas comerciales del tenant, opcionalmente filtradas por oportunidad y archivado,
      * aplicando aislamiento por usuario para no-administradores.

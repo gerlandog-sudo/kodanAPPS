@@ -20,6 +20,7 @@ namespace kodanAPPS;
 
 use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\Middleware\AuthMiddleware;
+use kodanAPPS\Middleware\ApiUsageTracker;
 use kodanAPPS\Controllers\SuperAdminController;
 use kodanAPPS\Controllers\AuthController;
 use kodanAPPS\Controllers\CrmController;
@@ -57,6 +58,14 @@ use kodanAPPS\Services\CustomFieldService;
 use kodanAPPS\Services\EntityOwnerSyncService;
 use kodanAPPS\Services\MentionsParser;
 use kodanAPPS\Services\WorkflowEngine;
+use kodanAPPS\Services\UsageTracker;
+use kodanAPPS\Services\UsageTrackerInterface;
+use kodanAPPS\Services\PlanAccessValidator;
+use kodanAPPS\Services\UsageLimitEnforcer;
+use kodanAPPS\Services\TenantOverrideManager;
+use kodanAPPS\Services\AppAccessService;
+use kodanAPPS\Services\Recounters\CrmUsageRecounter;
+use kodanAPPS\Services\Recounters\TrackerUsageRecounter;
 use kodanAPPS\Controllers\MessagingController;
 use kodanAPPS\Controllers\WorkflowController;
 
@@ -201,14 +210,52 @@ $emailTemplateRepo = new \kodanAPPS\Repositories\EmailTemplateRepository($pdo);
 $smtpConfigRepo = new \kodanAPPS\Repositories\SmtpConfigRepository($pdo);
 
 // ------------------------------------------------------------
+// Servicios de Límites y Consumo (deben ir antes de TenantService)
+// ------------------------------------------------------------
+$usageTracker = new UsageTracker($pdo, [
+    'crm' => new CrmUsageRecounter(),
+    'tracker' => new TrackerUsageRecounter(),
+]);
+$planAccessValidator = new PlanAccessValidator($pdo);
+$usageLimitEnforcer = new UsageLimitEnforcer($usageTracker);
+$tenantOverrideManager = new TenantOverrideManager($pdo);
+$appAccessService = new AppAccessService(
+    $planAccessValidator,
+    $usageLimitEnforcer,
+    $tenantOverrideManager,
+    $usageTracker,
+);
+$apiUsageTracker = new ApiUsageTracker($usageTracker);
+
+// ------------------------------------------------------------
 // Servicios
 // ------------------------------------------------------------
-$tenantService = new TenantService($tenantRepo, $userRepo);
+$tenantService = new TenantService($tenantRepo, $userRepo, $usageTracker);
 $customFieldService = new CustomFieldService($pdo);
 $mentionsParser = new MentionsParser($chatRepo);
 $entityOwnerSyncService = new EntityOwnerSyncService($chatRepo);
 $workflowEngine = new WorkflowEngine($workflowRepo, $taskRepo, $oppRepo, $notificationRepo);
 $mailService = new \kodanAPPS\Services\MailService($pdo, $smtpConfigRepo);
+
+// ------------------------------------------------------------
+// Inyectar limit enforcer en repositorios
+// ------------------------------------------------------------
+$accountRepo->setLimitEnforcer($usageLimitEnforcer);
+$contactRepo->setLimitEnforcer($usageLimitEnforcer);
+$oppRepo->setLimitEnforcer($usageLimitEnforcer);
+$pipelineRepo->setLimitEnforcer($usageLimitEnforcer);
+$taskRepo->setLimitEnforcer($usageLimitEnforcer);
+$projectRepo->setLimitEnforcer($usageLimitEnforcer);
+$planAccessValidator = new PlanAccessValidator($pdo);
+$usageLimitEnforcer = new UsageLimitEnforcer($usageTracker);
+$tenantOverrideManager = new TenantOverrideManager($pdo);
+$appAccessService = new AppAccessService(
+    $planAccessValidator,
+    $usageLimitEnforcer,
+    $tenantOverrideManager,
+    $usageTracker,
+);
+$apiUsageTracker = new ApiUsageTracker($usageTracker);
 
 // ------------------------------------------------------------
 // Configuración sensible
@@ -258,9 +305,12 @@ $authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId);
 // ------------------------------------------------------------
 // Controladores
 // ------------------------------------------------------------
-$authController = new AuthController($userRepo, $jwtSecret, $systemTenantId, $pdo, $cookieDomain);
-$superAdminController = new SuperAdminController($tenantService, $tenantRepo, $planRepo, $userRepo);
-$crmController = new CrmController($pdo);
+$authController = new AuthController($userRepo, $jwtSecret, $systemTenantId, $pdo, $planAccessValidator, $usageTracker, $cookieDomain);
+$superAdminController = new SuperAdminController($tenantService, $tenantRepo, $planRepo, $userRepo, $tenantOverrideManager, $usageTracker, $pdo, [
+    'crm' => new CrmUsageRecounter(),
+    'tracker' => new TrackerUsageRecounter(),
+]);
+$crmController = new CrmController($pdo, $usageTracker);
 $customFieldController = new CustomFieldController($customFieldService, $pdo);
 $accountController = new AccountController($accountRepo);
 $contactController = new ContactController($contactRepo);
@@ -272,7 +322,7 @@ $taskController = new CrmTaskController($taskRepo, $notificationRepo, $workflowE
 $taskTypeController = new TaskTypeController($taskTypeRepo);
 $chatController = new ChatController($chatRepo);
 $trackerController = new TrackerController($projectRepo);
-$tenantUserController = new TenantUserController($userRepo, $pdo);
+$tenantUserController = new TenantUserController($userRepo, $pdo, $planAccessValidator, $usageTracker);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
 $workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo);
@@ -312,8 +362,14 @@ return [
         'entityOwnerSync' => $entityOwnerSyncService,
         'workflowEngine' => $workflowEngine,
         'mail' => $mailService,
+        'usageTracker' => $usageTracker,
+        'planAccessValidator' => $planAccessValidator,
+        'usageLimitEnforcer' => $usageLimitEnforcer,
+        'tenantOverrideManager' => $tenantOverrideManager,
+        'appAccessService' => $appAccessService,
     ],
     'auth' => $authMiddleware,
+    'apiUsageTracker' => $apiUsageTracker,
     'controllers' => [
         'auth' => $authController,
         'superAdmin' => $superAdminController,

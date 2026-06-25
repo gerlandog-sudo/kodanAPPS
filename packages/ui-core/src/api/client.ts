@@ -140,6 +140,27 @@ export async function apiClient<T = unknown>(
   return response.json();
 }
 
+export const usageApi = {
+  getPlanStatus: () => api.get<PlanLimitResponse[]>('/api/tenant-users/plan-status'),
+  getContractedApps: () => api.get<string[]>('/api/tenant-users/apps'),
+};
+
+export const overrideApi = {
+  getTenantUsage: (tenantId: number) => api.get<any>(`/api/super-admin/tenants/${tenantId}/usage`),
+  setOverride: (tenantId: number, module: string, metric: string, customValue: number) =>
+    api.post<any>(`/api/super-admin/tenants/${tenantId}/overrides`, { module, metric, custom_value: customValue }),
+  clearOverride: (tenantId: number, module: string, metric: string) =>
+    api.delete<any>(`/api/super-admin/tenants/${tenantId}/overrides/${module}/${metric}`),
+};
+
+interface PlanLimitResponse {
+  module: string;
+  metric: string;
+  limit_value: number | string;
+  current_usage: number | string;
+  has_capacity: number | string;
+}
+
 export const api = {
   get: <T>(endpoint: string, params?: Record<string, string>) =>
     apiClient<T>(endpoint, { method: 'GET', params }),

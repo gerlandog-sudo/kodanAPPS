@@ -13,6 +13,11 @@ final class QuoteRepository extends BaseRepository
 {
     protected const TABLE = 'quotes';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     /**
      * Lista todas las cotizaciones del tenant, opcionalmente filtradas por oportunidad
      * Incluye datos de la oportunidad (título) y cuenta (nombre)

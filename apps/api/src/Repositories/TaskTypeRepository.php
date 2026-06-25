@@ -13,6 +13,11 @@ final class TaskTypeRepository extends BaseRepository
 {
     protected const TABLE = 'task_types';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     /**
      * Lista todos los tipos de tareas del tenant
      * 

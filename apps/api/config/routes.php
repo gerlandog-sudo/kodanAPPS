@@ -188,6 +188,7 @@ return function (Router $router, array $app): void {
     // ============================================================
     $router->use('/api/crm', function (Router $router) use ($app) {
         $auth = $app['auth']->handle();
+        $app['apiUsageTracker']->handle();
         $router->setContext('auth', $auth);
     });
 
@@ -283,6 +284,44 @@ return function (Router $router, array $app): void {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['superAdmin']->changePassword($input));
+    });
+
+    $router->get('/api/super-admin/app-metrics', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->listAppMetrics());
+    });
+
+    $router->post('/api/super-admin/app-metrics/{app}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->createAppMetric($p['app'], $input));
+    });
+
+    $router->patch('/api/super-admin/app-metrics/{app}/{metric}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->updateAppMetric($p['app'], $p['metric'], $input));
+    });
+
+    $router->delete('/api/super-admin/app-metrics/{app}/{metric}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->deleteAppMetric($p['app'], $p['metric']));
+    });
+
+    $router->get('/api/super-admin/tenants/{tenantId}/usage', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->getTenantUsage((int)$p['tenantId']));
+    });
+
+    $router->post('/api/super-admin/tenants/{tenantId}/overrides', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->setTenantOverride((int)$p['tenantId'], $input));
+    });
+
+    $router->delete('/api/super-admin/tenants/{tenantId}/overrides/{module}/{metric}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->clearTenantOverride((int)$p['tenantId'], $p['module'], $p['metric']));
     });
 
     $router->post('/api/super-admin/recount-usage', function () use ($app) {
@@ -651,6 +690,15 @@ return function (Router $router, array $app): void {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['tenantUser']->getPlanStatus());
     });
+    $router->get('/api/tenant-users/apps', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->getContractedApps());
+    });
+    $router->patch('/api/tenant-users/roles', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['tenantUser']->updateRoles($input));
+    });
     $router->post('/api/tenant-users', function () use ($app) {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         header('Content-Type: application/json');
@@ -728,6 +776,7 @@ return function (Router $router, array $app): void {
     // ============================================================
     $router->use('/api/tracker', function (Router $router) use ($app) {
         $auth = $app['auth']->handle();
+        $app['apiUsageTracker']->handle();
         $router->setContext('auth', $auth);
     });
 

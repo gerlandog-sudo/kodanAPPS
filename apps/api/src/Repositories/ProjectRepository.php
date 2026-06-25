@@ -9,6 +9,11 @@ class ProjectRepository extends BaseRepository
 {
     protected const TABLE = 'projects';
 
+    protected function getLimitConfig(): ?array
+    {
+        return ['module' => 'crm', 'metric' => 'projects_max'];
+    }
+
     /**
      * Lista todos los proyectos con tenant scope automático.
      *

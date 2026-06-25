@@ -8,6 +8,7 @@ use kodanAPPS\DTOs\TenantCreateDTO;
 use kodanAPPS\Repositories\TenantRepository;
 use kodanAPPS\Repositories\UserRepository;
 use kodanAPPS\DB\TenantContext;
+use kodanAPPS\Services\UsageTrackerInterface;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -33,13 +34,16 @@ final class TenantService
 {
     private TenantRepository $tenantRepo;
     private UserRepository $userRepo;
+    private UsageTrackerInterface $usageTracker;
 
     public function __construct(
         TenantRepository $tenantRepo,
-        UserRepository $userRepo
+        UserRepository $userRepo,
+        UsageTrackerInterface $usageTracker
     ) {
         $this->tenantRepo = $tenantRepo;
         $this->userRepo = $userRepo;
+        $this->usageTracker = $usageTracker;
     }
 
     /**
@@ -100,11 +104,7 @@ final class TenantService
             ]);
 
             foreach ($planModules as $module) {
-            $this->tenantRepo->rawExecute(
-                "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage SET current_value = current_value + 1
-                 WHERE tenant_id = ? AND module = ? AND metric = 'users_max'",
-                [$tenantId, $module]
-            );
+                $this->usageTracker->increment($module, 'users_max', 1);
             }
 
             // ------------------------------------------------------------
@@ -227,13 +227,7 @@ final class TenantService
      */
     private function initializePlanUsage(int $tenantId, int $planId): void
     {
-        $this->tenantRepo->rawExecute(
-            "/* BYPASS_TENANT_SCOPE */ INSERT INTO tenant_plan_usage (tenant_id, module, metric, current_value)
-             SELECT ?, pl.module, pl.metric, 0
-             FROM plan_limits pl WHERE pl.plan_id = ?
-             ON DUPLICATE KEY UPDATE current_value = current_value",
-            [$tenantId, $planId]
-        );
+        $this->usageTracker->initializeTenant($tenantId, $planId);
     }
 
     /**

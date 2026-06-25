@@ -1,0 +1,298 @@
+import { useState } from 'react';
+import { Plus, GripVertical, Pencil, Trash2, Check, X } from 'lucide-react';
+import { SlidePanel } from './SlidePanel';
+import { ConfirmDialog } from './ConfirmDialog';
+import { Button } from './Button';
+import { toast } from 'sonner';
+
+interface AppMetric {
+  app_id: string;
+  metric: string;
+  label: string;
+  description: string | null;
+  metric_type: 'limit_entity' | 'counter_usage';
+  default_value: number;
+  is_active: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AppMetricsManagerProps {
+  metrics: AppMetric[];
+  apps: Array<{ app_id: string; name: string }>;
+  onCreate: (app: string, data: { metric: string; label: string; description?: string; metric_type?: string; default_value?: number; sort_order?: number }) => Promise<void>;
+  onUpdate: (app: string, metric: string, data: { label?: string; description?: string; metric_type?: string; default_value?: number; is_active?: boolean; sort_order?: number }) => Promise<void>;
+  onDelete: (app: string, metric: string) => Promise<void>;
+  onRefresh: () => Promise<void>;
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  limit_entity: 'Límite de entidad',
+  counter_usage: 'Contador de uso',
+};
+
+export function AppMetricsManager({ metrics, apps, onCreate, onUpdate, onDelete, onRefresh }: AppMetricsManagerProps) {
+  const [editMetric, setEditMetric] = useState<AppMetric | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ app: string; metric: string; label: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    app_id: apps[0]?.app_id || '',
+    metric: '',
+    label: '',
+    description: '',
+    metric_type: 'limit_entity' as string,
+    default_value: 0,
+    sort_order: 0,
+  });
+
+  const grouped = apps.map(app => ({
+    app,
+    metrics: metrics.filter(m => m.app_id === app.app_id).sort((a, b) => a.sort_order - b.sort_order),
+  }));
+
+  const openCreate = () => {
+    setEditMetric(null);
+    setForm({
+      app_id: apps[0]?.app_id || '',
+      metric: '',
+      label: '',
+      description: '',
+      metric_type: 'limit_entity',
+      default_value: 0,
+      sort_order: metrics.length,
+    });
+    setCreating(true);
+  };
+
+  const openEdit = (m: AppMetric) => {
+    setEditMetric(m);
+    setForm({
+      app_id: m.app_id,
+      metric: m.metric,
+      label: m.label,
+      description: m.description || '',
+      metric_type: m.metric_type,
+      default_value: m.default_value,
+      sort_order: m.sort_order,
+    });
+    setCreating(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.metric.trim() || !form.label.trim()) {
+      toast.error('Metric y Label son requeridos');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      if (editMetric) {
+        await onUpdate(editMetric.app_id, editMetric.metric, {
+          label: form.label,
+          description: form.description,
+          metric_type: form.metric_type,
+          default_value: form.default_value,
+          sort_order: form.sort_order,
+        });
+        toast.success('Métrica actualizada');
+      } else {
+        await onCreate(form.app_id, {
+          metric: form.metric.trim(),
+          label: form.label.trim(),
+          description: form.description,
+          metric_type: form.metric_type,
+          default_value: form.default_value,
+          sort_order: form.sort_order,
+        });
+        toast.success('Métrica creada');
+      }
+      setCreating(false);
+      setEditMetric(null);
+      await onRefresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Error guardando métrica');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await onDelete(deleteTarget.app, deleteTarget.metric);
+      toast.success('Métrica eliminada');
+      setDeleteTarget(null);
+      await onRefresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Error eliminando métrica');
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>Métricas por App</h3>
+        <Button variant="primary" onClick={openCreate}>
+          <Plus size={16} />
+          Nueva Métrica
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-6">
+        {grouped.map(({ app, metrics: appMetrics }) => (
+          <div key={app.app_id} className="glass-panel rounded-xl overflow-hidden">
+            <div className="px-5 py-3 flex items-center gap-3" style={{ background: 'var(--sys-surface)', borderBottom: '1px solid var(--sys-border-soft)' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: 'var(--sys-primary-container)', color: 'var(--sys-on-primary)' }}>
+                {app.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>{app.name}</span>
+              <span className="text-xs ml-auto" style={{ color: 'var(--sys-text-muted)' }}>{appMetrics.length} métricas</span>
+            </div>
+            {appMetrics.length === 0 ? (
+              <div className="px-5 py-8 text-center text-xs" style={{ color: 'var(--sys-text-muted)' }}>
+                No hay métricas configuradas
+              </div>
+            ) : (
+              <div className="divide-y" style={{ borderColor: 'var(--sys-border-soft)' }}>
+                {appMetrics.map(m => (
+                  <div key={m.metric} className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--sys-hover)] transition-colors">
+                    <GripVertical size={14} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium" style={{ color: 'var(--sys-text)' }}>{m.label}</span>
+                        <code className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--sys-surface)', color: 'var(--sys-text-muted)' }}>{m.metric}</code>
+                      </div>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>{TYPE_LABELS[m.metric_type] || m.metric_type}</span>
+                        <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Default: {m.default_value}</span>
+                        {m.is_active ? (
+                          <span className="flex items-center gap-1 text-xs" style={{ color: '#22c55e' }}><Check size={10} /> Activo</span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--sys-text-muted)' }}><X size={10} /> Inactivo</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => openEdit(m)} className="p-1.5 rounded-md hover:bg-[var(--sys-surface)] transition-colors" style={{ color: 'var(--sys-text-muted)' }}>
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => setDeleteTarget({ app: m.app_id, metric: m.metric, label: m.label })} className="p-1.5 rounded-md hover:bg-[var(--sys-error-container)] transition-colors" style={{ color: 'var(--sys-error)' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <SlidePanel open={creating} onClose={() => { setCreating(false); setEditMetric(null); }} title={editMetric ? 'Editar Métrica' : 'Nueva Métrica'}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6" style={{ minHeight: 'calc(100vh - 120px)' }}>
+          <div className="glass-panel rounded-xl p-5">
+            <div className="flex flex-col gap-4">
+              {!editMetric && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>App</label>
+                  <select
+                    className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                    value={form.app_id}
+                    onChange={e => setForm({ ...form, app_id: e.target.value })}
+                  >
+                    {apps.map(a => <option key={a.app_id} value={a.app_id}>{a.name}</option>)}
+                  </select>
+                </div>
+              )}
+              {!editMetric && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Metric Key *</label>
+                  <input
+                    type="text"
+                    className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                    value={form.metric}
+                    onChange={e => setForm({ ...form, metric: e.target.value.replace(/[^a-z_]/g, '') })}
+                    placeholder="users_max"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Label *</label>
+                <input
+                  type="text"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                  value={form.label}
+                  onChange={e => setForm({ ...form, label: e.target.value })}
+                  placeholder="Usuarios máximos"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Descripción</label>
+                <textarea
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                  rows={2}
+                  value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value })}
+                  placeholder="Descripción de la métrica..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Tipo</label>
+                  <select
+                    className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                    value={form.metric_type}
+                    onChange={e => setForm({ ...form, metric_type: e.target.value })}
+                  >
+                    <option value="limit_entity">Límite de entidad</option>
+                    <option value="counter_usage">Contador de uso</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Valor por defecto</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                    value={form.default_value}
+                    onChange={e => setForm({ ...form, default_value: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Orden</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                  value={form.sort_order}
+                  onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 mt-auto" style={{ borderTop: '1px solid var(--sys-border-soft)' }}>
+            <Button variant="secondary" onClick={() => { setCreating(false); setEditMetric(null); }}>Cancelar</Button>
+            <Button variant="primary" type="submit" disabled={submitting}>
+              {submitting ? 'Guardando...' : (editMetric ? 'Actualizar' : 'Crear')}
+            </Button>
+          </div>
+        </form>
+      </SlidePanel>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Eliminar métrica"
+        message={deleteTarget ? `¿Eliminar métrica "${deleteTarget.label}" (${deleteTarget.metric})?` : ''}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={handleDelete}
+      />
+    </div>
+  );
+}

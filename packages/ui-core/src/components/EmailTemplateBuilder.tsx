@@ -201,113 +201,114 @@ export function EmailTemplateBuilder({
 
   return (
     <div className="flex flex-col gap-6 h-full min-h-[500px]" style={{ fontFamily: 'var(--font-hanken-grotesk, system-ui)' }}>
-      {/* Campos de Nombre y Asunto */}
-      <div className="flex flex-col gap-4">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sys-text-muted)' }}>Nombre de la Plantilla</label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Bienvenida a Cliente"
-            required
-          />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sys-text-muted)' }}>Asunto por Defecto</label>
-          <input
-            ref={subjectInputRef}
-            value={subject}
-            onChange={(e) => {
-              setSubject(e.target.value)
-              handleSubjectSelect()
-            }}
-            onFocus={handleSubjectFocus}
-            onSelect={handleSubjectSelect}
-            onKeyUp={handleSubjectSelect}
-            onClick={handleSubjectSelect}
-            placeholder="Ej. Hola {{contact_name}}, bienvenido a nuestra plataforma"
-            required
-            className="w-full px-4 py-3 rounded-md border border-border-soft bg-surface-raised text-text text-sm placeholder:text-text-muted/60 focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25"
-          />
-        </div>
-      </div>
-
+      {/* Fila: contenido izquierdo + variables a la derecha */}
       <div className="flex gap-6 flex-1 min-h-[300px]">
-        {/* Editor WYSIWYG */}
-        <div className="flex-1 flex flex-col border border-solid rounded-lg overflow-hidden" style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface)' }}>
-          {/* Barra de Herramientas */}
-          <div className="flex items-center gap-1 p-2 border-b border-solid border-border-soft bg-surface-raised shrink-0">
-            <button
-              type="button"
-              onClick={() => handleFormat('bold')}
-              title="Negrita"
-              style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
-              className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
-            >
-              <Bold size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFormat('italic')}
-              title="Cursiva"
-              style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
-              className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
-            >
-              <Italic size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFormat('underline')}
-              title="Subrayado"
-              style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
-              className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
-            >
-              <Underline size={16} />
-            </button>
-            <div style={{ width: '1px', height: '1.25rem', background: 'var(--sys-border-soft)', margin: '0 0.25rem' }} />
-            <button
-              type="button"
-              onClick={() => handleFormat('insertUnorderedList')}
-              title="Lista Desordenada"
-              style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
-              className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
-            >
-              <List size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFormat('insertOrderedList')}
-              title="Lista Ordenada"
-              style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
-              className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
-            >
-              <ListOrdered size={16} />
-            </button>
+        {/* Columna izquierda: Nombre, Asunto, Editor */}
+        <div className="flex-1 flex flex-col gap-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sys-text-muted)' }}>Nombre de la Plantilla</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ej. Bienvenida a Cliente"
+              required
+            />
           </div>
 
-          {/* Área contentEditable */}
-          <div
-            ref={editorRef}
-            contentEditable
-            onInput={handleEditorInput}
-            onBlur={saveSelection}
-            onFocus={handleEditorFocus}
-            onKeyUp={saveSelection}
-            onMouseUp={saveSelection}
-            className="flex-1 p-4 overflow-y-auto outline-none min-h-[200px]"
-            style={{
-              color: 'var(--sys-text)',
-              background: 'var(--sys-surface)',
-              fontFamily: 'sans-serif',
-              lineHeight: '1.6',
-              maxHeight: '280px',
-            }}
-            data-placeholder="Escribe el cuerpo de tu correo aquí..."
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sys-text-muted)' }}>Asunto por Defecto</label>
+            <input
+              ref={subjectInputRef}
+              value={subject}
+              onChange={(e) => {
+                setSubject(e.target.value)
+                handleSubjectSelect()
+              }}
+              onFocus={handleSubjectFocus}
+              onSelect={handleSubjectSelect}
+              onKeyUp={handleSubjectSelect}
+              onClick={handleSubjectSelect}
+              placeholder="Ej. Hola {{contact_name}}, bienvenido a nuestra plataforma"
+              required
+              className="w-full px-4 py-3 rounded-md border border-border-soft bg-surface-raised text-text text-sm placeholder:text-text-muted/60 focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25"
+            />
+          </div>
+
+          {/* Editor WYSIWYG */}
+          <div className="flex-1 flex flex-col border border-solid rounded-lg overflow-hidden" style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface)' }}>
+            {/* Barra de Herramientas */}
+            <div className="flex items-center gap-1 p-2 border-b border-solid border-border-soft bg-surface-raised shrink-0">
+              <button
+                type="button"
+                onClick={() => handleFormat('bold')}
+                title="Negrita"
+                style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
+                className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
+              >
+                <Bold size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFormat('italic')}
+                title="Cursiva"
+                style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
+                className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
+              >
+                <Italic size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFormat('underline')}
+                title="Subrayado"
+                style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
+                className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
+              >
+                <Underline size={16} />
+              </button>
+              <div style={{ width: '1px', height: '1.25rem', background: 'var(--sys-border-soft)', margin: '0 0.25rem' }} />
+              <button
+                type="button"
+                onClick={() => handleFormat('insertUnorderedList')}
+                title="Lista Desordenada"
+                style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
+                className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
+              >
+                <List size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFormat('insertOrderedList')}
+                title="Lista Ordenada"
+                style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', color: 'var(--sys-text)', borderRadius: '0.25rem', cursor: 'pointer' }}
+                className="hover:bg-surface-hover active:scale-[0.95] transition-transform"
+              >
+                <ListOrdered size={16} />
+              </button>
+            </div>
+
+            {/* Área contentEditable */}
+            <div
+              ref={editorRef}
+              contentEditable
+              onInput={handleEditorInput}
+              onBlur={saveSelection}
+              onFocus={handleEditorFocus}
+              onKeyUp={saveSelection}
+              onMouseUp={saveSelection}
+              className="flex-1 p-4 overflow-y-auto outline-none min-h-[200px]"
+              style={{
+                color: 'var(--sys-text)',
+                background: 'var(--sys-surface)',
+                fontFamily: 'sans-serif',
+                lineHeight: '1.6',
+                maxHeight: '280px',
+              }}
+              data-placeholder="Escribe el cuerpo de tu correo aquí..."
+            />
+          </div>
         </div>
 
-        {/* Panel Lateral de Variables — inserta donde esté el cursor */}
+        {/* Columna derecha: Variables Dinámicas — alineadas desde el borde superior */}
         <div className="w-64 border border-solid rounded-lg p-4 flex flex-col gap-3 shrink-0" style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface-raised)' }}>
           <div className="flex items-center gap-2 border-b border-solid border-border-soft pb-2 shrink-0">
             <Braces size={16} className="text-primary" />

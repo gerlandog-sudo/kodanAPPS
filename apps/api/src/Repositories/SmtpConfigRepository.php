@@ -19,6 +19,11 @@ final class SmtpConfigRepository extends BaseRepository
 {
     protected const TABLE = 'tenant_smtp_config';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     public function __construct(TenantAwarePDO $pdo)
     {
         parent::__construct($pdo);

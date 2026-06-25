@@ -13,6 +13,11 @@ final class ProductRepository extends BaseRepository
 {
     protected const TABLE = 'products';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     /**
      * Lista todos los productos del tenant
      * 

@@ -6,10 +6,14 @@ namespace kodanAPPS\Controllers;
 
 use kodanAPPS\DTOs\TenantCreateDTO;
 use kodanAPPS\Services\TenantService;
+use kodanAPPS\Services\RecountStrategyInterface;
+use kodanAPPS\Services\UsageTrackerInterface;
+use kodanAPPS\Services\TenantOverrideManager;
 use kodanAPPS\Repositories\TenantRepository;
 use kodanAPPS\Repositories\PlanRepository;
 use kodanAPPS\Repositories\UserRepository;
 use kodanAPPS\DB\TenantContext;
+use kodanAPPS\DB\TenantAwarePDO;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -42,17 +46,34 @@ final class SuperAdminController
     private TenantRepository $tenantRepo;
     private PlanRepository $planRepo;
     private UserRepository $userRepo;
+    private TenantOverrideManager $overrideManager;
+    private UsageTrackerInterface $usageTracker;
+    private TenantAwarePDO $pdo;
 
+    /** @var array<string, RecountStrategyInterface> */
+    private array $recounters;
+
+    /**
+     * @param array<string, RecountStrategyInterface> $recounters
+     */
     public function __construct(
         TenantService $tenantService,
         TenantRepository $tenantRepo,
         PlanRepository $planRepo,
-        UserRepository $userRepo
+        UserRepository $userRepo,
+        TenantOverrideManager $overrideManager,
+        UsageTrackerInterface $usageTracker,
+        TenantAwarePDO $pdo,
+        array $recounters = []
     ) {
         $this->tenantService = $tenantService;
         $this->tenantRepo = $tenantRepo;
         $this->planRepo = $planRepo;
         $this->userRepo = $userRepo;
+        $this->overrideManager = $overrideManager;
+        $this->usageTracker = $usageTracker;
+        $this->pdo = $pdo;
+        $this->recounters = $recounters;
     }
 
     /**
@@ -528,36 +549,218 @@ final class SuperAdminController
     {
         $results = [];
 
-        $results['users_max'] = $this->tenantRepo->rawExecute(
-            "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage u
-             JOIN (SELECT tenant_id, COUNT(*) AS cnt FROM users WHERE is_active = 1 GROUP BY tenant_id) actual
-             ON u.tenant_id = actual.tenant_id
-             SET u.current_value = actual.cnt
-             WHERE u.metric = 'users_max'"
+        $tenants = $this->tenantRepo->rawSelect(
+            "SELECT tenant_id FROM tenants WHERE is_active = 1"
         );
+        $tenantIds = array_map(fn($r) => (int)$r['tenant_id'], $tenants);
 
-        $results['negotiations_max'] = $this->tenantRepo->rawExecute(
-            "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage u
-             JOIN (SELECT tenant_id, COUNT(*) AS cnt FROM opportunities WHERE deleted_at IS NULL GROUP BY tenant_id) actual
-             ON u.tenant_id = actual.tenant_id
-             SET u.current_value = actual.cnt
-             WHERE u.metric = 'negotiations_max'"
-        );
-
-        $tables = $this->tenantRepo->rawSelect("SHOW TABLES LIKE 'crm_tasks'");
-        if (count($tables) > 0) {
-            $results['tasks_max'] = $this->tenantRepo->rawExecute(
-                "/* BYPASS_TENANT_SCOPE */ UPDATE tenant_plan_usage u
-                 JOIN (SELECT tenant_id, COUNT(*) AS cnt FROM crm_tasks WHERE deleted_at IS NULL AND is_completed = 0 GROUP BY tenant_id) actual
-                 ON u.tenant_id = actual.tenant_id
-                 SET u.current_value = actual.cnt
-                 WHERE u.metric = 'tasks_max'"
-            );
+        foreach ($this->recounters as $module => $strategy) {
+            $count = 0;
+            foreach ($tenantIds as $tid) {
+                $strategy->recount($tid, $this->pdo);
+                $count++;
+            }
+            $results[$module] = $count;
         }
 
         $this->auditLog('USAGE_RECALCULATED', $results);
 
         return ['success' => true, 'results' => $results];
+    }
+
+    /**
+     * ============================================================
+     * App Metrics CRUD
+     * ============================================================
+     */
+
+    /**
+     * GET /api/super-admin/app-metrics
+     * @return array<int, array<string, mixed>>
+     */
+    public function listAppMetrics(): array
+    {
+        return $this->planRepo->rawSelect(
+            "SELECT * FROM app_metrics ORDER BY app_id, sort_order"
+        );
+    }
+
+    /**
+     * POST /api/super-admin/app-metrics/{app}
+     * @param array<string, mixed> $input
+     * @return array{success: bool, metric: string}
+     */
+    public function createAppMetric(string $app, array $input): array
+    {
+        if (empty($input['metric']) || empty($input['label'])) {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'Campos requeridos: metric, label',
+            ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        $this->planRepo->rawExecute(
+            "INSERT INTO app_metrics (app_id, metric, label, description, metric_type, default_value, sort_order)
+             VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [
+                $app,
+                $input['metric'],
+                $input['label'],
+                $input['description'] ?? '',
+                $input['metric_type'] ?? 'limit_entity',
+                (int)($input['default_value'] ?? 0),
+                (int)($input['sort_order'] ?? 0),
+            ]
+        );
+
+        $this->auditLog('APP_METRIC_CREATED', ['app' => $app, 'metric' => $input['metric']]);
+
+        return ['success' => true, 'metric' => $input['metric']];
+    }
+
+    /**
+     * PATCH /api/super-admin/app-metrics/{app}/{metric}
+     * @param array<string, mixed> $input
+     * @return array{success: bool}
+     */
+    public function updateAppMetric(string $app, string $metric, array $input): array
+    {
+        $allowed = ['label', 'description', 'metric_type', 'default_value', 'is_active', 'sort_order'];
+        $data = array_intersect_key($input, array_flip($allowed));
+
+        if (empty($data)) {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'No hay campos válidos para actualizar',
+            ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        $sets = implode(', ', array_map(fn($c) => "`{$c}` = :{$c}", array_keys($data)));
+        $data['app_id'] = $app;
+        $data['metric'] = $metric;
+        $this->planRepo->rawExecute(
+            "UPDATE app_metrics SET {$sets} WHERE app_id = :app_id AND metric = :metric",
+            $data
+        );
+
+        $this->auditLog('APP_METRIC_UPDATED', ['app' => $app, 'metric' => $metric, 'changes' => $data]);
+
+        return ['success' => true];
+    }
+
+    /**
+     * DELETE /api/super-admin/app-metrics/{app}/{metric}
+     * @return array{success: bool}
+     */
+    public function deleteAppMetric(string $app, string $metric): array
+    {
+        $this->planRepo->rawExecute(
+            "DELETE FROM app_metrics WHERE app_id = ? AND metric = ?",
+            [$app, $metric]
+        );
+
+        $this->auditLog('APP_METRIC_DELETED', ['app' => $app, 'metric' => $metric]);
+
+        return ['success' => true];
+    }
+
+    /**
+     * ============================================================
+     * Tenant Usage & Overrides
+     * ============================================================
+     */
+
+    /**
+     * GET /api/super-admin/tenants/{tenantId}/usage
+     * @return array<string, mixed>
+     */
+    public function getTenantUsage(int $tenantId): array
+    {
+        $modules = $this->usageTracker->getContractedApps($tenantId);
+        $usage = [];
+
+        // Obtener módulos contratados
+        $modules = $this->planRepo->rawSelect(
+            "SELECT DISTINCT pl.module
+             FROM tenants t
+             JOIN subscription_plans sp ON sp.id = t.subscription_plan_id
+             JOIN plan_limits pl ON pl.plan_id = sp.id
+             WHERE t.tenant_id = ?",
+            [$tenantId]
+        );
+
+        // Para obtener todas las métricas del tenant usando v_tenant_plan_limits
+        $rows = $this->planRepo->rawSelect(
+            "SELECT module, metric,
+                    CASE WHEN override_value IS NOT NULL THEN override_value ELSE plan_limit END AS limit_value,
+                    COALESCE(current_usage, 0) AS current_usage,
+                    has_capacity
+             FROM v_tenant_plan_limits
+             WHERE tenant_id = ?
+             ORDER BY module, metric",
+            [$tenantId]
+        );
+
+        $overrides = $this->overrideManager->getOverrides($tenantId);
+
+        return [
+            'modules' => array_column($modules, 'module'),
+            'limits' => $rows,
+            'overrides' => $overrides,
+            'tenant_id' => $tenantId,
+        ];
+    }
+
+    /**
+     * POST /api/super-admin/tenants/{tenantId}/overrides
+     * @param array<string, mixed> $input
+     * @return array{success: bool, override: array<string, mixed>}
+     */
+    public function setTenantOverride(int $tenantId, array $input): array
+    {
+        $module = $input['module'] ?? '';
+        $metric = $input['metric'] ?? '';
+        $customValue = (int)($input['custom_value'] ?? 0);
+
+        if (empty($module) || empty($metric)) {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'Campos requeridos: module, metric',
+            ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        $this->overrideManager->setOverride($tenantId, $module, $metric, $customValue);
+
+        $this->auditLog('TENANT_OVERRIDE_SET', [
+            'tenant_id' => $tenantId,
+            'module' => $module,
+            'metric' => $metric,
+            'custom_value' => $customValue,
+        ]);
+
+        return [
+            'success' => true,
+            'override' => [
+                'tenant_id' => $tenantId,
+                'module' => $module,
+                'metric' => $metric,
+                'custom_value' => $customValue,
+            ],
+        ];
+    }
+
+    /**
+     * DELETE /api/super-admin/tenants/{tenantId}/overrides/{module}/{metric}
+     * @return array{success: bool}
+     */
+    public function clearTenantOverride(int $tenantId, string $module, string $metric): array
+    {
+        $this->overrideManager->clearOverride($tenantId, $module, $metric);
+
+        $this->auditLog('TENANT_OVERRIDE_CLEARED', [
+            'tenant_id' => $tenantId,
+            'module' => $module,
+            'metric' => $metric,
+        ]);
+
+        return ['success' => true];
     }
 
     /**

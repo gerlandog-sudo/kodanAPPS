@@ -16,6 +16,11 @@ final class ChatRepository extends BaseRepository
 {
     protected const TABLE = 'conversations';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     /**
      * Busca una conversación existente para una entidad sin crearla.
      * 

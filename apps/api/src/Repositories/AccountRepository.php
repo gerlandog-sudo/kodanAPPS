@@ -14,6 +14,11 @@ final class AccountRepository extends BaseRepository
     protected const TABLE = 'accounts';
     protected string $primaryKey = 'account_id';
 
+    protected function getLimitConfig(): ?array
+    {
+        return ['module' => 'crm', 'metric' => 'accounts_max'];
+    }
+
     /**
      * Lista todas las cuentas del tenant
      * 

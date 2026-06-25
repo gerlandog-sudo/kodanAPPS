@@ -6,6 +6,8 @@ import { TenantManagement } from './components/TenantManagement';
 import { PlanManagement } from './components/PlanManagement';
 import { RoleManagement } from './components/RoleManagement';
 import { ChangePassword } from './components/ChangePassword';
+import { AppMetricsManager } from '@kodan-apps/ui-core';
+import { superAdminApi } from './api/client';
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import {
   LayoutDashboard,
@@ -15,7 +17,9 @@ import {
   Shield,
   User,
   Settings,
+  Gauge,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import './index.css';
 
 const LogoAdmin3D = lazy(() => import('./components/LogoAdmin3D').then(m => ({ default: m.LogoAdmin3D })));
@@ -24,7 +28,7 @@ function Logo3DPlaceholder({ size }: { size?: number }) {
   return <div style={{ width: size ?? 48, height: size ?? 48 }} />;
 }
 
-type Route = 'dashboard' | 'tenants' | 'plans' | 'roles' | 'audit';
+type Route = 'dashboard' | 'tenants' | 'plans' | 'roles' | 'audit' | 'app-metrics';
 type View = 'login' | 'set-password' | 'app';
 
 
@@ -32,9 +36,58 @@ const navItems: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
   { key: 'tenants', label: 'Tenants', icon: <Building2 size={18} /> },
   { key: 'plans', label: 'Planes', icon: <CreditCard size={18} /> },
+  { key: 'app-metrics', label: 'Métricas', icon: <Gauge size={18} /> },
   { key: 'roles', label: 'Roles', icon: <Shield size={18} /> },
   { key: 'audit', label: 'Auditoria', icon: <FileSearch size={18} /> },
 ];
+
+const APPS = [
+  { app_id: 'crm', name: 'CRM' },
+  { app_id: 'tracker', name: 'Tracker' },
+];
+
+function AppMetricsManagerPage() {
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadMetrics = async () => {
+    try {
+      setLoading(true);
+      const data = await superAdminApi.listAppMetrics() as any[];
+      setMetrics(data);
+    } catch (err: any) {
+      toast.error(err.message || 'Error cargando métricas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadMetrics(); }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-16"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>;
+  }
+
+  return (
+    <AppMetricsManager
+      metrics={metrics}
+      apps={APPS}
+      onCreate={async (app, data) => {
+        await superAdminApi.createAppMetric(app, data);
+        await loadMetrics();
+      }}
+      onUpdate={async (app, metric, data) => {
+        await superAdminApi.updateAppMetric(app, metric, data);
+        await loadMetrics();
+      }}
+      onDelete={async (app, metric) => {
+        await superAdminApi.deleteAppMetric(app, metric);
+        await loadMetrics();
+      }}
+      onRefresh={loadMetrics}
+    />
+  );
+}
 
 function AppContent() {
   const [view, setView] = useState<View | 'initial'>('initial');
@@ -135,6 +188,7 @@ function AppContent() {
             {route === 'dashboard' && <SuperAdminDashboard />}
             {route === 'tenants' && <TenantManagement />}
             {route === 'plans' && <PlanManagement />}
+            {route === 'app-metrics' && <AppMetricsManagerPage />}
             {route === 'roles' && <RoleManagement />}
             {route === 'audit' && (
               <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>

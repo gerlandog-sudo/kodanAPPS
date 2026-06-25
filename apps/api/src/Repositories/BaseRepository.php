@@ -6,6 +6,7 @@ namespace kodanAPPS\Repositories;
 
 use kodanAPPS\DB\TenantAwarePDO;
 use kodanAPPS\DB\TenantContext;
+use kodanAPPS\Services\UsageLimitEnforcer;
 use PDO;
 use RuntimeException;
 use Throwable;
@@ -31,6 +32,72 @@ abstract class BaseRepository
      * Sobrescribir en subclases si difiere de 'id'.
      */
     protected string $primaryKey = 'id';
+
+    private ?UsageLimitEnforcer $limitEnforcer = null;
+
+    /** Inyectar UsageLimitEnforcer para enforcement automático en create() */
+    public function setLimitEnforcer(?UsageLimitEnforcer $enforcer): void
+    {
+        $this->limitEnforcer = $enforcer;
+    }
+
+    /**
+     * Declara qué límite aplica a las entidades de este repositorio.
+     * Retorna null si no aplica límite (repos de solo lectura o globales).
+     * @return array{module: string, metric: string}|null
+     */
+    abstract protected function getLimitConfig(): ?array;
+
+    /**
+     * Verifica límite antes de INSERT si hay UsageLimitEnforcer configurado.
+     * Se llama automáticamente en create() cuando $table coincide con static::TABLE.
+     */
+    protected function enforceLimitIfNeeded(string $table): void
+    {
+        if ($table !== static::TABLE || $this->limitEnforcer === null) {
+            return;
+        }
+        $config = $this->getLimitConfig();
+        if ($config !== null) {
+            $this->limitEnforcer->enforce($config['module'], $config['metric']);
+        }
+    }
+
+    /**
+     * Incrementa contador después de INSERT si hay UsageLimitEnforcer configurado.
+     * Se llama automáticamente en create() cuando $table coincide con static::TABLE.
+     */
+    protected function incrementUsageIfNeeded(string $table): void
+    {
+        if ($table !== static::TABLE || $this->limitEnforcer === null) {
+            return;
+        }
+        $config = $this->getLimitConfig();
+        if ($config !== null) {
+            $this->limitEnforcer->increment($config['module'], $config['metric']);
+        }
+    }
+
+    /**
+     * Verifica un límite directamente (sin control de tabla).
+     * Útil cuando un repo necesita verificar un límite de otro módulo.
+     */
+    protected function enforceUsageLimit(string $module, string $metric): void
+    {
+        if ($this->limitEnforcer !== null) {
+            $this->limitEnforcer->enforce($module, $metric);
+        }
+    }
+
+    /**
+     * Incrementa un contador de uso directamente (sin control de tabla).
+     */
+    protected function incrementUsage(string $module, string $metric): void
+    {
+        if ($this->limitEnforcer !== null) {
+            $this->limitEnforcer->increment($module, $metric);
+        }
+    }
 
     public function __construct(TenantAwarePDO $pdo)
     {
@@ -141,7 +208,9 @@ abstract class BaseRepository
     {
         $globalTables = ['tenants', 'subscription_plans', 'plan_limits'];
         $isGlobalTable = in_array($table, $globalTables, true);
-        
+
+        $this->enforceLimitIfNeeded($table);
+
         if (!$isGlobalTable) {
             $tenantId = TenantContext::getTenantId();
             $data['tenant_id'] = $tenantId;
@@ -155,6 +224,8 @@ abstract class BaseRepository
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);
+
+        $this->incrementUsageIfNeeded($table);
         
         return (int)$this->pdo->lastInsertId();
     }

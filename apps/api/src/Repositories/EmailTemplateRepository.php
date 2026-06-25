@@ -15,6 +15,11 @@ final class EmailTemplateRepository extends BaseRepository
 {
     protected const TABLE = 'email_templates';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     public function __construct(TenantAwarePDO $pdo)
     {
         parent::__construct($pdo);

@@ -13,6 +13,11 @@ final class WorkflowRepository extends BaseRepository
 {
     protected const TABLE = 'workflow_rules';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */

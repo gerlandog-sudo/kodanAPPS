@@ -15,6 +15,11 @@ final class NotificationRepository extends BaseRepository
 {
     protected const TABLE = 'notifications';
 
+    protected function getLimitConfig(): ?array
+    {
+        return null;
+    }
+
     /**
      * Lista todas las notificaciones de un usuario ordenadas por fecha descendente
      * 

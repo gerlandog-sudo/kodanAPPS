@@ -664,6 +664,104 @@ final class SuperAdminController
 
     /**
      * ============================================================
+     * Apps CRUD
+     * ============================================================
+     */
+
+    /**
+     * GET /api/super-admin/apps
+     * @return array<int, array<string, mixed>>
+     */
+    public function listApps(): array
+    {
+        return $this->planRepo->rawSelect(
+            "SELECT app_id, name, description, is_active, created_at /* BYPASS_TENANT_SCOPE */
+             FROM apps ORDER BY name"
+        );
+    }
+
+    /**
+     * POST /api/super-admin/apps
+     * @param array<string, mixed> $input
+     * @return array{success: bool, app_id: string}
+     */
+    public function createApp(array $input): array
+    {
+        if (empty($input['app_id']) || empty($input['name'])) {
+            throw new \InvalidArgumentException(json_encode([
+                'message' => 'Campos requeridos: app_id, name',
+            ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        $appId = preg_replace('/[^a-z0-9_]/', '', strtolower($input['app_id']));
+        if (strlen($appId) < 2) {
+            throw new \InvalidArgumentException(json_encode([
+                'message' => 'app_id debe tener al menos 2 caracteres (a-z, 0-9, _)',
+            ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        $this->planRepo->rawExecute(
+            "INSERT INTO apps (app_id, name, description, is_active) /* BYPASS_TENANT_SCOPE */
+             VALUES (?, ?, ?, ?)",
+            [
+                $appId,
+                $input['name'],
+                $input['description'] ?? '',
+                (int)($input['is_active'] ?? 1),
+            ]
+        );
+
+        $this->auditLog('APP_CREATED', ['app_id' => $appId, 'name' => $input['name']]);
+
+        return ['success' => true, 'app_id' => $appId];
+    }
+
+    /**
+     * PUT /api/super-admin/apps/{appId}
+     * @param array<string, mixed> $input
+     * @return array{success: bool}
+     */
+    public function updateApp(string $appId, array $input): array
+    {
+        $allowed = ['name', 'description', 'is_active'];
+        $data = array_intersect_key($input, array_flip($allowed));
+
+        if (empty($data)) {
+            throw new \InvalidArgumentException(json_encode([
+                'message' => 'No hay campos válidos para actualizar',
+            ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        $sets = implode(', ', array_map(fn($c) => "`{$c}` = :{$c}", array_keys($data)));
+        $data['app_id'] = $appId;
+        $this->planRepo->rawExecute(
+            "UPDATE apps SET {$sets} /* BYPASS_TENANT_SCOPE */ WHERE app_id = :app_id",
+            $data
+        );
+
+        $this->auditLog('APP_UPDATED', ['app_id' => $appId, 'changes' => $data]);
+
+        return ['success' => true];
+    }
+
+    /**
+     * DELETE /api/super-admin/apps/{appId}
+     * @return array{success: bool}
+     */
+    public function deleteApp(string $appId): array
+    {
+        $this->planRepo->rawExecute(
+            "DELETE FROM apps /* BYPASS_TENANT_SCOPE */ WHERE app_id = ?",
+            [$appId]
+        );
+
+        $this->auditLog('APP_DELETED', ['app_id' => $appId]);
+
+        return ['success' => true];
+    }
+
+    /**
+     * ============================================================
      * Tenant Usage & Overrides
      * ============================================================
      */

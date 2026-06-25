@@ -286,6 +286,28 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['superAdmin']->changePassword($input));
     });
 
+    $router->get('/api/super-admin/apps', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->listApps());
+    });
+
+    $router->post('/api/super-admin/apps', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->createApp($input));
+    });
+
+    $router->put('/api/super-admin/apps/{appId}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->updateApp($p['appId'], $input));
+    });
+
+    $router->delete('/api/super-admin/apps/{appId}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->deleteApp($p['appId']));
+    });
+
     $router->get('/api/super-admin/app-metrics', function () use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['superAdmin']->listAppMetrics());

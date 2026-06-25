@@ -41,28 +41,28 @@ const navItems: NavItem[] = [
   { key: 'audit', label: 'Auditoria', icon: <FileSearch size={18} /> },
 ];
 
-const APPS = [
-  { app_id: 'crm', name: 'CRM' },
-  { app_id: 'tracker', name: 'Tracker' },
-];
-
 function AppMetricsManagerPage() {
   const [metrics, setMetrics] = useState<any[]>([]);
+  const [apps, setApps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadMetrics = async () => {
+  const loadAll = async () => {
     try {
       setLoading(true);
-      const data = await superAdminApi.listAppMetrics() as any[];
-      setMetrics(data);
+      const [metricsData, appsData] = await Promise.all([
+        superAdminApi.listAppMetrics() as Promise<any[]>,
+        superAdminApi.listApps() as Promise<any[]>,
+      ]);
+      setMetrics(metricsData);
+      setApps(appsData);
     } catch (err: any) {
-      toast.error(err.message || 'Error cargando métricas');
+      toast.error(err.message || 'Error cargando datos');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadMetrics(); }, []);
+  useEffect(() => { loadAll(); }, []);
 
   if (loading) {
     return <div className="flex items-center justify-center py-16"><div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>;
@@ -70,21 +70,33 @@ function AppMetricsManagerPage() {
 
   return (
     <AppMetricsManager
+      apps={apps}
       metrics={metrics}
-      apps={APPS}
-      onCreate={async (app, data) => {
+      onRefresh={loadAll}
+      onCreateMetric={async (app, data) => {
         await superAdminApi.createAppMetric(app, data);
-        await loadMetrics();
+        await loadAll();
       }}
-      onUpdate={async (app, metric, data) => {
+      onUpdateMetric={async (app, metric, data) => {
         await superAdminApi.updateAppMetric(app, metric, data);
-        await loadMetrics();
+        await loadAll();
       }}
-      onDelete={async (app, metric) => {
+      onDeleteMetric={async (app, metric) => {
         await superAdminApi.deleteAppMetric(app, metric);
-        await loadMetrics();
+        await loadAll();
       }}
-      onRefresh={loadMetrics}
+      onCreateApp={async (data) => {
+        await superAdminApi.createApp(data);
+        await loadAll();
+      }}
+      onUpdateApp={async (appId, data) => {
+        await superAdminApi.updateApp(appId, data);
+        await loadAll();
+      }}
+      onDeleteApp={async (appId) => {
+        await superAdminApi.deleteApp(appId);
+        await loadAll();
+      }}
     />
   );
 }
@@ -183,8 +195,8 @@ function AppContent() {
           notificationCount={unreadCount}
           onNotificationClick={() => setChatOpen(true)}
         />
-        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)' }}>
-          <div className="mx-auto" style={{ maxWidth: '1400px' }}>
+        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-hidden flex flex-col" style={{ background: 'var(--sys-bg)' }}>
+          <div className="mx-auto flex-1 flex flex-col min-h-0" style={{ maxWidth: '1400px' }}>
             {route === 'dashboard' && <SuperAdminDashboard />}
             {route === 'tenants' && <TenantManagement />}
             {route === 'plans' && <PlanManagement />}

@@ -50,6 +50,14 @@ export const superAdminApi = {
 
   getCsrfToken: () => api.get('/api/csrf-token'),
 
+  // Apps CRUD
+  listApps: () => api.get<any[]>('/api/super-admin/apps'),
+  createApp: (data: { app_id: string; name: string; description?: string }) =>
+    api.post('/api/super-admin/apps', data),
+  updateApp: (appId: string, data: { name?: string; description?: string; is_active?: boolean }) =>
+    api.put(`/api/super-admin/apps/${appId}`, data),
+  deleteApp: (appId: string) => api.delete(`/api/super-admin/apps/${appId}`),
+
   // App Metrics
   listAppMetrics: () => api.get('/api/super-admin/app-metrics'),
   createAppMetric: (app: string, data: { metric: string; label: string; description?: string; metric_type?: string; default_value?: number; sort_order?: number }) =>

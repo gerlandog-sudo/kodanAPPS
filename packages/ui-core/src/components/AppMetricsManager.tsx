@@ -256,8 +256,8 @@ export function AppMetricsManager({ apps, metrics, loading, onRefresh, onCreateM
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div className="flex items-center justify-between mb-4 shrink-0">
+    <div>
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>Apps y Métricas</h3>
         <Button variant="primary" onClick={openCreateApp}>
           <Plus size={16} />
@@ -265,7 +265,7 @@ export function AppMetricsManager({ apps, metrics, loading, onRefresh, onCreateM
         </Button>
       </div>
 
-      <div className="flex gap-1 mb-4 shrink-0 items-center">
+      <div className="flex gap-1 mb-4 items-center">
         {apps.map((app, i) => (
           <div key={app.app_id} className="relative group/tab">
             <button
@@ -315,65 +315,63 @@ export function AppMetricsManager({ apps, metrics, loading, onRefresh, onCreateM
         ))}
       </div>
 
-      <div className="flex items-center justify-end mb-2 shrink-0">
+      <div className="flex items-center justify-end mb-2">
         <Button variant="secondary" onClick={openCreateMetric}>
           <Plus size={14} />
           Nueva Métrica
         </Button>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        {selectedApp ? (
-          <Table<AppMetric>
-            data={appMetrics}
-            loading={loading}
-            columns={[
-              {
-                key: 'metric',
-                header: 'Métrica',
-                render: m => (
-                  <div>
-                    <span className="text-sm font-medium" style={{ color: 'var(--sys-text)' }}>{m.label}</span>
-                    <code className="text-[10px] px-1.5 py-0.5 rounded ml-2" style={{ background: 'var(--sys-surface)', color: 'var(--sys-text-muted)' }}>{m.metric}</code>
-                  </div>
-                ),
-              },
-              {
-                key: 'type',
-                header: 'Tipo',
-                render: m => <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>{TYPE_LABELS[m.metric_type] || m.metric_type}</span>,
-              },
-              {
-                key: 'default',
-                header: 'Default',
-                render: m => <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>{m.default_value}</span>,
-              },
-              {
-                key: 'status',
-                header: 'Estado',
-                render: m => m.is_active ? (
-                  <span className="text-xs font-medium" style={{ color: '#22c55e' }}>Activo</span>
-                ) : (
-                  <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Inactivo</span>
-                ),
-              },
-            ]}
-            keyExtractor={m => m.metric}
-            maxHeight="100%"
-            emptyState={{
-              icon: <Plus size={32} />,
-              title: 'Sin métricas',
-              description: 'Agrega la primera métrica',
-            }}
-            editable={{ onClick: m => openEditMetric(m) }}
-            deletable={{ onClick: m => setDeleteTarget({ app: m.app_id, metric: m.metric, label: m.label }) }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-xs" style={{ color: 'var(--sys-text-muted)' }}>
-            Sin apps registradas. Crea la primera app.
-          </div>
-        )}
-      </div>
+      {selectedApp ? (
+        <Table<AppMetric>
+          data={appMetrics}
+          loading={loading}
+          columns={[
+            {
+              key: 'metric',
+              header: 'Métrica',
+              render: m => (
+                <div>
+                  <span className="text-sm font-medium" style={{ color: 'var(--sys-text)' }}>{m.label}</span>
+                  <code className="text-[10px] px-1.5 py-0.5 rounded ml-2" style={{ background: 'var(--sys-surface)', color: 'var(--sys-text-muted)' }}>{m.metric}</code>
+                </div>
+              ),
+            },
+            {
+              key: 'type',
+              header: 'Tipo',
+              render: m => <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>{TYPE_LABELS[m.metric_type] || m.metric_type}</span>,
+            },
+            {
+              key: 'default',
+              header: 'Default',
+              render: m => <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>{m.default_value}</span>,
+            },
+            {
+              key: 'status',
+              header: 'Estado',
+              render: m => m.is_active ? (
+                <span className="text-xs font-medium" style={{ color: '#22c55e' }}>Activo</span>
+              ) : (
+                <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Inactivo</span>
+              ),
+            },
+          ]}
+          keyExtractor={m => m.metric}
+          maxHeight="calc(100vh - 280px)"
+          emptyState={{
+            icon: <Plus size={32} />,
+            title: 'Sin métricas',
+            description: 'Agrega la primera métrica',
+          }}
+          editable={{ onClick: m => openEditMetric(m) }}
+          deletable={{ onClick: m => setDeleteTarget({ app: m.app_id, metric: m.metric, label: m.label }) }}
+        />
+      ) : (
+        <div className="flex items-center justify-center" style={{ minHeight: '20vh', color: 'var(--sys-text-muted)' }}>
+          Sin apps registradas. Crea la primera app.
+        </div>
+      )}
 
       <Modal
         open={showMetricForm}

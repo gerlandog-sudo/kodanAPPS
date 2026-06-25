@@ -186,81 +186,79 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div className="flex items-center justify-end mb-4 shrink-0">
+    <div>
+      <div className="flex items-center justify-end mb-4">
         <Button variant="primary" onClick={() => { setEditingPlan(null); setShowModal(true); }}>
           <Plus size={16} />
           Nuevo Plan
         </Button>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <Table<Plan>
-          data={plans}
-          columns={[
-            {
-              key: 'plan',
-              header: 'Plan',
-              render: plan => (
-                <>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0" style={{ background: 'var(--sys-surface)', color: 'var(--sys-tertiary)' }}>
-                    <CreditCard size={14} />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm">{plan.name}</p>
-                    {plan.description && <p className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{plan.description}</p>}
-                  </div>
-                </>
-              ),
+      <Table<Plan>
+        data={plans}
+        columns={[
+          {
+            key: 'plan',
+            header: 'Plan',
+            render: plan => (
+              <>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0" style={{ background: 'var(--sys-surface)', color: 'var(--sys-tertiary)' }}>
+                  <CreditCard size={14} />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">{plan.name}</p>
+                  {plan.description && <p className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{plan.description}</p>}
+                </div>
+              </>
+            ),
+          },
+          {
+            key: 'price',
+            header: 'Precio',
+            align: 'right',
+            render: plan => (
+              <>
+                ${plan.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <span className="font-normal" style={{ color: 'var(--sys-text-muted)' }}>/{plan.currency}</span>
+              </>
+            ),
+          },
+          ...modules.map(mod => ({
+            key: `limits_${mod}`,
+            header: `Límites ${MODULE_LABELS[mod] || mod}`,
+            render: (plan: Plan) => {
+              const modLimits = plan.limits.filter(l => l.module === mod);
+              if (modLimits.length === 0) return <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>—</span>;
+              return (
+                <div className="flex flex-wrap gap-1">
+                  {modLimits.map(l => (
+                    <span key={l.metric} className="badge badge-plan text-xs">
+                      {l.value === 0 ? (
+                        <span className="flex items-center gap-1">
+                          <Infinity size={10} />
+                          {getMetricLabel(l.metric)}
+                        </span>
+                      ) : (
+                        `${getMetricLabel(l.metric)}: ${l.value.toLocaleString()}`
+                      )}
+                    </span>
+                  ))}
+                </div>
+              );
             },
-            {
-              key: 'price',
-              header: 'Precio',
-              align: 'right',
-              render: plan => (
-                <>
-                  ${plan.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  <span className="font-normal" style={{ color: 'var(--sys-text-muted)' }}>/{plan.currency}</span>
-                </>
-              ),
-            },
-            ...modules.map(mod => ({
-              key: `limits_${mod}`,
-              header: `Límites ${MODULE_LABELS[mod] || mod}`,
-              render: (plan: Plan) => {
-                const modLimits = plan.limits.filter(l => l.module === mod);
-                if (modLimits.length === 0) return <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>—</span>;
-                return (
-                  <div className="flex flex-wrap gap-1">
-                    {modLimits.map(l => (
-                      <span key={l.metric} className="badge badge-plan text-xs">
-                        {l.value === 0 ? (
-                          <span className="flex items-center gap-1">
-                            <Infinity size={10} />
-                            {getMetricLabel(l.metric)}
-                          </span>
-                        ) : (
-                          `${getMetricLabel(l.metric)}: ${l.value.toLocaleString()}`
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                );
-              },
-            }) as any),
-          ]}
-          keyExtractor={plan => plan.id}
-          loading={loading}
-          maxHeight="100%"
-          emptyState={{
-            icon: <CreditCard size={40} />,
-            title: 'No hay planes configurados',
-            description: 'Crea el primer plan de suscripción',
-          }}
-          editable={{ onClick: plan => { setEditingPlan(plan); setShowModal(true); } }}
-          deletable={{ onClick: handleDeleteClick }}
-        />
-      </div>
+          }) as any),
+        ]}
+        keyExtractor={plan => plan.id}
+        loading={loading}
+        maxHeight="calc(100vh - 210px)"
+        emptyState={{
+          icon: <CreditCard size={40} />,
+          title: 'No hay planes configurados',
+          description: 'Crea el primer plan de suscripción',
+        }}
+        editable={{ onClick: plan => { setEditingPlan(plan); setShowModal(true); } }}
+        deletable={{ onClick: handleDeleteClick }}
+      />
 
       <Modal
         open={showModal || !!editingPlan}

@@ -51,6 +51,7 @@ export { EmailTemplatesSettingsPanel } from './components/EmailTemplatesSettings
 export type { EmailTemplatesSettingsPanelProps } from './components/EmailTemplatesSettingsPanel'
 export { EmailComposer } from './components/EmailComposer'
 export type { EmailComposerProps } from './components/EmailComposer'
+export { SmtpSettingsPanel } from './components/SmtpSettingsPanel'
 
 export { useSSE } from './hooks/useSSE'
 export type { SSEMessage } from './hooks/useSSE'

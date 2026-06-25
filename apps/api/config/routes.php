@@ -703,6 +703,26 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['mail']->sendMail($input));
     });
 
+    // SMTP Configuration per Tenant
+    $router->get('/api/mail/smtp-config', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->getSmtpConfig());
+    });
+    $router->put('/api/mail/smtp-config', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->saveSmtpConfig($input));
+    });
+    $router->post('/api/mail/smtp-config/test', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->testSmtpConfig($input));
+    });
+    $router->delete('/api/mail/smtp-config', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['mail']->deleteSmtpConfig());
+    });
+
     // ============================================================
     // Middleware: Tracker (JWT)
     // ============================================================

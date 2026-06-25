@@ -198,6 +198,7 @@ $projectRepo = new ProjectRepository($pdo);
 $notificationRepo = new NotificationRepository($pdo);
 $workflowRepo = new WorkflowRepository($pdo);
 $emailTemplateRepo = new \kodanAPPS\Repositories\EmailTemplateRepository($pdo);
+$smtpConfigRepo = new \kodanAPPS\Repositories\SmtpConfigRepository($pdo);
 
 // ------------------------------------------------------------
 // Servicios
@@ -207,7 +208,7 @@ $customFieldService = new CustomFieldService($pdo);
 $mentionsParser = new MentionsParser($chatRepo);
 $entityOwnerSyncService = new EntityOwnerSyncService($chatRepo);
 $workflowEngine = new WorkflowEngine($workflowRepo, $taskRepo, $oppRepo, $notificationRepo);
-$mailService = new \kodanAPPS\Services\MailService($pdo);
+$mailService = new \kodanAPPS\Services\MailService($pdo, $smtpConfigRepo);
 
 // ------------------------------------------------------------
 // Configuración sensible
@@ -275,7 +276,7 @@ $tenantUserController = new TenantUserController($userRepo, $pdo);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
 $workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo);
-$mailController = new \kodanAPPS\Controllers\MailController($emailTemplateRepo, $mailService);
+$mailController = new \kodanAPPS\Controllers\MailController($emailTemplateRepo, $smtpConfigRepo, $mailService);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);

@@ -13,7 +13,7 @@ final class CrmTaskRepository extends BaseRepository
 {
     protected const TABLE = 'tasks';
 
-    protected function getLimitConfig(): ?array
+    protected function getLimitConfig(): array
     {
         return ['module' => 'crm', 'metric' => 'tasks_max'];
     }

@@ -14,7 +14,7 @@ final class ContactRepository extends BaseRepository
     protected const TABLE = 'contacts';
     protected string $primaryKey = 'contact_id';
 
-    protected function getLimitConfig(): ?array
+    protected function getLimitConfig(): array
     {
         return ['module' => 'crm', 'metric' => 'contacts_max'];
     }

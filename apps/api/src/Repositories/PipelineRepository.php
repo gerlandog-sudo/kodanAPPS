@@ -13,7 +13,7 @@ final class PipelineRepository extends BaseRepository
 {
     protected const TABLE = 'pipelines';
 
-    protected function getLimitConfig(): ?array
+    protected function getLimitConfig(): array
     {
         return ['module' => 'crm', 'metric' => 'pipelines_max'];
     }

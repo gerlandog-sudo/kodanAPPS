@@ -15,6 +15,7 @@ final class PlanAccessValidator
         $this->pdo = $pdo;
     }
 
+    /** @return array{allowed: bool, roles: array<int, string>, plan_id: int} */
     public function validateAppAccess(int $tenantId, string $appId, int $userId): array
     {
         $tenant = $this->pdo->query(
@@ -45,6 +46,7 @@ final class PlanAccessValidator
         return ['allowed' => true, 'roles' => $roles, 'plan_id' => $planId];
     }
 
+    /** @return array{has_capacity: bool, current_usage: int, limit_value: int} */
     public function checkUserCapacity(int $tenantId, string $appId): array
     {
         $row = $this->pdo->query(

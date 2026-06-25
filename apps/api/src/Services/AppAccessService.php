@@ -13,6 +13,7 @@ final class AppAccessService
         public readonly UsageTrackerInterface $usageTracker,
     ) {}
 
+    /** @return array{allowed: bool, roles: array<int, string>, plan_id: int} */
     public function validateAppAccess(int $tenantId, string $appId, int $userId): array
     {
         return $this->planAccess->validateAppAccess($tenantId, $appId, $userId);
@@ -28,11 +29,13 @@ final class AppAccessService
         $this->limitEnforcer->increment($module, $metric, $amount);
     }
 
+    /** @return array<int, array<string, mixed>> */
     public function getUsageStatus(string $module): array
     {
         return $this->usageTracker->getUsageStatus($module);
     }
 
+    /** @return array<int, array<string, mixed>> */
     public function getAllUsageStatus(): array
     {
         return $this->usageTracker->getAllUsageStatus();
@@ -53,6 +56,7 @@ final class AppAccessService
         $this->usageTracker->initializeTenant($tenantId, $planId);
     }
 
+    /** @return array<int, string> */
     public function getContractedApps(int $tenantId): array
     {
         return $this->usageTracker->getContractedApps($tenantId);

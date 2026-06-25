@@ -15,7 +15,7 @@ final class OpportunityRepository extends BaseRepository
 {
     protected const TABLE = 'opportunities';
 
-    protected function getLimitConfig(): ?array
+    protected function getLimitConfig(): array
     {
         return ['module' => 'crm', 'metric' => 'negotiations_max'];
     }

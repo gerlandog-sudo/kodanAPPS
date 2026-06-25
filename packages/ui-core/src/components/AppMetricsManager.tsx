@@ -256,7 +256,7 @@ export function AppMetricsManager({ apps, metrics, loading, onRefresh, onCreateM
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       <div className="flex items-center justify-between mb-4 shrink-0">
         <h3 className="text-sm font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>Apps y Métricas</h3>
         <Button variant="primary" onClick={openCreateApp}>
@@ -270,11 +270,13 @@ export function AppMetricsManager({ apps, metrics, loading, onRefresh, onCreateM
           <div key={app.app_id} className="relative group/tab">
             <button
               onClick={() => setTabIndex(i)}
-              className="px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1"
+              className="px-4 h-9 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 duration-100"
               style={{
-                background: tabIndex === i ? 'var(--sys-primary)' : 'var(--sys-surface)',
-                color: tabIndex === i ? 'var(--sys-on-primary)' : 'var(--sys-text-muted)',
+                background: tabIndex === i ? 'var(--sys-primary-container)' : 'transparent',
+                color: tabIndex === i ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
               }}
+              onMouseEnter={(e) => { if (tabIndex !== i) { e.currentTarget.style.background = 'var(--sys-surface-hover)' } }}
+              onMouseLeave={(e) => { if (tabIndex !== i) { e.currentTarget.style.background = 'transparent' } }}
             >
               {app.name}
               <span className="ml-1 opacity-60" style={tabIndex === i ? { color: 'var(--sys-on-primary)' } : { color: 'var(--sys-text-muted)' }}>

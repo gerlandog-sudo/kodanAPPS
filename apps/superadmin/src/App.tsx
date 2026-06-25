@@ -196,7 +196,7 @@ function AppContent() {
           onNotificationClick={() => setChatOpen(true)}
         />
         <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-hidden flex flex-col" style={{ background: 'var(--sys-bg)' }}>
-          <div className="mx-auto flex-1 flex flex-col min-h-0" style={{ maxWidth: '1400px' }}>
+          <div className="flex-1 flex flex-col min-h-0 w-full">
             {route === 'dashboard' && <SuperAdminDashboard />}
             {route === 'tenants' && <TenantManagement />}
             {route === 'plans' && <PlanManagement />}

@@ -186,7 +186,7 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       <div className="flex items-center justify-end mb-4 shrink-0">
         <Button variant="primary" onClick={() => { setEditingPlan(null); setShowModal(true); }}>
           <Plus size={16} />

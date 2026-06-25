@@ -298,7 +298,7 @@ final class SuperAdminController
     {
         // Verificar que no tenga tenants
         $count = (int)$this->planRepo->rawSelect(
-            "SELECT COUNT(*) as c FROM tenants WHERE subscription_plan_id = ?",
+            "/* BYPASS_TENANT_SCOPE */ SELECT COUNT(*) as c FROM tenants WHERE subscription_plan_id = ?",
             [$planId]
         )[0]['c'];
 

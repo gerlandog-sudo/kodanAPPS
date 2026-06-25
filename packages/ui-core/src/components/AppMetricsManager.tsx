@@ -331,7 +331,7 @@ export function AppMetricsManager({ apps, metrics, loading, onRefresh, onCreateM
               key: 'metric',
               header: 'Métrica',
               render: m => (
-                <div>
+    <div className="min-h-0">
                   <span className="text-sm font-medium" style={{ color: 'var(--sys-text)' }}>{m.label}</span>
                   <code className="text-[10px] px-1.5 py-0.5 rounded ml-2" style={{ background: 'var(--sys-surface)', color: 'var(--sys-text-muted)' }}>{m.metric}</code>
                 </div>

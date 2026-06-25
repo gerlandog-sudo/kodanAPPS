@@ -162,7 +162,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar
         title="kodanAPPS"
         logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoAdmin3D size={48} theme={theme} /></Suspense>}
@@ -183,7 +183,7 @@ function AppContent() {
         }
       />
       {showPasswordModal && <ChangePassword onClose={() => setShowPasswordModal(false)} />}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <TopBar
           title="kodanAPPS"
           user={user}

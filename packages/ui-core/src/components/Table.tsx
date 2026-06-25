@@ -184,7 +184,7 @@ export function Table<T>({
 
   if (loading) {
     return (
-      <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden">
+      <div className={`w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden${maxHeight ? ' h-full' : ''}`}>
         <div className="overflow-x-auto overflow-y-auto" style={maxHeight ? { maxHeight } : undefined}>
           <table className="w-full border-collapse">
             <thead>
@@ -225,7 +225,7 @@ export function Table<T>({
 
   if (data.length === 0) {
     return (
-      <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden">
+      <div className={`w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden${maxHeight ? ' h-full' : ''}`}>
         <div className="flex flex-col items-center justify-center py-12 px-6 text-center text-text-muted/35">
           {emptyState.icon}
           <p className="mt-3 text-sm font-semibold text-text-muted">{emptyState.title}</p>
@@ -241,7 +241,7 @@ export function Table<T>({
   const actionBtn = 'inline-flex items-center justify-center w-8 h-8 rounded-md border border-transparent bg-transparent cursor-pointer text-text-muted hover:bg-surface hover:border-border-soft hover:text-text active:scale-[0.92] transition-all duration-350'
 
   return (
-    <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden" ref={tableRef}>
+      <div className={`w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden${maxHeight ? ' h-full' : ''}`} ref={tableRef}>
       {selectable && selectedItems.length > 0 && bulkActions && bulkActions.length > 0 && (
         <div
           className="flex items-center gap-3 px-4 py-2 mb-2 rounded-md bg-primary-container border text-[13px] text-on-primary-container"

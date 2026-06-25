@@ -1,22 +1,4 @@
-import type { CustomFieldDef, StageBulkInput } from '../api/client'
 
-// ── Tenant Users ──
-export interface TenantUser {
-  id: number
-  email: string
-  display_name: string
-  is_active: number
-  created_at: string
-  role_id: number | null
-  role_name: string | null
-  role_description: string | null
-}
-
-export interface CrmRole {
-  id: number
-  name: string
-  description: string
-}
 
 // ── Pipelines ──
 export interface Pipeline {
@@ -38,10 +20,6 @@ export interface Stage {
   is_lost_stage: number
   probability: number
   pipeline_id: number
-}
-
-export interface StageWithUIConfig extends StageBulkInput {
-  ui_config?: Record<string, any> | null
 }
 
 // ── Quotes ──
@@ -74,17 +52,15 @@ export interface Quote {
 
 // ── Custom Fields ──
 export type EntityType = 'account' | 'contact' | 'opportunity'
-export type { CustomFieldDef }
-
 // ── Workflows ──
-export type TriggerEntity = 'opportunity' | 'task'
-export type TriggerEvent =
+type TriggerEntity = 'opportunity' | 'task'
+type TriggerEvent =
   | 'stage_changed' | 'created' | 'won' | 'lost' | 'assigned'
   | 'archived' | 'unarchived' | 'value_changed' | 'close_date_changed'
   | 'task_created' | 'task_status_changed' | 'task_completed'
   | 'task_assigned' | 'task_due_date_changed' | 'task_archived' | 'task_unarchived'
 
-export type ActionType =
+type ActionType =
   | 'create_task' | 'update_task_status' | 'assign_task' | 'add_task_participants' | 'create_followup_task'
   | 'update_opportunity_stage' | 'assign_opportunity' | 'update_opportunity_field' | 'create_followup_opportunity'
   | 'send_notification'

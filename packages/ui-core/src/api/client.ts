@@ -24,7 +24,7 @@ export function setCurrentAppId(appId: string): void {
 }
 
 // --- Force logout event ---
-export function triggerForceLogout(): void {
+function triggerForceLogout(): void {
   sessionStorage.removeItem('csrf_token');
   if (currentAppId) {
     document.cookie = `access_token_${currentAppId}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;

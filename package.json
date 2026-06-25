@@ -22,11 +22,14 @@
     "test:api": "npm run test --workspace=@kodan-apps/api",
     "phpstan": "cd apps/api && composer phpstan",
     "db:migrate": "php migrations/run.php",
-    "db:seed": "php migrations/seed_superadmin.php"
+    "db:seed": "php migrations/seed_superadmin.php",
+    "knip": "knip"
   },
   "devDependencies": {
+    "@types/node": "^26.0.1",
     "@types/three": "^0.184.1",
-    "typescript": "^5.4.0"
+    "knip": "^6.20.0",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.0.0 || >=24.0.0",

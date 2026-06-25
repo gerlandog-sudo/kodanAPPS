@@ -7,7 +7,7 @@ export interface BreadcrumbItem {
   onClick?: () => void
 }
 
-export interface BreadcrumbProps {
+interface BreadcrumbProps {
   items: BreadcrumbItem[]
   separator?: ReactNode
 }

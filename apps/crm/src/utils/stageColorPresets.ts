@@ -5,7 +5,7 @@ export interface StageColorPreset {
   dot: string
 }
 
-export const STAGE_COLOR_PRESETS: Record<string, StageColorPreset> = {
+const STAGE_COLOR_PRESETS: Record<string, StageColorPreset> = {
   '#6366F1': { bg: 'rgba(99,102,241,0.12)', text: '#818CF8', border: '#6366F1', dot: '#6366F1' },
   '#8B5CF6': { bg: 'rgba(139,92,246,0.12)', text: '#A78BFA', border: '#8B5CF6', dot: '#8B5CF6' },
   '#EC4899': { bg: 'rgba(236,72,153,0.12)', text: '#F472B6', border: '#EC4899', dot: '#EC4899' },
@@ -21,12 +21,3 @@ export const STAGE_COLOR_PRESETS: Record<string, StageColorPreset> = {
 }
 
 export const STAGE_PRESET_LIST = Object.keys(STAGE_COLOR_PRESETS)
-
-export function getStagePreset(colorHex: string): StageColorPreset {
-  return STAGE_COLOR_PRESETS[colorHex] || {
-    bg: 'rgba(99,102,241,0.12)',
-    text: '#818CF8',
-    border: '#6366F1',
-    dot: '#6366F1',
-  }
-}

@@ -1,7 +1,5 @@
 import { api } from '@kodan-apps/ui-core';
 
-export { apiClient, ApiError } from '@kodan-apps/ui-core';
-
 // Custom field & pipeline types
 export interface CustomFieldDef {
   id: number

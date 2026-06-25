@@ -143,4 +143,3 @@ export function KanbanBoard<T>({
   );
 }
 
-export default KanbanBoard;

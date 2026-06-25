@@ -1,7 +1,5 @@
 import { api } from '@kodan-apps/ui-core';
 
-export { apiClient, ApiError } from '@kodan-apps/ui-core';
-
 export const superAdminApi = {
   getStats: () => api.get('/api/super-admin/stats'),
 

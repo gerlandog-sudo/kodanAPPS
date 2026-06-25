@@ -27,6 +27,24 @@ interface AppMetricsManagerProps {
   onRefresh: () => Promise<void>;
 }
 
+const KNOWN_METRICS: Record<string, Array<{ metric: string; label: string }>> = {
+  crm: [
+    { metric: 'users_max', label: 'Usuarios máximos' },
+    { metric: 'negotiations_max', label: 'Negociaciones activas' },
+    { metric: 'pipelines_max', label: 'Pipelines' },
+    { metric: 'accounts_max', label: 'Cuentas' },
+    { metric: 'contacts_max', label: 'Contactos' },
+    { metric: 'api_calls_month', label: 'Llamadas API/mes' },
+  ],
+  tracker: [
+    { metric: 'users_max', label: 'Usuarios máximos' },
+    { metric: 'projects_max', label: 'Proyectos activos' },
+    { metric: 'tasks_max', label: 'Tareas activas' },
+    { metric: 'time_entries_max', label: 'Registros tiempo/mes' },
+    { metric: 'api_calls_month', label: 'Llamadas API/mes' },
+  ],
+};
+
 const TYPE_LABELS: Record<string, string> = {
   limit_entity: 'Límite de entidad',
   counter_usage: 'Contador de uso',
@@ -207,16 +225,41 @@ export function AppMetricsManager({ metrics, apps, onCreate, onUpdate, onDelete,
                 </div>
               )}
               {!editMetric && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Metric Key *</label>
-                  <input
-                    type="text"
-                    className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-                    value={form.metric}
-                    onChange={e => setForm({ ...form, metric: e.target.value.replace(/[^a-z_]/g, '') })}
-                    placeholder="users_max"
-                  />
-                </div>
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Metric Key *</label>
+                    <select
+                      className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                      value={KNOWN_METRICS[form.app_id]?.some(m => m.metric === form.metric) ? form.metric : '__custom__'}
+                      onChange={e => {
+                        if (e.target.value === '__custom__') {
+                          setForm({ ...form, metric: '' });
+                        } else {
+                          const found = KNOWN_METRICS[form.app_id]?.find(m => m.metric === e.target.value);
+                          setForm({ ...form, metric: e.target.value, label: found?.label || form.label });
+                        }
+                      }}
+                    >
+                      <option value="" disabled>Seleccionar métrica...</option>
+                      {(KNOWN_METRICS[form.app_id] || []).map(m => (
+                        <option key={m.metric} value={m.metric}>{m.label} ({m.metric})</option>
+                      ))}
+                      <option value="__custom__">— Otro (personalizado) —</option>
+                    </select>
+                  </div>
+                  {form.metric && !KNOWN_METRICS[form.app_id]?.some(m => m.metric === form.metric) && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Metric Key personalizada</label>
+                      <input
+                        type="text"
+                        className="w-full bg-surface-raised border border-border-soft rounded-lg px-4 py-2.5 text-text text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+                        value={form.metric}
+                        onChange={e => setForm({ ...form, metric: e.target.value.replace(/[^a-z_]/g, '') })}
+                        placeholder="mi_metrica"
+                      />
+                    </div>
+                  )}
+                </>
               )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Label *</label>

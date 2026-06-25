@@ -581,7 +581,7 @@ final class SuperAdminController
     public function listAppMetrics(): array
     {
         return $this->planRepo->rawSelect(
-            "SELECT * FROM app_metrics ORDER BY app_id, sort_order"
+            "/* BYPASS_TENANT_SCOPE */ SELECT * FROM app_metrics ORDER BY app_id, sort_order"
         );
     }
 
@@ -599,7 +599,7 @@ final class SuperAdminController
         }
 
         $this->planRepo->rawExecute(
-            "INSERT INTO app_metrics (app_id, metric, label, description, metric_type, default_value, sort_order)
+            "/* BYPASS_TENANT_SCOPE */ INSERT INTO app_metrics (app_id, metric, label, description, metric_type, default_value, sort_order)
              VALUES (?, ?, ?, ?, ?, ?, ?)",
             [
                 $app,
@@ -637,7 +637,7 @@ final class SuperAdminController
         $data['app_id'] = $app;
         $data['metric'] = $metric;
         $this->planRepo->rawExecute(
-            "UPDATE app_metrics SET {$sets} WHERE app_id = :app_id AND metric = :metric",
+            "/* BYPASS_TENANT_SCOPE */ UPDATE app_metrics SET {$sets} WHERE app_id = :app_id AND metric = :metric",
             $data
         );
 
@@ -653,7 +653,7 @@ final class SuperAdminController
     public function deleteAppMetric(string $app, string $metric): array
     {
         $this->planRepo->rawExecute(
-            "DELETE FROM app_metrics WHERE app_id = ? AND metric = ?",
+            "/* BYPASS_TENANT_SCOPE */ DELETE FROM app_metrics WHERE app_id = ? AND metric = ?",
             [$app, $metric]
         );
 

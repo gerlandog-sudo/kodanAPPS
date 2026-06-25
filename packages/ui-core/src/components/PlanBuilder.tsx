@@ -76,12 +76,20 @@ export function PlanBuilder({ plans, metrics, loading, onCreate, onUpdate, onDel
 
   useEffect(() => {
     if (editingPlan) {
+      const merged: PlanLimit[] = editingPlan.limits.map(l => ({ ...l }));
+      modules.forEach(mod => {
+        (metricsByModule[mod] || []).forEach(m => {
+          if (!merged.some(l => l.module === mod && l.metric === m.metric)) {
+            merged.push({ module: mod, metric: m.metric, value: 0 });
+          }
+        });
+      });
       setFormData({
         name: editingPlan.name,
         description: editingPlan.description,
         price: editingPlan.price,
         currency: editingPlan.currency,
-        limits: editingPlan.limits.map(l => ({ ...l })),
+        limits: merged,
       });
     }
   }, [editingPlan]);

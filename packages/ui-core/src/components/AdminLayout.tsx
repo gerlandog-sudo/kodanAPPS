@@ -19,8 +19,8 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
   const [hoveredSection, setHoveredSection] = useState<string | null>(null)
 
   return (
-    <div style={{ fontFamily: 'var(--font-montserrat, system-ui)', width: '100%' }}>
-      <div className="flex gap-0.5 mb-6 p-1 rounded-lg border border-border-soft bg-surface w-fit">
+    <div style={{ fontFamily: 'var(--font-montserrat, system-ui)', width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className="flex gap-0.5 mb-6 p-1 rounded-lg border border-border-soft bg-surface w-fit flex-shrink-0">
         {sections.map(section => {
           const isActive = section.key === activeSection
           const isHovered = hoveredSection === section.key
@@ -54,7 +54,7 @@ export function AdminLayout({ sections, activeSection, onNavigate, children }: A
         })}
       </div>
 
-      <div className="flex flex-col w-full" style={{ minHeight: 'calc(100vh - 280px)' }}>
+      <div className="flex flex-col w-full" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         <div className="flex-1 w-full">
           {children}
         </div>

@@ -21,6 +21,7 @@ export function useSSE(appId: string) {
 
   // Fetch initial unread count on mount
   useEffect(() => {
+    if (!appId) return;
     let active = true;
     async function fetchInitialUnread() {
       try {

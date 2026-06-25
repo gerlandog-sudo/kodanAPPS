@@ -89,11 +89,11 @@ export const crmApi = {
   bulkUpdateStages: (pipelineId: number, stages: StageBulkInput[]) => api.put('/api/crm/pipeline-stages', { pipeline_id: pipelineId, stages }),
 
   // Tenant Users
-  listTenantUsers: () => api.get<any[]>('/api/crm/users'),
-  listCrmRoles: () => api.get<any[]>('/api/crm/users/roles'),
-  createTenantUser: (data: any) => api.post('/api/crm/users', data),
-  updateTenantUser: (id: number, data: any) => api.put(`/api/crm/users/${id}`, data),
-  deleteTenantUser: (id: number) => api.delete(`/api/crm/users/${id}`),
+  listTenantUsers: () => api.get<any[]>('/api/tenant-users'),
+  listCrmRoles: () => api.get<any[]>('/api/tenant-users/roles'),
+  createTenantUser: (data: any) => api.post('/api/tenant-users', data),
+  updateTenantUser: (id: number, data: any) => api.put(`/api/tenant-users/${id}`, data),
+  deleteTenantUser: (id: number) => api.delete(`/api/tenant-users/${id}`),
 
   // Quotes
   listQuotes: (params?: { opportunity_id?: number }) =>

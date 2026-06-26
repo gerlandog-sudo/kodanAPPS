@@ -46,17 +46,6 @@ final class TaskTypeRepository extends BaseRepository
     }
 
     /**
-     * Crea un nuevo tipo de tarea
-     * 
-     * @param array{name: string, icon: string|null, color_hex: string|null} $data
-     * @return int ID del tipo de tarea creado
-     */
-    public function createTaskType(array $data): int
-    {
-        return $this->create(self::TABLE, $data);
-    }
-
-    /**
      * Actualiza un tipo de tarea existente
      * 
      * @param array{name?: string, icon?: string|null, color_hex?: string|null} $data

@@ -25,7 +25,7 @@ final class TaskTypeController
      */
     public function list(): array
     {
-        $module = $_GET['module'] ?? null;
+        $module = isset($_GET['module']) && is_string($_GET['module']) ? $_GET['module'] : null;
         return $this->taskTypeRepo->listAll($module);
     }
 

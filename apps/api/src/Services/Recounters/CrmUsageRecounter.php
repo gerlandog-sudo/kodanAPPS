@@ -18,7 +18,7 @@ class CrmUsageRecounter implements RecountStrategyInterface
     {
         $stmtNeg = $pdo->prepare(
             "UPDATE tenant_plan_usage u
-             JOIN (SELECT COUNT(*) AS cnt FROM opportunities WHERE tenant_id = ? AND deleted_at IS NULL) actual
+             JOIN (SELECT COUNT(*) AS cnt FROM CRM_opportunities WHERE tenant_id = ? AND deleted_at IS NULL) actual
              SET u.current_value = actual.cnt
              WHERE u.tenant_id = ? AND u.module = 'crm' AND u.metric = 'negotiations_max'"
         );

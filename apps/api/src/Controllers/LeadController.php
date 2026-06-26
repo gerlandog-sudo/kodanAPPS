@@ -50,7 +50,7 @@ final class LeadController
         TenantContext::set(self::TENANT_ID, 0, [], 'public');
 
         $pipelines = $this->pipelineRepo->rawSelect(
-            "SELECT * FROM pipelines WHERE tenant_id = ? ORDER BY is_default DESC, id ASC LIMIT 1",
+            "SELECT * FROM CRM_pipelines WHERE tenant_id = ? ORDER BY is_default DESC, id ASC LIMIT 1",
             [self::TENANT_ID]
         );
         if (empty($pipelines)) {
@@ -58,7 +58,7 @@ final class LeadController
         }
 
         $stages = $this->pipelineRepo->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT * FROM pipeline_stages WHERE pipeline_id = ? ORDER BY sort_order ASC, id ASC LIMIT 1",
+            "/* BYPASS_TENANT_SCOPE */ SELECT * FROM CRM_pipeline_stages WHERE pipeline_id = ? ORDER BY sort_order ASC, id ASC LIMIT 1",
             [(int)$pipelines[0]['id']]
         );
         if (empty($stages)) {

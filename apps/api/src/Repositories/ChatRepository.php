@@ -306,12 +306,12 @@ final class ChatRepository extends BaseRepository
 
         $title = null;
         if ($entityType === 'crm_opportunity' && $entityId > 0) {
-            $opp = $this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT title FROM opportunities WHERE id = ?", [$entityId]);
+            $opp = $this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT title FROM CRM_opportunities WHERE id = ?", [$entityId]);
             if (!empty($opp)) {
                 $title = $opp[0]['title'] ?? null;
             }
         } elseif ($entityType === 'tracker_task' && $entityId > 0) {
-            $task = $this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT title FROM tasks WHERE id = ?", [$entityId]);
+            $task = $this->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT title FROM CRM_tasks WHERE id = ?", [$entityId]);
             if (!empty($task)) {
                 $title = $task[0]['title'] ?? null;
             }

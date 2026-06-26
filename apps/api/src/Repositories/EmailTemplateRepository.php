@@ -13,7 +13,7 @@ use kodanAPPS\DB\TenantAwarePDO;
  */
 final class EmailTemplateRepository extends BaseRepository
 {
-    protected const TABLE = 'email_templates';
+    protected const TABLE = 'CRM_email_templates';
 
     protected function getLimitConfig(): ?array
     {

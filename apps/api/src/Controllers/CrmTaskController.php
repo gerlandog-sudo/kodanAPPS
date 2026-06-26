@@ -85,7 +85,7 @@ final class CrmTaskController
         
         // Heredar owner si no se especificó y hay oportunidad relacionada
         if ($opportunityId !== null && $assignedTo === null) {
-            $opp = $this->taskRepo->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT owner_user_id FROM opportunities WHERE id = ?", [$opportunityId]);
+            $opp = $this->taskRepo->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT owner_user_id FROM CRM_opportunities WHERE id = ?", [$opportunityId]);
             if (!empty($opp)) {
                 $assignedTo = isset($opp[0]['owner_user_id']) ? (int)$opp[0]['owner_user_id'] : null;
             }

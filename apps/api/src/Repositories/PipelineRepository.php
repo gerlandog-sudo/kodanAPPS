@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class PipelineRepository extends BaseRepository
 {
-    protected const TABLE = 'pipelines';
+    protected const TABLE = 'CRM_pipelines';
 
     protected function getLimitConfig(): array
     {
@@ -48,7 +48,7 @@ final class PipelineRepository extends BaseRepository
     {
         // Si es el por defecto, quitar el por defecto anterior
         if (isset($data['is_default']) && (int)$data['is_default'] === 1) {
-            $this->rawExecute("UPDATE pipelines SET is_default = 0 WHERE tenant_id = :tenant_id");
+            $this->rawExecute("UPDATE CRM_pipelines SET is_default = 0 WHERE tenant_id = :tenant_id");
         }
         return $this->create(self::TABLE, $data);
     }
@@ -61,7 +61,7 @@ final class PipelineRepository extends BaseRepository
     public function updatePipeline(int $id, array $data): int
     {
         if (isset($data['is_default']) && (int)$data['is_default'] === 1) {
-            $this->rawExecute("UPDATE pipelines SET is_default = 0 WHERE tenant_id = :tenant_id");
+            $this->rawExecute("UPDATE CRM_pipelines SET is_default = 0 WHERE tenant_id = :tenant_id");
         }
         return $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
     }
@@ -90,7 +90,7 @@ final class PipelineRepository extends BaseRepository
         // Las etapas no tienen tenant_id en su tabla, están vinculadas a pipeline_id.
         // Hacemos un BYPASS_TENANT_SCOPE controlado ya que validamos la propiedad del pipeline antes.
         return $this->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT * FROM pipeline_stages WHERE pipeline_id = ? ORDER BY sort_order ASC, id ASC",
+            "/* BYPASS_TENANT_SCOPE */ SELECT * FROM CRM_pipeline_stages WHERE pipeline_id = ? ORDER BY sort_order ASC, id ASC",
             [$pipelineId]
         );
     }
@@ -106,8 +106,8 @@ final class PipelineRepository extends BaseRepository
         // Hacemos la consulta mediante un join con pipelines para validar pertenencia de tenant.
         $results = $this->rawSelect(
             "SELECT ps.* 
-             FROM pipeline_stages ps
-             JOIN pipelines p ON p.id = ps.pipeline_id
+             FROM CRM_pipeline_stages ps
+             JOIN CRM_pipelines p ON p.id = ps.pipeline_id
              WHERE ps.id = :id AND p.tenant_id = :tenant_id
              LIMIT 1",
             [':id' => $id]
@@ -133,7 +133,7 @@ final class PipelineRepository extends BaseRepository
         $columns = implode(', ', array_map(fn($c) => "`{$c}`", array_keys($data)));
         $placeholders = ':' . implode(', :', array_keys($data));
         
-        $sql = "/* BYPASS_TENANT_SCOPE */ INSERT INTO pipeline_stages ({$columns}) VALUES ({$placeholders})";
+        $sql = "/* BYPASS_TENANT_SCOPE */ INSERT INTO CRM_pipeline_stages ({$columns}) VALUES ({$placeholders})";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);
@@ -158,7 +158,7 @@ final class PipelineRepository extends BaseRepository
         foreach (array_keys($data) as $col) {
             $setParts[] = "`{$col}` = :{$col}";
         }
-        $sql = "/* BYPASS_TENANT_SCOPE */ UPDATE pipeline_stages SET " . implode(', ', $setParts) . " WHERE id = :id";
+        $sql = "/* BYPASS_TENANT_SCOPE */ UPDATE CRM_pipeline_stages SET " . implode(', ', $setParts) . " WHERE id = :id";
         
         $params = $data;
         $params['id'] = $id;
@@ -179,7 +179,7 @@ final class PipelineRepository extends BaseRepository
             throw new \RuntimeException('Etapa no encontrada o acceso denegado', 403);
         }
         
-        $stmt = $this->pdo->prepare("/* BYPASS_TENANT_SCOPE */ DELETE FROM pipeline_stages WHERE id = ?");
+        $stmt = $this->pdo->prepare("/* BYPASS_TENANT_SCOPE */ DELETE FROM CRM_pipeline_stages WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->rowCount();
     }
@@ -197,7 +197,7 @@ final class PipelineRepository extends BaseRepository
         $this->transactional(function () use ($pipelineId, $tenantId, $stages) {
             // Obtener IDs existentes de etapas de este pipeline
             $existingStmt = $this->pdo->prepare(
-                "/* BYPASS_TENANT_SCOPE */ SELECT id FROM pipeline_stages WHERE pipeline_id = ?"
+                "/* BYPASS_TENANT_SCOPE */ SELECT id FROM CRM_pipeline_stages WHERE pipeline_id = ?"
             );
             $existingStmt->execute([$pipelineId]);
             $existingIds = array_map(fn($r) => (int)$r['id'], $existingStmt->fetchAll());
@@ -222,7 +222,7 @@ final class PipelineRepository extends BaseRepository
                 if ($stageId > 0 && in_array($stageId, $existingIds, true)) {
                     // Actualizar existente
                     $updateStmt = $this->pdo->prepare(
-                        "/* BYPASS_TENANT_SCOPE */ UPDATE pipeline_stages 
+                        "/* BYPASS_TENANT_SCOPE */ UPDATE CRM_pipeline_stages 
                          SET name = :name, color_hex = :ch, sort_order = :so, probability = :prob, 
                              is_won_stage = :iw, is_lost_stage = :il, ui_config = :uic
                          WHERE id = :id AND pipeline_id = :pid"
@@ -242,7 +242,7 @@ final class PipelineRepository extends BaseRepository
                 } else {
                     // Crear nuevo
                     $insertStmt = $this->pdo->prepare(
-                        "/* BYPASS_TENANT_SCOPE */ INSERT INTO pipeline_stages (pipeline_id, name, color_hex, sort_order, probability, is_won_stage, is_lost_stage, ui_config, created_at) 
+                        "/* BYPASS_TENANT_SCOPE */ INSERT INTO CRM_pipeline_stages (pipeline_id, name, color_hex, sort_order, probability, is_won_stage, is_lost_stage, ui_config, created_at) 
                          VALUES (:pid, :name, :ch, :so, :prob, :iw, :il, :uic, NOW())"
                     );
                     $insertStmt->execute([
@@ -266,12 +266,12 @@ final class PipelineRepository extends BaseRepository
                 $firstStageId = $submittedIds[0] ?? 0;
                 if ($firstStageId > 0) {
                     $reassignStmt = $this->pdo->prepare(
-                        "UPDATE opportunities SET pipeline_stage_id = :firstId, updated_at = NOW() WHERE pipeline_stage_id = :delId AND tenant_id = :tid"
+                        "UPDATE CRM_opportunities SET pipeline_stage_id = :firstId, updated_at = NOW() WHERE pipeline_stage_id = :delId AND tenant_id = :tid"
                     );
                     $reassignStmt->execute([':firstId' => $firstStageId, ':delId' => $deleteId, ':tid' => $tenantId]);
                 }
 
-                $delStmt = $this->pdo->prepare("/* BYPASS_TENANT_SCOPE */ DELETE FROM pipeline_stages WHERE id = ?");
+                $delStmt = $this->pdo->prepare("/* BYPASS_TENANT_SCOPE */ DELETE FROM CRM_pipeline_stages WHERE id = ?");
                 $delStmt->execute([$deleteId]);
             }
         });

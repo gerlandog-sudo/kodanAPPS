@@ -172,14 +172,14 @@ final class NotificationRepository extends BaseRepository
                          AND `entity_type` = 'crm_opportunity' 
                          AND `entity_id` NOT IN (
                              SELECT o.`id` 
-                             FROM `opportunities` o
-                             JOIN `pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
-                             WHERE o.`owner_user_id` = :sub_user_id 
-                               AND o.`archived_at` IS NULL 
-                               AND s.`is_won_stage` = 0 
-                               AND s.`is_lost_stage` = 0 
-                               AND o.`close_date` IS NOT NULL 
-                               AND o.`close_date` < CURRENT_DATE()
+FROM `CRM_opportunities` o
+                              JOIN `CRM_pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
+                              WHERE o.`owner_user_id` = :sub_user_id 
+                                AND o.`archived_at` IS NULL 
+                                AND s.`is_won_stage` = 0 
+                                AND s.`is_lost_stage` = 0 
+                                AND o.`close_date` IS NOT NULL 
+                                AND o.`close_date` < CURRENT_DATE()
                           )";
         $this->rawExecute($sqlOverdue, [':user_id' => $userId, ':sub_user_id' => $userId]);
 
@@ -190,13 +190,13 @@ final class NotificationRepository extends BaseRepository
                          AND `entity_type` = 'crm_opportunity' 
                          AND `entity_id` NOT IN (
                              SELECT o.`id` 
-                             FROM `opportunities` o
-                             JOIN `pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
-                             WHERE o.`owner_user_id` = :sub_user_id 
-                               AND o.`archived_at` IS NULL 
-                               AND s.`is_won_stage` = 0 
-                               AND s.`is_lost_stage` = 0 
-                               AND o.`updated_at` < DATE_SUB(NOW(), INTERVAL :days DAY)
+FROM `CRM_opportunities` o
+                              JOIN `CRM_pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
+                              WHERE o.`owner_user_id` = :sub_user_id 
+                                AND o.`archived_at` IS NULL 
+                                AND s.`is_won_stage` = 0 
+                                AND s.`is_lost_stage` = 0 
+                                AND o.`updated_at` < DATE_SUB(NOW(), INTERVAL :days DAY)
                          )";
         $this->rawExecute($sqlStalled, [':user_id' => $userId, ':sub_user_id' => $userId, ':days' => $days]);
 
@@ -207,11 +207,11 @@ final class NotificationRepository extends BaseRepository
                               AND `entity_type` = 'crm_task' 
                               AND `entity_id` NOT IN (
                                   SELECT t.`id` 
-                                  FROM `tasks` t
-                                  WHERE t.`status` NOT IN ('done', 'archived')
-                                    AND (t.`assigned_to` = :sub_user_id OR t.`id` IN (SELECT tp.task_id FROM task_participants tp WHERE tp.user_id = :sub_user_id_p))
-                                    AND t.`end_date` IS NOT NULL 
-                                    AND t.`end_date` < NOW()
+FROM `CRM_tasks` t
+                                   WHERE t.`status` NOT IN ('done', 'archived')
+                                     AND (t.`assigned_to` = :sub_user_id OR t.`id` IN (SELECT tp.task_id FROM CRM_task_participants tp WHERE tp.user_id = :sub_user_id_p))
+                                     AND t.`end_date` IS NOT NULL 
+                                     AND t.`end_date` < NOW()
                               )";
         $this->rawExecute($sqlOverdueTasks, [':user_id' => $userId, ':sub_user_id' => $userId, ':sub_user_id_p' => $userId]);
     }
@@ -226,8 +226,8 @@ final class NotificationRepository extends BaseRepository
     {
         $sql = "/* BYPASS_TENANT_SCOPE */
                 SELECT o.`id`, o.`title`, o.`close_date`, o.`updated_at`
-                FROM `opportunities` o
-                JOIN `pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
+                FROM `CRM_opportunities` o
+                JOIN `CRM_pipeline_stages` s ON o.`pipeline_stage_id` = s.`id`
                 WHERE o.`owner_user_id` = :user_id 
                   AND o.`archived_at` IS NULL 
                   AND s.`is_won_stage` = 0 
@@ -246,9 +246,9 @@ final class NotificationRepository extends BaseRepository
     {
         $sql = "/* BYPASS_TENANT_SCOPE */
                 SELECT t.`id`, t.`title`, t.`end_date`
-                FROM `tasks` t
+                FROM `CRM_tasks` t
                 WHERE t.`status` NOT IN ('done', 'archived')
-                  AND (t.`assigned_to` = :user_id OR t.`id` IN (SELECT tp.task_id FROM task_participants tp WHERE tp.user_id = :user_id_p))
+                  AND (t.`assigned_to` = :user_id OR t.`id` IN (SELECT tp.task_id FROM CRM_task_participants tp WHERE tp.user_id = :user_id_p))
                   AND t.`end_date` IS NOT NULL 
                   AND t.`end_date` < NOW()
                   AND t.`tenant_id` = :tenant_id";

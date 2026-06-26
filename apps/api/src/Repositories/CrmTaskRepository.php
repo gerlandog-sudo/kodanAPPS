@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class CrmTaskRepository extends BaseRepository
 {
-    protected const TABLE = 'tasks';
+    protected const TABLE = 'CRM_tasks';
 
     protected function getLimitConfig(): array
     {
@@ -42,7 +42,7 @@ final class CrmTaskRepository extends BaseRepository
         }
 
         if (!$isAdmin) {
-            $whereClauses[] = '(t.assigned_to = :current_user OR t.id IN (SELECT tp.task_id FROM task_participants tp WHERE tp.user_id = :current_user_p))';
+            $whereClauses[] = '(t.assigned_to = :current_user OR t.id IN (SELECT tp.task_id FROM CRM_task_participants tp WHERE tp.user_id = :current_user_p))';
             $params[':current_user'] = $userId;
             $params[':current_user_p'] = $userId;
         }
@@ -54,9 +54,9 @@ final class CrmTaskRepository extends BaseRepository
                       tt.color_hex AS task_type_color, 
                       tt.icon AS task_type_icon,
                       o.title AS opportunity_name
-               FROM `tasks` t
+               FROM `CRM_tasks` t
                LEFT JOIN `task_types` tt ON tt.id = t.task_type_id
-               LEFT JOIN `opportunities` o ON o.id = t.opportunity_id" . $whereSql;
+               LEFT JOIN `CRM_opportunities` o ON o.id = t.opportunity_id" . $whereSql;
         
         $sql .= " ORDER BY t.end_date ASC, t.id ASC";
 
@@ -74,7 +74,7 @@ final class CrmTaskRepository extends BaseRepository
         if (isset($data['opportunity_id']) && (int)$data['opportunity_id'] > 0) {
             $opp = $this->rawSelect(
                 "/* BYPASS_TENANT_SCOPE */
-                 SELECT 1 FROM opportunities WHERE id = ? AND tenant_id = ? LIMIT 1",
+                 SELECT 1 FROM CRM_opportunities WHERE id = ? AND tenant_id = ? LIMIT 1",
                 [(int)$data['opportunity_id'], \kodanAPPS\DB\TenantContext::getTenantId()]
             );
             if (empty($opp)) {
@@ -89,7 +89,7 @@ final class CrmTaskRepository extends BaseRepository
             $userId = \kodanAPPS\DB\TenantContext::getUserId();
             $this->rawExecute(
                 "/* BYPASS_TENANT_SCOPE */
-                 INSERT INTO task_history_logs (task_id, changed_by, old_status, new_status, updated_at)
+                 INSERT INTO CRM_task_history_logs (task_id, changed_by, old_status, new_status, updated_at)
                  VALUES (?, ?, NULL, ?, NOW())",
                 [$id, $userId, $data['status']]
             );
@@ -120,7 +120,7 @@ final class CrmTaskRepository extends BaseRepository
                 $userId = \kodanAPPS\DB\TenantContext::getUserId();
                 $this->rawExecute(
                     "/* BYPASS_TENANT_SCOPE */
-                     INSERT INTO task_history_logs (task_id, changed_by, old_status, new_status, updated_at)
+                     INSERT INTO CRM_task_history_logs (task_id, changed_by, old_status, new_status, updated_at)
                      VALUES (?, ?, ?, ?, NOW())",
                     [$id, $userId, $oldStatus, $newStatus]
                 );
@@ -153,7 +153,7 @@ final class CrmTaskRepository extends BaseRepository
         return $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
              SELECT tp.user_id, u.display_name, u.email
-             FROM task_participants tp
+             FROM CRM_task_participants tp
              JOIN users u ON u.id = tp.user_id
              WHERE tp.task_id = ?",
             [$taskId]
@@ -174,13 +174,13 @@ final class CrmTaskRepository extends BaseRepository
 
         $this->transactional(function () use ($taskId, $userIds) {
             // Eliminar anteriores
-            $this->rawExecute("/* BYPASS_TENANT_SCOPE */ DELETE FROM task_participants WHERE task_id = ?", [$taskId]);
+            $this->rawExecute("/* BYPASS_TENANT_SCOPE */ DELETE FROM CRM_task_participants WHERE task_id = ?", [$taskId]);
 
             // Insertar nuevos
             foreach ($userIds as $userId) {
                 $this->rawExecute(
                     "/* BYPASS_TENANT_SCOPE */
-                     INSERT INTO task_participants (task_id, user_id)
+                     INSERT INTO CRM_task_participants (task_id, user_id)
                      VALUES (?, ?)",
                     [$taskId, (int)$userId]
                 );

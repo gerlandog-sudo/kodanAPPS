@@ -11,7 +11,7 @@ namespace kodanAPPS\Repositories;
  */
 final class QuoteRepository extends BaseRepository
 {
-    protected const TABLE = 'quotes';
+    protected const TABLE = 'CRM_quotes';
 
     protected function getLimitConfig(): ?array
     {
@@ -36,8 +36,8 @@ final class QuoteRepository extends BaseRepository
         return $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
              SELECT q.*, o.title AS opportunity_title, a.name AS account_name
-             FROM quotes q
-             LEFT JOIN opportunities o ON o.id = q.opportunity_id
+             FROM CRM_quotes q
+             LEFT JOIN CRM_opportunities o ON o.id = q.opportunity_id
              LEFT JOIN accounts a ON a.account_id = o.account_id
              {$where}
              ORDER BY q.created_at DESC",
@@ -55,8 +55,8 @@ final class QuoteRepository extends BaseRepository
         $result = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
              SELECT q.*, o.title AS opportunity_title, a.name AS account_name
-             FROM quotes q
-             LEFT JOIN opportunities o ON o.id = q.opportunity_id
+             FROM CRM_quotes q
+             LEFT JOIN CRM_opportunities o ON o.id = q.opportunity_id
              LEFT JOIN accounts a ON a.account_id = o.account_id
              WHERE q.id = :id AND q.tenant_id = :tenant_id",
             [':id' => $id, ':tenant_id' => \kodanAPPS\DB\TenantContext::getTenantId()]
@@ -75,7 +75,7 @@ final class QuoteRepository extends BaseRepository
         // Validar que la oportunidad pertenece al tenant antes de crear
         $opp = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
-             SELECT 1 FROM opportunities WHERE id = ? AND tenant_id = ? LIMIT 1",
+             SELECT 1 FROM CRM_opportunities WHERE id = ? AND tenant_id = ? LIMIT 1",
             [(int)$data['opportunity_id'], \kodanAPPS\DB\TenantContext::getTenantId()]
         );
         if (empty($opp)) {
@@ -118,7 +118,7 @@ final class QuoteRepository extends BaseRepository
         return $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
              SELECT qli.*, p.name AS product_name, p.sku AS product_sku
-             FROM quote_line_items qli
+             FROM CRM_quote_line_items qli
              JOIN products p ON p.id = qli.product_id
              WHERE qli.quote_id = ?
              ORDER BY qli.id ASC",
@@ -140,7 +140,7 @@ final class QuoteRepository extends BaseRepository
 
         $this->transactional(function () use ($quoteId, $items) {
             // Eliminar anteriores
-            $this->rawExecute("/* BYPASS_TENANT_SCOPE */ DELETE FROM quote_line_items WHERE quote_id = ?", [$quoteId]);
+            $this->rawExecute("/* BYPASS_TENANT_SCOPE */ DELETE FROM CRM_quote_line_items WHERE quote_id = ?", [$quoteId]);
 
             // Insertar nuevas
             $totalAmount = 0.00;
@@ -155,7 +155,7 @@ final class QuoteRepository extends BaseRepository
 
                 $this->rawExecute(
                     "/* BYPASS_TENANT_SCOPE */
-                     INSERT INTO quote_line_items (quote_id, product_id, quantity, unit_price, discount_percentage, tax_percentage)
+                     INSERT INTO CRM_quote_line_items (quote_id, product_id, quantity, unit_price, discount_percentage, tax_percentage)
                      VALUES (?, ?, ?, ?, ?, ?)",
                     [$quoteId, (int)$item['product_id'], $qty, $price, $disc, $tax]
                 );

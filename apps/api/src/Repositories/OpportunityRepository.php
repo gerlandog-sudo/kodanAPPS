@@ -13,7 +13,7 @@ use kodanAPPS\DB\TenantContext;
  */
 final class OpportunityRepository extends BaseRepository
 {
-    protected const TABLE = 'opportunities';
+    protected const TABLE = 'CRM_opportunities';
 
     protected function getLimitConfig(): array
     {
@@ -34,8 +34,8 @@ final class OpportunityRepository extends BaseRepository
             CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
             u.display_name AS owner_name,
             uc.avatar_url AS owner_avatar,
-            (SELECT COUNT(*) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
-            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total,
+            (SELECT COUNT(*) FROM CRM_quotes q JOIN CRM_quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
+            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM CRM_quotes q JOIN CRM_quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total,
             (
                 SELECT COUNT(m.id)
                 FROM conversations c
@@ -47,8 +47,8 @@ final class OpportunityRepository extends BaseRepository
                   AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
                   AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
             ) AS chat_unread_count
-         FROM opportunities o
-         JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
+         FROM CRM_opportunities o
+         JOIN CRM_pipeline_stages ps ON ps.id = o.pipeline_stage_id
          JOIN accounts a ON a.account_id = o.account_id
          LEFT JOIN contacts c ON c.contact_id = o.contact_id
          LEFT JOIN users u ON u.id = o.owner_user_id
@@ -76,8 +76,8 @@ final class OpportunityRepository extends BaseRepository
             CONCAT(c.first_name, ' ', c.last_name) AS contact_name,
             u.display_name AS owner_name,
             uc.avatar_url AS owner_avatar,
-            (SELECT COUNT(*) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
-            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM quotes q JOIN quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total,
+            (SELECT COUNT(*) FROM CRM_quotes q JOIN CRM_quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS line_items_count,
+            (SELECT COALESCE(SUM(qli.quantity * qli.unit_price), 0) FROM CRM_quotes q JOIN CRM_quote_line_items qli ON qli.quote_id = q.id WHERE q.opportunity_id = o.id) AS quote_total,
             (
                 SELECT COUNT(m.id)
                 FROM conversations c
@@ -89,8 +89,8 @@ final class OpportunityRepository extends BaseRepository
                   AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
                   AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
             ) AS chat_unread_count
-         FROM opportunities o
-         JOIN pipeline_stages ps ON ps.id = o.pipeline_stage_id
+         FROM CRM_opportunities o
+         JOIN CRM_pipeline_stages ps ON ps.id = o.pipeline_stage_id
          JOIN accounts a ON a.account_id = o.account_id
          LEFT JOIN contacts c ON c.contact_id = o.contact_id
          LEFT JOIN users u ON u.id = o.owner_user_id
@@ -214,9 +214,9 @@ final class OpportunityRepository extends BaseRepository
         }
         
         return $this->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */
+             "/* BYPASS_TENANT_SCOPE */
              SELECT oli.*, p.name AS product_name, p.sku AS product_sku
-             FROM opportunity_line_items oli
+             FROM CRM_opportunity_line_items oli
              JOIN products p ON p.id = oli.product_id
              WHERE oli.opportunity_id = ?
              ORDER BY oli.id ASC",
@@ -238,7 +238,7 @@ final class OpportunityRepository extends BaseRepository
         
         $this->transactional(function () use ($opportunityId, $items) {
             // Eliminar existentes
-            $this->rawExecute("/* BYPASS_TENANT_SCOPE */ DELETE FROM opportunity_line_items WHERE opportunity_id = ?", [$opportunityId]);
+            $this->rawExecute("/* BYPASS_TENANT_SCOPE */ DELETE FROM CRM_opportunity_line_items WHERE opportunity_id = ?", [$opportunityId]);
             
             // Insertar nuevos
             $totalAmount = 0.00;
@@ -254,7 +254,7 @@ final class OpportunityRepository extends BaseRepository
                 
                 $this->rawExecute(
                     "/* BYPASS_TENANT_SCOPE */
-                     INSERT INTO opportunity_line_items (opportunity_id, product_id, quantity, unit_price, discount_percentage, tax_percentage)
+                     INSERT INTO CRM_opportunity_line_items (opportunity_id, product_id, quantity, unit_price, discount_percentage, tax_percentage)
                      VALUES (?, ?, ?, ?, ?, ?)",
                     [$opportunityId, (int)$item['product_id'], $qty, $price, $disc, $tax]
                 );
@@ -280,7 +280,7 @@ final class OpportunityRepository extends BaseRepository
             ], 'id = :id', [':id' => $opportunityId]);
             
             $oppResult = $this->rawSelect(
-                "/* BYPASS_TENANT_SCOPE */ SELECT account_id FROM opportunities WHERE id = ?",
+                "/* BYPASS_TENANT_SCOPE */ SELECT account_id FROM CRM_opportunities WHERE id = ?",
                 [$opportunityId]
             );
             $accountId = isset($oppResult[0]['account_id']) && is_scalar($oppResult[0]['account_id']) ? (int)$oppResult[0]['account_id'] : 0;

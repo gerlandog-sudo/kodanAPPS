@@ -410,7 +410,7 @@ final class OpportunityController
         // 1. Obtener la etapa ganada del pipeline
         $pipelineIdResult = $this->pipelineRepo->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
-             SELECT pipeline_id FROM pipeline_stages WHERE id = ?",
+             SELECT pipeline_id FROM CRM_pipeline_stages WHERE id = ?",
             [$pipelineStageId]
         );
         if (empty($pipelineIdResult)) {
@@ -420,7 +420,7 @@ final class OpportunityController
 
         $wonStageResult = $this->pipelineRepo->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
-             SELECT id FROM pipeline_stages WHERE pipeline_id = ? AND is_won_stage = 1 LIMIT 1",
+             SELECT id FROM CRM_pipeline_stages WHERE pipeline_id = ? AND is_won_stage = 1 LIMIT 1",
             [$pipelineId]
         );
         if (empty($wonStageResult)) {

@@ -11,7 +11,7 @@ use kodanAPPS\DB\TenantContext;
  */
 final class WorkflowRepository extends BaseRepository
 {
-    protected const TABLE = 'workflow_rules';
+    protected const TABLE = 'CRM_workflow_rules';
 
     protected function getLimitConfig(): ?array
     {
@@ -64,7 +64,7 @@ final class WorkflowRepository extends BaseRepository
 
         $columns = implode(', ', array_map(fn($c) => "`{$c}`", array_keys($data)));
         $placeholders = ':' . implode(', :', array_keys($data));
-        $sql = "/* BYPASS_TENANT_SCOPE */ INSERT INTO `workflow_executions` ({$columns}) VALUES ({$placeholders})";
+        $sql = "/* BYPASS_TENANT_SCOPE */ INSERT INTO `CRM_workflow_executions` ({$columns}) VALUES ({$placeholders})";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);
@@ -78,8 +78,8 @@ final class WorkflowRepository extends BaseRepository
     {
         $sql = "/* BYPASS_TENANT_SCOPE */
                 SELECT we.*, wr.name AS rule_name
-                FROM workflow_executions we
-                JOIN workflow_rules wr ON wr.id = we.rule_id
+                FROM CRM_workflow_executions we
+                JOIN CRM_workflow_rules wr ON wr.id = we.rule_id
                 WHERE we.rule_id = :rule_id AND we.tenant_id = :tenant_id
                 ORDER BY we.executed_at DESC
                 LIMIT " . (int)$limit;
@@ -92,7 +92,7 @@ final class WorkflowRepository extends BaseRepository
     public function countActiveRules(): int
     {
         $rows = $this->rawSelect(
-            "SELECT COUNT(*) AS cnt FROM `workflow_rules` WHERE is_active = 1"
+            "SELECT COUNT(*) AS cnt FROM `CRM_workflow_rules` WHERE is_active = 1"
         );
         return isset($rows[0]['cnt']) && is_numeric($rows[0]['cnt']) ? (int)$rows[0]['cnt'] : 0;
     }
@@ -116,7 +116,7 @@ final class WorkflowRepository extends BaseRepository
         $rules = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
             SELECT COUNT(*) AS total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) AS inactive
-            FROM `workflow_rules`
+            FROM `CRM_workflow_rules`
             WHERE tenant_id = :tenant_id",
             [':tenant_id' => $tenantId]
         );
@@ -129,7 +129,7 @@ final class WorkflowRepository extends BaseRepository
                 COUNT(*) AS total,
                 SUM(CASE WHEN DATE(executed_at) = CURDATE() THEN 1 ELSE 0 END) AS today,
                 SUM(CASE WHEN YEARWEEK(executed_at, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END) AS this_week
-            FROM `workflow_executions`
+            FROM `CRM_workflow_executions`
             WHERE tenant_id = :tenant_id",
             [':tenant_id' => $tenantId]
         );
@@ -138,7 +138,7 @@ final class WorkflowRepository extends BaseRepository
         $byStatus = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
             SELECT status, COUNT(*) AS count
-            FROM `workflow_executions`
+            FROM `CRM_workflow_executions`
             WHERE tenant_id = :tenant_id
             GROUP BY status",
             [':tenant_id' => $tenantId]
@@ -148,7 +148,7 @@ final class WorkflowRepository extends BaseRepository
         $byDay = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
             SELECT DATE(executed_at) AS date, COUNT(*) AS count
-            FROM `workflow_executions`
+            FROM `CRM_workflow_executions`
             WHERE tenant_id = :tenant_id AND executed_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
             GROUP BY DATE(executed_at)
             ORDER BY date ASC",
@@ -159,8 +159,8 @@ final class WorkflowRepository extends BaseRepository
         $topEvents = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
             SELECT wr.trigger_event, COUNT(*) AS count
-            FROM `workflow_executions` we
-            JOIN `workflow_rules` wr ON wr.id = we.rule_id
+            FROM `CRM_workflow_executions` we
+            JOIN `CRM_workflow_rules` wr ON wr.id = we.rule_id
             WHERE we.tenant_id = :tenant_id
             GROUP BY wr.trigger_event
             ORDER BY count DESC
@@ -172,8 +172,8 @@ final class WorkflowRepository extends BaseRepository
         $topRules = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
             SELECT wr.id, wr.name, COUNT(*) AS execution_count
-            FROM `workflow_executions` we
-            JOIN `workflow_rules` wr ON wr.id = we.rule_id
+            FROM `CRM_workflow_executions` we
+            JOIN `CRM_workflow_rules` wr ON wr.id = we.rule_id
             WHERE we.tenant_id = :tenant_id
             GROUP BY wr.id, wr.name
             ORDER BY execution_count DESC
@@ -185,8 +185,8 @@ final class WorkflowRepository extends BaseRepository
         $recent = $this->rawSelect(
             "/* BYPASS_TENANT_SCOPE */
             SELECT we.*, wr.name AS rule_name
-            FROM `workflow_executions` we
-            JOIN `workflow_rules` wr ON wr.id = we.rule_id
+            FROM `CRM_workflow_executions` we
+            JOIN `CRM_workflow_rules` wr ON wr.id = we.rule_id
             WHERE we.tenant_id = :tenant_id
             ORDER BY we.executed_at DESC
             LIMIT 10",

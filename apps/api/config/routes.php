@@ -382,6 +382,30 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['crm']->getPlanStatus($auth['tenant_id'] ?? 0));
     });
 
+    // Dashboard
+    $router->get('/api/crm/dashboard/sales-velocity', function () use ($app) {
+        $pipelineId = isset($_GET['pipeline_id']) ? (int)$_GET['pipeline_id'] : null;
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['dashboard']->getSalesVelocity($pipelineId));
+    });
+
+    $router->get('/api/crm/dashboard/activity', function () use ($app) {
+        $pipelineId = isset($_GET['pipeline_id']) ? (int)$_GET['pipeline_id'] : null;
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['dashboard']->getRecentActivity($pipelineId));
+    });
+
+    $router->get('/api/crm/dashboard/win-rate', function () use ($app) {
+        $pipelineId = isset($_GET['pipeline_id']) ? (int)$_GET['pipeline_id'] : null;
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['dashboard']->getWinRateByUser($pipelineId));
+    });
+
+    $router->get('/api/crm/dashboard/pipeline-comparison', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['dashboard']->getPipelineComparison());
+    });
+
     // Notifications
     $router->get('/api/crm/notifications', function () use ($app) {
         header('Content-Type: application/json');

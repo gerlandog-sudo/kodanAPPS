@@ -327,6 +327,7 @@ $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
 $workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo);
 $mailController = new \kodanAPPS\Controllers\MailController($emailTemplateRepo, $smtpConfigRepo, $mailService);
+$dashboardController = new \kodanAPPS\Controllers\DashboardController($pdo);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);
@@ -391,5 +392,6 @@ return [
         'webLead' => $leadController,
         'workflow' => $workflowController,
         'mail' => $mailController,
+        'dashboard' => $dashboardController,
         ],
 ];

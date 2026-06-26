@@ -1,7 +1,6 @@
 import { Card } from '@kodan-apps/ui-core'
-import { ResponsiveContainer, AreaChart, Area } from 'recharts'
 import { useGsapCountUp } from '../../hooks/useGsapCountUp'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, ArrowUpRight } from 'lucide-react'
 
 interface KpiCardAnimatedProps {
   label: string
@@ -12,15 +11,13 @@ interface KpiCardAnimatedProps {
   icon: React.ReactNode
   iconBg: string
   iconColor: string
-  sparklineColor: string
-  sparklineData: { value: number }[]
   backContent: React.ReactNode
   onDrillDown?: () => void
 }
 
 export function KpiCardAnimated({
   label, value, formatCurrency, trend, subtitle, icon, iconBg, iconColor,
-  sparklineColor, sparklineData, backContent, onDrillDown
+  backContent, onDrillDown
 }: KpiCardAnimatedProps) {
   const prefix = formatCurrency ? '$' : ''
   const displayValue = formatCurrency
@@ -57,32 +54,23 @@ export function KpiCardAnimated({
         </div>
       }
       back={
-        <div className="p-4 flex flex-col justify-between h-full gap-3">
-          <div className="flex items-center gap-2">
+        <div className="p-4 flex flex-col h-full" style={{ background: 'var(--sys-surface)' }}>
+          <div className="flex items-center justify-between mb-3">
             <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--sys-text-muted)' }}>{label}</span>
-            <span className="text-[9px] font-semibold tabular-nums" style={{ color: 'var(--sys-text)', opacity: 0.7 }}>{prefix}{displayValue}</span>
+            <span className="text-[9px] font-semibold tabular-nums opacity-50">{prefix}{displayValue}</span>
           </div>
-          <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0">
             {backContent}
           </div>
-          <div className="flex items-center justify-between mt-auto pt-1">
-            <div className="h-10 w-24 opacity-40">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={sparklineData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
-                  <Area type="monotone" dataKey="value" stroke={sparklineColor} strokeWidth={1} fill="transparent" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            {onDrillDown && (
-              <button
-                onClick={onDrillDown}
-                className="bg-surface-raised border border-border-soft rounded px-2.5 py-1 text-[10px] text-text-muted font-medium cursor-pointer hover:bg-surface-hover transition-colors"
-                style={{ borderRadius: 'var(--radius-sm)' }}
-              >
-                Ver Detalle
-              </button>
-            )}
-          </div>
+          {onDrillDown && (
+            <button
+              onClick={onDrillDown}
+              className="mt-3 flex items-center justify-center gap-1 w-full py-2 rounded-lg text-[10px] font-semibold cursor-pointer transition-all duration-150 hover:opacity-80"
+              style={{ background: 'var(--sys-surface-hover)', color: 'var(--sys-text)' }}
+            >
+              <ArrowUpRight size={12} /> Ver Detalle
+            </button>
+          )}
         </div>
       }
     />

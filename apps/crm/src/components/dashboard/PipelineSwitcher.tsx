@@ -40,34 +40,30 @@ export function PipelineSwitcher({ pipelines, selectedId, onChange, loading }: P
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 shrink-0">
-          <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-montserrat)' }}>
-            Dashboard Comercial
-          </h1>
-          {loading && (
-            <span className="size-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--sys-primary)' }} />
-          )}
-        </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-montserrat)' }}>
+          Dashboard Comercial
+        </h1>
+        {loading && (
+          <span className="size-2 rounded-full animate-pulse shrink-0" style={{ background: 'var(--sys-primary)' }} />
+        )}
       </div>
 
-      <div ref={containerRef} className="relative flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
-        <div className="absolute bottom-0 left-0 h-0.5 rounded-full z-10 pointer-events-none" style={{ background: 'var(--sys-primary)' }} ref={indicatorRef} />
+      <div ref={containerRef} className="relative flex gap-0.5 p-0.5 border rounded-lg w-fit overflow-x-auto scrollbar-none" style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface)' }}>
+        <div
+          className="absolute top-0.5 bottom-0.5 rounded-md z-10 pointer-events-none transition-[background] duration-200"
+          style={{ background: 'var(--sys-primary-container)' }}
+          ref={indicatorRef}
+        />
 
         <button
           ref={(el) => setPillRef('all', el)}
           onClick={() => onChange('all')}
-          className={`
-            relative shrink-0 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer
-            transition-all duration-200 select-none
-            ${selectedId === 'all'
-              ? 'text-on-primary shadow-md'
-              : 'text-text-muted hover:text-text hover:bg-surface-hover border border-border-soft/50'
-            }
-          `}
-          style={{
-            background: selectedId === 'all' ? 'var(--sys-primary)' : 'transparent',
-          }}
+          className={`relative z-20 shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer select-none transition-colors duration-150 ${
+            selectedId === 'all'
+              ? 'text-on-primary-container'
+              : 'text-text-muted hover:text-text hover:bg-surface-hover'
+          }`}
         >
           Todos los Canales
         </button>
@@ -77,17 +73,11 @@ export function PipelineSwitcher({ pipelines, selectedId, onChange, loading }: P
             key={p.id}
             ref={(el) => setPillRef(p.id, el)}
             onClick={() => onChange(p.id)}
-            className={`
-              relative shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer
-              transition-all duration-200 select-none
-              ${selectedId === p.id
-                ? 'text-on-primary shadow-md'
-                : 'text-text-muted hover:text-text hover:bg-surface-hover border border-border-soft/50'
-              }
-            `}
-            style={{
-              background: selectedId === p.id ? 'var(--sys-primary)' : 'transparent',
-            }}
+            className={`relative z-20 shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer select-none transition-colors duration-150 ${
+              selectedId === p.id
+                ? 'text-on-primary-container'
+                : 'text-text-muted hover:text-text hover:bg-surface-hover'
+            }`}
           >
             <span
               className="size-2 rounded-full shrink-0"

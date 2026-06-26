@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { SlidePanel, Table } from '@kodan-apps/ui-core'
-import { Users, Briefcase, TrendingUp, FileDown, Download } from 'lucide-react'
+import { Users, Briefcase, FileDown, Download, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
 import { crmApi } from '../api/client'
 import { exportToExcel } from '../utils/excelExport'
@@ -8,42 +8,37 @@ import { useGsapStagger } from '../hooks/useGsapStagger'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { PipelineSwitcher } from '../components/dashboard/PipelineSwitcher'
 import { KpiCardGrid } from '../components/dashboard/KpiCardGrid'
-import { SalesGoalsWidget } from '../components/dashboard/SalesGoalsWidget'
-import { HotDealsWidget } from '../components/dashboard/HotDealsWidget'
-import { PipelineStageChart } from '../components/dashboard/PipelineStageChart'
-import { SalesFunnelSVG } from '../components/dashboard/SalesFunnelSVG'
-import { ForecastChart } from '../components/dashboard/ForecastChart'
-import { CloseReasonsAnalysis } from '../components/dashboard/CloseReasonsAnalysis'
 import { SalesVelocityWidget } from '../components/dashboard/SalesVelocityWidget'
 import { ActivityTimeline } from '../components/dashboard/ActivityTimeline'
-import { PipelineComparisonWidget } from '../components/dashboard/PipelineComparisonWidget'
+import { PipelineStageChart } from '../components/dashboard/PipelineStageChart'
 import { WinRateBySellerWidget } from '../components/dashboard/WinRateBySellerWidget'
+import { CloseReasonsAnalysis } from '../components/dashboard/CloseReasonsAnalysis'
+import { PipelineComparisonWidget } from '../components/dashboard/PipelineComparisonWidget'
 import { AutomationDashboard } from '../components/dashboard/AutomationDashboard'
 
 function DashboardSkeleton() {
   return (
-    <div className="flex flex-col gap-8 animate-pulse">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="flex flex-col gap-6 animate-pulse">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-32 rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-5 flex flex-col justify-between" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }}>
+          <div key={i} className="h-28 rounded-2xl p-5 flex flex-col justify-between" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }}>
             <div className="flex justify-between">
               <div className="flex flex-col gap-2 w-2/3">
-                <div className="h-2.5 bg-border-soft rounded w-1/2" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
-                <div className="h-6 bg-border-soft rounded w-3/4" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
-                <div className="h-2 bg-border-soft rounded w-1/3" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+                <div className="h-2.5 rounded w-1/2" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+                <div className="h-6 rounded w-3/4" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
               </div>
-              <div className="w-10 h-10 rounded-xl bg-border-soft" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
+              <div className="w-10 h-10 rounded-xl" style={{ backgroundColor: 'var(--sys-border-soft)' }} />
             </div>
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="h-[280px] rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-6" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }} />
-        <div className="lg:col-span-2 h-[280px] rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-6" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 h-64 rounded-2xl p-6" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }} />
+        <div className="h-64 rounded-2xl p-6" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }} />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-[360px] rounded-2xl bg-surface-hover/30 border border-border-soft/50 p-6" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-64 rounded-2xl p-6" style={{ backgroundColor: 'var(--sys-surface-hover)', opacity: 0.6 }} />
         ))}
       </div>
     </div>
@@ -54,6 +49,7 @@ export function Dashboard() {
   const [pipelines, setPipelines] = useState<any[]>([])
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | number>('all')
   const [initialLoading, setInitialLoading] = useState(true)
+  const [showExtended, setShowExtended] = useState(false)
 
   const dashboard = useDashboardData(selectedPipelineId)
   const staggerRef = useGsapStagger({ key: selectedPipelineId, enabled: !dashboard.loading })
@@ -152,8 +148,8 @@ export function Dashboard() {
   const loading = initialLoading || dashboard.loading
 
   return (
-    <div className="flex flex-col gap-8 flex-1 overflow-y-auto pr-2 scrollbar-none">
-      <div className="flex items-start justify-between gap-4 shrink-0 pb-2 border-b" style={{ borderColor: 'var(--sys-border-soft)' }}>
+    <div className="flex flex-col gap-5 flex-1 overflow-y-auto pr-2 scrollbar-none">
+      <div className="flex items-start justify-between gap-4 shrink-0 pb-3 border-b" style={{ borderColor: 'var(--sys-border-soft)' }}>
         <PipelineSwitcher
           pipelines={pipelines}
           selectedId={selectedPipelineId}
@@ -177,27 +173,21 @@ export function Dashboard() {
       </div>
 
       {loading ? <DashboardSkeleton /> : (
-        <div ref={staggerRef} className="flex flex-col gap-8">
-          <div className="animate-fade-in" style={{ animationDuration: '0.35s' }}>
-            <KpiCardGrid
-              stats={dashboard.stats}
-              opportunities={dashboard.opportunities}
-              accounts={dashboard.accounts}
-              onDrillDown={handleOpenDrillDown}
-            />
-          </div>
+        <div ref={staggerRef} className="flex flex-col gap-5">
+          <KpiCardGrid
+            stats={dashboard.stats}
+            opportunities={dashboard.opportunities}
+            accounts={dashboard.accounts}
+            onDrillDown={handleOpenDrillDown}
+          />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <SalesGoalsWidget
-              wonValue={dashboard.stats.wonValue}
-              wonDeals={dashboard.stats.wonDeals}
-              totalValue={dashboard.stats.totalValue}
-              formatCurrency={formatCurrency}
-            />
-            <HotDealsWidget
-              opportunities={dashboard.opportunities}
-              formatCurrency={formatCurrency}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div className="lg:col-span-2">
+              <PipelineStageChart
+                data={dashboard.stageData}
+                formatCurrency={formatCurrency}
+              />
+            </div>
             <SalesVelocityWidget
               avgDaysToClose={dashboard.salesVelocity.avgDaysToClose}
               avgStages={dashboard.salesVelocity.avgStages}
@@ -206,63 +196,52 @@ export function Dashboard() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <PipelineStageChart
-              data={dashboard.stageData}
-              formatCurrency={formatCurrency}
-            />
-            <div className="glass-panel p-6" style={{ borderRadius: 'var(--radius-lg)' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp size={18} style={{ color: 'var(--sys-tertiary)' }} />
-                <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-montserrat)' }}>Embudo de Conversión Comercial</h2>
-              </div>
-              <SalesFunnelSVG opportunities={dashboard.opportunities} />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {dashboard.winRateByUser.length > 0 && (
+              <WinRateBySellerWidget
+                data={dashboard.winRateByUser}
+                formatCurrency={formatCurrency}
+              />
+            )}
+            {dashboard.recentActivity.length > 0 && (
+              <ActivityTimeline
+                activities={dashboard.recentActivity}
+                loading={dashboard.loading}
+                onRefresh={dashboard.reload}
+              />
+            )}
+            {dashboard.pipelineComparison.length > 0 && (
+              <PipelineComparisonWidget
+                pipelines={dashboard.pipelineComparison}
+                formatCurrency={formatCurrency}
+                onSelectPipeline={(id) => handlePipelineChange(id)}
+              />
+            )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="glass-panel p-6" style={{ borderRadius: 'var(--radius-lg)' }}>
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUp size={18} style={{ color: 'var(--sys-tertiary)' }} />
-                <h2 className="text-base font-bold" style={{ fontFamily: 'var(--font-montserrat)' }}>Pronóstico Predictivo de Ventas</h2>
+          <div className="flex flex-col gap-3 pt-2 border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
+            <button
+              onClick={() => setShowExtended(!showExtended)}
+              className="flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-text transition-colors cursor-pointer w-fit"
+            >
+              <BarChart3 size={14} />
+              Analítica Avanzada
+              {showExtended ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+
+            {showExtended && (
+              <div className="flex flex-col gap-5 pt-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <CloseReasonsAnalysis
+                    wonReasons={dashboard.closeReasons.wonReasons}
+                    lostReasons={dashboard.closeReasons.lostReasons}
+                    summaryTable={dashboard.closeReasons.summaryTable}
+                    formatCurrency={formatCurrency}
+                  />
+                  <AutomationDashboard />
+                </div>
               </div>
-              <ForecastChart opportunities={dashboard.opportunities} />
-            </div>
-            <CloseReasonsAnalysis
-              wonReasons={dashboard.closeReasons.wonReasons}
-              lostReasons={dashboard.closeReasons.lostReasons}
-              summaryTable={dashboard.closeReasons.summaryTable}
-              formatCurrency={formatCurrency}
-            />
-          </div>
-
-          {(dashboard.pipelineComparison.length > 0 || dashboard.winRateByUser.length > 0 || dashboard.recentActivity.length > 0) && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {dashboard.pipelineComparison.length > 0 && (
-                <PipelineComparisonWidget
-                  pipelines={dashboard.pipelineComparison}
-                  formatCurrency={formatCurrency}
-                  onSelectPipeline={(id) => handlePipelineChange(id)}
-                />
-              )}
-              {dashboard.winRateByUser.length > 0 && (
-                <WinRateBySellerWidget
-                  data={dashboard.winRateByUser}
-                  formatCurrency={formatCurrency}
-                />
-              )}
-              {dashboard.recentActivity.length > 0 && (
-                <ActivityTimeline
-                  activities={dashboard.recentActivity}
-                  loading={dashboard.loading}
-                  onRefresh={dashboard.reload}
-                />
-              )}
-            </div>
-          )}
-
-          <div className="mt-4">
-            <AutomationDashboard />
+            )}
           </div>
         </div>
       )}

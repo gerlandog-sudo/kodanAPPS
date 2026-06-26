@@ -1,6 +1,7 @@
 import { api } from '@kodan-apps/ui-core';
+import { B2BService } from '@kodan-apps/shared';
 
-// Custom field & pipeline types
+// Custom field & pipeline types (CRM-specific)
 export interface CustomFieldDef {
   id: number
   entity_type: 'account' | 'contact' | 'opportunity'
@@ -24,18 +25,23 @@ export interface StageBulkInput {
 }
 
 export const crmApi = {
+  // Accounts & Contacts - delegated to shared B2BService
+  listAccounts: () => B2BService.listAccounts(),
+  createAccount: (data: Record<string, unknown>) => B2BService.createAccount(data),
+  updateAccount: (id: number, data: Record<string, unknown>) => B2BService.updateAccount(id, data),
+  deleteAccount: (id: number) => B2BService.deleteAccount(id),
+
+  listContacts: (accountId?: number) => B2BService.listContacts(accountId),
+  createContact: (data: Record<string, unknown>) => B2BService.createContact(data),
+  updateContact: (id: number, data: Record<string, unknown>) => B2BService.updateContact(id, data),
+  deleteContact: (id: number) => B2BService.deleteContact(id),
+  listContactsByAccount: (accountId: number) => B2BService.listContacts(accountId),
+
+  // Custom Fields
+  listCustomFields: (entity: string) => B2BService.listCustomFields(entity),
+
+  // CRM-specific endpoints
   getPlanStatus: () => api.get<any>('/api/crm/plan-status'),
-
-  listAccounts: () => api.get<any[]>('/api/crm/accounts'),
-  createAccount: (data: any) => api.post('/api/crm/accounts', data),
-  updateAccount: (id: number, data: any) => api.patch(`/api/crm/accounts/${id}`, data),
-  deleteAccount: (id: number) => api.delete(`/api/crm/accounts/${id}`),
-
-  listContacts: () => api.get<any[]>('/api/crm/contacts'),
-  createContact: (data: any) => api.post('/api/crm/contacts', data),
-  updateContact: (id: number, data: any) => api.patch(`/api/crm/contacts/${id}`, data),
-  deleteContact: (id: number) => api.delete(`/api/crm/contacts/${id}`),
-  listContactsByAccount: (accountId: number) => api.get<any[]>(`/api/crm/contacts/account/${accountId}`),
 
   listPipelines: () => api.get<any[]>('/api/crm/pipelines'),
   createPipeline: (data: any) => api.post('/api/crm/pipelines', data),
@@ -78,8 +84,7 @@ export const crmApi = {
   sendMessage: (oppId: number, data: { content: string; thread_id?: number | null; attachments?: any[] }) =>
     api.post(`/api/crm/opportunities/${oppId}/chat`, data),
 
-  // Custom Fields
-  listCustomFields: (entity: string) => api.get<CustomFieldDef[]>('/api/crm/custom-fields', { entity }),
+  // Custom Fields (CRM-specific CRUD)
   createCustomField: (data: Partial<CustomFieldDef>) => api.post('/api/crm/custom-fields', data),
   updateCustomField: (id: number, data: Partial<CustomFieldDef>) => api.patch(`/api/crm/custom-fields/${id}`, data),
   deleteCustomField: (id: number, purge?: boolean) => api.delete(`/api/crm/custom-fields/${id}${purge ? '?purge=true' : ''}`),

@@ -1,9 +1,13 @@
 import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization, useSSE, MessageDrawer, useAuth, AuthLoading } from '@kodan-apps/ui-core';
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
+import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
+import { LayoutDashboard } from 'lucide-react';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Accounts = lazy(() => import('./pages/Accounts').then(m => ({ default: m.Accounts })));
+const Contacts = lazy(() => import('./pages/Contacts').then(m => ({ default: m.Contacts })));
 const LogoTRACKER3D = lazy(() => import('./components/LogoTRACKER3D').then(m => ({ default: m.LogoTRACKER3D })));
 
 function Logo3DPlaceholder({ size }: { size?: number }) {
@@ -11,13 +15,14 @@ function Logo3DPlaceholder({ size }: { size?: number }) {
 }
 
 type View = 'login' | 'set-password' | 'app';
+type Route = 'dashboard' | 'accounts' | 'contacts';
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme();
   const [view, setView] = useState<View | 'initial'>('initial');
+  const [route, setRoute] = useState<Route>('dashboard');
   const [chatOpen, setChatOpen] = useState(false);
-  
-  // Utiliza el hook useAuth unificado con el appId de tracker
+
   const {
     logout: authLogout,
     setAuthenticated,
@@ -40,7 +45,6 @@ function AppContent() {
   useEffect(() => {
     if (view !== 'initial') return;
     if (loading) return;
-
     setView(authenticated ? 'app' : 'login');
   }, [loading, authenticated, view]);
 
@@ -60,8 +64,12 @@ function AppContent() {
     return () => window.removeEventListener('auth:force-logout', onForceLogout);
   }, [handleLogout]);
 
-  // Sidebar sin opciones por ahora
-  const navItems: NavItem[] = [];
+  const navItems = useMemo<NavItem[]>(() => [
+    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    B2BAccountNavItem,
+    B2BContactNavItem,
+  ], []);
+
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [], []);
 
   if (view === 'initial' || loading) {
@@ -101,8 +109,8 @@ function AppContent() {
         title="kodanTRACKER"
         logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
         navItems={navItems}
-        activeKey="dashboard"
-        onNavigate={() => {}}
+        activeKey={route}
+        onNavigate={(key) => setRoute(key as Route)}
         user={user}
         onLogout={handleLogout}
         theme={theme}
@@ -133,7 +141,9 @@ function AppContent() {
                 <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />
               </div>
             }>
-              <Dashboard />
+              {route === 'dashboard' && <Dashboard />}
+              {route === 'accounts' && <Accounts />}
+              {route === 'contacts' && <Contacts />}
             </Suspense>
           </div>
         </main>

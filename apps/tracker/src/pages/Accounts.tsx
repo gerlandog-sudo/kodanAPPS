@@ -32,7 +32,7 @@ export function Accounts() {
     if (accountIdToDelete === null) return;
     try {
       await B2BService.deleteAccount(accountIdToDelete);
-      toast.success('Cuenta comercial eliminada.');
+      toast.success('Cuenta eliminada.');
       reload();
     } catch {
       toast.error('Error al eliminar la cuenta.');
@@ -107,7 +107,7 @@ export function Accounts() {
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
         title="Eliminar cuenta"
-        message="¿Está seguro de eliminar esta cuenta? Esto no eliminará las negociaciones asociadas, pero se desvincularán."
+        message="¿Está seguro de eliminar esta cuenta?"
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         variant="danger"

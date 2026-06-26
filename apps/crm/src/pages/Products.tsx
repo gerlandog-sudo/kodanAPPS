@@ -3,7 +3,7 @@ import { Button, Input, Modal, Table, ConfirmDialog } from '@kodan-apps/ui-core'
 import { crmApi } from '../api/client';
 import { Plus, Tag, PackageOpen, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { exportToExcel } from '../utils/excelExport';
+import { exportToExcel } from '@kodan-apps/ui-core';
 
 export function Products() {
   const [products, setProducts] = useState<any[]>([]);

@@ -25,7 +25,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { exportToExcel } from '../utils/excelExport';
+import { exportToExcel } from '@kodan-apps/ui-core';
 
 interface Opportunity {
   id: number;

@@ -3,8 +3,6 @@ import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
   LayoutDashboard,
-  Building2,
-  Users,
   Briefcase,
   Tag,
   ListTodo,
@@ -20,6 +18,7 @@ import {
   Trash2,
   ExternalLink,
 } from 'lucide-react';
+import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
 import type { UserMenuItem } from '@kodan-apps/ui-core';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { crmApi } from './api/client';
@@ -162,8 +161,8 @@ function AppContent() {
       { key: 'tasks', label: 'Tareas', icon: <ListTodo size={18} /> },
       { key: 'negotiations', label: 'Negociaciones', icon: <Briefcase size={18} /> },
       { key: 'quotes', label: 'Cotizaciones', icon: <FileText size={18} /> },
-      { key: 'accounts', label: 'Cuentas B2B', icon: <Building2 size={18} /> },
-      { key: 'contacts', label: 'Contactos', icon: <Users size={18} /> },
+      B2BAccountNavItem,
+      B2BContactNavItem,
       { key: 'products', label: 'Catalogo', icon: <Tag size={18} /> },
     ]
     return items

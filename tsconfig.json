@@ -23,7 +23,8 @@
     /* Paths mapping */
     "baseUrl": ".",
     "paths": {
-      "@kodan-apps/ui-core": ["packages/ui-core/src/index.ts"]
+      "@kodan-apps/ui-core": ["packages/ui-core/src/index.ts"],
+      "@kodan-apps/shared": ["packages/shared/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "apps/api"]

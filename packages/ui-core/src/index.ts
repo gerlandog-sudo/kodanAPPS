@@ -64,5 +64,7 @@ export { useSSE } from './hooks/useSSE'
 export type { SSEMessage } from './hooks/useSSE'
 export { MessageDrawer } from './components/MessageDrawer'
 
+export { exportToExcel } from './utils'
+
 import './styles/z-index.css'
 import './styles/keyframes.css'

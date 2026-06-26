@@ -16,6 +16,9 @@ final class DashboardController
         $this->pdo = $pdo;
     }
 
+    /**
+     * @return array{avgDaysToClose: float, avgStages: int, conversionRate: float, trend: int}
+     */
     public function getSalesVelocity(?int $pipelineId): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -66,6 +69,9 @@ final class DashboardController
         ];
     }
 
+    /**
+     * @return array<int, array{type: string, message: string, userName: string, timestamp: string, entityType: string, entityId: int}>
+     */
     public function getRecentActivity(?int $pipelineId): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -116,6 +122,9 @@ final class DashboardController
         ], $rows);
     }
 
+    /**
+     * @return array<int, array{id: int, name: string, avatar: string|null, won: int, lost: int, winRate: float, totalValue: float}>
+     */
     public function getWinRateByUser(?int $pipelineId): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -159,6 +168,9 @@ final class DashboardController
         ], $rows);
     }
 
+    /**
+     * @return array<int, array{id: int, name: string, totalValue: float, activeDeals: int, wonDeals: int, winRate: float, avgCycleDays: float, color: string}>
+     */
     public function getPipelineComparison(): array
     {
         $tenantId = TenantContext::getTenantId();

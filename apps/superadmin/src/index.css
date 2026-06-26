@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../../../packages/ui-core/src/styles/shared.css";
 @source "../../../packages/ui-core/src";
 
 :root {
@@ -136,121 +137,12 @@
   --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* {
-  box-sizing: border-box;
-}
-
 html {
-  font-family: var(--font-hanken);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-normal),
               color var(--transition-normal),
               border-color var(--transition-normal);
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  background-color: var(--sys-bg);
-  color: var(--sys-text);
   line-height: 1.6;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-montserrat);
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--sys-text);
-}
-
-.select {
-  appearance: none;
-  padding-right: 2.5rem;
-  background-color: var(--sys-text-muted);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='black' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: right 0.75rem center;
-  mask-position: right 0.75rem center;
-  -webkit-mask-size: 1.25em;
-  mask-size: 1.25em;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.table-container table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.table-container th {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--sys-text-muted);
-  border-bottom: 1px solid var(--sys-border-soft);
-  font-family: var(--font-hanken);
-}
-
-.table-container td {
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  color: var(--sys-text);
-  border-bottom: 1px solid var(--sys-border-soft);
-  font-family: var(--font-hanken);
-}
-
-.table-container tbody tr:hover {
-  background: var(--sys-surface-hover);
-}
-
-.glass-panel {
-  background: var(--sys-glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--sys-glass-border);
-  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05) inset;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 999px;
-  font-family: var(--font-hanken);
-}
-
-.badge-active {
-  background: color-mix(in srgb, var(--sys-success-bg) 20%, transparent);
-  color: var(--sys-success);
-}
-
-.badge-inactive {
-  background: color-mix(in srgb, var(--sys-text-muted) 10%, transparent);
-  color: var(--sys-text-muted);
-}
-
-.spinner {
-  display: inline-block;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }

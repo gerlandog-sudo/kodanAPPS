@@ -6,6 +6,7 @@ namespace kodanAPPS\Controllers;
 
 use kodanAPPS\Services\DashboardService;
 use kodanAPPS\Repositories\TimeEntryRepository;
+use kodanAPPS\DB\TenantContext;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -13,7 +14,7 @@ final class ReportController
 {
     public function __construct(
         private DashboardService $dashboardService,
-        private TimeEntryRepository $timeEntryRepository,
+        private TimeEntryRepository $timeEntryRepo,
     ) {}
 
     public function byProject(): void
@@ -21,7 +22,9 @@ final class ReportController
         $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : null;
         $from = $_GET['from'] ?? date('Y-m-01');
         $to = $_GET['to'] ?? date('Y-m-t');
-        $entries = $this->timeEntryRepository->list($projectId ? ['project_id' => $projectId] : [], $from, $to, 0, 10000)['data'];
+        $filters = ['date_from' => $from, 'date_to' => $to];
+        if ($projectId) $filters['project_id'] = $projectId;
+        $entries = $this->timeEntryRepo->findFiltered($filters, 1, 10000);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -47,7 +50,7 @@ final class ReportController
     {
         $from = $_GET['from'] ?? date('Y-m-01');
         $to = $_GET['to'] ?? date('Y-m-t');
-        $entries = $this->timeEntryRepository->list([], $from, $to, 0, 10000)['data'];
+        $entries = $this->timeEntryRepo->findFiltered(['date_from' => $from, 'date_to' => $to], 1, 10000);
 
         $grouped = [];
         foreach ($entries as $e) {
@@ -78,7 +81,19 @@ final class ReportController
     {
         $from = $_GET['from'] ?? date('Y-m-01');
         $to = $_GET['to'] ?? date('Y-m-t');
-        $entries = $this->timeEntryRepository->list([], $from, $to, 0, 10000)['data'];
+        $tenantId = TenantContext::getTenantId();
+
+        $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name,
+                       a.name AS account_name
+                FROM TRACKER_time_entries te
+                JOIN projects p ON p.id = te.project_id
+                LEFT JOIN accounts a ON a.account_id = p.account_id
+                LEFT JOIN users u ON u.id = te.user_id
+                WHERE te.tenant_id = :tid AND te.date >= :dfrom AND te.date <= :dto
+                ORDER BY te.date DESC LIMIT 10000";
+        $stmt = $this->timeEntryRepo->getPdo()->prepare($sql);
+        $stmt->execute([':tid' => $tenantId, ':dfrom' => $from, ':dto' => $to]);
+        $entries = $stmt->fetchAll();
 
         $grouped = [];
         foreach ($entries as $e) {
@@ -110,7 +125,7 @@ final class ReportController
     {
         $from = $_GET['from'] ?? date('Y-m-d', strtotime('monday this week'));
         $to = $_GET['to'] ?? date('Y-m-d');
-        $entries = $this->timeEntryRepository->list([], $from, $to, 0, 10000)['data'];
+        $entries = $this->timeEntryRepo->findFiltered(['date_from' => $from, 'date_to' => $to], 1, 10000);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();

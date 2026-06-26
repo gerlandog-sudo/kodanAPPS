@@ -40,10 +40,11 @@ export function Dashboard() {
 
   const statusLabel: Record<string, string> = { active: 'Activos', paused: 'Pausados', completed: 'Completados' };
 
+  const fmtHours = (h: number) => `${Math.floor(h)}h ${Math.round((h % 1) * 60)}m`;
   const kpiCards = kpis ? [
     { label: 'Proyectos activos', value: kpis.active_projects, icon: <FolderKanban size={20} />, color: '#3b82f6' },
-    { label: 'Horas hoy', value: `${Math.floor(kpis.hours_today / 60)}h${kpis.hours_today % 60}m`, icon: <Clock size={20} />, color: '#22c55e' },
-    { label: 'Horas esta semana', value: `${Math.floor(kpis.hours_week / 60)}h${kpis.hours_week % 60}m`, icon: <Clock size={20} />, color: '#8b5cf6' },
+    { label: 'Horas hoy', value: fmtHours(kpis.hours_today), icon: <Clock size={20} />, color: '#22c55e' },
+    { label: 'Horas esta semana', value: fmtHours(kpis.hours_week), icon: <Clock size={20} />, color: '#8b5cf6' },
     { label: 'Tareas abiertas', value: kpis.open_tasks, icon: <AlertTriangle size={20} />, color: '#f59e0b' },
     { label: 'Pendientes aprobar', value: kpis.pending_approvals, icon: <CheckCircle size={20} />, color: '#ef4444' },
   ] : [];

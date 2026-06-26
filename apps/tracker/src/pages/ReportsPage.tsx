@@ -17,9 +17,16 @@ export function ReportsPage() {
   });
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0]);
 
-  const handleDownload = () => {
-    const url = trackerApi.getReportUrl(reportType, { from: dateFrom, to: dateTo });
-    window.open(url, '_blank');
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await trackerApi.downloadReport(reportType, { from: dateFrom, to: dateTo });
+    } catch {
+      // toast error handled by caller
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const currentReport = REPORT_TYPES.find((r) => r.value === reportType);
@@ -55,8 +62,8 @@ export function ReportsPage() {
           </div>
 
           <div className="pt-2">
-            <Button variant="primary" onClick={handleDownload}>
-              <Download size={16} className="mr-1" /> Descargar Excel
+            <Button variant="primary" onClick={handleDownload} disabled={downloading}>
+              <Download size={16} className="mr-1" /> {downloading ? 'Descargando...' : 'Descargar Excel'}
             </Button>
           </div>
         </div>

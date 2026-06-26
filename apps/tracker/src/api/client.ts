@@ -154,8 +154,18 @@ export const trackerApi = {
   createSeniority: (name: string) => api.post<CatalogItem>('/api/tracker/seniorities', { name }),
   deleteSeniority: (id: number) => api.delete(`/api/tracker/seniorities/${id}`),
 
-  getReportUrl: (type: string, params?: Record<string, string>) => {
+  downloadReport: async (type: string, params?: Record<string, string>) => {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return `/api/tracker/reports/${type}${qs}`;
+    const res = await fetch(`/api/tracker/reports/${type}${qs}`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Error al descargar reporte');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${type}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   },
 };

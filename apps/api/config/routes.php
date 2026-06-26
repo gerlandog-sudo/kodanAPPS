@@ -886,6 +886,191 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['tracker']->getProject($p['id']));
     });
 
+    // Tracker Kanban
+    $router->get('/api/tracker/kanban/{projectId}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['kanban']->getBoard((int)$p['projectId']));
+    });
+    $router->post('/api/tracker/kanban/tasks', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['kanban']->create($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+    $router->get('/api/tracker/kanban/tasks/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['kanban']->get((int)$p['id']));
+    });
+    $router->patch('/api/tracker/kanban/tasks/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['kanban']->update((int)$p['id'], $input));
+    });
+    $router->post('/api/tracker/kanban/tasks/{id}/move', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['kanban']->move((int)$p['id'], $input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+    $router->delete('/api/tracker/kanban/tasks/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['kanban']->delete((int)$p['id']));
+    });
+    $router->get('/api/tracker/kanban/task-types', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['kanban']->taskTypes());
+    });
+
+    // Tracker Time Entries
+    $router->get('/api/tracker/time-entries', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['timeEntry']->list());
+    });
+    $router->post('/api/tracker/time-entries', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['timeEntry']->create($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+    $router->patch('/api/tracker/time-entries/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['timeEntry']->update((int)$p['id'], $input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode() ?: 500;
+            http_response_code($code);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    });
+    $router->delete('/api/tracker/time-entries/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['timeEntry']->delete((int)$p['id']));
+    });
+    $router->post('/api/tracker/time-entries/{id}/submit', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['timeEntry']->submit((int)$p['id']));
+    });
+    $router->post('/api/tracker/time-entries/{id}/approve', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['timeEntry']->approve((int)$p['id']));
+    });
+    $router->post('/api/tracker/time-entries/{id}/reject', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['timeEntry']->reject((int)$p['id'], $input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+    $router->post('/api/tracker/time-entries/bulk-approve', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['timeEntry']->bulkApprove($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+    $router->get('/api/tracker/time-entries/pending-approvals', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['timeEntry']->pendingApprovals());
+    });
+
+    // Tracker Dashboard
+    $router->get('/api/tracker/dashboard/kpis', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerDashboard']->kpis());
+    });
+    $router->get('/api/tracker/dashboard/hours-by-day', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerDashboard']->hoursByDay());
+    });
+    $router->get('/api/tracker/dashboard/projects-by-status', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerDashboard']->projectsByStatus());
+    });
+    $router->get('/api/tracker/dashboard/top-users', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerDashboard']->topUsers());
+    });
+    $router->get('/api/tracker/dashboard/recent-entries', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerDashboard']->recentEntries());
+    });
+
+    // Tracker Profiles (Settings)
+    $router->get('/api/tracker/profiles', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerProfile']->listProfiles());
+    });
+    $router->post('/api/tracker/profiles', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['trackerProfile']->upsertProfile($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+
+    // Tracker Catalogs
+    $router->get('/api/tracker/positions', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['catalog']->listPositions());
+    });
+    $router->post('/api/tracker/positions', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['catalog']->createPosition($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+    $router->delete('/api/tracker/positions/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['catalog']->deletePosition((int)$p['id']));
+    });
+    $router->get('/api/tracker/seniorities', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['catalog']->listSeniorities());
+    });
+    $router->post('/api/tracker/seniorities', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['catalog']->createSeniority($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
+    $router->delete('/api/tracker/seniorities/{id}', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['catalog']->deleteSeniority((int)$p['id']));
+    });
+
     // ============================================================
     // Middleware & Routes: Unified Messaging System
     // ============================================================

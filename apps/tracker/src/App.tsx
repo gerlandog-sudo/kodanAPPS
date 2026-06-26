@@ -2,12 +2,17 @@ import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, 
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
-import { LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, KanbanSquare, Clock, CheckCircle, Settings } from 'lucide-react';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
 const Accounts = lazy(() => import('./pages/Accounts').then(m => ({ default: m.Accounts })));
 const Contacts = lazy(() => import('./pages/Contacts').then(m => ({ default: m.Contacts })));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
+const KanbanPage = lazy(() => import('./pages/KanbanPage').then(m => ({ default: m.KanbanPage })));
+const TimeEntriesPage = lazy(() => import('./pages/TimeEntriesPage').then(m => ({ default: m.TimeEntriesPage })));
+const ApprovalsPage = lazy(() => import('./pages/ApprovalsPage').then(m => ({ default: m.ApprovalsPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const LogoTRACKER3D = lazy(() => import('./components/LogoTRACKER3D').then(m => ({ default: m.LogoTRACKER3D })));
 
 function Logo3DPlaceholder({ size }: { size?: number }) {
@@ -15,7 +20,7 @@ function Logo3DPlaceholder({ size }: { size?: number }) {
 }
 
 type View = 'login' | 'set-password' | 'app';
-type Route = 'dashboard' | 'accounts' | 'contacts';
+type Route = 'dashboard' | 'projects' | 'kanban' | 'time-entries' | 'approvals' | 'accounts' | 'contacts' | 'settings';
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme();
@@ -66,11 +71,17 @@ function AppContent() {
 
   const navItems = useMemo<NavItem[]>(() => [
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    B2BAccountNavItem,
-    B2BContactNavItem,
+    { key: 'projects', label: 'Proyectos', icon: <FolderKanban size={18} /> },
+    { key: 'kanban', label: 'Tablero', icon: <KanbanSquare size={18} /> },
+    { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
+    { key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> },
+    { key: 'accounts', label: 'Cuentas', icon: B2BAccountNavItem.icon },
+    { key: 'contacts', label: 'Contactos', icon: B2BContactNavItem.icon },
   ], []);
 
-  const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [], []);
+  const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
+    { label: 'Configuración', icon: <Settings size={16} />, onClick: () => setRoute('settings'), dividerBefore: false },
+  ], []);
 
   if (view === 'initial' || loading) {
     return <AuthLoading />;
@@ -142,6 +153,11 @@ function AppContent() {
               </div>
             }>
               {route === 'dashboard' && <Dashboard />}
+              {route === 'projects' && <ProjectsPage />}
+              {route === 'kanban' && <KanbanPage />}
+              {route === 'time-entries' && <TimeEntriesPage />}
+              {route === 'approvals' && <ApprovalsPage />}
+              {route === 'settings' && <SettingsPage />}
               {route === 'accounts' && <Accounts />}
               {route === 'contacts' && <Contacts />}
             </Suspense>

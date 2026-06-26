@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 26-06-2026 a las 07:59:57
+-- Tiempo de generación: 26-06-2026 a las 11:37:50
 -- Versión del servidor: 10.11.17-MariaDB-cll-lve
 -- Versión de PHP: 8.3.31
 
@@ -52,7 +52,7 @@ INSERT INTO `accounts` (`account_id`, `tenant_id`, `name`, `legal_name`, `tax_id
 (4, 12, 'Acme Corporation Inc', 'Acme Corp S.A. de C.V.', 'RFC-ACM850101-1A1', 'https://acme.com', '+1 (555) 123-4567', '123 Industrial Blvd, Suite 400, Austin, TX', '{}', '2026-06-15 21:48:50', '2026-06-15 21:48:50'),
 (5, 12, 'Globex Corporation', 'Globex Holdings Ltd.', 'TAX-GBX990214-X32', 'https://globex.com', '+1 (555) 987-6543', '456 Cypress Ave, Silicon Valley, CA', '{}', '2026-06-15 21:48:50', '2026-06-15 21:48:50'),
 (6, 12, 'Initech LLC', 'Initech Software Systems', 'TAX-INI010417-AA9', 'https://initech.com', '+1 (555) 234-5678', '789 Office Park Road, Boulder, CO', '{}', '2026-06-15 21:48:50', '2026-06-15 21:48:50'),
-(7, 16, 'Amaranthus GFB', 'Amaranthus GFB', '', '', '+541144488277', '', '{}', '2026-06-23 18:52:17', '2026-06-23 18:55:35');
+(7, 16, 'Amaranthus GFB', 'Amaranthus GFB', '', '', '+541144488277', '', '{\"0\":\"{\",\"1\":\"\\\"\",\"2\":\"0\",\"3\":\"\\\"\",\"4\":\":\",\"5\":\"\\\"\",\"6\":\"{\",\"7\":\"\\\"\",\"8\":\",\",\"9\":\"\\\"\",\"10\":\"1\",\"11\":\"\\\"\",\"12\":\":\",\"13\":\"\\\"\",\"14\":\"}\",\"15\":\"\\\"\",\"16\":\",\",\"17\":\"\\\"\",\"18\":\"f\",\"19\":\"e\",\"20\":\"c\",\"21\":\"h\",\"22\":\"a\",\"23\":\"_\",\"24\":\"c\",\"25\":\"u\",\"26\":\"s\",\"27\":\"t\",\"28\":\"o\",\"29\":\"m\",\"30\":\"\\\"\",\"31\":\":\",\"32\":\"\\\"\",\"33\":\"2\",\"34\":\"0\",\"35\":\"2\",\"36\":\"6\",\"37\":\"-\",\"38\":\"0\",\"39\":\"6\",\"40\":\"-\",\"41\":\"2\",\"42\":\"4\",\"43\":\"\\\"\",\"44\":\"}\",\"fecha_custom\":\"2026-06-24\"}', '2026-06-23 18:52:17', '2026-06-26 16:35:47');
 
 -- --------------------------------------------------------
 
@@ -243,390 +243,6 @@ INSERT INTO `audit_logs` (`id`, `tenant_id`, `user_id`, `action`, `details`, `cr
 (109, 1, 9, 'TENANT_UPDATED', '{\"tenant_id\":16,\"changes\":{\"name\":\"kodan software\",\"subscription_plan_id\":3,\"logo_changed\":true}}', '2026-06-25 22:22:45'),
 (110, 1, 9, 'TENANT_PLAN_CHANGED', '{\"tenant_id\":16,\"new_plan_id\":16}', '2026-06-25 22:23:08'),
 (111, 1, 9, 'TENANT_UPDATED', '{\"tenant_id\":16,\"changes\":{\"name\":\"kodan software\",\"subscription_plan_id\":16,\"logo_changed\":true}}', '2026-06-25 22:23:08');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_email_templates`
---
-
-CREATE TABLE `bak_email_templates` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `tenant_id` bigint(20) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `subject` varchar(255) NOT NULL,
-  `body` longtext NOT NULL,
-  `module` varchar(50) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_email_templates`
---
-
-INSERT INTO `bak_email_templates` (`id`, `tenant_id`, `name`, `subject`, `body`, `module`, `created_at`, `updated_at`) VALUES
-(1, 16, 'Bienvenida', 'Hola {{contact_name}}', 'Te damos la bienvenida a&nbsp;{{opportunity_name}} y queremos decirte que nos complace facturarte&nbsp;{{opportunity_value}}, yo soy&nbsp;{{sender_name}} y el nombre de la cuenta es&nbsp;{{account_name}}<div><br></div><div>te vamos a cocer el ocote...</div><div>saludetes!!!</div><div><br></div><div>g.</div>', 'crm', '2026-06-24 19:09:44', '2026-06-25 09:30:20');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_opportunities`
---
-
-CREATE TABLE `bak_opportunities` (
-  `id` bigint(20) NOT NULL,
-  `tenant_id` bigint(20) NOT NULL,
-  `account_id` bigint(20) NOT NULL,
-  `contact_id` bigint(20) DEFAULT NULL,
-  `pipeline_stage_id` bigint(20) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `value` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `currency` char(3) NOT NULL DEFAULT 'USD',
-  `close_date` date DEFAULT NULL,
-  `owner_user_id` bigint(20) DEFAULT NULL,
-  `custom_fields` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`custom_fields`)),
-  `close_reason` varchar(255) DEFAULT NULL COMMENT 'Motivo del cierre ganado/perdido',
-  `archived_at` timestamp NULL DEFAULT NULL COMMENT 'Archivado (oculta del kanban activo)',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_opportunities`
---
-
-INSERT INTO `bak_opportunities` (`id`, `tenant_id`, `account_id`, `contact_id`, `pipeline_stage_id`, `title`, `value`, `currency`, `close_date`, `owner_user_id`, `custom_fields`, `close_reason`, `archived_at`, `created_at`, `updated_at`) VALUES
-(1, 13, 1, 1, 3, 'SaaS Enterprise + Onboarding Acme', 4500.00, 'USD', '2026-07-15', 11, '{}', NULL, NULL, '2026-06-15 21:44:49', '2026-06-15 21:44:49'),
-(2, 13, 2, 3, 2, 'Consultor├¡a Especializada Globex', 2400.00, 'USD', '2026-06-30', 11, '{}', NULL, NULL, '2026-06-15 21:44:49', '2026-06-15 21:44:49'),
-(3, 13, 3, 4, 1, 'Migraci├│n de Sistemas de Servidores', 7500.00, 'USD', '2026-07-30', 11, '{}', NULL, NULL, '2026-06-15 21:44:49', '2026-06-15 21:44:49'),
-(4, 13, 1, 2, 4, 'Soporte Premium Adicional Acme', 3000.00, 'USD', '2026-06-20', 11, '{}', NULL, NULL, '2026-06-15 21:44:49', '2026-06-15 21:44:49'),
-(5, 12, 4, 5, 12, 'SaaS Enterprise + Onboarding Acme', 4500.00, 'USD', '2026-07-15', 10, '{}', 'Precio Alto', '2026-06-23 16:04:42', '2026-06-15 21:48:50', '2026-06-23 16:04:42'),
-(6, 12, 5, 7, 7, 'Consultoria Especializada Globex', 2400.00, 'USD', '2026-06-30', 10, '{}', NULL, NULL, '2026-06-15 21:48:50', '2026-06-24 17:05:41'),
-(7, 12, 6, 8, 10, 'Migracion de Sistemas de Servidores', 7500.00, 'USD', '2026-07-30', 10, '{}', NULL, NULL, '2026-06-15 21:48:50', '2026-06-22 21:41:09'),
-(8, 12, 4, 6, 7, 'Soporte Premium Adicional Acme', 3000.00, 'USD', '2026-06-20', 10, '{}', 'Precio Alto', NULL, '2026-06-15 21:48:50', '2026-06-24 17:05:44'),
-(9, 12, 6, 5, 11, 'Prueba', 100000.00, 'USD', '2026-05-30', 10, '[]', NULL, NULL, '2026-06-22 20:04:28', '2026-06-23 20:12:39'),
-(10, 12, 6, 5, 8, 'sdfasdfasdfasdfasdf', 0.00, 'USD', '2026-05-24', 10, '[]', NULL, NULL, '2026-06-22 20:34:32', '2026-06-24 17:20:15'),
-(11, 16, 7, 9, 27, 'Contacto Web - Amaranthus GFB', 15000.00, 'USD', '2026-06-30', 15, '[]', NULL, NULL, '2026-06-23 18:52:17', '2026-06-24 19:16:50');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_opportunity_line_items`
---
-
-CREATE TABLE `bak_opportunity_line_items` (
-  `id` bigint(20) NOT NULL,
-  `opportunity_id` bigint(20) NOT NULL,
-  `product_id` bigint(20) NOT NULL,
-  `quantity` decimal(10,2) NOT NULL DEFAULT 1.00,
-  `unit_price` decimal(15,2) NOT NULL,
-  `discount_percentage` decimal(5,2) NOT NULL DEFAULT 0.00,
-  `tax_percentage` decimal(5,2) NOT NULL DEFAULT 0.00
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_opportunity_line_items`
---
-
-INSERT INTO `bak_opportunity_line_items` (`id`, `opportunity_id`, `product_id`, `quantity`, `unit_price`, `discount_percentage`, `tax_percentage`) VALUES
-(1, 1, 1, 20.00, 150.00, 10.00, 16.00),
-(2, 1, 2, 1.00, 1500.00, 0.00, 16.00),
-(3, 2, 4, 20.00, 120.00, 0.00, 16.00),
-(4, 3, 1, 50.00, 150.00, 20.00, 16.00),
-(5, 4, 3, 12.00, 250.00, 0.00, 16.00),
-(6, 5, 5, 20.00, 150.00, 10.00, 16.00),
-(7, 5, 6, 1.00, 1500.00, 0.00, 16.00),
-(8, 6, 8, 20.00, 120.00, 0.00, 16.00),
-(9, 7, 5, 50.00, 150.00, 20.00, 16.00),
-(10, 8, 7, 12.00, 250.00, 0.00, 16.00);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_pipelines`
---
-
-CREATE TABLE `bak_pipelines` (
-  `id` bigint(20) NOT NULL,
-  `tenant_id` bigint(20) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `is_default` tinyint(1) NOT NULL DEFAULT 0,
-  `ui_config` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Configuración visual y motivos de cierre' CHECK (json_valid(`ui_config`)),
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_pipelines`
---
-
-INSERT INTO `bak_pipelines` (`id`, `tenant_id`, `name`, `is_default`, `ui_config`, `created_at`) VALUES
-(1, 13, 'Embudo de Ventas IT', 1, NULL, '2026-06-15 21:44:49'),
-(2, 12, 'Embudo de Ventas IT', 1, '{\"won_reasons\":[\"Mejor Precio\",\"Contacto Interno\"],\"lost_reasons\":[\"Precio Alto\",\"Menos Features\"]}', '2026-06-15 21:48:50'),
-(3, 1, 'Ventas Directas', 1, NULL, '2026-06-16 10:51:36'),
-(4, 1, 'Ventas Partner', 0, NULL, '2026-06-16 10:51:36'),
-(5, 1, 'Renovaci├│n / Soporte', 0, NULL, '2026-06-16 10:51:36'),
-(6, 16, 'Ventas Directas', 0, '{\"won_reasons\":[],\"lost_reasons\":[]}', '2026-06-23 18:51:21');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_pipeline_stages`
---
-
-CREATE TABLE `bak_pipeline_stages` (
-  `id` bigint(20) NOT NULL,
-  `pipeline_id` bigint(20) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `color_hex` varchar(7) NOT NULL DEFAULT '#6366F1',
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `probability` decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Probabilidad de cierre %',
-  `is_won_stage` tinyint(1) NOT NULL DEFAULT 0,
-  `is_lost_stage` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Etapa de perdido',
-  `ui_config` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Preset metadata: colorKey, dot, badgeClass, glowClass' CHECK (json_valid(`ui_config`)),
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_pipeline_stages`
---
-
-INSERT INTO `bak_pipeline_stages` (`id`, `pipeline_id`, `name`, `color_hex`, `sort_order`, `probability`, `is_won_stage`, `is_lost_stage`, `ui_config`, `created_at`) VALUES
-(1, 1, 'Contacto Inicial', '#3B82F6', 10, 0.00, 0, 0, NULL, '2026-06-15 21:44:49'),
-(2, 1, 'Calificaci├│n', '#6366F1', 20, 0.00, 0, 0, NULL, '2026-06-15 21:44:49'),
-(3, 1, 'Propuesta Enviada', '#F59E0B', 30, 0.00, 0, 0, NULL, '2026-06-15 21:44:49'),
-(4, 1, 'Negociaci├│n', '#EC4899', 40, 0.00, 0, 0, NULL, '2026-06-15 21:44:49'),
-(5, 1, 'Ganada (Cerrada)', '#10B981', 50, 0.00, 1, 0, NULL, '2026-06-15 21:44:49'),
-(6, 1, 'Perdida (Cerrada)', '#EF4444', 60, 0.00, 0, 1, NULL, '2026-06-15 21:44:49'),
-(7, 2, 'Contacto Inicial', '#14B8A6', 10, 10.00, 0, 0, '{\"preset\":\"#14B8A6\"}', '2026-06-15 21:48:50'),
-(8, 2, 'Calificación', '#6366F1', 20, 30.00, 0, 0, '{\"preset\":\"#6366F1\"}', '2026-06-15 21:48:50'),
-(9, 2, 'Propuesta Enviada', '#F59E0B', 30, 50.00, 0, 0, '{\"preset\":\"#F59E0B\"}', '2026-06-15 21:48:50'),
-(10, 2, 'Negociación', '#EC4899', 40, 70.00, 0, 0, '{\"preset\":\"#EC4899\"}', '2026-06-15 21:48:50'),
-(11, 2, 'Ganada (Cerrada)', '#10B981', 50, 100.00, 1, 0, '{\"preset\":\"#10B981\"}', '2026-06-15 21:48:50'),
-(12, 2, 'Perdida (Cerrada)', '#EF4444', 60, 0.00, 0, 1, '{\"preset\":\"#EF4444\"}', '2026-06-15 21:48:50'),
-(13, 3, 'Nuevo Lead', '#6366F1', 10, 10.00, 0, 0, '{\"preset\":\"#6366F1\"}', '2026-06-16 10:51:36'),
-(14, 3, 'Calificado', '#8B5CF6', 20, 25.00, 0, 0, '{\"preset\":\"#8B5CF6\"}', '2026-06-16 10:51:36'),
-(15, 3, 'Reuni├│n Agendada', '#3B82F6', 30, 40.00, 0, 0, '{\"preset\":\"#3B82F6\"}', '2026-06-16 10:51:36'),
-(16, 3, 'Propuesta Enviada', '#F97316', 40, 60.00, 0, 0, '{\"preset\":\"#F97316\"}', '2026-06-16 10:51:36'),
-(17, 3, 'Negociaci├│n', '#EAB308', 50, 75.00, 0, 0, '{\"preset\":\"#EAB308\"}', '2026-06-16 10:51:36'),
-(18, 3, 'Cerrado Ganado', '#22C55E', 60, 100.00, 1, 0, '{\"preset\":\"#22C55E\"}', '2026-06-16 10:51:36'),
-(19, 3, 'Cerrado Perdido', '#F43F5E', 70, 0.00, 0, 1, '{\"preset\":\"#F43F5E\"}', '2026-06-16 10:51:36'),
-(20, 4, 'Partner Identificado', '#06B6D4', 10, 15.00, 0, 0, '{\"preset\":\"#06B6D4\"}', '2026-06-16 10:51:36'),
-(21, 4, 'Propuesta Conjunta', '#14B8A6', 20, 40.00, 0, 0, '{\"preset\":\"#14B8A6\"}', '2026-06-16 10:51:36'),
-(22, 4, 'Acuerdo Cerrado', '#22C55E', 30, 100.00, 1, 0, '{\"preset\":\"#22C55E\"}', '2026-06-16 10:51:36'),
-(23, 5, 'Renovaci├│n Pr├│xima', '#EC4899', 10, 30.00, 0, 0, '{\"preset\":\"#EC4899\"}', '2026-06-16 10:51:36'),
-(24, 5, 'Cotizaci├│n Enviada', '#F97316', 20, 60.00, 0, 0, '{\"preset\":\"#F97316\"}', '2026-06-16 10:51:36'),
-(25, 5, 'Renovaci├│n Cerrada', '#22C55E', 30, 100.00, 1, 0, '{\"preset\":\"#22C55E\"}', '2026-06-16 10:51:36'),
-(26, 6, 'Contacto Inicial', '#c7c8ca', 10, 0.00, 0, 0, '{\"preset\":\"#6B7280\"}', '2026-06-23 18:52:11'),
-(27, 6, 'Calificacion', '#6B7280', 20, 20.00, 0, 0, '{\"preset\":\"#06B6D4\"}', '2026-06-23 18:52:11'),
-(28, 6, 'Propuesta Enviada', '#F97316', 30, 40.00, 0, 0, '{\"preset\":\"#22C55E\"}', '2026-06-23 18:52:11'),
-(29, 6, 'Negociacion', '#3B82F6', 40, 70.00, 0, 0, '{\"preset\":\"#FF0000\"}', '2026-06-23 18:52:11'),
-(42, 6, 'Ganada', '#22C55E', 50, 100.00, 1, 0, NULL, '2026-06-25 11:21:53'),
-(43, 6, 'Perdida', '#ff0000', 60, 0.00, 0, 1, NULL, '2026-06-25 11:21:53');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_quotes`
---
-
-CREATE TABLE `bak_quotes` (
-  `id` bigint(20) NOT NULL,
-  `tenant_id` bigint(20) NOT NULL,
-  `opportunity_id` bigint(20) NOT NULL,
-  `quote_number` varchar(50) NOT NULL,
-  `status` enum('draft','sent','accepted','rejected') NOT NULL DEFAULT 'draft',
-  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_quotes`
---
-
-INSERT INTO `bak_quotes` (`id`, `tenant_id`, `opportunity_id`, `quote_number`, `status`, `total_amount`, `created_at`) VALUES
-(1, 13, 1, 'Q-2026-0001', 'sent', 4500.00, '2026-06-15 21:44:49'),
-(2, 12, 5, 'Q-2026-0005', 'sent', 1350.00, '2026-06-15 21:48:50'),
-(3, 12, 9, 'Q-2026-0286', 'draft', 1238.56, '2026-06-22 20:48:11');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_quote_line_items`
---
-
-CREATE TABLE `bak_quote_line_items` (
-  `id` bigint(20) NOT NULL,
-  `quote_id` bigint(20) NOT NULL,
-  `product_id` bigint(20) NOT NULL,
-  `quantity` decimal(10,2) NOT NULL DEFAULT 1.00,
-  `unit_price` decimal(15,2) NOT NULL,
-  `discount_percentage` decimal(5,2) NOT NULL DEFAULT 0.00,
-  `tax_percentage` decimal(5,2) NOT NULL DEFAULT 0.00
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_quote_line_items`
---
-
-INSERT INTO `bak_quote_line_items` (`id`, `quote_id`, `product_id`, `quantity`, `unit_price`, `discount_percentage`, `tax_percentage`) VALUES
-(1, 1, 1, 20.00, 150.00, 10.00, 16.00),
-(2, 1, 2, 1.00, 1500.00, 0.00, 16.00),
-(6, 2, 6, 1.00, 1500.00, 10.00, 0.00),
-(17, 3, 5, 2.00, 152.00, 10.00, 21.00),
-(18, 3, 7, 3.00, 250.00, 0.00, 21.00);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_tasks`
---
-
-CREATE TABLE `bak_tasks` (
-  `id` bigint(20) NOT NULL,
-  `tenant_id` bigint(20) NOT NULL,
-  `opportunity_id` bigint(20) DEFAULT NULL,
-  `task_type_id` bigint(20) DEFAULT NULL,
-  `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `start_date` datetime DEFAULT NULL,
-  `end_date` datetime DEFAULT NULL,
-  `due_date` datetime DEFAULT NULL,
-  `status` enum('todo','in_progress','done','archived') NOT NULL DEFAULT 'todo',
-  `assigned_to` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_tasks`
---
-
-INSERT INTO `bak_tasks` (`id`, `tenant_id`, `opportunity_id`, `task_type_id`, `title`, `description`, `start_date`, `end_date`, `due_date`, `status`, `assigned_to`, `created_at`) VALUES
-(1, 13, 1, 9, 'Llamar a John Doe para seguimiento de propuesta', 'Preguntar si pudieron evaluar los t├®rminos y el 10% de descuento que incluimos en el software SaaS.', '2026-06-16 20:44:49', '2026-06-16 21:44:49', '2026-06-16 21:44:49', '', 11, '2026-06-23 20:29:07'),
-(2, 13, NULL, 9, 'Preparar presentaci├│n para Globex', 'Enfocar la presentaci├│n en el servicio de soporte 24/7 y SLA premium.', '2026-06-13 20:44:49', '2026-06-13 21:44:49', '2026-06-13 21:44:49', '', 11, '2026-06-23 20:29:07'),
-(3, 13, NULL, 9, 'Enviar cotizaci├│n firmada a Initech', 'Espera de aprobaci├│n por parte del comit├® de compras.', '2026-06-18 20:44:49', '2026-06-18 21:44:49', '2026-06-18 21:44:49', '', 11, '2026-06-23 20:29:07'),
-(4, 12, 5, 5, 'Llamar a John Doe para seguimiento de propuesta', 'Preguntar si pudieron evaluar los t├®rminos y el 10% de descuento que incluimos en el software SaaS.', '2026-06-16 20:48:51', '2026-06-16 21:48:51', '2026-06-16 21:48:51', '', 10, '2026-06-23 20:29:07'),
-(5, 12, 5, 5, 'Preparar presentaci├│n para Globex', 'Enfocar la presentaci├│n en el servicio de soporte 24/7 y SLA premium.', '2026-06-30 23:00:00', '2026-07-01 00:00:00', '2026-07-01 00:00:00', '', 10, '2026-06-23 20:29:07'),
-(6, 12, NULL, 5, 'Enviar cotizaci├│n firmada a Initech', 'Espera de aprobaci├│n por parte del comit├® de compras.', '2026-06-18 20:48:51', '2026-06-18 21:48:51', '2026-06-18 21:48:51', '', 10, '2026-06-23 20:29:07'),
-(9, 16, 11, 15, 'prueba', NULL, '2026-06-23 18:00:00', '2026-06-25 20:30:00', '2026-06-25 20:30:00', 'todo', 12, '2026-06-23 20:31:39'),
-(10, 16, 11, 13, 'prueba 2', NULL, '2026-06-23 18:29:00', '2026-06-24 17:32:00', '2026-06-24 17:32:00', 'in_progress', 15, '2026-06-23 20:32:10'),
-(11, 16, 11, 16, 'Tarea automática', NULL, NULL, NULL, NULL, 'todo', 15, '2026-06-23 22:44:32');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_task_history_logs`
---
-
-CREATE TABLE `bak_task_history_logs` (
-  `id` bigint(20) NOT NULL,
-  `task_id` bigint(20) NOT NULL,
-  `changed_by` bigint(20) NOT NULL,
-  `old_status` varchar(50) DEFAULT NULL,
-  `new_status` varchar(50) NOT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_task_history_logs`
---
-
-INSERT INTO `bak_task_history_logs` (`id`, `task_id`, `changed_by`, `old_status`, `new_status`, `updated_at`) VALUES
-(2, 9, 15, NULL, 'todo', '2026-06-23 20:31:39'),
-(3, 10, 15, NULL, 'todo', '2026-06-23 20:32:10'),
-(4, 10, 15, 'todo', 'in_progress', '2026-06-23 20:32:37'),
-(5, 10, 15, 'in_progress', 'todo', '2026-06-23 20:37:31'),
-(6, 10, 15, 'todo', 'in_progress', '2026-06-23 20:37:34'),
-(7, 10, 15, 'in_progress', 'todo', '2026-06-23 20:42:46'),
-(8, 10, 15, 'todo', 'in_progress', '2026-06-23 21:34:14'),
-(9, 10, 15, 'in_progress', 'todo', '2026-06-23 21:34:15'),
-(10, 11, 15, NULL, 'todo', '2026-06-23 22:44:32'),
-(11, 10, 15, 'todo', 'in_progress', '2026-06-26 10:32:00');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_task_participants`
---
-
-CREATE TABLE `bak_task_participants` (
-  `task_id` bigint(20) NOT NULL,
-  `user_id` bigint(20) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_task_participants`
---
-
-INSERT INTO `bak_task_participants` (`task_id`, `user_id`) VALUES
-(9, 15),
-(10, 12);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_workflow_executions`
---
-
-CREATE TABLE `bak_workflow_executions` (
-  `id` bigint(20) NOT NULL,
-  `tenant_id` bigint(20) NOT NULL,
-  `rule_id` bigint(20) NOT NULL,
-  `trigger_entity` enum('opportunity','task') NOT NULL,
-  `trigger_entity_id` bigint(20) NOT NULL,
-  `status` enum('success','partial','failed') NOT NULL DEFAULT 'success',
-  `executed_actions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`executed_actions`)),
-  `error_message` text DEFAULT NULL,
-  `executed_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_workflow_executions`
---
-
-INSERT INTO `bak_workflow_executions` (`id`, `tenant_id`, `rule_id`, `trigger_entity`, `trigger_entity_id`, `status`, `executed_actions`, `error_message`, `executed_at`) VALUES
-(1, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"create_followup_task\",\"status\":\"success\"}]', NULL, '2026-06-23 22:44:32'),
-(2, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-23 23:07:45'),
-(3, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-23 23:08:52'),
-(4, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 14:16:03'),
-(5, 16, 1, 'opportunity', 11, 'partial', '[{\"type\":\"send_notification\",\"status\":\"failed\",\"error\":\"SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`admkoda_BBDD_APPS`.`notifications`, CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE)\"}]', 'SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`admkoda_BBDD_APPS`.`notifications`, CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE)', '2026-06-24 16:03:38'),
-(6, 16, 1, 'opportunity', 11, 'partial', '[{\"type\":\"send_notification\",\"status\":\"failed\",\"error\":\"SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`admkoda_BBDD_APPS`.`notifications`, CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE)\"}]', 'SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`admkoda_BBDD_APPS`.`notifications`, CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE)', '2026-06-24 16:12:42'),
-(7, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 16:42:21'),
-(8, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 16:47:18'),
-(9, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 16:48:43'),
-(10, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 16:55:09'),
-(11, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 16:55:46'),
-(12, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 17:20:55'),
-(13, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 17:32:23'),
-(14, 16, 1, 'opportunity', 11, 'success', '[{\"type\":\"send_notification\",\"status\":\"success\"}]', NULL, '2026-06-24 19:16:50');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `bak_workflow_rules`
---
-
-CREATE TABLE `bak_workflow_rules` (
-  `id` bigint(20) NOT NULL,
-  `tenant_id` bigint(20) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `trigger_entity` enum('opportunity','task') NOT NULL DEFAULT 'opportunity',
-  `trigger_event` varchar(50) NOT NULL,
-  `trigger_conditions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`trigger_conditions`)),
-  `actions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`actions`)),
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `execution_order` int(11) NOT NULL DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `bak_workflow_rules`
---
-
-INSERT INTO `bak_workflow_rules` (`id`, `tenant_id`, `name`, `description`, `trigger_entity`, `trigger_event`, `trigger_conditions`, `actions`, `is_active`, `execution_order`, `created_at`, `updated_at`) VALUES
-(1, 16, 'Prueba de Regla', 'Prueba de Regla', 'opportunity', 'stage_changed', '{\"to_stage_id\":27}', '[{\"type\":\"send_notification\",\"params\":{\"title\":\"Notificacion automatica\",\"message\":\"Prueba de Notifiacacion automatica\"}}]', 1, 0, '2026-06-23 22:31:33', '2026-06-24 16:11:01');
 
 -- --------------------------------------------------------
 
@@ -1148,7 +764,8 @@ INSERT INTO `custom_field_definitions` (`id`, `tenant_id`, `entity_type`, `field
 (14, 1, 'opportunity', 'urgencia', 'Urgencia', 'select', '[\"Baja\",\"Media\",\"Alta\",\"Cr├¡tica\"]', 0, 40, NULL, '2026-06-16 10:51:36'),
 (15, 12, 'account', 'campo_prueba', 'Campo Prueba', 'date', NULL, 0, 1, NULL, '2026-06-18 20:24:56'),
 (16, 12, 'account', 'prueba', 'prueba', 'select', '[]', 0, 2, '2026-06-19 11:51:44', '2026-06-19 11:51:37'),
-(18, 12, 'opportunity', 'prueba', 'Prueba', 'text', NULL, 0, 1, NULL, '2026-06-22 22:08:10');
+(18, 12, 'opportunity', 'prueba', 'Prueba', 'text', NULL, 0, 1, NULL, '2026-06-22 22:08:10'),
+(19, 16, 'account', 'fecha_custom', 'Fecha Custom', 'date', NULL, 0, 1, NULL, '2026-06-26 16:35:19');
 
 -- --------------------------------------------------------
 
@@ -1283,8 +900,8 @@ INSERT INTO `notifications` (`id`, `tenant_id`, `user_id`, `type`, `entity_type`
 (2479, 16, 12, 'new_shared_task', 'crm_task', 10, 'Tarea comercial compartida', 'Se te ha agregado como participante en la tarea \"prueba 2\".', 0, '2026-06-23 20:32:10'),
 (2494, 16, 15, 'new_assignment_deal', 'crm_opportunity', 11, 'Nueva negociación asignada', 'Se te ha asignado la negociación \"Contacto Web - Amaranthus GFB\".', 1, '2026-06-24 16:41:50'),
 (2495, 16, 15, 'workflow_auto', 'crm_opportunity', 11, 'Notificacion automatica', 'Prueba de Notifiacacion automatica', 0, '2026-06-24 19:16:50'),
-(2599, 16, 15, 'overdue_task', 'crm_task', 10, 'Tarea comercial vencida', 'La tarea \"prueba 2\" ha superado su fecha límite (2026-06-24 17:32:00).', 0, '2026-06-26 12:59:29'),
-(3343, 16, 15, 'overdue_task', 'crm_task', 9, 'Tarea comercial vencida', 'La tarea \"prueba\" ha superado su fecha límite (2026-06-25 20:30:00).', 0, '2026-06-26 12:59:29');
+(2599, 16, 15, 'overdue_task', 'crm_task', 10, 'Tarea comercial vencida', 'La tarea \"prueba 2\" ha superado su fecha límite (2026-06-24 17:32:00).', 0, '2026-06-26 16:37:29'),
+(3343, 16, 15, 'overdue_task', 'crm_task', 9, 'Tarea comercial vencida', 'La tarea \"prueba\" ha superado su fecha límite (2026-06-25 20:30:00).', 0, '2026-06-26 16:37:29');
 
 -- --------------------------------------------------------
 
@@ -1523,6 +1140,7 @@ INSERT INTO `subscription_plans` (`id`, `name`, `description`, `price`, `currenc
 CREATE TABLE `task_types` (
   `id` bigint(20) NOT NULL,
   `tenant_id` bigint(20) NOT NULL,
+  `module` varchar(50) NOT NULL DEFAULT 'crm' COMMENT 'App a la que pertenece (crm, tracker, etc.)',
   `name` varchar(100) NOT NULL,
   `icon` varchar(50) DEFAULT 'list',
   `color_hex` varchar(7) DEFAULT '#6366F1',
@@ -1533,23 +1151,23 @@ CREATE TABLE `task_types` (
 -- Volcado de datos para la tabla `task_types`
 --
 
-INSERT INTO `task_types` (`id`, `tenant_id`, `name`, `icon`, `color_hex`, `created_at`) VALUES
-(1, 1, 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:46'),
-(2, 1, 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:46'),
-(3, 1, 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:46'),
-(4, 1, 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:47'),
-(5, 12, 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:47'),
-(6, 12, 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:47'),
-(7, 12, 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:48'),
-(8, 12, 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:48'),
-(9, 13, 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:48'),
-(10, 13, 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:48'),
-(11, 13, 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:49'),
-(12, 13, 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:49'),
-(13, 16, 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:49'),
-(14, 16, 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:50'),
-(15, 16, 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:50'),
-(16, 16, 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:50');
+INSERT INTO `task_types` (`id`, `tenant_id`, `module`, `name`, `icon`, `color_hex`, `created_at`) VALUES
+(1, 1, 'crm', 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:46'),
+(2, 1, 'crm', 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:46'),
+(3, 1, 'crm', 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:46'),
+(4, 1, 'crm', 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:47'),
+(5, 12, 'crm', 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:47'),
+(6, 12, 'crm', 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:47'),
+(7, 12, 'crm', 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:48'),
+(8, 12, 'crm', 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:48'),
+(9, 13, 'crm', 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:48'),
+(10, 13, 'crm', 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:48'),
+(11, 13, 'crm', 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:49'),
+(12, 13, 'crm', 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:49'),
+(13, 16, 'crm', 'Reunión', 'video', '#6366F1', '2026-06-23 19:07:49'),
+(14, 16, 'crm', 'Demo', 'monitor', '#7C3AED', '2026-06-23 19:07:50'),
+(15, 16, 'crm', 'Llamada', 'phone', '#10B981', '2026-06-23 19:07:50'),
+(16, 16, 'crm', 'Visita', 'map-pin', '#F59E0B', '2026-06-23 19:07:50');
 
 -- --------------------------------------------------------
 
@@ -1660,12 +1278,12 @@ INSERT INTO `tenant_plan_usage` (`tenant_id`, `module`, `metric`, `current_value
 (13, 'tracker', 'tasks_max', 0, '2026-06-15 21:44:49'),
 (13, 'tracker', 'users_max', 1, '2026-06-25 16:54:46'),
 (16, 'crm', 'accounts_max', 0, '2026-06-25 22:23:08'),
-(16, 'crm', 'api_calls_month', 926, '2026-06-26 12:59:29'),
+(16, 'crm', 'api_calls_month', 1384, '2026-06-26 16:37:29'),
 (16, 'crm', 'contacts_max', 0, '2026-06-25 22:23:08'),
 (16, 'crm', 'negotiations_max', 1, '2026-06-25 17:19:33'),
 (16, 'crm', 'pipelines_max', 0, '2026-06-25 22:23:08'),
 (16, 'crm', 'users_max', 2, '2026-06-25 16:54:46'),
-(16, 'tracker', 'api_calls_month', 0, '2026-06-23 17:47:45'),
+(16, 'tracker', 'api_calls_month', 13, '2026-06-26 15:23:12'),
 (16, 'tracker', 'projects_max', 0, '2026-06-25 22:23:08'),
 (16, 'tracker', 'tasks_max', 0, '2026-06-23 17:47:45'),
 (16, 'tracker', 'time_entries_max', 0, '2026-06-25 22:23:08'),
@@ -1852,102 +1470,6 @@ ALTER TABLE `app_metrics`
 ALTER TABLE `audit_logs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_audit_tenant_action` (`tenant_id`,`action`,`created_at`);
-
---
--- Indices de la tabla `bak_email_templates`
---
-ALTER TABLE `bak_email_templates`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_templates_tenant` (`tenant_id`);
-
---
--- Indices de la tabla `bak_opportunities`
---
-ALTER TABLE `bak_opportunities`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_opportunities_tenant` (`tenant_id`),
-  ADD KEY `fk_opportunities_account` (`account_id`),
-  ADD KEY `fk_opportunities_contact` (`contact_id`),
-  ADD KEY `fk_opportunities_stage` (`pipeline_stage_id`),
-  ADD KEY `fk_opportunities_owner` (`owner_user_id`);
-
---
--- Indices de la tabla `bak_opportunity_line_items`
---
-ALTER TABLE `bak_opportunity_line_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_oli_opportunity` (`opportunity_id`),
-  ADD KEY `fk_oli_product` (`product_id`);
-
---
--- Indices de la tabla `bak_pipelines`
---
-ALTER TABLE `bak_pipelines`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_pipelines_tenant` (`tenant_id`);
-
---
--- Indices de la tabla `bak_pipeline_stages`
---
-ALTER TABLE `bak_pipeline_stages`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_stages_pipeline` (`pipeline_id`);
-
---
--- Indices de la tabla `bak_quotes`
---
-ALTER TABLE `bak_quotes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_quotes_tenant` (`tenant_id`),
-  ADD KEY `fk_quotes_opportunity` (`opportunity_id`);
-
---
--- Indices de la tabla `bak_quote_line_items`
---
-ALTER TABLE `bak_quote_line_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_qli_quote` (`quote_id`),
-  ADD KEY `fk_qli_product` (`product_id`);
-
---
--- Indices de la tabla `bak_tasks`
---
-ALTER TABLE `bak_tasks`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_tasks_tenant` (`tenant_id`),
-  ADD KEY `fk_tasks_opportunity` (`opportunity_id`),
-  ADD KEY `fk_tasks_assignee` (`assigned_to`),
-  ADD KEY `fk_tasks_type` (`task_type_id`);
-
---
--- Indices de la tabla `bak_task_history_logs`
---
-ALTER TABLE `bak_task_history_logs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_thl_task` (`task_id`);
-
---
--- Indices de la tabla `bak_task_participants`
---
-ALTER TABLE `bak_task_participants`
-  ADD PRIMARY KEY (`task_id`,`user_id`),
-  ADD KEY `fk_tp_user` (`user_id`);
-
---
--- Indices de la tabla `bak_workflow_executions`
---
-ALTER TABLE `bak_workflow_executions`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_we_rule` (`rule_id`),
-  ADD KEY `idx_we_entity` (`trigger_entity`,`trigger_entity_id`),
-  ADD KEY `idx_we_tenant_time` (`tenant_id`,`executed_at`);
-
---
--- Indices de la tabla `bak_workflow_rules`
---
-ALTER TABLE `bak_workflow_rules`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_wf_tenant_trigger` (`tenant_id`,`trigger_entity`,`trigger_event`);
 
 --
 -- Indices de la tabla `contacts`
@@ -2240,72 +1762,6 @@ ALTER TABLE `audit_logs`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
 
 --
--- AUTO_INCREMENT de la tabla `bak_email_templates`
---
-ALTER TABLE `bak_email_templates`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `bak_opportunities`
---
-ALTER TABLE `bak_opportunities`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT de la tabla `bak_opportunity_line_items`
---
-ALTER TABLE `bak_opportunity_line_items`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
--- AUTO_INCREMENT de la tabla `bak_pipelines`
---
-ALTER TABLE `bak_pipelines`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT de la tabla `bak_pipeline_stages`
---
-ALTER TABLE `bak_pipeline_stages`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
-
---
--- AUTO_INCREMENT de la tabla `bak_quotes`
---
-ALTER TABLE `bak_quotes`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT de la tabla `bak_quote_line_items`
---
-ALTER TABLE `bak_quote_line_items`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-
---
--- AUTO_INCREMENT de la tabla `bak_tasks`
---
-ALTER TABLE `bak_tasks`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT de la tabla `bak_task_history_logs`
---
-ALTER TABLE `bak_task_history_logs`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT de la tabla `bak_workflow_executions`
---
-ALTER TABLE `bak_workflow_executions`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
-
---
--- AUTO_INCREMENT de la tabla `bak_workflow_rules`
---
-ALTER TABLE `bak_workflow_rules`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
 -- AUTO_INCREMENT de la tabla `contacts`
 --
 ALTER TABLE `contacts`
@@ -2387,7 +1843,7 @@ ALTER TABLE `CRM_workflow_rules`
 -- AUTO_INCREMENT de la tabla `custom_field_definitions`
 --
 ALTER TABLE `custom_field_definitions`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de la tabla `custom_field_values`
@@ -2417,7 +1873,7 @@ ALTER TABLE `message_attachments`
 -- AUTO_INCREMENT de la tabla `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3849;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4329;
 
 --
 -- AUTO_INCREMENT de la tabla `plan_limits`

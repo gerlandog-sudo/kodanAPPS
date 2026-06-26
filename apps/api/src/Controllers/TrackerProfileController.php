@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+namespace kodanAPPS\Controllers;
+
+use kodanAPPS\DB\TenantContext;
+use kodanAPPS\DB\TenantAwarePDO;
+use InvalidArgumentException;
+use RuntimeException;
+
+final class TrackerProfileController
+{
+    public function __construct(
+        private TenantAwarePDO $pdo,
+    ) {}
+
+    public function listProfiles(): array
+    {
+        $tenantId = TenantContext::getTenantId();
+        return $this->pdo->query(
+            "SELECT up.*, u.display_name AS user_name, p.name AS position_name, s.name AS seniority_name
+             FROM TRACKER_user_profiles up
+             JOIN users u ON u.id = up.user_id
+             LEFT JOIN TRACKER_positions p ON p.id = up.position_id
+             LEFT JOIN TRACKER_seniorities s ON s.id = up.seniority_id
+             WHERE up.tenant_id = {$tenantId}
+             ORDER BY u.display_name ASC"
+        )->fetchAll();
+    }
+
+    public function upsertProfile(array $input): array
+    {
+        $tenantId = TenantContext::getTenantId();
+        $userId = (int)($input['user_id'] ?? 0);
+        if ($userId <= 0) {
+            throw new InvalidArgumentException(json_encode(['user_id' => 'Usuario requerido'], JSON_UNESCAPED_UNICODE));
+        }
+
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO TRACKER_user_profiles (tenant_id, user_id, position_id, seniority_id, hourly_cost, weekly_capacity)
+             VALUES (:tenant_id, :user_id, :position_id, :seniority_id, :hourly_cost, :weekly_capacity)
+             ON DUPLICATE KEY UPDATE
+               position_id = VALUES(position_id),
+               seniority_id = VALUES(seniority_id),
+               hourly_cost = VALUES(hourly_cost),
+               weekly_capacity = VALUES(weekly_capacity)"
+        );
+        $stmt->execute([
+            ':tenant_id' => $tenantId,
+            ':user_id' => $userId,
+            ':position_id' => isset($input['position_id']) ? (int)$input['position_id'] : null,
+            ':seniority_id' => isset($input['seniority_id']) ? (int)$input['seniority_id'] : null,
+            ':hourly_cost' => (float)($input['hourly_cost'] ?? 0),
+            ':weekly_capacity' => (int)($input['weekly_capacity'] ?? 2400),
+        ]);
+
+        return ['success' => true];
+    }
+}

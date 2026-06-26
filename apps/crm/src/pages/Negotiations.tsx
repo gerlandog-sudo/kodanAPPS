@@ -5,8 +5,8 @@ import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
 import { WonOpportunityModal } from '../components/modals/WonOpportunityModal';
 import { LostOpportunityModal } from '../components/modals/LostOpportunityModal';
-import { KanbanBoard } from '../components/kanban/KanbanBoard';
-import type { ColumnDef } from '../components/kanban/KanbanBoard';
+import { KanbanBoard } from '@kodan-apps/ui-core';
+import type { ColumnDef } from '@kodan-apps/ui-core';
 import { QuoteLineItemsEditor } from '../components/quotes/QuoteLineItemsEditor';
 import type { QuoteLineItem, QuoteStatus } from '../types/admin';
 import { 

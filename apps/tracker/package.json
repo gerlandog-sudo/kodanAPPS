@@ -9,12 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@kodan-apps/ui-core": "*",
     "@kodan-apps/shared": "*",
+    "@kodan-apps/ui-core": "*",
     "gsap": "^3.15.0",
     "lucide-react": "^1.18.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^2.15.4",
     "sonner": "^1.5.0",
     "three": "^0.170.0"
   },

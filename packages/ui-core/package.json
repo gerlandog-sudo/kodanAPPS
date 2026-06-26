@@ -9,6 +9,7 @@
     "build": "echo 'ui-core: no separate build needed, compiled within each app'"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
     "exceljs": "^4.4.0"
   },
   "peerDependencies": {

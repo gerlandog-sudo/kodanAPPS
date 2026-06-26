@@ -51,8 +51,19 @@ use kodanAPPS\Repositories\TaskTypeRepository;
 use kodanAPPS\Repositories\WorkflowRepository;
 use kodanAPPS\Repositories\ChatRepository;
 use kodanAPPS\Repositories\ProjectRepository;
+use kodanAPPS\Repositories\ProjectTaskRepository;
+use kodanAPPS\Repositories\TimeEntryRepository;
+use kodanAPPS\Repositories\SummaryDailyRepository;
 use kodanAPPS\Controllers\TrackerController;
 use kodanAPPS\Controllers\TenantUserController;
+use kodanAPPS\Controllers\KanbanController;
+use kodanAPPS\Controllers\TimeEntryController;
+use kodanAPPS\Controllers\TrackerDashboardController;
+use kodanAPPS\Controllers\TrackerProfileController;
+use kodanAPPS\Controllers\CatalogController;
+use kodanAPPS\Services\KanbanService;
+use kodanAPPS\Services\TimeEntryService;
+use kodanAPPS\Services\DashboardService;
 use kodanAPPS\Services\TenantService;
 use kodanAPPS\Services\CustomFieldService;
 use kodanAPPS\Services\EntityOwnerSyncService;
@@ -208,6 +219,9 @@ $notificationRepo = new NotificationRepository($pdo);
 $workflowRepo = new WorkflowRepository($pdo);
 $emailTemplateRepo = new \kodanAPPS\Repositories\EmailTemplateRepository($pdo);
 $smtpConfigRepo = new \kodanAPPS\Repositories\SmtpConfigRepository($pdo);
+$projectTaskRepo = new ProjectTaskRepository($pdo);
+$timeEntryRepo = new TimeEntryRepository($pdo);
+$summaryDailyRepo = new SummaryDailyRepository($pdo);
 
 // ------------------------------------------------------------
 // Servicios de Límites y Consumo (deben ir antes de TenantService)
@@ -236,6 +250,9 @@ $mentionsParser = new MentionsParser($chatRepo);
 $entityOwnerSyncService = new EntityOwnerSyncService($chatRepo);
 $workflowEngine = new WorkflowEngine($workflowRepo, $taskRepo, $oppRepo, $notificationRepo);
 $mailService = new \kodanAPPS\Services\MailService($pdo, $smtpConfigRepo);
+$kanbanService = new KanbanService($projectTaskRepo, $taskTypeRepo);
+$timeEntryService = new TimeEntryService($timeEntryRepo, $summaryDailyRepo);
+$dashboardService = new DashboardService($pdo);
 
 // ------------------------------------------------------------
 // Inyectar limit enforcer en repositorios
@@ -246,6 +263,8 @@ $oppRepo->setLimitEnforcer($usageLimitEnforcer);
 $pipelineRepo->setLimitEnforcer($usageLimitEnforcer);
 $taskRepo->setLimitEnforcer($usageLimitEnforcer);
 $projectRepo->setLimitEnforcer($usageLimitEnforcer);
+$projectTaskRepo->setLimitEnforcer($usageLimitEnforcer);
+$timeEntryRepo->setLimitEnforcer($usageLimitEnforcer);
 $planAccessValidator = new PlanAccessValidator($pdo);
 $usageLimitEnforcer = new UsageLimitEnforcer($usageTracker);
 $tenantOverrideManager = new TenantOverrideManager($pdo);
@@ -322,6 +341,11 @@ $taskController = new CrmTaskController($taskRepo, $notificationRepo, $workflowE
 $taskTypeController = new TaskTypeController($taskTypeRepo);
 $chatController = new ChatController($chatRepo);
 $trackerController = new TrackerController($projectRepo);
+$kanbanController = new KanbanController($kanbanService);
+$timeEntryController = new TimeEntryController($timeEntryService);
+$trackerDashboardController = new TrackerDashboardController($dashboardService);
+$trackerProfileController = new TrackerProfileController($pdo);
+$catalogController = new CatalogController($pdo);
 $tenantUserController = new TenantUserController($userRepo, $pdo, $planAccessValidator, $usageTracker);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
@@ -386,6 +410,11 @@ return [
         'taskType' => $taskTypeController,
         'chat' => $chatController,
         'tracker' => $trackerController,
+        'kanban' => $kanbanController,
+        'timeEntry' => $timeEntryController,
+        'trackerDashboard' => $trackerDashboardController,
+        'trackerProfile' => $trackerProfileController,
+        'catalog' => $catalogController,
         'tenantUser' => $tenantUserController,
         'messaging' => $messagingController,
         'notification' => $notificationController,

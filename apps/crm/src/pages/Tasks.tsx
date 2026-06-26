@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Button, Input, Modal, ConfirmDialog, Select, MultiSelect, Table, EntityCard, useAuth, DatePicker } from '@kodan-apps/ui-core';
 import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
-import { KanbanBoard } from '../components/kanban/KanbanBoard';
-import type { ColumnDef } from '../components/kanban/KanbanBoard';
+import { KanbanBoard } from '@kodan-apps/ui-core';
+import type { ColumnDef } from '@kodan-apps/ui-core';
 import { 
   Plus, Trash2, Calendar, ListTodo, LayoutGrid, 
   Table as TableIcon, CalendarDays, ChevronLeft, ChevronRight, 

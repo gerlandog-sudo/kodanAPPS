@@ -64,6 +64,12 @@ export { EmailComposer } from './components/EmailComposer'
 export type { EmailComposerProps } from './components/EmailComposer'
 export { SmtpSettingsPanel } from './components/SmtpSettingsPanel'
 
+export { KanbanBoard } from './components/KanbanBoard'
+export type { KanbanBoardProps, ColumnDef } from './components/KanbanBoard'
+export { KanbanColumn } from './components/KanbanColumn'
+export type { KanbanColumnProps } from './components/KanbanColumn'
+export { useKanbanDrag } from './components/useKanbanDrag'
+
 export { useSSE } from './hooks/useSSE'
 export type { SSEMessage } from './hooks/useSSE'
 export { MessageDrawer } from './components/MessageDrawer'

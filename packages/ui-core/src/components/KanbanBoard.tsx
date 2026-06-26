@@ -65,9 +65,7 @@ export function KanbanBoard<T>({
   const draggedItem = useMemo(() => {
     if (activeId === null) return undefined;
     return allItems.find((item: any) => {
-      const itemId =
-        item.id ?? item.account_id ?? item.opportunity_id ?? item.ID;
-      return String(itemId) === String(activeId);
+      return String(item.id) === String(activeId);
     });
   }, [activeId, allItems]);
 
@@ -113,11 +111,8 @@ export function KanbanBoard<T>({
               {stageItems.length === 0
                 ? (emptyPlaceholder ?? defaultEmpty)
                 : stageItems.map((item: any) => {
-                    const itemId =
-                      item.id ?? item.account_id ?? item.opportunity_id ?? item.ID;
-
                     return (
-                      <KanbanCardWrapper key={String(itemId)} id={itemId}>
+                      <KanbanCardWrapper key={String(item.id)} id={item.id}>
                         {renderCard(item)}
                       </KanbanCardWrapper>
                     );
@@ -142,4 +137,3 @@ export function KanbanBoard<T>({
     </DndContext>
   );
 }
-

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { B2BService } from '../services/B2BService';
 import type { B2BAccount } from '../types';
 
@@ -13,11 +13,15 @@ export function useB2BAccounts() {
       const data = await B2BService.listAccounts();
       setAccounts(data);
     } catch {
-      throw new Error('Error al cargar cuentas.');
+      setAccounts([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const filteredAccounts = useMemo(() => {
     if (!filter) return accounts;
@@ -30,5 +34,5 @@ export function useB2BAccounts() {
     );
   }, [accounts, filter]);
 
-  return { accounts: filteredAccounts, loading, filter, setFilter, reload: load };
+  return { accounts: filteredAccounts, allAccounts: accounts, loading, filter, setFilter, reload: load };
 }

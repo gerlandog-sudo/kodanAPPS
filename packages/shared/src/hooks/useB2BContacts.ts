@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { B2BService } from '../services/B2BService';
 import type { B2BAccount, B2BContact } from '../types';
 
@@ -19,11 +19,20 @@ export function useB2BContacts() {
       setContacts(conts);
       setAccounts(accs);
     } catch {
-      throw new Error('Error al cargar contactos.');
+      setContacts([]);
+      setAccounts([]);
     } finally {
       setLoading(false);
     }
   }, [accountFilter]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    load();
+  }, [accountFilter, load]);
 
   const filteredContacts = useMemo(() => {
     let result = contacts;
@@ -41,6 +50,7 @@ export function useB2BContacts() {
 
   return {
     contacts: filteredContacts,
+    allContacts: contacts,
     accounts,
     loading,
     searchFilter,

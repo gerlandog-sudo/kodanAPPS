@@ -1,17 +1,17 @@
 import { useState, useCallback } from 'react';
 import { Modal, ConfirmDialog, Button } from '@kodan-apps/ui-core';
 import { exportToExcel } from '@kodan-apps/ui-core';
-import { B2BAccountsList, B2BAccountForm, useB2BAccounts, B2BService } from '@kodan-apps/shared';
+import { B2BAccountsList, B2BAccountForm, B2BService } from '@kodan-apps/shared';
 import { Download, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { B2BAccount } from '@kodan-apps/shared';
 
 export function Accounts() {
-  const { accounts, reload } = useB2BAccounts();
   const [showModal, setShowModal] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [accountIdToDelete, setAccountIdToDelete] = useState<number | null>(null);
   const [selectedAcc, setSelectedAcc] = useState<B2BAccount | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleOpenCreate = useCallback(() => {
     setSelectedAcc(null);
@@ -33,18 +33,19 @@ export function Accounts() {
     try {
       await B2BService.deleteAccount(accountIdToDelete);
       toast.success('Cuenta comercial eliminada.');
-      reload();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('Error al eliminar la cuenta.');
     } finally {
       setDeleteConfirmOpen(false);
       setAccountIdToDelete(null);
     }
-  }, [accountIdToDelete, reload]);
+  }, [accountIdToDelete]);
 
   const handleExportExcel = useCallback(async () => {
+    const allAccounts = await B2BService.listAccounts();
     try {
-      const dataToExport = accounts.map(acc => ({
+      const dataToExport = allAccounts.map(acc => ({
         name: acc.name,
         legal_name: acc.legal_name || 'Sin razón social',
         tax_id: acc.tax_id || 'Sin TAX ID',
@@ -69,13 +70,14 @@ export function Accounts() {
     } catch {
       toast.error('Error al exportar empresas a Excel');
     }
-  }, [accounts]);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
       <B2BAccountsList
         onEdit={handleOpenEdit}
         onDelete={handleDeleteClick}
+        refreshKey={refreshKey}
         customActions={
           <>
             <Button variant="secondary" onClick={handleExportExcel} className="inline-flex items-center gap-1.5 cursor-pointer">
@@ -97,7 +99,7 @@ export function Accounts() {
         <B2BAccountForm
           account={selectedAcc}
           onClose={() => setShowModal(false)}
-          onSaved={() => { setShowModal(false); reload(); }}
+          onSaved={() => { setShowModal(false); setRefreshKey(k => k + 1); }}
           onError={(msg) => toast.error(msg)}
           onSuccess={(msg) => toast.success(msg)}
         />

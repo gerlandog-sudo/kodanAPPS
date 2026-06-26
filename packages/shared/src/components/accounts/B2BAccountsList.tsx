@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Building2 } from 'lucide-react';
 import { Table } from '@kodan-apps/ui-core';
 import { B2BSearchFilter } from '../filters/B2BSearchFilter';
@@ -8,10 +9,17 @@ interface B2BAccountsListProps {
   onEdit: (account: B2BAccount) => void
   onDelete: (id: number) => void
   customActions?: React.ReactNode
+  refreshKey?: number
 }
 
-export function B2BAccountsList({ onEdit, onDelete, customActions }: B2BAccountsListProps) {
-  const { accounts, loading, filter, setFilter } = useB2BAccounts();
+export function B2BAccountsList({ onEdit, onDelete, customActions, refreshKey }: B2BAccountsListProps) {
+  const { accounts, loading, filter, setFilter, reload } = useB2BAccounts();
+
+  useEffect(() => {
+    if (refreshKey !== undefined && refreshKey > 0) {
+      reload();
+    }
+  }, [refreshKey, reload]);
 
   return (
     <div className="flex flex-col gap-6">

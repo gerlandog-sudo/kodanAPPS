@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { User2 } from 'lucide-react';
 import { Table, Select } from '@kodan-apps/ui-core';
 import { B2BSearchFilter } from '../filters/B2BSearchFilter';
@@ -8,9 +9,10 @@ interface B2BContactsListProps {
   onEdit: (contact: B2BContact) => void
   onDelete: (id: number) => void
   customActions?: React.ReactNode
+  refreshKey?: number
 }
 
-export function B2BContactsList({ onEdit, onDelete, customActions }: B2BContactsListProps) {
+export function B2BContactsList({ onEdit, onDelete, customActions, refreshKey }: B2BContactsListProps) {
   const {
     contacts,
     accounts,
@@ -19,7 +21,14 @@ export function B2BContactsList({ onEdit, onDelete, customActions }: B2BContacts
     setSearchFilter,
     accountFilter,
     setAccountFilter,
+    reload,
   } = useB2BContacts();
+
+  useEffect(() => {
+    if (refreshKey !== undefined && refreshKey > 0) {
+      reload();
+    }
+  }, [refreshKey, reload]);
 
   const accountOptions = [
     { value: '', label: 'Todas las cuentas' },

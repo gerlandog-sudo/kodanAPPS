@@ -1,25 +1,28 @@
 import { useState, useCallback } from 'react';
 import { Modal, ConfirmDialog, Button } from '@kodan-apps/ui-core';
 import { exportToExcel } from '@kodan-apps/ui-core';
-import { B2BContactsList, B2BContactForm, useB2BContacts, B2BService } from '@kodan-apps/shared';
+import { B2BContactsList, B2BContactForm, B2BService } from '@kodan-apps/shared';
 import { Download, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { B2BContact } from '@kodan-apps/shared';
 
 export function Contacts() {
-  const { contacts, accounts, reload } = useB2BContacts();
   const [showModal, setShowModal] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [contactIdToDelete, setContactIdToDelete] = useState<number | null>(null);
   const [selectedContact, setSelectedContact] = useState<B2BContact | null>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleOpenCreate = useCallback(() => {
     setSelectedContact(null);
+    B2BService.listAccounts().then(setAccounts).catch(() => {});
     setShowModal(true);
   }, []);
 
   const handleOpenEdit = useCallback((c: B2BContact) => {
     setSelectedContact(c);
+    B2BService.listAccounts().then(setAccounts).catch(() => {});
     setShowModal(true);
   }, []);
 
@@ -33,16 +36,17 @@ export function Contacts() {
     try {
       await B2BService.deleteContact(contactIdToDelete);
       toast.success('Contacto eliminado.');
-      reload();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('Error al eliminar contacto.');
     } finally {
       setDeleteConfirmOpen(false);
       setContactIdToDelete(null);
     }
-  }, [contactIdToDelete, reload]);
+  }, [contactIdToDelete]);
 
   const handleExportExcel = useCallback(async () => {
+    const contacts = await B2BService.listContacts();
     try {
       const dataToExport = contacts.map(c => ({
         name: `${c.first_name} ${c.last_name}`,
@@ -67,13 +71,14 @@ export function Contacts() {
     } catch {
       toast.error('Error al exportar contactos a Excel');
     }
-  }, [contacts]);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6">
       <B2BContactsList
         onEdit={handleOpenEdit}
         onDelete={handleDeleteClick}
+        refreshKey={refreshKey}
         customActions={
           <>
             <Button variant="secondary" onClick={handleExportExcel} className="inline-flex items-center gap-1.5 cursor-pointer">
@@ -96,7 +101,7 @@ export function Contacts() {
           contact={selectedContact}
           accounts={accounts}
           onClose={() => setShowModal(false)}
-          onSaved={() => { setShowModal(false); reload(); }}
+          onSaved={() => { setShowModal(false); setRefreshKey(k => k + 1); }}
           onError={(msg) => toast.error(msg)}
           onSuccess={(msg) => toast.success(msg)}
         />

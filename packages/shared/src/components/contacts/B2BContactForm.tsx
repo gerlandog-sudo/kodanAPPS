@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input, Button, Select, CustomFieldsForm } from '@kodan-apps/ui-core';
 import { User2, Settings2 } from 'lucide-react';
 import { B2BService } from '../../services/B2BService';
@@ -26,9 +26,9 @@ export function B2BContactForm({ contact, accounts, onClose, onSaved, onError, o
   const [fieldDefs, setFieldDefs] = useState<CustomFieldDef[]>([]);
   const [tab, setTab] = useState<'general' | 'custom-fields'>('general');
 
-  useState(() => {
+  useEffect(() => {
     B2BService.listCustomFields('contact').then(setFieldDefs).catch(() => {});
-  });
+  }, []);
 
   const accountOptions = accounts.map((a) => ({ value: String(a.account_id), label: a.name }));
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Trash2 } from 'lucide-react'
 
 export interface EntityCardProps {
   title: string
@@ -298,7 +299,7 @@ export function EntityCard({
               style={{ width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.375rem', border: '1px solid var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)' }}
               onMouseEnter={e => { const b = e.currentTarget; b.style.color = 'var(--sys-error)'; b.style.background = 'color-mix(in srgb, var(--sys-error) 10%, transparent)'; b.style.borderColor = 'color-mix(in srgb, var(--sys-error) 30%, transparent)' }}
               onMouseLeave={e => { const b = e.currentTarget; b.style.color = 'var(--sys-text-muted)'; b.style.background = 'var(--sys-bg)'; b.style.borderColor = 'var(--sys-border-soft)' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <Trash2 size={14} />
             </button>
           )}
         </div>

@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import { AdminLayout, Table, Modal, Button, Input, Select, Toggle, UsersSettingsPanel, CustomFieldsSettingsPanel, TaskTypesSettingsPanel, useTheme } from '@kodan-apps/ui-core'
+import { AdminLayout, Table, Modal, Button, Input, Select, UsersSettingsPanel, CustomFieldsSettingsPanel, TaskTypesSettingsPanel } from '@kodan-apps/ui-core'
 import type { AdminSection, TableColumn, TableAction, SelectOption } from '@kodan-apps/ui-core'
 import { trackerApi, UserProfile, CatalogItem } from '../api/client'
-import { Users, UserCog, Settings2, ListTodo, SlidersHorizontal } from 'lucide-react'
+import { Users, UserCog, Settings2, ListTodo } from 'lucide-react'
 
-type SettingsPanel = 'users' | 'profiles' | 'custom-fields' | 'task-types' | 'config'
+type SettingsPanel = 'users' | 'profiles' | 'custom-fields' | 'task-types'
 
 function getSectionFromHash(): SettingsPanel | null {
   const hash = window.location.hash.replace('#', '')
-  if (['users', 'profiles', 'custom-fields', 'task-types', 'config'].includes(hash)) return hash as SettingsPanel
+  if (['users', 'profiles', 'custom-fields', 'task-types'].includes(hash)) return hash as SettingsPanel
   return null
 }
 
@@ -110,22 +110,6 @@ function UserProfilesPanel() {
   )
 }
 
-function TrackerConfigPanel() {
-  const { theme, toggleTheme } = useTheme()
-
-  return (
-    <div className="space-y-4 max-w-md">
-      <div className="flex items-center justify-between p-4 rounded-lg border" style={{ borderColor: 'var(--sys-border-soft)' }}>
-        <div>
-          <p className="font-medium">Tema oscuro/claro</p>
-          <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Actual: {theme}</p>
-        </div>
-        <Toggle checked={theme === 'dark'} onChange={toggleTheme} />
-      </div>
-    </div>
-  )
-}
-
 export function SettingsPage() {
   const [activePanel, setActivePanel] = useState<SettingsPanel>(
     () => getSectionFromHash() || 'users'
@@ -150,7 +134,6 @@ export function SettingsPage() {
     { key: 'profiles', label: 'Perfiles', icon: <UserCog size={16} />, href: '#profiles' },
     { key: 'custom-fields', label: 'Campos Personalizados', icon: <Settings2 size={16} />, href: '#custom-fields' },
     { key: 'task-types', label: 'Tipos de Tareas', icon: <ListTodo size={16} />, href: '#task-types' },
-    { key: 'config', label: 'Configuración', icon: <SlidersHorizontal size={16} />, href: '#config' },
   ]
 
   return (
@@ -159,7 +142,6 @@ export function SettingsPage() {
       {activePanel === 'profiles' && <UserProfilesPanel />}
       {activePanel === 'custom-fields' && <CustomFieldsSettingsPanel />}
       {activePanel === 'task-types' && <TaskTypesSettingsPanel moduleContext="tracker" />}
-      {activePanel === 'config' && <TrackerConfigPanel />}
     </AdminLayout>
   )
 }

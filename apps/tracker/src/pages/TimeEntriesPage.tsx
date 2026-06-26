@@ -124,12 +124,20 @@ export function TimeEntriesPage() {
 
       <TimerWidget onSave={handleTimerSave} />
 
-      <div className="flex items-center gap-3 flex-wrap">
-        <Filter size={16} style={{ color: 'var(--sys-text-muted)' }} />
-        <Select options={projectOptions} value={filterProject} onChange={setFilterProject} className="w-48" />
-        <Select options={statusOptions} value={filterStatus} onChange={setFilterStatus} className="w-40" />
-        <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="Desde" />
-        <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Hasta" />
+      <div className="flex items-center gap-3 overflow-x-auto shrink-0 pb-1 scrollbar-none">
+        <Filter size={16} style={{ color: 'var(--sys-text-muted)', flexShrink: 0 }} />
+        <div className="w-48 shrink-0">
+          <Select options={projectOptions} value={filterProject} onChange={setFilterProject} />
+        </div>
+        <div className="w-40 shrink-0">
+          <Select options={statusOptions} value={filterStatus} onChange={setFilterStatus} />
+        </div>
+        <div className="shrink-0">
+          <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="Desde" />
+        </div>
+        <div className="shrink-0">
+          <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Hasta" />
+        </div>
       </div>
 
       <Table

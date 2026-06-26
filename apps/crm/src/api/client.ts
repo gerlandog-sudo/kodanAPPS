@@ -105,6 +105,18 @@ export const crmApi = {
   getQuoteLineItems: (id: number) => api.get<any[]>(`/api/crm/quotes/${id}/items`),
   saveQuoteLineItems: (id: number, data: any) => api.post(`/api/crm/quotes/${id}/items`, data),
 
+  // Dashboard
+  getDashboardStats: (pipelineId?: number) =>
+    api.get<any>('/api/crm/dashboard/stats', pipelineId ? { pipeline_id: String(pipelineId) } : undefined),
+  getSalesVelocity: (pipelineId?: number) =>
+    api.get<any>('/api/crm/dashboard/sales-velocity', pipelineId ? { pipeline_id: String(pipelineId) } : undefined),
+  getRecentActivity: (pipelineId?: number) =>
+    api.get<any[]>('/api/crm/dashboard/activity', pipelineId ? { pipeline_id: String(pipelineId) } : undefined),
+  getPipelineComparison: () =>
+    api.get<any[]>('/api/crm/dashboard/pipeline-comparison'),
+  getWinRateByUser: (pipelineId?: number) =>
+    api.get<any[]>('/api/crm/dashboard/win-rate', pipelineId ? { pipeline_id: String(pipelineId) } : undefined),
+
   // Workflows
   listWorkflowRules: () => api.get<any[]>('/api/crm/workflows'),
   getWorkflowRule: (id: number) => api.get<any>(`/api/crm/workflows/${id}`),

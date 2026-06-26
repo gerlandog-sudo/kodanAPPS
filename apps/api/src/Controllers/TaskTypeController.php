@@ -18,13 +18,15 @@ final class TaskTypeController
     }
 
     /**
-     * GET /api/crm/task-types
+     * GET /api/app-config/task-types?module=crm|tracker
+     * GET /api/crm/task-types (legacy)
      * 
      * @return array<int, array<string, mixed>>
      */
     public function list(): array
     {
-        return $this->taskTypeRepo->listAll();
+        $module = $_GET['module'] ?? null;
+        return $this->taskTypeRepo->listAll($module);
     }
 
     /**
@@ -65,10 +67,13 @@ final class TaskTypeController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        $module = isset($input['module']) && is_scalar($input['module']) ? trim((string)$input['module']) : 'crm';
+
         $data = [
             'name' => $name,
             'color_hex' => $color,
             'icon' => $icon,
+            'module' => $module,
         ];
 
         $id = $this->taskTypeRepo->createTaskType($data);

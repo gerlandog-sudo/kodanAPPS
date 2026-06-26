@@ -761,6 +761,53 @@ return function (Router $router, array $app): void {
     });
 
     // ============================================================
+    // Middleware: App Config (JWT) - Cross-platform routes
+    // ============================================================
+    $router->use('/api/app-config', function (Router $router) use ($app) {
+        $auth = $app['auth']->handle();
+        $router->setContext('auth', $auth);
+    });
+
+    // Custom Fields (cross-platform)
+    $router->get('/api/app-config/custom-fields', function () use ($app) {
+        echo json_encode($app['controllers']['customField']->list());
+    });
+    $router->post('/api/app-config/custom-fields', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        echo json_encode($app['controllers']['customField']->create($input));
+    });
+    $router->put('/api/app-config/custom-fields/reorder', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        echo json_encode($app['controllers']['customField']->reorder($input));
+    });
+    $router->patch('/api/app-config/custom-fields/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        echo json_encode($app['controllers']['customField']->update($p['id'], $input));
+    });
+    $router->delete('/api/app-config/custom-fields/{id}', function (array $p) use ($app) {
+        echo json_encode($app['controllers']['customField']->delete($p['id']));
+    });
+
+    // Task Types (cross-platform)
+    $router->get('/api/app-config/task-types', function () use ($app) {
+        echo json_encode($app['controllers']['taskType']->list());
+    });
+    $router->post('/api/app-config/task-types', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        echo json_encode($app['controllers']['taskType']->create($input));
+    });
+    $router->get('/api/app-config/task-types/{id}', function (array $p) use ($app) {
+        echo json_encode($app['controllers']['taskType']->get($p['id']));
+    });
+    $router->patch('/api/app-config/task-types/{id}', function (array $p) use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        echo json_encode($app['controllers']['taskType']->update($p['id'], $input));
+    });
+    $router->delete('/api/app-config/task-types/{id}', function (array $p) use ($app) {
+        echo json_encode($app['controllers']['taskType']->delete($p['id']));
+    });
+
+    // ============================================================
     // Middleware: Mail (JWT)
     // ============================================================
     $router->use('/api/mail', function (Router $router) use ($app) {

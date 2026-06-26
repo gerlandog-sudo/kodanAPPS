@@ -1,16 +1,26 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Button, Input, SlidePanel, ConfirmDialog, Table, ColorPicker } from '@kodan-apps/ui-core'
-import type { TableColumn } from '@kodan-apps/ui-core'
-import { crmApi } from '../../api/client'
-import { 
+import { Button } from './Button'
+import { Input } from './Input'
+import { SlidePanel } from './SlidePanel'
+import { ConfirmDialog } from './ConfirmDialog'
+import { Table } from './Table'
+import { ColorPicker } from './ColorPicker'
+import type { TableColumn } from './Table'
+import { api } from '../api/client'
+import {
   Plus, Video, Monitor, Phone, MapPin, Mail, Users, Calendar, ListTodo, List
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-export interface TaskType {
+export interface TaskTypesSettingsPanelProps {
+  moduleContext?: string
+}
+
+interface TaskType {
   id: number
   tenant_id: number
+  module: string
   name: string
   icon: string
   color_hex: string
@@ -18,8 +28,8 @@ export interface TaskType {
 }
 
 const AVAILABLE_ICONS = [
-  { name: 'video', label: 'Reunión / Videollamada', component: Video },
-  { name: 'monitor', label: 'Demo / Presentación', component: Monitor },
+  { name: 'video', label: 'Reuni&oacute;n / Videollamada', component: Video },
+  { name: 'monitor', label: 'Demo / Presentaci&oacute;n', component: Monitor },
   { name: 'phone', label: 'Llamada', component: Phone },
   { name: 'map-pin', label: 'Visita / Presencial', component: MapPin },
   { name: 'mail', label: 'Email', component: Mail },
@@ -28,7 +38,7 @@ const AVAILABLE_ICONS = [
   { name: 'list', label: 'General / Lista', component: ListTodo },
 ]
 
-export function TasksSettings() {
+export function TaskTypesSettingsPanel({ moduleContext = 'crm' }: TaskTypesSettingsPanelProps) {
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedKeys, setSelectedKeys] = useState<(string | number)[]>([])
@@ -45,10 +55,13 @@ export function TasksSettings() {
   const [confirmMsg, setConfirmMsg] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
 
+  const TT_BASE = '/api/app-config/task-types'
+  const params = moduleContext !== 'crm' ? { module: moduleContext } : undefined
+
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await crmApi.listTaskTypes()
+      const data = await api.get<TaskType[]>(TT_BASE, params)
       setTaskTypes(data)
     } catch {
       toast.error('Error al cargar tipos de tareas')
@@ -84,19 +97,20 @@ export function TasksSettings() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formName.trim()) return toast.error('El nombre es requerido')
-    
+
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name: formName.trim(),
         color_hex: formColor,
         icon: formIcon,
+        module: moduleContext,
       }
-      
+
       if (!editingType) {
-        await crmApi.createTaskType(payload)
+        await api.post(TT_BASE, payload)
         toast.success('Tipo de tarea creado')
       } else {
-        await crmApi.updateTaskType(editingType.id, payload)
+        await api.patch(`${TT_BASE}/${editingType.id}`, payload)
         toast.success('Tipo de tarea actualizado')
       }
       setPanelOpen(false)
@@ -119,15 +133,15 @@ export function TasksSettings() {
       await confirmAction()
       setConfirmOpen(false)
     } catch {
-      toast.error('Error al realizar la acción')
+      toast.error('Error al realizar la acci&oacute;n')
     } finally {
       setConfirmLoading(false)
     }
   }
 
   const handleDelete = (t: TaskType) => {
-    openConfirm(`¿Está seguro que desea eliminar el tipo de tarea "${t.name}"?`, async () => {
-      await crmApi.deleteTaskType(t.id)
+    openConfirm(`?Est&aacute; seguro que desea eliminar el tipo de tarea "${t.name}"?`, async () => {
+      await api.delete(`${TT_BASE}/${t.id}`)
       toast.success('Tipo de tarea eliminado')
       loadData()
     })
@@ -196,9 +210,9 @@ export function TasksSettings() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--sys-text)', margin: 0 }}>Tipos de Tareas Comerciales</h2>
+          <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--sys-text)', margin: 0 }}>Tipos de Tareas</h2>
           <p style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', margin: '0.125rem 0 0 0' }}>
-            Define las categorías para reuniones, demos y llamadas de negociación
+            Define las categor&iacute;as para organizar las tareas del m&oacute;dulo
           </p>
         </div>
         <Button variant="primary" onClick={handleOpenCreate}>
@@ -220,14 +234,14 @@ export function TasksSettings() {
         emptyState={{
           icon: <ListTodo size={24} />,
           title: 'Sin tipos de tareas',
-          description: 'Crea un tipo de tarea para organizar la agenda de negociaciones.'
+          description: 'Crea un tipo de tarea para organizar las actividades.'
         }}
       />
 
       <ConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        title="Confirmar eliminación"
+        title="Confirmar eliminaci&oacute;n"
         message={confirmMsg}
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
@@ -246,7 +260,7 @@ export function TasksSettings() {
               <Input
                 value={formName}
                 onChange={e => setFormName(e.target.value)}
-                placeholder="Ej: Reunión Inicial, Demo Técnica..."
+                placeholder="Ej: Reuni&oacute;n Inicial, Demo T&eacute;cnica..."
                 required
               />
             </div>

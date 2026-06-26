@@ -32,8 +32,12 @@ export interface RoleOption {
   description?: string;
 }
 
-export function UsersSettingsPanel() {
-  const { user: currentUser } = useAuth('crm')
+export interface UsersSettingsPanelProps {
+  appId?: string
+}
+
+export function UsersSettingsPanel({ appId = 'crm' }: UsersSettingsPanelProps) {
+  const { user: currentUser } = useAuth(appId)
   const [users, setUsers] = useState<TenantUser[]>([])
   const [roles, setRoles] = useState<Record<string, RoleOption[]>>({})
   const [loading, setLoading] = useState(true)

@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react'
 import { AdminLayout } from '@kodan-apps/ui-core'
 import type { AdminSection } from '@kodan-apps/ui-core'
 import { PipelineManager } from '../components/settings/PipelineManager'
-import { CustomFieldsSettings } from '../components/settings/CustomFieldsSettings'
-import { UsersSettingsPanel, EmailTemplatesSettingsPanel, SmtpSettingsPanel } from '@kodan-apps/ui-core'
+import { UsersSettingsPanel, EmailTemplatesSettingsPanel, SmtpSettingsPanel, CustomFieldsSettingsPanel, TaskTypesSettingsPanel } from '@kodan-apps/ui-core'
 import { NotificationsSettings } from '../components/settings/NotificationsSettings'
-import { TasksSettings } from '../components/settings/TasksSettings'
 import { WorkflowManager } from '../components/settings/WorkflowManager'
 import { GitBranch, Settings2, Users, BellRing, ListTodo, Workflow, Mail, Server } from 'lucide-react'
 
@@ -50,12 +48,12 @@ export function Settings() {
   return (
     <AdminLayout sections={SETTINGS_SECTIONS} activeSection={activePanel} onNavigate={navigate}>
       {activePanel === 'pipelines' && <PipelineManager />}
-      {activePanel === 'custom-fields' && <CustomFieldsSettings />}
-      {activePanel === 'users' && <UsersSettingsPanel />}
+      {activePanel === 'custom-fields' && <CustomFieldsSettingsPanel />}
+      {activePanel === 'users' && <UsersSettingsPanel appId="crm" />}
       {activePanel === 'email-templates' && <EmailTemplatesSettingsPanel moduleContext="crm" />}
       {activePanel === 'smtp' && <SmtpSettingsPanel />}
       {activePanel === 'notifications' && <NotificationsSettings />}
-      {activePanel === 'task-types' && <TasksSettings />}
+      {activePanel === 'task-types' && <TaskTypesSettingsPanel moduleContext="crm" />}
       {activePanel === 'workflows' && <WorkflowManager />}
     </AdminLayout>
   )

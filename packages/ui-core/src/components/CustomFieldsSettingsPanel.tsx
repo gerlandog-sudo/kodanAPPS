@@ -1,14 +1,33 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Button, Input, SlidePanel, Toggle, ConfirmDialog, Table } from '@kodan-apps/ui-core'
-import type { TableColumn } from '@kodan-apps/ui-core'
-import { crmApi } from '../../api/client'
-import type { CustomFieldDef } from '../../api/client'
-import type { EntityType } from '../../types/admin'
+import { Button } from './Button'
+import { Input } from './Input'
+import { SlidePanel } from './SlidePanel'
+import { Toggle } from './Toggle'
+import { ConfirmDialog } from './ConfirmDialog'
+import { Table } from './Table'
+import type { TableColumn } from './Table'
+import { api } from '../api/client'
 import { Plus, Trash2, Copy, Building2, Users, Briefcase, Type, Hash, List, CheckSquare, ToggleRight, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 
-const ENTITY_TABS: { key: EntityType; label: string; icon: React.ReactNode }[] = [
+export interface CustomFieldsSettingsPanelProps {
+  entityTypes?: { key: string; label: string; icon?: React.ReactNode }[]
+}
+
+interface FieldDef {
+  id: number
+  module: string
+  entity_type: string
+  field_key: string
+  field_label: string
+  field_type: 'text' | 'number' | 'select' | 'multi_select' | 'date' | 'boolean'
+  options: string[] | null
+  is_required: boolean
+  sort_order: number
+}
+
+const DEFAULT_ENTITY_TYPES = [
   { key: 'account', label: 'Cuentas', icon: <Building2 size={14} /> },
   { key: 'contact', label: 'Contactos', icon: <Users size={14} /> },
   { key: 'opportunity', label: 'Negociaciones', icon: <Briefcase size={14} /> },
@@ -23,14 +42,14 @@ const FIELD_TYPE_OPTIONS = [
   { value: 'boolean', label: 'Sí/No', desc: 'Interruptor', icon: <ToggleRight size={14} />, color: '#06B6D4' },
 ]
 
-export function CustomFieldsSettings() {
-  const [entity, setEntity] = useState<EntityType>('account')
-  const [fields, setFields] = useState<CustomFieldDef[]>([])
+export function CustomFieldsSettingsPanel({ entityTypes = DEFAULT_ENTITY_TYPES }: CustomFieldsSettingsPanelProps) {
+  const [entity, setEntity] = useState<string>(entityTypes[0]?.key || 'account')
+  const [fields, setFields] = useState<FieldDef[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedKeys, setSelectedKeys] = useState<(string | number)[]>([])
 
   const [panelOpen, setPanelOpen] = useState(false)
-  const [editingField, setEditingField] = useState<CustomFieldDef | null>(null)
+  const [editingField, setEditingField] = useState<FieldDef | null>(null)
 
   const [formKey, setFormKey] = useState('')
   const [formLabel, setFormLabel] = useState('')
@@ -38,24 +57,28 @@ export function CustomFieldsSettings() {
   const [formRequired, setFormRequired] = useState(false)
   const [formOptions, setFormOptions] = useState<string[]>([])
   const [optionInput, setOptionInput] = useState('')
-  const [hoveredTab, setHoveredTab] = useState<EntityType | null>(null)
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null)
 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<() => Promise<void>>(async () => {})
   const [confirmMsg, setConfirmMsg] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
 
+  const CF_BASE = '/api/app-config/custom-fields'
+
   const loadFields = useCallback(async () => {
     setLoading(true)
-    try { setFields((await crmApi.listCustomFields(entity)).sort((a, b) => a.sort_order - b.sort_order)) }
-    catch { toast.error('Error al cargar campos') }
+    try {
+      const data = await api.get<FieldDef[]>(CF_BASE, { entity })
+      setFields(data.sort((a, b) => a.sort_order - b.sort_order))
+    } catch { toast.error('Error al cargar campos') }
     finally { setLoading(false) }
   }, [entity])
 
-  useEffect(() => { loadFields() }, [entity])
+  useEffect(() => { loadFields() }, [loadFields])
   useEffect(() => { setSelectedKeys([]) }, [entity])
 
-  const resetForm = () => { 
+  const resetForm = () => {
     setFormKey('')
     setFormLabel('')
     setFormType('text')
@@ -67,7 +90,7 @@ export function CustomFieldsSettings() {
 
   const handleOpenCreate = () => { resetForm(); setPanelOpen(true) }
 
-  const handleOpenEdit = (f: CustomFieldDef) => {
+  const handleOpenEdit = (f: FieldDef) => {
     setEditingField(f); setFormKey(f.field_key); setFormLabel(f.field_label); setFormType(f.field_type)
     setFormRequired(f.is_required); setFormOptions(f.options || []); setPanelOpen(true)
   }
@@ -81,10 +104,10 @@ export function CustomFieldsSettings() {
       if (!finalKey) return toast.error('Clave inválida')
     }
     try {
-      const p: any = { entity_type: entity, field_key: finalKey, field_label: formLabel.trim(), field_type: formType, is_required: formRequired }
+      const p: Record<string, unknown> = { entity_type: entity, field_key: finalKey, field_label: formLabel.trim(), field_type: formType, is_required: formRequired }
       if (['select', 'multi_select'].includes(formType)) p.options = formOptions.filter(o => o.trim())
-      if (editingField) { await crmApi.updateCustomField(editingField.id, p); toast.success('Campo actualizado') }
-      else { await crmApi.createCustomField(p); toast.success('Campo creado') }
+      if (editingField) { await api.patch(`${CF_BASE}/${editingField.id}`, p); toast.success('Campo actualizado') }
+      else { await api.post(CF_BASE, p); toast.success('Campo creado') }
       setPanelOpen(false); resetForm(); loadFields()
     } catch (err: any) { toast.error(err?.message || 'Error al guardar') }
   }
@@ -98,9 +121,9 @@ export function CustomFieldsSettings() {
     finally { setConfirmLoading(false) }
   }
 
-  const handleDelete = (f: CustomFieldDef) => {
-    openConfirm(`¿Eliminar "${f.field_label}" permanentemente?`, async () => {
-      await crmApi.deleteCustomField(f.id, true); toast.success('Eliminado'); loadFields()
+  const handleDelete = (f: FieldDef) => {
+    openConfirm(`?Eliminar "${f.field_label}" permanentemente?`, async () => {
+      await api.delete(`${CF_BASE}/${f.id}?purge=true`); toast.success('Eliminado'); loadFields()
     })
   }
 
@@ -113,7 +136,7 @@ export function CustomFieldsSettings() {
     )
   }
 
-  const columns: TableColumn<CustomFieldDef>[] = [
+  const columns: TableColumn<FieldDef>[] = [
     {
       key: 'label', header: 'Campo', filterKey: 'label',
       render: (f) => (
@@ -132,7 +155,7 @@ export function CustomFieldsSettings() {
       render: (f) => (
         f.options && f.options.length > 0
           ? <span style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)' }}>{f.options.slice(0, 2).join(', ')}{f.options.length > 2 ? ` +${f.options.length - 2}` : ''}</span>
-          : <span style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>—</span>
+          : <span style={{ fontSize: '0.75rem', color: 'var(--sys-text-muted)', fontStyle: 'italic' }}>&mdash;</span>
       ),
     },
     {
@@ -142,12 +165,12 @@ export function CustomFieldsSettings() {
   ]
 
   const bulkActions = [
-    { label: 'Duplicar', icon: <Copy size={14} />, onClick: (items: CustomFieldDef[]) => Promise.all(items.map(f => crmApi.createCustomField({
+    { label: 'Duplicar', icon: <Copy size={14} />, onClick: (items: FieldDef[]) => Promise.all(items.map(f => api.post(CF_BASE, {
       entity_type: f.entity_type, field_key: `${f.field_key}_copy`, field_label: `${f.field_label} (copia)`, field_type: f.field_type, options: f.options, is_required: f.is_required,
     }))).then(() => { toast.success('Duplicados'); loadFields() }) },
-    { label: 'Eliminar', icon: <Trash2 size={14} />, variant: 'danger' as const, onClick: (items: CustomFieldDef[]) => {
-      openConfirm(`¿Eliminar ${items.length} campo(s)?`, async () => {
-        await Promise.all(items.map(f => crmApi.deleteCustomField(f.id, true)))
+    { label: 'Eliminar', icon: <Trash2 size={14} />, variant: 'danger' as const, onClick: (items: FieldDef[]) => {
+      openConfirm(`?Eliminar ${items.length} campo(s)?`, async () => {
+        await Promise.all(items.map(f => api.delete(`${CF_BASE}/${f.id}?purge=true`)))
         toast.success('Eliminados'); loadFields()
       })
     }},
@@ -164,7 +187,7 @@ export function CustomFieldsSettings() {
       </div>
 
       <div style={{ display: 'flex', gap: '0.25rem', padding: '0.25rem', borderRadius: '0.5rem', background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', width: 'fit-content', marginBottom: '1rem' }}>
-        {ENTITY_TABS.map(tab => {
+        {entityTypes.map(tab => {
           const isSelected = entity === tab.key
           const isHovered = hoveredTab === tab.key
           return (
@@ -176,8 +199,8 @@ export function CustomFieldsSettings() {
                 padding: '0.375rem 0.75rem', borderRadius: '0.375rem',
                 fontSize: '0.6875rem', fontWeight: 600, cursor: 'pointer',
                 border: 'none',
-                background: isSelected 
-                  ? 'var(--sys-primary-container)' 
+                background: isSelected
+                  ? 'var(--sys-primary-container)'
                   : (isHovered ? 'var(--sys-surface-hover)' : 'transparent'),
                 color: isSelected ? 'var(--color-on-primary-container)' : 'var(--sys-text-muted)',
                 transition: 'all 120ms ease',
@@ -188,7 +211,7 @@ export function CustomFieldsSettings() {
         })}
       </div>
 
-      <Table<CustomFieldDef>
+      <Table<FieldDef>
         data={fields}
         columns={columns}
         keyExtractor={f => f.id}
@@ -211,12 +234,12 @@ export function CustomFieldsSettings() {
         <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editingField ? 'Editar Campo' : 'Nuevo Campo'}>
           <form onSubmit={e => { e.preventDefault(); handleSave() }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {!editingField && (
-              <div><label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Clave técnica *</label>
+              <div><label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Clave t&eacute;cnica *</label>
                 <Input value={formKey} onChange={e => setFormKey(e.target.value)} placeholder="Ej: numero_empleados" /></div>
             )}
             <div><label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Nombre visible *</label>
               <Input value={formLabel} onChange={e => { setFormLabel(e.target.value); if (!editingField) setFormKey(e.target.value.toLowerCase().replace(/[^a-z0-9\s_-]/g, '').trim().replace(/[\s_-]+/g, '_')) }}
-                placeholder="Ej: Número de empleados" /></div>
+                placeholder="Ej: N&uacute;mero de empleados" /></div>
             <div>
               <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--sys-text-muted)', textTransform: 'uppercase' }}>Tipo *</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem', marginTop: '0.5rem' }}>
@@ -269,7 +292,7 @@ export function CustomFieldsSettings() {
                     {formOptions.map((opt, i) => (
                       <span key={i} style={{ fontSize: '0.6875rem', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                         {opt}
-                        <button type="button" onClick={() => setFormOptions(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-error)', padding: 0, fontSize: '0.75rem' }}>×</button>
+                        <button type="button" onClick={() => setFormOptions(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sys-error)', padding: 0, fontSize: '0.75rem' }}>&times;</button>
                       </span>
                     ))}
                   </div>

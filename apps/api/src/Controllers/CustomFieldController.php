@@ -22,7 +22,8 @@ final class CustomFieldController
     }
 
     /**
-     * GET /api/crm/custom-fields?entity=account|contact|opportunity
+     * GET /api/app-config/custom-fields?entity=account|contact|opportunity
+     * GET /api/crm/custom-fields?entity=account|contact|opportunity (legacy)
      * 
      * @return array<int, array<string, mixed>>
      */
@@ -36,7 +37,8 @@ final class CustomFieldController
     }
 
     /**
-     * POST /api/crm/custom-fields
+     * POST /api/app-config/custom-fields
+     * POST /api/crm/custom-fields (legacy)
      * 
      * @param array<string, mixed> $input
      * @return array<string, mixed>

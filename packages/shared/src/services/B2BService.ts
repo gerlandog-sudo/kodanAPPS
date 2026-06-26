@@ -29,5 +29,5 @@ export const B2BService = {
     api.delete<{ success: boolean; message: string }>(`/api/crm/contacts/${id}`),
 
   listCustomFields: (entity: string) =>
-    api.get<CustomFieldDef[]>('/api/crm/custom-fields', { entity }),
+    api.get<CustomFieldDef[]>('/api/app-config/custom-fields', { entity }),
 };

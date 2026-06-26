@@ -23,9 +23,26 @@ final class TaskTypeRepository extends BaseRepository
      * 
      * @return array<int, array<string, mixed>>
      */
-    public function listAll(): array
+    public function listAll(?string $module = null): array
     {
+        if ($module !== null) {
+            return $this->findAll(self::TABLE, '*', 'module = :module', [':module' => $module], 'name ASC');
+        }
         return $this->findAll(self::TABLE, '*', '', [], 'name ASC');
+    }
+
+    /**
+     * Crea un nuevo tipo de tarea con módulo
+     * 
+     * @param array{name: string, icon: string|null, color_hex: string|null, module?: string} $data
+     * @return int ID del tipo de tarea creado
+     */
+    public function createTaskType(array $data): int
+    {
+        if (!isset($data['module'])) {
+            $data['module'] = 'crm';
+        }
+        return $this->create(self::TABLE, $data);
     }
 
     /**

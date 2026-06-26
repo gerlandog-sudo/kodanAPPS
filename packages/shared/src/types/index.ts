@@ -32,6 +32,26 @@ export interface CustomFieldDef {
   sort_order: number
 }
 
+export interface TaskType {
+  id: number
+  tenant_id: number
+  module: string
+  name: string
+  icon: string
+  color_hex: string
+  created_at: string
+}
+
+export interface TaskType {
+  id: number
+  tenant_id: number
+  module: string
+  name: string
+  icon: string
+  color_hex: string
+  created_at: string
+}
+
 export interface B2BAccountFormData {
   name: string
   legal_name: string

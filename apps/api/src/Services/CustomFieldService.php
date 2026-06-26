@@ -23,13 +23,14 @@ final class CustomFieldService
     {
         $tenantId ??= TenantContext::getTenantId();
         $sql = "SELECT * FROM custom_field_definitions WHERE tenant_id = :tenant_id AND entity_type = :entity";
+        $params = [':tenant_id' => $tenantId, ':entity' => $entity];
         if (!$includeSoftDeleted) {
             $sql .= " AND deleted_at IS NULL";
         }
         $sql .= " ORDER BY sort_order ASC, id ASC";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':tenant_id' => $tenantId, ':entity' => $entity]);
+        $stmt->execute($params);
         $definitions = $stmt->fetchAll();
 
         foreach ($definitions as &$def) {

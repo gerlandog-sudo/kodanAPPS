@@ -116,6 +116,80 @@ export interface CatalogItem {
   name: string
 }
 
+export interface ProjectKpis {
+  scope: number;
+  schedule: number;
+  budget: number;
+  risks: 'green' | 'amber' | 'red';
+  quality: number;
+  value: number;
+}
+
+export interface PortfolioProject {
+  id: number;
+  name: string;
+  status: string;
+  budget_hours: number | null;
+  budget_money: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  client_name: string | null;
+  kpis: ProjectKpis;
+}
+
+export interface DetailedProjectMetrics {
+  project: {
+    id: number;
+    name: string;
+    client_name: string;
+    status: string;
+    start_date: string | null;
+    end_date: string | null;
+  };
+  kpis: {
+    scope: {
+      percentage: number;
+      completed: number;
+      total: number;
+      source: 'kanban' | 'budget';
+    };
+    schedule: {
+      spi: number;
+      status: string;
+      planned_progress: number;
+    };
+    budget: {
+      burn_rate: number;
+      cost: number;
+      budget: number;
+      status: string;
+    };
+    quality: {
+      percentage: number;
+      status: string;
+    };
+    value: {
+      percentage: number;
+      revenue: number;
+      target: number;
+      status: string;
+    };
+    risks: {
+      total: number;
+      high: number;
+      medium: number;
+      status: string;
+      warnings: string[];
+    };
+  };
+  trends: Array<{
+    name: string;
+    alcance: number;
+    cronograma: number;
+    presupuesto: number;
+  }>;
+}
+
 export const trackerApi = {
   listProjects: () => api.get<Project[]>('/api/tracker/projects'),
   getProject: (id: number) => api.get<Project>(`/api/tracker/projects/${id}`),
@@ -137,6 +211,14 @@ export const trackerApi = {
   rejectTimeEntry: (id: number, reason: string) => api.post<TimeEntry>(`/api/tracker/time-entries/${id}/reject`, { reason }),
   bulkApproveTimeEntries: (ids: number[]) => api.post<{ approved: number }>('/api/tracker/time-entries/bulk-approve', { ids }),
   pendingApprovals: () => api.get<TimeEntry[]>('/api/tracker/time-entries/pending-approvals'),
+
+  getMetrics: (projectId?: number, from?: string, to?: string) => {
+    const params: Record<string, string> = {};
+    if (projectId) params.project_id = String(projectId);
+    if (from) params.from = from;
+    if (to) params.to = to;
+    return api.get<any>('/api/tracker/metrics', params);
+  },
 
   getDashboardKpis: () => api.get<DashboardKpis>('/api/tracker/dashboard/kpis'),
   getHoursByDay: (params?: Record<string, string>) => api.get<HoursByDay[]>('/api/tracker/dashboard/hours-by-day', params),

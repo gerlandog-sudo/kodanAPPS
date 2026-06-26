@@ -2,7 +2,7 @@ import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, 
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
-import { LayoutDashboard, FolderKanban, KanbanSquare, Clock, CheckCircle, Settings, FileSpreadsheet } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, KanbanSquare, Clock, CheckCircle, Settings, FileSpreadsheet, TrendingUp } from 'lucide-react';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -14,6 +14,7 @@ const TimeEntriesPage = lazy(() => import('./pages/TimeEntriesPage').then(m => (
 const ApprovalsPage = lazy(() => import('./pages/ApprovalsPage').then(m => ({ default: m.ApprovalsPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const MetricsPage = lazy(() => import('./pages/MetricsPage').then(m => ({ default: m.MetricsPage })));
 const LogoTRACKER3D = lazy(() => import('./components/LogoTRACKER3D').then(m => ({ default: m.LogoTRACKER3D })));
 
 function Logo3DPlaceholder({ size }: { size?: number }) {
@@ -21,7 +22,7 @@ function Logo3DPlaceholder({ size }: { size?: number }) {
 }
 
 type View = 'login' | 'set-password' | 'app';
-type Route = 'dashboard' | 'projects' | 'kanban' | 'time-entries' | 'approvals' | 'reports' | 'accounts' | 'contacts' | 'settings';
+type Route = 'dashboard' | 'projects' | 'kanban' | 'time-entries' | 'approvals' | 'reports' | 'accounts' | 'contacts' | 'settings' | 'metrics';
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme();
@@ -77,6 +78,7 @@ function AppContent() {
     { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
     { key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> },
     { key: 'reports', label: 'Reportes', icon: <FileSpreadsheet size={18} /> },
+    { key: 'metrics', label: 'Métricas', icon: <TrendingUp size={18} /> },
     { key: 'accounts', label: 'Cuentas', icon: B2BAccountNavItem.icon },
     { key: 'contacts', label: 'Contactos', icon: B2BContactNavItem.icon },
   ], []);
@@ -160,6 +162,7 @@ function AppContent() {
               {route === 'time-entries' && <TimeEntriesPage />}
               {route === 'approvals' && <ApprovalsPage />}
               {route === 'reports' && <ReportsPage />}
+              {route === 'metrics' && <MetricsPage />}
               {route === 'settings' && <SettingsPage />}
               {route === 'accounts' && <Accounts />}
               {route === 'contacts' && <Contacts />}

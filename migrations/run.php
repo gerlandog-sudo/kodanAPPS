@@ -80,6 +80,7 @@ try {
         '018_create_tenant_recount_schedule.sql', '019_update_v_tenant_plan_limits.sql',
         '020_rename_crm_tables.sql', '021_cross_app_config.sql',
         '022_tracker_project_tasks.sql', '023_tracker_time_entries.sql', '024_tracker_extensions.sql',
+        '025_extend_projects_for_metrics.php',
     ];
     
     foreach ($migrations as $migration) {

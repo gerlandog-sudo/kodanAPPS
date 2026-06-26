@@ -995,6 +995,18 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['timeEntry']->pendingApprovals());
     });
 
+    $router->get('/api/tracker/metrics', function () use ($app) {
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['trackerMetrics']->getProjectMetrics());
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode() ?: 500;
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    });
+
     // Tracker Dashboard
     $router->get('/api/tracker/dashboard/kpis', function () use ($app) {
         header('Content-Type: application/json');

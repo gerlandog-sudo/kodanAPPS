@@ -62,6 +62,7 @@ use kodanAPPS\Controllers\TrackerDashboardController;
 use kodanAPPS\Controllers\TrackerProfileController;
 use kodanAPPS\Controllers\CatalogController;
 use kodanAPPS\Controllers\ReportController;
+use kodanAPPS\Controllers\TrackerMetricsController;
 use kodanAPPS\Services\KanbanService;
 use kodanAPPS\Services\TimeEntryService;
 use kodanAPPS\Services\DashboardService;
@@ -347,6 +348,7 @@ $timeEntryController = new TimeEntryController($timeEntryService);
 $trackerDashboardController = new TrackerDashboardController($dashboardService);
 $trackerProfileController = new TrackerProfileController($pdo);
 $catalogController = new CatalogController($pdo);
+$trackerMetricsController = new TrackerMetricsController($pdo);
 $tenantUserController = new TenantUserController($userRepo, $pdo, $planAccessValidator, $usageTracker);
 $messagingController = new MessagingController($chatRepo, $mentionsParser);
 $notificationController = new NotificationController($notificationRepo);
@@ -425,5 +427,6 @@ return [
         'mail' => $mailController,
         'dashboard' => $dashboardController,
         'report' => $reportController,
+        'trackerMetrics' => $trackerMetricsController,
         ],
 ];

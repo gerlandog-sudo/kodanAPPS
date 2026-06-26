@@ -4,7 +4,7 @@
   "type": "project",
   "license": "proprietary",
   "require": {
-    "php": "^8.3",
+    "php": "^8.2",
     "phpmailer/phpmailer": "^7.1",
     "phpoffice/phpspreadsheet": "^5.8"
   },

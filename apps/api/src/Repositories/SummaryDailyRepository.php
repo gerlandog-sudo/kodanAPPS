@@ -68,7 +68,7 @@ final class SummaryDailyRepository extends BaseRepository
     public function getWeeklyTotalsByUser(string $dateFrom, string $dateTo): array
     {
         $sql = "SELECT sd.user_id, u.display_name AS user_name, SUM(sd.total_minutes) AS total_minutes, SUM(sd.calculated_cost) AS total_cost
-                FROM `{$this::TABLE}` sd
+                FROM `" . self::TABLE . "` sd
                 JOIN users u ON u.id = sd.user_id
                 WHERE sd.tenant_id = :tenant_id AND sd.date >= :date_from AND sd.date <= :date_to
                 GROUP BY sd.user_id, u.display_name

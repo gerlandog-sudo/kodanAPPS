@@ -5,7 +5,8 @@
   "license": "proprietary",
   "require": {
     "php": "^8.3",
-    "phpmailer/phpmailer": "^7.1"
+    "phpmailer/phpmailer": "^7.1",
+    "phpoffice/phpspreadsheet": "^5.8"
   },
   "require-dev": {
     "phpstan/phpstan": "^2.0",

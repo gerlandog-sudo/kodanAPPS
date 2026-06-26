@@ -1071,6 +1071,20 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['catalog']->deleteSeniority((int)$p['id']));
     });
 
+    // Tracker Reports (Excel)
+    $router->get('/api/tracker/reports/by-project', function () use ($app) {
+        $app['controllers']['report']->byProject();
+    });
+    $router->get('/api/tracker/reports/by-user', function () use ($app) {
+        $app['controllers']['report']->byUser();
+    });
+    $router->get('/api/tracker/reports/by-client', function () use ($app) {
+        $app['controllers']['report']->byClient();
+    });
+    $router->get('/api/tracker/reports/weekly-summary', function () use ($app) {
+        $app['controllers']['report']->weeklySummary();
+    });
+
     // ============================================================
     // Middleware & Routes: Unified Messaging System
     // ============================================================

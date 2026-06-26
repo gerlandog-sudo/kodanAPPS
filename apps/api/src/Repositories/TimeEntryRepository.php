@@ -114,7 +114,7 @@ final class TimeEntryRepository extends BaseRepository
         $offset = ($page - 1) * $perPage;
 
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
-                FROM `{$this::TABLE}` te
+                FROM `" . self::TABLE . "` te
                 JOIN projects p ON p.id = te.project_id
                 LEFT JOIN users u ON u.id = te.user_id
                 WHERE te.tenant_id = :tenant_id{$whereSql}
@@ -152,7 +152,7 @@ final class TimeEntryRepository extends BaseRepository
         }
 
         $whereSql = !empty($where) ? ' AND ' . implode(' AND ', $where) : '';
-        $sql = "SELECT COUNT(*) FROM `{$this::TABLE}` te WHERE te.tenant_id = :tenant_id{$whereSql}";
+        $sql = "SELECT COUNT(*) FROM `" . self::TABLE . "` te WHERE te.tenant_id = :tenant_id{$whereSql}";
         $params[':tenant_id'] = \kodanAPPS\DB\TenantContext::getTenantId();
 
         $stmt = $this->pdo->prepare($sql);
@@ -163,7 +163,7 @@ final class TimeEntryRepository extends BaseRepository
     public function getPendingApprovals(int $approverId): array
     {
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
-                FROM `{$this::TABLE}` te
+                FROM `" . self::TABLE . "` te
                 JOIN projects p ON p.id = te.project_id
                 JOIN users u ON u.id = te.user_id
                 WHERE te.tenant_id = :tenant_id AND te.approval_status = 'submitted'

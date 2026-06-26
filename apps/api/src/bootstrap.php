@@ -61,6 +61,7 @@ use kodanAPPS\Controllers\TimeEntryController;
 use kodanAPPS\Controllers\TrackerDashboardController;
 use kodanAPPS\Controllers\TrackerProfileController;
 use kodanAPPS\Controllers\CatalogController;
+use kodanAPPS\Controllers\ReportController;
 use kodanAPPS\Services\KanbanService;
 use kodanAPPS\Services\TimeEntryService;
 use kodanAPPS\Services\DashboardService;
@@ -352,6 +353,7 @@ $notificationController = new NotificationController($notificationRepo);
 $workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo);
 $mailController = new \kodanAPPS\Controllers\MailController($emailTemplateRepo, $smtpConfigRepo, $mailService);
 $dashboardController = new \kodanAPPS\Controllers\DashboardController($pdo);
+$reportController = new ReportController($dashboardService, $timeEntryRepo);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);
@@ -422,5 +424,6 @@ return [
         'workflow' => $workflowController,
         'mail' => $mailController,
         'dashboard' => $dashboardController,
+        'report' => $reportController,
         ],
 ];

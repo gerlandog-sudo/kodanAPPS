@@ -47,7 +47,7 @@ final class ProjectTaskRepository extends BaseRepository
     public function createTask(array $data): int
     {
         $maxPos = $this->rawSelect(
-            "SELECT COALESCE(MAX(position), -1) + 1 AS next_pos FROM `{$this::TABLE}` WHERE project_id = :pid AND kanban_status = :ks",
+            "SELECT COALESCE(MAX(position), -1) + 1 AS next_pos FROM `" . self::TABLE . "` WHERE project_id = :pid AND kanban_status = :ks",
             [':pid' => $data['project_id'], ':ks' => $data['kanban_status']]
         );
         $data['position'] = $maxPos[0]['next_pos'] ?? 0;
@@ -62,7 +62,7 @@ final class ProjectTaskRepository extends BaseRepository
 
     public function getBoardColumns(int $projectId): array
     {
-        $sql = "SELECT kanban_status, COUNT(*) AS count FROM `{$this::TABLE}` WHERE project_id = :pid GROUP BY kanban_status";
+        $sql = "SELECT kanban_status, COUNT(*) AS count FROM `" . self::TABLE . "` WHERE project_id = :pid GROUP BY kanban_status";
         $results = $this->rawSelect($sql, [':pid' => $projectId]);
         $counts = [];
         foreach ($results as $row) {

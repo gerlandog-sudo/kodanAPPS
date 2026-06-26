@@ -78,6 +78,8 @@ try {
         '014_create_tenant_smtp_config.php', '015_add_is_blocked_to_plan_limits.sql',
         '016_create_app_metrics.sql', '017_create_tenant_limit_overrides.sql',
         '018_create_tenant_recount_schedule.sql', '019_update_v_tenant_plan_limits.sql',
+        '020_rename_crm_tables.sql', '021_cross_app_config.sql',
+        '022_tracker_project_tasks.sql', '023_tracker_time_entries.sql', '024_tracker_extensions.sql',
     ];
     
     foreach ($migrations as $migration) {

@@ -153,4 +153,9 @@ export const trackerApi = {
   listSeniorities: () => api.get<CatalogItem[]>('/api/tracker/seniorities'),
   createSeniority: (name: string) => api.post<CatalogItem>('/api/tracker/seniorities', { name }),
   deleteSeniority: (id: number) => api.delete(`/api/tracker/seniorities/${id}`),
+
+  getReportUrl: (type: string, params?: Record<string, string>) => {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return `/api/tracker/reports/${type}${qs}`;
+  },
 };

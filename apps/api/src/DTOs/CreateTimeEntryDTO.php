@@ -16,6 +16,9 @@ final readonly class CreateTimeEntryDTO
     public ?string $description;
     public float $hourlyCost;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data)
     {
         $this->validate($data);
@@ -29,6 +32,9 @@ final readonly class CreateTimeEntryDTO
         $this->hourlyCost = isset($data['hourly_cost']) ? (float)$data['hourly_cost'] : 0.0;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function validate(array $data): void
     {
         $errors = [];
@@ -60,6 +66,9 @@ final readonly class CreateTimeEntryDTO
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $calculatedCost = $this->hourlyCost > 0

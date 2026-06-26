@@ -13,17 +13,27 @@ final class TimeEntryRepository extends BaseRepository
 {
     protected const TABLE = 'TRACKER_time_entries';
 
-    protected function getLimitConfig(): ?array
+    /**
+     * @return array{module: string, metric: string}
+     */
+    protected function getLimitConfig(): array
     {
         return ['module' => 'tracker', 'metric' => 'time_entries_max'];
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function createEntry(array $data): int
     {
         $data['approval_status'] = 'draft';
         return $this->create(self::TABLE, $data);
     }
 
+    /**
+     * @param int $id
+     * @param array<string, mixed> $data
+     */
     public function updateEntry(int $id, array $data): int
     {
         $entry = $this->findById($id);
@@ -84,6 +94,12 @@ final class TimeEntryRepository extends BaseRepository
         ], 'id = :id', [':id' => $id]);
     }
 
+    /**
+     * @param array<string, mixed> $filters
+     * @param int $page
+     * @param int $perPage
+     * @return array<int, array<string, mixed>>
+     */
     public function findFiltered(array $filters, int $page = 1, int $perPage = 50): array
     {
         $where = [];
@@ -125,6 +141,9 @@ final class TimeEntryRepository extends BaseRepository
         return $this->rawSelect($sql, $params);
     }
 
+    /**
+     * @param array<string, mixed> $filters
+     */
     public function countFiltered(array $filters): int
     {
         $where = [];
@@ -160,6 +179,10 @@ final class TimeEntryRepository extends BaseRepository
         return (int)$stmt->fetchColumn();
     }
 
+    /**
+     * @param int $approverId
+     * @return array<int, array<string, mixed>>
+     */
     public function getPendingApprovals(int $approverId): array
     {
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
@@ -171,6 +194,10 @@ final class TimeEntryRepository extends BaseRepository
         return $this->rawSelect($sql, [':tenant_id' => \kodanAPPS\DB\TenantContext::getTenantId()]);
     }
 
+    /**
+     * @param array<int, int|string> $ids
+     * @param int $approvedBy
+     */
     public function bulkApprove(array $ids, int $approvedBy): int
     {
         $affected = 0;

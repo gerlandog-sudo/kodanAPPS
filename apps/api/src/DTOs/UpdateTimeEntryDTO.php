@@ -20,6 +20,9 @@ final readonly class UpdateTimeEntryDTO
     public bool $hasDuration;
     public bool $hasDescription;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data)
     {
         $this->validate($data);
@@ -37,6 +40,9 @@ final readonly class UpdateTimeEntryDTO
         $this->description = $this->hasDescription ? ($data['description'] !== null ? trim((string)$data['description']) : null) : null;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function validate(array $data): void
     {
         $errors = [];
@@ -62,6 +68,9 @@ final readonly class UpdateTimeEntryDTO
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $result = [];

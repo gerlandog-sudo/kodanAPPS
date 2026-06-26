@@ -14,6 +14,9 @@ final readonly class TimeEntryFilterDTO
     public int $page;
     public int $perPage;
 
+    /**
+     * @param array<string, mixed> $query
+     */
     public function __construct(array $query)
     {
         $this->projectId = isset($query['project_id']) ? (int)$query['project_id'] : null;
@@ -30,6 +33,9 @@ final readonly class TimeEntryFilterDTO
         $this->perPage = isset($query['per_page']) ? max(1, min(100, (int)$query['per_page'])) : 50;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $filters = [];

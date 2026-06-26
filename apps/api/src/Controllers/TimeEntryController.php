@@ -17,17 +17,30 @@ final class TimeEntryController
         private TimeEntryService $timeEntryService,
     ) {}
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function create(array $input): array
     {
         $dto = new CreateTimeEntryDTO($input);
         return $this->timeEntryService->create($dto);
     }
 
+    /**
+     * @param int $id
+     * @return array<string, mixed>
+     */
     public function get(int $id): array
     {
         throw new RuntimeException('Not implemented', 501);
     }
 
+    /**
+     * @param int $id
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function update(int $id, array $input): array
     {
         $authUserId = \kodanAPPS\DB\TenantContext::getUserId();
@@ -35,6 +48,10 @@ final class TimeEntryController
         return $this->timeEntryService->update($id, $dto, $authUserId);
     }
 
+    /**
+     * @param int $id
+     * @return array<string, bool>
+     */
     public function delete(int $id): array
     {
         $authUserId = \kodanAPPS\DB\TenantContext::getUserId();
@@ -42,24 +59,40 @@ final class TimeEntryController
         return ['deleted' => true];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function list(): array
     {
         $filter = new TimeEntryFilterDTO($_GET);
         return $this->timeEntryService->list($filter);
     }
 
+    /**
+     * @param int $id
+     * @return array<string, mixed>
+     */
     public function submit(int $id): array
     {
         $authUserId = \kodanAPPS\DB\TenantContext::getUserId();
         return $this->timeEntryService->submit($id, $authUserId);
     }
 
+    /**
+     * @param int $id
+     * @return array<string, mixed>
+     */
     public function approve(int $id): array
     {
         $approverId = \kodanAPPS\DB\TenantContext::getUserId();
         return $this->timeEntryService->approve($id, $approverId);
     }
 
+    /**
+     * @param int $id
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function reject(int $id, array $input): array
     {
         $reason = $input['reason'] ?? '';
@@ -69,6 +102,10 @@ final class TimeEntryController
         return $this->timeEntryService->reject($id, $reason);
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function bulkApprove(array $input): array
     {
         $ids = $input['ids'] ?? [];
@@ -79,6 +116,9 @@ final class TimeEntryController
         return $this->timeEntryService->bulkApprove($ids, $approverId);
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function pendingApprovals(): array
     {
         $approverId = \kodanAPPS\DB\TenantContext::getUserId();

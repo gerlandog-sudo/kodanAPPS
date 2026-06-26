@@ -19,6 +19,9 @@ final readonly class CreateProjectTaskDTO
     public ?string $dueDate;
     public ?float $estimatedHours;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data)
     {
         $this->validate($data);
@@ -35,6 +38,9 @@ final readonly class CreateProjectTaskDTO
         $this->estimatedHours = isset($data['estimated_hours']) ? (float)$data['estimated_hours'] : null;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function validate(array $data): void
     {
         $errors = [];
@@ -68,6 +74,9 @@ final readonly class CreateProjectTaskDTO
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

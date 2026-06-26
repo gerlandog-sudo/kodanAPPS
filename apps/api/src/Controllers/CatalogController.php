@@ -14,6 +14,9 @@ final class CatalogController
         private TenantAwarePDO $pdo,
     ) {}
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function listPositions(): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -22,6 +25,10 @@ final class CatalogController
         )->fetchAll();
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function createPosition(array $input): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -39,6 +46,10 @@ final class CatalogController
         return ['id' => $id, 'name' => $name];
     }
 
+    /**
+     * @param int $id
+     * @return array<string, bool>
+     */
     public function deletePosition(int $id): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -49,6 +60,9 @@ final class CatalogController
         return ['deleted' => $stmt->rowCount() > 0];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function listSeniorities(): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -57,6 +71,10 @@ final class CatalogController
         )->fetchAll();
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function createSeniority(array $input): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -74,6 +92,10 @@ final class CatalogController
         return ['id' => $id, 'name' => $name];
     }
 
+    /**
+     * @param int $id
+     * @return array<string, bool>
+     */
     public function deleteSeniority(int $id): array
     {
         $tenantId = TenantContext::getTenantId();

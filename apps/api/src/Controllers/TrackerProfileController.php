@@ -15,6 +15,9 @@ final class TrackerProfileController
         private TenantAwarePDO $pdo,
     ) {}
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function listProfiles(): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -29,6 +32,10 @@ final class TrackerProfileController
         )->fetchAll();
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function upsertProfile(array $input): array
     {
         $tenantId = TenantContext::getTenantId();

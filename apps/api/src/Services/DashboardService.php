@@ -13,7 +13,10 @@ final class DashboardService
         private TenantAwarePDO $pdo,
     ) {}
 
-    public function getKpis(): array
+    /**
+     * @return array<string, mixed>
+     */
+     public function getKpis(): array
     {
         $tenantId = TenantContext::getTenantId();
         $pdo = $this->pdo;
@@ -58,6 +61,11 @@ final class DashboardService
         ];
     }
 
+    /**
+     * @param string $from
+     * @param string $to
+     * @return array<int, array<string, mixed>>
+     */
     public function getHoursByDay(string $from, string $to): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -72,6 +80,9 @@ final class DashboardService
         return $rows;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getProjectsByStatus(): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -83,6 +94,10 @@ final class DashboardService
         return $rows;
     }
 
+    /**
+     * @param int $limit
+     * @return array<int, array<string, mixed>>
+     */
     public function getTopUsers(int $limit = 5): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -102,6 +117,10 @@ final class DashboardService
         )->fetchAll();
     }
 
+    /**
+     * @param int $limit
+     * @return array<int, array<string, mixed>>
+     */
     public function getRecentEntries(int $limit = 10): array
     {
         $tenantId = TenantContext::getTenantId();

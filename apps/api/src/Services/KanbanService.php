@@ -17,6 +17,10 @@ final class KanbanService
         private TaskTypeRepository $taskTypeRepo,
     ) {}
 
+    /**
+     * @param int $projectId
+     * @return array<string, mixed>
+     */
     public function getBoard(int $projectId): array
     {
         $tasks = $this->taskRepo->findByProject($projectId);
@@ -33,6 +37,10 @@ final class KanbanService
         ];
     }
 
+    /**
+     * @param CreateProjectTaskDTO $dto
+     * @return array<string, mixed>
+     */
     public function createTask(CreateProjectTaskDTO $dto): array
     {
         $data = $dto->toArray();
@@ -46,6 +54,10 @@ final class KanbanService
         $this->taskRepo->moveTask($dto->taskId, $dto->toStage, $dto->position);
     }
 
+    /**
+     * @param int $id
+     * @return array<string, mixed>
+     */
     public function getTask(int $id): array
     {
         $task = $this->taskRepo->findById($id);
@@ -55,6 +67,11 @@ final class KanbanService
         return $task;
     }
 
+    /**
+     * @param int $id
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
     public function updateTask(int $id, array $data): array
     {
         $this->taskRepo->rawExecute(
@@ -69,6 +86,9 @@ final class KanbanService
         $this->taskRepo->deleteTask($id);
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getTaskTypes(): array
     {
         return $this->taskTypeRepo->listAll('tracker');

@@ -17,27 +17,49 @@ final class KanbanController
         private KanbanService $kanbanService,
     ) {}
 
+    /**
+     * @param int $projectId
+     * @return array<string, mixed>
+     */
     public function getBoard(int $projectId): array
     {
         return $this->kanbanService->getBoard($projectId);
     }
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function create(array $input): array
     {
         $dto = new CreateProjectTaskDTO($input);
         return $this->kanbanService->createTask($dto);
     }
 
+    /**
+     * @param int $id
+     * @return array<string, mixed>
+     */
     public function get(int $id): array
     {
         return $this->kanbanService->getTask($id);
     }
 
+    /**
+     * @param int $id
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function update(int $id, array $input): array
     {
         return $this->kanbanService->updateTask($id, $input);
     }
 
+    /**
+     * @param int $id
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function move(int $id, array $input): array
     {
         $input['task_id'] = $id;
@@ -46,12 +68,19 @@ final class KanbanController
         return $this->kanbanService->getTask($id);
     }
 
+    /**
+     * @param int $id
+     * @return array<string, bool>
+     */
     public function delete(int $id): array
     {
         $this->kanbanService->deleteTask($id);
         return ['deleted' => true];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function taskTypes(): array
     {
         return $this->kanbanService->getTaskTypes();

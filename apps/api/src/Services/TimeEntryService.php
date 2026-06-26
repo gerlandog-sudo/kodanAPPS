@@ -19,6 +19,10 @@ final class TimeEntryService
         private SummaryDailyRepository $summaryRepo,
     ) {}
 
+    /**
+     * @param CreateTimeEntryDTO $dto
+     * @return array<string, mixed>
+     */
     public function create(CreateTimeEntryDTO $dto): array
     {
         $data = $dto->toArray();
@@ -30,6 +34,12 @@ final class TimeEntryService
         return $entry ?? [];
     }
 
+    /**
+     * @param int $id
+     * @param UpdateTimeEntryDTO $dto
+     * @param int $authUserId
+     * @return array<string, mixed>
+     */
     public function update(int $id, UpdateTimeEntryDTO $dto, int $authUserId): array
     {
         $entry = $this->entryRepo->findById($id);
@@ -75,6 +85,11 @@ final class TimeEntryService
         );
     }
 
+    /**
+     * @param int $id
+     * @param int $authUserId
+     * @return array<string, mixed>
+     */
     public function submit(int $id, int $authUserId): array
     {
         $entry = $this->entryRepo->findById($id);
@@ -88,24 +103,43 @@ final class TimeEntryService
         return $this->entryRepo->findById($id) ?? [];
     }
 
+    /**
+     * @param int $id
+     * @param int $approverId
+     * @return array<string, mixed>
+     */
     public function approve(int $id, int $approverId): array
     {
         $this->entryRepo->approve($id, $approverId);
         return $this->entryRepo->findById($id) ?? [];
     }
 
+    /**
+     * @param int $id
+     * @param string $reason
+     * @return array<string, mixed>
+     */
     public function reject(int $id, string $reason): array
     {
         $this->entryRepo->reject($id, $reason);
         return $this->entryRepo->findById($id) ?? [];
     }
 
+    /**
+     * @param array<int, int|string> $ids
+     * @param int $approverId
+     * @return array<string, int>
+     */
     public function bulkApprove(array $ids, int $approverId): array
     {
         $affected = $this->entryRepo->bulkApprove($ids, $approverId);
         return ['approved' => $affected];
     }
 
+    /**
+     * @param TimeEntryFilterDTO $filter
+     * @return array<string, mixed>
+     */
     public function list(TimeEntryFilterDTO $filter): array
     {
         $items = $this->entryRepo->findFiltered(
@@ -123,6 +157,10 @@ final class TimeEntryService
         ];
     }
 
+    /**
+     * @param int $approverId
+     * @return array<int, array<string, mixed>>
+     */
     public function getPendingApprovals(int $approverId): array
     {
         return $this->entryRepo->getPendingApprovals($approverId);

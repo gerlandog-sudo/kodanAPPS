@@ -12,6 +12,9 @@ final readonly class MoveTaskDTO
     public string $toStage;
     public int $position;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data)
     {
         $this->validate($data);
@@ -21,6 +24,9 @@ final readonly class MoveTaskDTO
         $this->position = isset($data['position']) ? (int)$data['position'] : 0;
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function validate(array $data): void
     {
         $errors = [];
@@ -43,6 +49,9 @@ final readonly class MoveTaskDTO
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

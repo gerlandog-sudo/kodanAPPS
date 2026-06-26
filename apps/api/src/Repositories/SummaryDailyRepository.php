@@ -39,6 +39,12 @@ final class SummaryDailyRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param int $userId
+     * @param string $dateFrom
+     * @param string $dateTo
+     * @return array<int, array<string, mixed>>
+     */
     public function getByUserAndPeriod(int $userId, string $dateFrom, string $dateTo): array
     {
         return $this->findAll(
@@ -52,6 +58,12 @@ final class SummaryDailyRepository extends BaseRepository
         );
     }
 
+    /**
+     * @param int $projectId
+     * @param string $dateFrom
+     * @param string $dateTo
+     * @return array<int, array<string, mixed>>
+     */
     public function getByProjectAndPeriod(int $projectId, string $dateFrom, string $dateTo): array
     {
         return $this->findAll(
@@ -65,6 +77,11 @@ final class SummaryDailyRepository extends BaseRepository
         );
     }
 
+    /**
+     * @param string $dateFrom
+     * @param string $dateTo
+     * @return array<int, array<string, mixed>>
+     */
     public function getWeeklyTotalsByUser(string $dateFrom, string $dateTo): array
     {
         $sql = "SELECT sd.user_id, u.display_name AS user_name, SUM(sd.total_minutes) AS total_minutes, SUM(sd.calculated_cost) AS total_cost
@@ -80,6 +97,16 @@ final class SummaryDailyRepository extends BaseRepository
         ]);
     }
 
+    /**
+     * @param string $table
+     * @param string $columns
+     * @param string $where
+     * @param array<string, mixed> $params
+     * @param string $orderBy
+     * @param int $limit
+     * @param string|null $joins
+     * @return array<int, array<string, mixed>>
+     */
     public function findAll(string $table = self::TABLE, string $columns = '*', string $where = '', array $params = [], string $orderBy = '', int $limit = 0, ?string $joins = null): array
     {
         $sql = "SELECT {$columns} FROM `{$table}`";

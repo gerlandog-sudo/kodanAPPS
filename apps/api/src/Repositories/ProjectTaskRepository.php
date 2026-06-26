@@ -13,11 +13,18 @@ final class ProjectTaskRepository extends BaseRepository
 {
     protected const TABLE = 'TRACKER_project_tasks';
 
-    protected function getLimitConfig(): ?array
+    /**
+     * @return array{module: string, metric: string}
+     */
+    protected function getLimitConfig(): array
     {
         return ['module' => 'tracker', 'metric' => 'tasks_max'];
     }
 
+    /**
+     * @param int $projectId
+     * @return array<int, array<string, mixed>>
+     */
     public function findByProject(int $projectId): array
     {
         return $this->findAll(
@@ -44,6 +51,9 @@ final class ProjectTaskRepository extends BaseRepository
         ], 'id = :id', [':id' => $taskId]);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function createTask(array $data): int
     {
         $maxPos = $this->rawSelect(
@@ -60,6 +70,10 @@ final class ProjectTaskRepository extends BaseRepository
         return $this->delete(self::TABLE, 'id = :id', [':id' => $id]);
     }
 
+    /**
+     * @param int $projectId
+     * @return array<string, int>
+     */
     public function getBoardColumns(int $projectId): array
     {
         $sql = "SELECT kanban_status, COUNT(*) AS count FROM `" . self::TABLE . "` WHERE project_id = :pid GROUP BY kanban_status";
@@ -71,6 +85,16 @@ final class ProjectTaskRepository extends BaseRepository
         return $counts;
     }
 
+    /**
+     * @param string $table
+     * @param string $columns
+     * @param string $where
+     * @param array<string, mixed> $params
+     * @param string $orderBy
+     * @param int $limit
+     * @param string|null $joins
+     * @return array<int, array<string, mixed>>
+     */
     public function findAll(string $table = self::TABLE, string $columns = '*', string $where = '', array $params = [], string $orderBy = '', int $limit = 0, ?string $joins = null): array
     {
         $sql = "SELECT {$columns} FROM `{$table}`";

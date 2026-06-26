@@ -13,7 +13,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 final class ReportController
 {
     public function __construct(
-        private DashboardService $dashboardService,
         private TimeEntryRepository $timeEntryRepo,
     ) {}
 
@@ -81,7 +80,6 @@ final class ReportController
     {
         $from = $_GET['from'] ?? date('Y-m-01');
         $to = $_GET['to'] ?? date('Y-m-t');
-        $tenantId = TenantContext::getTenantId();
 
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name,
                        a.name AS account_name
@@ -89,11 +87,9 @@ final class ReportController
                 JOIN projects p ON p.id = te.project_id
                 LEFT JOIN accounts a ON a.account_id = p.account_id
                 LEFT JOIN users u ON u.id = te.user_id
-                WHERE te.tenant_id = :tid AND te.date >= :dfrom AND te.date <= :dto
+                WHERE te.tenant_id = :tenant_id AND te.date >= :dfrom AND te.date <= :dto
                 ORDER BY te.date DESC LIMIT 10000";
-        $stmt = $this->timeEntryRepo->getPdo()->prepare($sql);
-        $stmt->execute([':tid' => $tenantId, ':dfrom' => $from, ':dto' => $to]);
-        $entries = $stmt->fetchAll();
+        $entries = $this->timeEntryRepo->rawSelect($sql, [':dfrom' => $from, ':dto' => $to]);
 
         $grouped = [];
         foreach ($entries as $e) {

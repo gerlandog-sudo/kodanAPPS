@@ -353,7 +353,7 @@ $notificationController = new NotificationController($notificationRepo);
 $workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo);
 $mailController = new \kodanAPPS\Controllers\MailController($emailTemplateRepo, $smtpConfigRepo, $mailService);
 $dashboardController = new \kodanAPPS\Controllers\DashboardController($pdo);
-$reportController = new ReportController($dashboardService, $timeEntryRepo);
+$reportController = new ReportController($timeEntryRepo);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);

@@ -76,41 +76,44 @@ final class DashboardController
     {
         $tenantId = TenantContext::getTenantId();
         $params = [':tenant_id' => $tenantId];
-
-        $pipelineJoin = '';
+        $pipelineFilter = '';
         if ($pipelineId) {
-            $pipelineJoin = 'AND (o.pipeline_stage_id IN (SELECT id FROM CRM_pipeline_stages WHERE pipeline_id = :pipeline_id))';
-            $params[':pipeline_id'] = $pipelineId;
+            $pipelineFilter = 'AND o.pipeline_stage_id IN (SELECT id FROM CRM_pipeline_stages WHERE pipeline_id = :pipeline_id2)';
+            $params[':pipeline_id2'] = $pipelineId;
         }
 
-        $sql = "
-            (SELECT 'stage_change' AS type,
-                    CONCAT('Oportunidad movida a: ', ps.name) AS message,
-                    u.display_name AS user_name,
-                    o.updated_at AS created_at,
-                    'crm_opportunity' AS entity_type,
-                    o.id AS entity_id
-             FROM CRM_opportunities o
-             JOIN CRM_pipeline_stages ps ON ps.id = o.pipeline_stage_id
-             LEFT JOIN users u ON u.id = o.owner_user_id
-             WHERE o.tenant_id = :tenant_id {$pipelineJoin})
-            UNION ALL
-            (SELECT CONCAT('notification_', n.type) AS type,
-                    n.message AS message,
-                    COALESCE(u.display_name, 'Sistema') AS user_name,
-                    n.created_at,
-                    COALESCE(n.entity_type, '') AS entity_type,
-                    COALESCE(n.entity_id, 0) AS entity_id
-             FROM notifications n
-             LEFT JOIN users u ON u.id = n.user_id
-             WHERE n.tenant_id = :tenant_id)
-            ORDER BY created_at DESC
-            LIMIT 20
-        ";
+        $stageSql = "SELECT 'stage_change' AS type,
+                            CONCAT('Oportunidad movida a: ', ps.name) AS message,
+                            u.display_name AS user_name,
+                            o.updated_at AS created_at,
+                            'crm_opportunity' AS entity_type,
+                            o.id AS entity_id
+                     FROM CRM_opportunities o
+                     JOIN CRM_pipeline_stages ps ON ps.id = o.pipeline_stage_id
+                     LEFT JOIN users u ON u.id = o.owner_user_id
+                     WHERE o.tenant_id = :tenant_id {$pipelineFilter}
+                     ORDER BY o.updated_at DESC LIMIT 10";
+        $notifSql = "SELECT CONCAT('notification_', n.type) AS type,
+                            n.message AS message,
+                            COALESCE(u.display_name, 'Sistema') AS user_name,
+                            n.created_at,
+                            COALESCE(n.entity_type, '') AS entity_type,
+                            COALESCE(n.entity_id, 0) AS entity_id
+                     FROM notifications n
+                     LEFT JOIN users u ON u.id = n.user_id
+                     WHERE n.tenant_id = :tenant_id2
+                     ORDER BY n.created_at DESC LIMIT 10";
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        $rows = $stmt->fetchAll();
+        $stageStmt = $this->pdo->prepare($stageSql);
+        $stageStmt->execute($params);
+
+        $notifParams = [':tenant_id2' => $tenantId];
+        $notifStmt = $this->pdo->prepare($notifSql);
+        $notifStmt->execute($notifParams);
+
+        $rows = array_merge($stageStmt->fetchAll(), $notifStmt->fetchAll());
+        usort($rows, fn($a, $b) => strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''));
+        $rows = array_slice($rows, 0, 20);
 
         return array_map(fn($r) => [
             'type' => $r['type'],
@@ -175,35 +178,39 @@ final class DashboardController
     {
         $tenantId = TenantContext::getTenantId();
 
-        $sql = "
-            SELECT
-                p.id,
-                p.name,
-                COALESCE(SUM(o.value), 0) AS total_value,
-                COUNT(o.id) AS total_deals,
-                SUM(CASE WHEN ps.is_won_stage = 0 AND ps.is_lost_stage = 0 THEN 1 ELSE 0 END) AS active_deals,
-                SUM(CASE WHEN ps.is_won_stage = 1 THEN 1 ELSE 0 END) AS won_deals,
-                SUM(CASE WHEN ps.is_lost_stage = 1 THEN 1 ELSE 0 END) AS lost_deals,
-                COALESCE((
-                    SELECT AVG(DATEDIFF(oi.close_date, oi.created_at))
-                    FROM CRM_opportunities oi
-                    JOIN CRM_pipeline_stages psi ON psi.id = oi.pipeline_stage_id
-                    WHERE psi.pipeline_id = p.id AND psi.is_won_stage = 1
-                      AND oi.close_date IS NOT NULL AND oi.tenant_id = :tenant_id
-                ), 0) AS avg_cycle_days
-            FROM CRM_pipelines p
-            LEFT JOIN CRM_opportunities o ON o.pipeline_stage_id IN (
-                SELECT ps2.id FROM CRM_pipeline_stages ps2 WHERE ps2.pipeline_id = p.id
-            ) AND o.tenant_id = :tenant_id
-            LEFT JOIN CRM_pipeline_stages ps ON ps.id = o.pipeline_stage_id
-            WHERE p.tenant_id = :tenant_id
-            GROUP BY p.id, p.name
-            ORDER BY p.name ASC
-        ";
+        // Segment 1: pipelines + opportunity aggregations
+        $aggSql = "SELECT p.id, p.name,
+                          COALESCE(SUM(o.value), 0) AS total_value,
+                          COUNT(o.id) AS total_deals,
+                          SUM(CASE WHEN ps.is_won_stage = 0 AND ps.is_lost_stage = 0 THEN 1 ELSE 0 END) AS active_deals,
+                          SUM(CASE WHEN ps.is_won_stage = 1 THEN 1 ELSE 0 END) AS won_deals,
+                          SUM(CASE WHEN ps.is_lost_stage = 1 THEN 1 ELSE 0 END) AS lost_deals
+                   FROM CRM_pipelines p
+                   LEFT JOIN CRM_pipeline_stages ps ON ps.pipeline_id = p.id
+                   LEFT JOIN CRM_opportunities o ON o.pipeline_stage_id = ps.id AND o.tenant_id = :tenant_id1
+                   WHERE p.tenant_id = :tenant_id1
+                   GROUP BY p.id, p.name
+                   ORDER BY p.name ASC";
+        $aggStmt = $this->pdo->prepare($aggSql);
+        $aggStmt->execute([':tenant_id1' => $tenantId]);
+        $pipelines = $aggStmt->fetchAll();
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':tenant_id' => $tenantId]);
-        $rows = $stmt->fetchAll();
+        // Segment 2: avg cycle days per pipeline (separate query to avoid correlated subquery issues)
+        $cycleSql = "SELECT ps.pipeline_id,
+                            AVG(TIMESTAMPDIFF(DAY, o.created_at, o.close_date)) AS avg_days
+                     FROM CRM_opportunities o
+                     JOIN CRM_pipeline_stages ps ON ps.id = o.pipeline_stage_id
+                     WHERE ps.is_won_stage = 1 AND o.close_date IS NOT NULL
+                       AND o.tenant_id = :tenant_id2
+                     GROUP BY ps.pipeline_id";
+        $cycleStmt = $this->pdo->prepare($cycleSql);
+        $cycleStmt->execute([':tenant_id2' => $tenantId]);
+        $cycleRows = $cycleStmt->fetchAll();
+
+        $cycleMap = [];
+        foreach ($cycleRows as $cr) {
+            $cycleMap[(int)$cr['pipeline_id']] = (float)$cr['avg_days'];
+        }
 
         $colors = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#3B82F6', '#8B5CF6', '#10B981', '#F97316'];
 
@@ -216,8 +223,8 @@ final class DashboardController
             'winRate' => (int)($r['won_deals'] ?? 0) + (int)($r['lost_deals'] ?? 0) > 0
                 ? round(((int)($r['won_deals'] ?? 0) / ((int)($r['won_deals'] ?? 0) + (int)($r['lost_deals'] ?? 0))) * 100, 1)
                 : 0,
-            'avgCycleDays' => round((float)($r['avg_cycle_days'] ?? 0), 1),
+            'avgCycleDays' => round($cycleMap[(int)$r['id']] ?? 0, 1),
             'color' => $colors[$i % count($colors)],
-        ], $rows, array_keys($rows));
+        ], $pipelines, array_keys($pipelines));
     }
 }

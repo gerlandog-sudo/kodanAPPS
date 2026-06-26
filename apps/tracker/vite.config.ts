@@ -8,7 +8,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@kodan-apps/ui-core': path.resolve(__dirname, '../../packages/ui-core/src/index.ts')
+      '@kodan-apps/ui-core': path.resolve(__dirname, '../../packages/ui-core/src/index.ts'),
+      '@kodan-apps/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
     }
   },
   server: {

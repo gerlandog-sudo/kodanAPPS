@@ -6,10 +6,14 @@ import { Users, UserCog, Settings2, ListTodo, Briefcase, Award, Plus } from 'luc
 
 type SettingsPanel = 'users' | 'profiles' | 'positions' | 'seniorities' | 'custom-fields' | 'task-types'
 
-function getSectionFromHash(): SettingsPanel | null {
-  const hash = window.location.hash.replace('#', '')
-  if (['users', 'profiles', 'positions', 'seniorities', 'custom-fields', 'task-types'].includes(hash)) return hash as SettingsPanel
-  return null
+const STORAGE_KEY = 'kodan_tracker_settings_panel'
+
+function getStoredSection(): SettingsPanel {
+  const stored = sessionStorage.getItem(STORAGE_KEY)
+  if (stored && ['users', 'profiles', 'positions', 'seniorities', 'custom-fields', 'task-types'].includes(stored)) {
+    return stored as SettingsPanel
+  }
+  return 'users'
 }
 
 function UserProfilesPanel() {
@@ -204,30 +208,21 @@ function CatalogSettingsPanel({
 
 export function SettingsPage() {
   const [activePanel, setActivePanel] = useState<SettingsPanel>(
-    () => getSectionFromHash() || 'users'
+    () => getStoredSection()
   )
 
-  useEffect(() => {
-    const onHashChange = () => {
-      const section = getSectionFromHash()
-      if (section) setActivePanel(section)
-    }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
-
   const navigate = (section: string) => {
-    window.history.pushState(null, '', `#${section}`)
+    sessionStorage.setItem(STORAGE_KEY, section)
     setActivePanel(section as SettingsPanel)
   }
 
   const SETTINGS_SECTIONS: AdminSection[] = [
-    { key: 'users', label: 'Usuarios', icon: <Users size={16} />, href: '#users' },
-    { key: 'profiles', label: 'Perfiles', icon: <UserCog size={16} />, href: '#profiles' },
-    { key: 'positions', label: 'Posiciones', icon: <Briefcase size={16} />, href: '#positions' },
-    { key: 'seniorities', label: 'Seniorities', icon: <Award size={16} />, href: '#seniorities' },
-    { key: 'custom-fields', label: 'Campos Personalizados', icon: <Settings2 size={16} />, href: '#custom-fields' },
-    { key: 'task-types', label: 'Tipos de Tareas', icon: <ListTodo size={16} />, href: '#task-types' },
+    { key: 'users', label: 'Usuarios', icon: <Users size={16} />, href: '' },
+    { key: 'profiles', label: 'Perfiles', icon: <UserCog size={16} />, href: '' },
+    { key: 'positions', label: 'Posiciones', icon: <Briefcase size={16} />, href: '' },
+    { key: 'seniorities', label: 'Seniorities', icon: <Award size={16} />, href: '' },
+    { key: 'custom-fields', label: 'Campos Personalizados', icon: <Settings2 size={16} />, href: '' },
+    { key: 'task-types', label: 'Tipos de Tareas', icon: <ListTodo size={16} />, href: '' },
   ]
 
   return (

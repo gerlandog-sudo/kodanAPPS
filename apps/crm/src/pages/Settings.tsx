@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AdminLayout } from '@kodan-apps/ui-core'
 import type { AdminSection } from '@kodan-apps/ui-core'
 import { PipelineManager } from '../components/settings/PipelineManager'
@@ -9,40 +9,35 @@ import { GitBranch, Settings2, Users, BellRing, ListTodo, Workflow, Mail, Server
 
 type SettingsPanel = 'users' | 'pipelines' | 'custom-fields' | 'notifications' | 'task-types' | 'workflows' | 'email-templates' | 'smtp'
 
-function getSectionFromHash(): SettingsPanel | null {
-  const hash = window.location.hash.replace('#', '')
-  if (hash === 'users' || hash === 'pipelines' || hash === 'custom-fields' || hash === 'notifications' || hash === 'task-types' || hash === 'workflows' || hash === 'email-templates' || hash === 'smtp') return hash
-  return null
+const STORAGE_KEY = 'kodan_crm_settings_panel'
+
+function getStoredSection(): SettingsPanel {
+  const stored = sessionStorage.getItem(STORAGE_KEY)
+  if (stored && ['users', 'pipelines', 'custom-fields', 'notifications', 'task-types', 'workflows', 'email-templates', 'smtp'].includes(stored)) {
+    return stored as SettingsPanel
+  }
+  return 'users'
 }
 
 export function Settings() {
   const [activePanel, setActivePanel] = useState<SettingsPanel>(
-    () => getSectionFromHash() || 'users'
+    () => getStoredSection()
   )
 
-  useEffect(() => {
-    const onHashChange = () => {
-      const section = getSectionFromHash()
-      if (section) setActivePanel(section)
-    }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
-
   const navigate = (section: string) => {
-    window.history.pushState(null, '', `#${section}`)
+    sessionStorage.setItem(STORAGE_KEY, section)
     setActivePanel(section as SettingsPanel)
   }
 
   const SETTINGS_SECTIONS: AdminSection[] = [
-    { key: 'users', label: 'Usuarios', icon: <Users size={16} />, href: '#users' },
-    { key: 'pipelines', label: 'Canales', icon: <GitBranch size={16} />, href: '#pipelines' },
-    { key: 'custom-fields', label: 'Campos', icon: <Settings2 size={16} />, href: '#custom-fields' },
-    { key: 'email-templates', label: 'Plantillas de Correo', icon: <Mail size={16} />, href: '#email-templates' },
-    { key: 'smtp', label: 'Configuración SMTP', icon: <Server size={16} />, href: '#smtp' },
-    { key: 'notifications', label: 'Alertas', icon: <BellRing size={16} />, href: '#notifications' },
-    { key: 'task-types', label: 'Tipos de Tareas', icon: <ListTodo size={16} />, href: '#task-types' },
-    { key: 'workflows', label: 'Workflows', icon: <Workflow size={16} />, href: '#workflows' },
+    { key: 'users', label: 'Usuarios', icon: <Users size={16} />, href: '' },
+    { key: 'pipelines', label: 'Canales', icon: <GitBranch size={16} />, href: '' },
+    { key: 'custom-fields', label: 'Campos', icon: <Settings2 size={16} />, href: '' },
+    { key: 'email-templates', label: 'Plantillas de Correo', icon: <Mail size={16} />, href: '' },
+    { key: 'smtp', label: 'Configuración SMTP', icon: <Server size={16} />, href: '' },
+    { key: 'notifications', label: 'Alertas', icon: <BellRing size={16} />, href: '' },
+    { key: 'task-types', label: 'Tipos de Tareas', icon: <ListTodo size={16} />, href: '' },
+    { key: 'workflows', label: 'Workflows', icon: <Workflow size={16} />, href: '' },
   ]
 
   return (

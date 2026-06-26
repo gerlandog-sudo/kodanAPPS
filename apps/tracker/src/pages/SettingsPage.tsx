@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminLayout, Table, Modal, Button, Input, Select, UsersSettingsPanel, CustomFieldsSettingsPanel, TaskTypesSettingsPanel } from '@kodan-apps/ui-core'
-import type { AdminSection, TableColumn, TableAction, SelectOption } from '@kodan-apps/ui-core'
+import type { AdminSection, TableColumn, SelectOption } from '@kodan-apps/ui-core'
 import { trackerApi, UserProfile, CatalogItem } from '../api/client'
 import { Users, UserCog, Settings2, ListTodo } from 'lucide-react'
 
@@ -53,32 +53,26 @@ function UserProfilesPanel() {
     { key: 'hourly_cost', header: 'Costo/hora', render: (p) => `$${Number(p.hourly_cost).toFixed(2)}` },
     { key: 'weekly_capacity', header: 'Capacidad', render: (p) => `${Math.floor(Number(p.weekly_capacity) / 60)}h/sem` },
   ]
-
-  const actions: TableAction<UserProfile>[] = [
-    {
-      icon: null!, label: 'Editar',
-      onClick: (row) => {
-        setEditing(row)
-        setEditHourlyCost(String(row.hourly_cost || 0))
-        setEditCapacity(String(row.weekly_capacity || 2400))
-        setEditPosition(row.position_id ? String(row.position_id) : '')
-        setEditSeniority(row.seniority_id ? String(row.seniority_id) : '')
-      },
-    },
-  ]
-
   return (
     <div className="space-y-4">
       <Table
         columns={columns}
         data={profiles}
-        keyExtractor={(p) => p.id}
+        keyExtractor={(p) => p.user_id}
         emptyState={{
           icon: <UserCog size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />,
           title: 'No hay perfiles configurados',
           description: 'Los perfiles aparecen automáticamente cuando los usuarios existen en el sistema.',
         }}
-        actions={actions}
+        editable={{
+          onClick: (row) => {
+            setEditing(row)
+            setEditHourlyCost(String(row.hourly_cost || 0))
+            setEditCapacity(String(row.weekly_capacity || 2400))
+            setEditPosition(row.position_id ? String(row.position_id) : '')
+            setEditSeniority(row.seniority_id ? String(row.seniority_id) : '')
+          }
+        }}
       />
 
       <Modal open={!!editing} onClose={() => setEditing(null)}>

@@ -4,7 +4,7 @@ import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
 import { trackerApi, TimeEntry, Project } from '../api/client';
 import { TimerWidget } from '../components/TimerWidget';
 import { TimeEntryForm } from '../components/TimeEntryForm';
-import { Clock, Filter } from 'lucide-react';
+import { Clock, Filter, Send, Trash2 } from 'lucide-react';
 
 export function TimeEntriesPage() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -86,13 +86,13 @@ export function TimeEntriesPage() {
 
   const actions: TableAction<TimeEntry>[] = [
     {
-      icon: null!, label: 'Enviar',
+      icon: <Send size={14} />, label: 'Enviar',
       onClick: (e) => { trackerApi.submitTimeEntry(e.id).then(load); },
       variant: 'default',
       badge: (e) => e.approval_status === 'draft' ? true : undefined,
     },
     {
-      icon: null!, label: 'Eliminar',
+      icon: <Trash2 size={14} />, label: 'Eliminar',
       onClick: (e) => setDeleteId(e.id),
       variant: 'danger',
       badge: (e) => e.approval_status === 'draft' ? true : undefined,

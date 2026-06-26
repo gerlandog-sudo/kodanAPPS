@@ -22,12 +22,21 @@ final class TrackerProfileController
     {
         $tenantId = TenantContext::getTenantId();
         return $this->pdo->query(
-            "SELECT up.*, u.display_name AS user_name, p.name AS position_name, s.name AS seniority_name
-             FROM TRACKER_user_profiles up
-             JOIN users u ON u.id = up.user_id
+            "SELECT 
+                COALESCE(up.id, 0) AS id,
+                u.id AS user_id,
+                u.display_name AS user_name,
+                up.position_id,
+                p.name AS position_name,
+                up.seniority_id,
+                s.name AS seniority_name,
+                COALESCE(up.hourly_cost, 0.00) AS hourly_cost,
+                COALESCE(up.weekly_capacity, 2400) AS weekly_capacity
+             FROM users u
+             LEFT JOIN TRACKER_user_profiles up ON up.user_id = u.id AND up.tenant_id = u.tenant_id
              LEFT JOIN TRACKER_positions p ON p.id = up.position_id
              LEFT JOIN TRACKER_seniorities s ON s.id = up.seniority_id
-             WHERE up.tenant_id = {$tenantId}
+             WHERE u.tenant_id = {$tenantId} AND u.is_active = 1
              ORDER BY u.display_name ASC"
         )->fetchAll();
     }

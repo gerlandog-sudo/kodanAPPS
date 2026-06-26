@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button, Table, ConfirmDialog, Input, Card } from '@kodan-apps/ui-core';
-import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
+import type { TableColumn } from '@kodan-apps/ui-core';
 import { trackerApi, Project } from '../api/client';
 import { ProjectForm } from '../components/ProjectForm';
 import { Plus, Search, FolderKanban } from 'lucide-react';
@@ -53,18 +53,6 @@ export function ProjectsPage() {
     { key: 'budget_hours', header: 'Horas/Hs', render: (p) => p.budget_hours ?? '-' },
     { key: 'created_at', header: 'Creado', render: (p) => new Date(p.created_at).toLocaleDateString() },
   ];
-
-  const actions: TableAction<Project>[] = [
-    {
-      icon: null!, label: 'Editar',
-      onClick: (p) => { setEditing(p); setFormOpen(true); },
-    },
-    {
-      icon: null!, label: 'Eliminar', variant: 'danger',
-      onClick: (p) => setDeleteId(p.id),
-    },
-  ];
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -97,7 +85,8 @@ export function ProjectsPage() {
               title: 'No hay proyectos',
               description: 'Creá tu primer proyecto para empezar.',
             }}
-            actions={actions}
+            editable={{ onClick: (p) => { setEditing(p); setFormOpen(true); } }}
+            deletable={{ onClick: (p) => setDeleteId(p.id) }}
           />
         </div>
       </Card>

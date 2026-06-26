@@ -238,7 +238,7 @@ export function Table<T>({
   }
 
   const hasFilterableColumns = filterable && columns.some(c => c.filterKey)
-  const actionBtn = 'inline-flex items-center justify-center w-8 h-8 rounded-md border border-transparent bg-transparent cursor-pointer text-text-muted hover:bg-surface hover:border-border-soft hover:text-text active:scale-[0.92] transition-all duration-350'
+  const actionBtn = 'cursor-pointer active:scale-[0.92]'
 
   return (
     <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden" ref={tableRef}>
@@ -392,11 +392,36 @@ export function Table<T>({
                         {combinedActions.map((action, ai) => (
                           <button
                             key={ai}
-                            className={`${actionBtn} ${action.variant === 'danger' ? 'text-error hover:bg-error-container hover:border-error/20 active:scale-[0.92]' : ''}`}
+                            className={actionBtn}
                             title={action.label}
                             aria-label={action.label}
                             onClick={e => { e.stopPropagation(); action.onClick(item) }}
-                            style={{ position: 'relative' }}
+                            style={{
+                              width: '1.75rem',
+                              height: '1.75rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '0.375rem',
+                              border: '1px solid var(--sys-border-soft)',
+                              background: 'var(--sys-bg)',
+                              color: 'var(--sys-text-muted)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s cubic-bezier(0.32, 0.72, 0, 1)',
+                              position: 'relative',
+                            }}
+                            onMouseEnter={e => {
+                              const b = e.currentTarget
+                              b.style.color = action.variant === 'danger' ? 'var(--sys-error)' : 'var(--sys-primary)'
+                              b.style.background = `color-mix(in srgb, ${action.variant === 'danger' ? 'var(--sys-error)' : 'var(--sys-primary)'} 10%, transparent)`
+                              b.style.borderColor = `color-mix(in srgb, ${action.variant === 'danger' ? 'var(--sys-error)' : 'var(--sys-primary)'} 30%, transparent)`
+                            }}
+                            onMouseLeave={e => {
+                              const b = e.currentTarget
+                              b.style.color = 'var(--sys-text-muted)'
+                              b.style.background = 'var(--sys-bg)'
+                              b.style.borderColor = 'var(--sys-border-soft)'
+                            }}
                           >
                             {action.icon}
                             {action.badge && action.badge(item) ? (

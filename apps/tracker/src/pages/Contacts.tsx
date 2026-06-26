@@ -4,14 +4,14 @@ import { exportToExcel } from '@kodan-apps/ui-core';
 import { B2BContactsList, B2BContactForm, B2BService } from '@kodan-apps/shared';
 import { Download, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import type { B2BContact } from '@kodan-apps/shared';
+import type { B2BAccount, B2BContact } from '@kodan-apps/shared';
 
 export function Contacts() {
   const [showModal, setShowModal] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [contactIdToDelete, setContactIdToDelete] = useState<number | null>(null);
   const [selectedContact, setSelectedContact] = useState<B2BContact | null>(null);
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<B2BAccount[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleOpenCreate = useCallback(() => {

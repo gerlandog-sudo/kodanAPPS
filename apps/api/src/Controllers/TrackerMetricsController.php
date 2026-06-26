@@ -23,35 +23,15 @@ final class TrackerMetricsController
      */
     public function getProjectMetrics(): array
     {
-        $user = TenantContext::getUser();
-        if (!$user) {
+        $userId = TenantContext::getUserId();
+        if ($userId <= 0) {
             throw new RuntimeException('Usuario no autenticado.', 401);
         }
 
         $tenantId = TenantContext::getTenantId();
-        $isAdmin = TenantContext::hasRole('admin');
 
-        // Dynamic permission check: admin has access by default
-        $canAccess = false;
-        if ($isAdmin) {
-            $canAccess = true;
-        } else {
-            // Check in permissions table
-            $roleId = $user['role_id'] ?? 0;
-            $stmt = $this->pdo->prepare("
-                SELECT can_access 
-                FROM permissions 
-                WHERE role_id = :role_id AND feature = 'metrics' AND (tenant_id = :tenant_id OR tenant_id IS NULL)
-                ORDER BY tenant_id DESC
-                LIMIT 1
-            ");
-            $stmt->execute([':role_id' => $roleId, ':tenant_id' => $tenantId]);
-            $perm = $stmt->fetch();
-            $canAccess = $perm ? (int)$perm['can_access'] === 1 : false;
-        }
-
-        if (!$canAccess) {
-            throw new RuntimeException('Acceso denegado. Se requieren privilegios de acceso para Métricas.', 403);
+        if (!TenantContext::hasRole('admin')) {
+            throw new RuntimeException('Acceso denegado. Se requieren privilegios de administrador para Métricas.', 403);
         }
 
         $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : null;
@@ -67,6 +47,8 @@ final class TrackerMetricsController
 
     /**
      * Obtiene la matriz general de todos los proyectos del tenant.
+     *
+     * @return array<int, array<string, mixed>>
      */
     private function getPortfolioMatrix(?string $from, ?string $to, int $tenantId): array
     {
@@ -154,6 +136,8 @@ final class TrackerMetricsController
 
     /**
      * Obtiene el Bento Grid y desglose histórico para un proyecto en particular.
+     *
+     * @return array<string, mixed>
      */
     private function getDetailedMetrics(int $projectId, ?string $from, ?string $to, int $tenantId): array
     {
@@ -205,6 +189,9 @@ final class TrackerMetricsController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function calculateScopeProgress(int $projectId, float $budgetHours): array
     {
         // 1. Medir en base a tareas registradas en TRACKER_project_tasks
@@ -265,6 +252,9 @@ final class TrackerMetricsController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function calculateSchedulePerformance(?string $start, ?string $end, float $scopeProgress): array
     {
         if (!$start || !$end) {
@@ -314,6 +304,9 @@ final class TrackerMetricsController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function calculateBudgetPerformance(int $projectId, float $budgetMoney): array
     {
         $stmt = $this->pdo->prepare("
@@ -349,6 +342,9 @@ final class TrackerMetricsController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function calculateQualityRate(int $projectId): array
     {
         $stmt = $this->pdo->prepare("
@@ -390,6 +386,9 @@ final class TrackerMetricsController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function calculateValuePerformance(float $scopeProgressPercentage, float $budgetMoney): array
     {
         // Earned Value = (% completado / 100) * valor pactado (presupuesto en dinero)
@@ -420,6 +419,9 @@ final class TrackerMetricsController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function calculateRiskProfile(float $scope, float $spi, float $burnRate, float $quality, ?string $end, string $status): array
     {
         $warnings = [];
@@ -482,6 +484,9 @@ final class TrackerMetricsController
         ];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     private function calculateTrends(int $projectId, ?string $start, ?string $end, float $budgetMoney, float $currentScope): array
     {
         // Si no hay rango de fecha, generar histórico ficticio basado en el progreso actual

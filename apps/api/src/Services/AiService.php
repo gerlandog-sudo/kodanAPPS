@@ -13,12 +13,16 @@ final class AiService
     private const DEFAULT_TOKEN = 'KDN-PG-225411';
     private const DEFAULT_APP_ID = 'kodanAPPS-PROD';
 
+    /** @var array<int, array{token: string, app_id: string}> */
     private static array $credsCache = [];
 
     public function __construct(
         private readonly PDO $pdo,
     ) {}
 
+    /**
+     * @return string
+     */
     public function generateText(string $prompt): string
     {
         $payload = [
@@ -32,6 +36,9 @@ final class AiService
         return $this->callHub($payload);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function assist(string $prompt, string $catalogJson): array
     {
         $fullPrompt = "ACT AS AN EXPERT BI ANALYST FOR A TIMETRACKING PLATFORM.\n"
@@ -110,6 +117,9 @@ final class AiService
         }
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
     private function callHub(array $payload): string
     {
         $creds = $this->getCredentials();
@@ -141,7 +151,7 @@ final class AiService
                 'Connection: close',
             ],
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_TIMEOUT => 90,
         ]);
 
@@ -183,6 +193,9 @@ final class AiService
         return (string) $result['response'];
     }
 
+    /**
+     * @return array{token: string, app_id: string}
+     */
     private function getCredentials(): array
     {
         $tenantId = TenantContext::getTenantId();

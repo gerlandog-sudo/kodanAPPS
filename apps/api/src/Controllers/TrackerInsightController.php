@@ -15,6 +15,9 @@ final class TrackerInsightController
         private readonly AiService $aiService,
     ) {}
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function heatmap(): array
     {
         $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-7 days'));
@@ -70,6 +73,9 @@ final class TrackerInsightController
         }, $users);
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function timelineProjects(): array
     {
         $from = $_GET['from'] ?? date('Y-m-d', strtotime('-15 days'));
@@ -116,6 +122,9 @@ final class TrackerInsightController
         return $result;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function timelineResources(): array
     {
         $from = $_GET['from'] ?? date('Y-m-d', strtotime('-15 days'));
@@ -169,6 +178,9 @@ final class TrackerInsightController
         return $result;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function timelineDetails(): array
     {
         $type = $_GET['type'] ?? 'project';
@@ -234,6 +246,9 @@ final class TrackerInsightController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function reassignSuggestions(): array
     {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -259,21 +274,18 @@ final class TrackerInsightController
                 ? round(((float) $project['consumed_hours'] / (float) $project['budget_hours']) * 100, 1)
                 : 0;
 
-            $prompt = "Eres un Analista Senior de Proyectos SaaS.
-Analiza la salud del proyecto '{$project['project_name']}':
-
-- Presupuesto: {$project['budget_hours']}h
-- Consumido: {$project['consumed_hours']}h ({$consumedPercent}%)
-" . ($consumedPercent > 80 ? "- ALERTA: Consumo crítico cercano al límite.\n" : "") . "
-- Fecha del reporte: " . date('Y-m-d') . "
-
-Genera un reporte de salud con:
-1. Evaluación del estado actual del proyecto.
-2. Riesgos identificados.
-3. Recomendación estratégica.
-
-Formato: Markdown con secciones numeradas.
-IMPORTANTE: Responde en español. Termina con <RESULTADO>[conclusión final]</RESULTADO>";
+            $prompt = "Eres un Analista Senior de Proyectos SaaS.\n"
+                . "Analiza la salud del proyecto '{$project['project_name']}':\n\n"
+                . "- Presupuesto: {$project['budget_hours']}h\n"
+                . "- Consumido: {$project['consumed_hours']}h ({$consumedPercent}%)\n"
+                . ($consumedPercent > 80 ? "- ALERTA: Consumo crítico cercano al límite.\n" : "")
+                . "- Fecha del reporte: " . date('Y-m-d') . "\n\n"
+                . "Genera un reporte de salud con:\n"
+                . "1. Evaluación del estado actual del proyecto.\n"
+                . "2. Riesgos identificados.\n"
+                . "3. Recomendación estratégica.\n\n"
+                . "Formato: Markdown con secciones numeradas.\n"
+                . "IMPORTANTE: Responde en español. Termina con <RESULTADO>[conclusión final]</RESULTADO>";
 
             $insight = '';
             try {
@@ -317,9 +329,10 @@ IMPORTANTE: Responde en español. Termina con <RESULTADO>[conclusión final]</RE
                 [':tid' => $tenantId, ':uid' => (int) $task['assigned_to']]
             );
 
-            $prompt = "Eres un experto en gestión de equipos IT.
-Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task['estimated_hours']}h).
-" . (!empty($candidates) ? "Candidatos disponibles:\n" . implode("\n", array_map(fn($c) => "- {$c['name']}: {$c['current_load']}h carga actual", $candidates)) : "No hay candidatos disponibles.") . "\n\nDa una recomendación de reasignación. Responde en español. Termina con <RESULTADO>[recomendación]</RESULTADO>";
+            $prompt = "Eres un experto en gestión de equipos IT.\n"
+                . "Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task['estimated_hours']}h).\n"
+                . (!empty($candidates) ? "Candidatos disponibles:\n" . implode("\n", array_map(fn($c) => "- {$c['name']}: {$c['current_load']}h carga actual", $candidates)) : "No hay candidatos disponibles.") . "\n\n"
+                . "Da una recomendación de reasignación. Responde en español. Termina con <RESULTADO>[recomendación]</RESULTADO>";
 
             $insight = '';
             try {
@@ -338,6 +351,9 @@ Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task[
         return ['error' => 'Se requiere project_id o task_id'];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function reassignExecute(): array
     {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -357,6 +373,9 @@ Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task[
         return ['success' => true, 'task_id' => $taskId, 'new_user_id' => $userId];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function predictiveAlerts(): array
     {
         $tenantId = TenantContext::getTenantId();
@@ -367,7 +386,6 @@ Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task[
             [':tid' => $tenantId]
         );
 
-        // Cache seniority ID
         $stmt = $this->pdo->prepare("SELECT id FROM TRACKER_seniorities WHERE tenant_id = :tid AND (name LIKE '%Senior%' OR name LIKE '%senior%') LIMIT 1");
         $stmt->execute([':tid' => $tenantId]);
         $seniorRow = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -437,6 +455,9 @@ Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task[
         return ['alerts' => $alerts];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function generateText(): array
     {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -454,6 +475,10 @@ Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task[
         }
     }
 
+    /**
+     * @param array<string, mixed> $params
+     * @return array<int, array<string, mixed>>
+     */
     private function fetchAll(string $sql, array $params = []): array
     {
         $stmt = $this->pdo->prepare($sql);
@@ -461,6 +486,10 @@ Analiza la reasignación de la tarea '{$task['description']}' (estimado: {$task[
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>|null
+     */
     private function fetchOne(string $sql, array $params = []): ?array
     {
         $stmt = $this->pdo->prepare($sql);

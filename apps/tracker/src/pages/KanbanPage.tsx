@@ -3,6 +3,7 @@ import { KanbanBoard, Modal, Button, Select, Input, SlidePanel, Toggle } from '@
 import type { ColumnDef } from '@kodan-apps/ui-core';
 import { trackerApi, Project, ProjectTask, TaskType } from '../api/client';
 import { Plus, Archive, ArchiveRestore, Search, FolderKanban, Clock, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const BASE_COLUMNS: ColumnDef[] = [
   { id: 'todo', label: 'PARA HACER' },
@@ -49,6 +50,7 @@ export function KanbanPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailTask, setDetailTask] = useState<ProjectTask | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [justDroppedId, setJustDroppedId] = useState<number | null>(null);
 
   const loadProjects = useCallback(async () => {
     const data = await trackerApi.listProjects();
@@ -103,15 +105,38 @@ export function KanbanPage() {
   });
 
   const handleDrop = async (itemId: string | number, toStage: string) => {
-    await trackerApi.moveTask(Number(itemId), { to_stage: toStage });
-    loadBoard();
+    const taskId = Number(itemId);
+    const prevTasks = [...tasks];
+
+    // Actualización optimista local
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, kanban_status: toStage as any } : t))
+    );
+    setJustDroppedId(taskId);
+    setTimeout(() => setJustDroppedId(null), 550);
+
+    try {
+      await trackerApi.moveTask(taskId, { to_stage: toStage });
+      toast.success('Estado de la tarea actualizado.');
+    } catch (err: any) {
+      setTasks(prevTasks);
+      toast.error(err?.message || 'Error al mover la tarea.');
+    }
   };
 
   const handleToggleArchive = async (task: ProjectTask) => {
     const nextStatus = task.kanban_status === 'archived' ? 'todo' : 'archived';
+    const prevTasks = [...tasks];
+
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, kanban_status: nextStatus as any } : t)));
-    await trackerApi.moveTask(task.id, { to_stage: nextStatus });
-    loadBoard();
+
+    try {
+      await trackerApi.moveTask(task.id, { to_stage: nextStatus });
+      toast.success(nextStatus === 'archived' ? 'Tarea archivada.' : 'Tarea restaurada.');
+    } catch {
+      setTasks(prevTasks);
+      toast.error('Error al cambiar el estado de archivado.');
+    }
   };
 
   const handleCreate = async (data: Partial<ProjectTask> & { project_id: number }) => {
@@ -191,9 +216,10 @@ export function KanbanPage() {
             }
             renderCard={(task) => {
               const config = priorityConfig[task.priority] || priorityConfig.medium;
+              const isDropped = justDroppedId === task.id;
               return (
                 <div
-                  className={`p-4 rounded-lg border bg-white dark:bg-slate-900 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col gap-3.5 ${config.cardBorder}`}
+                  className={`p-4 rounded-lg border bg-white dark:bg-slate-900 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col gap-3.5 ${config.cardBorder} ${isDropped ? 'animate-drop-shake' : ''}`}
                   onClick={() => setDetailTask(task)}
                 >
                   {/* Badges y Acciones */}

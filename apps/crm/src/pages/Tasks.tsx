@@ -67,6 +67,7 @@ export function Tasks() {
   const [taskIdToDelete, setTaskIdToDelete] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [saving, setSaving] = useState(false);
+  const [justDroppedId, setJustDroppedId] = useState<number | null>(null);
 
   // Form State
   const [form, setForm] = useState({
@@ -307,11 +308,14 @@ export function Tasks() {
   };
 
   const handleDrop = async (itemId: string | number, toStage: string) => {
+    const taskId = Number(itemId);
     setTasks(prevTasks => 
-      prevTasks.map(t => t.id === Number(itemId) ? { ...t, status: toStage as any } : t)
+      prevTasks.map(t => t.id === taskId ? { ...t, status: toStage as any } : t)
     );
+    setJustDroppedId(taskId);
+    setTimeout(() => setJustDroppedId(null), 550);
     try {
-      await crmApi.updateTask(Number(itemId), { status: toStage });
+      await crmApi.updateTask(taskId, { status: toStage });
       toast.success('Estado de la tarea actualizado.');
       loadData(true);
     } catch {
@@ -415,6 +419,7 @@ export function Tasks() {
         startDate={task.start_date || undefined}
         closeDate={task.end_date || undefined}
         ownerName={getOwnerName(task.assigned_to)}
+        isDropped={justDroppedId === task.id}
         onEdit={() => handleOpenEdit(task)}
         onDelete={() => handleDeleteClick(task.id)}
       />

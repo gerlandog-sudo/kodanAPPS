@@ -107,8 +107,10 @@ export function ProjectsPage() {
             );
 
             // Display actual hours / budget hours in a clean way
+            const actualHoursNum = Number(p.actual_hours || 0);
+            const budgetHoursNum = Number(p.budget_hours || 0);
             const hoursDisplay = p.budget_hours 
-              ? `${(p.actual_hours || 0).toFixed(1)}h / ${p.budget_hours.toFixed(1)}h`
+              ? `${actualHoursNum.toFixed(1)}h / ${budgetHoursNum.toFixed(1)}h`
               : undefined;
 
             return (

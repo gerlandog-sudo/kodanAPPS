@@ -319,28 +319,26 @@ final class OpportunityRepository extends BaseRepository
             );
             $accountId = isset($oppResult[0]['account_id']) && is_scalar($oppResult[0]['account_id']) ? (int)$oppResult[0]['account_id'] : 0;
 
-            // 2. Crear proyecto en Tracker (con manejo seguro si projects_max no está configurado)
+            // 2. Crear proyecto en Tracker
+            // Si projects_max no está definido en plan_limits, se crea igual sin verificar límite
             $projectId = 0;
             try {
                 $this->enforceUsageLimit('tracker', 'projects_max');
-
-                $projectId = $this->create('TRACKER_projects', [
-                    'account_id' => $accountId,
-                    'opportunity_id' => $opportunityId,
-                    'name' => $projectName,
-                    'budget_hours' => $budgetHours,
-                    'status' => 'active'
-                ]);
-
                 $this->incrementUsage('tracker', 'projects_max');
             } catch (\RuntimeException $e) {
-                // Si projects_max no está configurado en el plan, omitir creación
-                if (str_contains($e->getMessage(), 'Límite no configurado')) {
-                    error_log("[WonOpportunity] projects_max no configurado para tracker. Tenant tiene módulo Tracker pero falta projects_max en plan_limits. Oportunidad #{$opportunityId} marcada como ganada sin proyecto.");
-                } else {
-                    throw $e;
+                if (!str_contains($e->getMessage(), 'Límite no configurado')) {
+                    throw $e; // Error real (límite excedido, etc.)
                 }
+                // projects_max no configurado → crear proyecto sin control de límite
             }
+
+            $projectId = $this->create('TRACKER_projects', [
+                'account_id' => $accountId,
+                'opportunity_id' => $opportunityId,
+                'name' => $projectName,
+                'budget_hours' => $budgetHours,
+                'status' => 'active'
+            ]);
             
             return $projectId;
         });

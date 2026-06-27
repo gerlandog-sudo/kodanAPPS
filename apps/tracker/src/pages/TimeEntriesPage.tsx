@@ -112,14 +112,16 @@ export function TimeEntriesPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-end">
+    <div className="h-full flex flex-col space-y-6 overflow-hidden">
+      <div className="flex items-center justify-end shrink-0">
         <Button variant="primary" onClick={() => { setFormDuration(undefined); setFormOpen(true); }}>
           Registrar tiempo
         </Button>
       </div>
 
-      <TimerWidget onSave={handleTimerSave} />
+      <div className="shrink-0">
+        <TimerWidget onSave={handleTimerSave} />
+      </div>
 
       <div className="flex items-center gap-3 overflow-x-auto shrink-0 pb-1 scrollbar-none">
         <Filter size={16} style={{ color: 'var(--sys-text-muted)', flexShrink: 0 }} />
@@ -137,26 +139,30 @@ export function TimeEntriesPage() {
         </div>
       </div>
 
-      <Table
-        columns={columns}
-        data={entries}
-        loading={loading}
-        keyExtractor={(e) => e.id}
-        emptyState={{
-          icon: <Clock size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />,
-          title: 'No hay registros de tiempo',
-          description: 'Registrá tu primer entrada de tiempo con el cronómetro o el botón "Registrar tiempo".',
-        }}
-        actions={actions}
-      />
-
-      <div className="text-sm" style={{ color: 'var(--sys-text-muted)' }}>
-        Total: {total} registros — Página {page}
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1 scrollbar-thin">
+        <Table
+          columns={columns}
+          data={entries}
+          loading={loading}
+          keyExtractor={(e) => e.id}
+          emptyState={{
+            icon: <Clock size={32} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} />,
+            title: 'No hay registros de tiempo',
+            description: 'Registrá tu primer entrada de tiempo con el cronómetro o el botón "Registrar tiempo".',
+          }}
+          actions={actions}
+        />
       </div>
 
-      {total > page * 50 && (
-        <Button variant="ghost" onClick={() => setPage(page + 1)}>Cargar más</Button>
-      )}
+      <div className="flex items-center justify-between shrink-0 pt-2 border-t border-border-soft/60">
+        <div className="text-sm" style={{ color: 'var(--sys-text-muted)' }}>
+          Total: {total} registros — Página {page}
+        </div>
+
+        {total > page * 50 && (
+          <Button variant="ghost" onClick={() => setPage(page + 1)} className="py-1 px-3">Cargar más</Button>
+        )}
+      </div>
 
       <TimeEntryForm
         open={formOpen}

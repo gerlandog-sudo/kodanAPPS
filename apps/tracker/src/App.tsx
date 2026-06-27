@@ -136,7 +136,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar
         title="kodanTRACKER"
         logoIcon={<Suspense fallback={<Logo3DPlaceholder size={48} />}><LogoTRACKER3D size={48} theme={theme} /></Suspense>}
@@ -155,7 +155,7 @@ function AppContent() {
           />
         }
       />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <TopBar
           title="kodanTRACKER"
           user={user}
@@ -166,8 +166,8 @@ function AppContent() {
           notificationCount={unreadCount}
           onNotificationClick={() => setChatOpen(true)}
         />
-        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-x-hidden" style={{ background: 'var(--sys-bg)', minHeight: '100dvh' }}>
-          <div className="mx-auto" style={{ maxWidth: '1400px' }}>
+        <main className="flex-1 p-6 lg:p-10 min-w-0 overflow-hidden flex flex-col" style={{ background: 'var(--sys-bg)' }}>
+          <div className="mx-auto w-full h-full flex flex-col min-h-0" style={{ maxWidth: '1400px' }}>
             <Suspense fallback={
               <div className="flex items-center justify-center py-20">
                 <div className="size-8 border-2 border-[var(--sys-primary)] border-t-transparent rounded-full animate-spin" />

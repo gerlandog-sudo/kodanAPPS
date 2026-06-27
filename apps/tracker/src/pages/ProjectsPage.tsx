@@ -50,8 +50,8 @@ export function ProjectsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col space-y-6 overflow-hidden">
+      <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--sys-text)', fontFamily: 'var(--font-hanken-grotesk, system-ui)' }}>
           Proyectos del Tracker
         </h1>
@@ -60,7 +60,7 @@ export function ProjectsPage() {
         </Button>
       </div>
 
-      <div className="max-w-xs">
+      <div className="max-w-xs shrink-0">
         <Input
           placeholder="Buscar proyectos..."
           value={search}
@@ -70,11 +70,11 @@ export function ProjectsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12 flex-1">
           <span className="text-sm" style={{ color: 'var(--sys-text-muted)' }}>Cargando proyectos...</span>
         </div>
       ) : filtered.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center p-12 text-center border border-dashed">
+        <Card className="flex flex-col items-center justify-center p-12 text-center border border-dashed flex-1">
           <FolderKanban size={48} style={{ color: 'var(--sys-text-muted)', opacity: 0.3 }} className="mb-4" />
           <h3 className="text-lg font-semibold" style={{ color: 'var(--sys-text)' }}>No hay proyectos</h3>
           <p className="text-sm mt-1 mb-4" style={{ color: 'var(--sys-text-muted)' }}>
@@ -87,7 +87,7 @@ export function ProjectsPage() {
           )}
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto flex-1 pr-1 pb-4 scrollbar-thin">
           {filtered.map((p) => (
             <ProjectCard
               key={p.id}

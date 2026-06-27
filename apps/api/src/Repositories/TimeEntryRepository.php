@@ -131,7 +131,7 @@ final class TimeEntryRepository extends BaseRepository
 
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
                 FROM `" . self::TABLE . "` te
-                JOIN projects p ON p.id = te.project_id
+                JOIN TRACKER_projects p ON p.id = te.project_id
                 LEFT JOIN users u ON u.id = te.user_id
                 WHERE te.tenant_id = :tenant_id{$whereSql}
                 ORDER BY te.date DESC, te.created_at DESC
@@ -187,7 +187,7 @@ final class TimeEntryRepository extends BaseRepository
     {
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
                 FROM `" . self::TABLE . "` te
-                JOIN projects p ON p.id = te.project_id
+                JOIN TRACKER_projects p ON p.id = te.project_id
                 JOIN users u ON u.id = te.user_id
                 WHERE te.tenant_id = :tenant_id AND te.approval_status = 'submitted'
                 ORDER BY te.date ASC, te.created_at ASC";

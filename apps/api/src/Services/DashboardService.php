@@ -22,7 +22,7 @@ final class DashboardService
         $pdo = $this->pdo;
 
         $activeProjects = (int)$pdo->query(
-            "SELECT COUNT(*) FROM projects WHERE tenant_id = {$tenantId} AND status = 'active'"
+            "SELECT COUNT(*) FROM TRACKER_projects WHERE tenant_id = {$tenantId} AND status = 'active'"
         )->fetchColumn();
 
         $today = date('Y-m-d');
@@ -87,7 +87,7 @@ final class DashboardService
     {
         $tenantId = TenantContext::getTenantId();
         $rows = $this->pdo->query(
-            "SELECT status, COUNT(*) AS count FROM projects
+            "SELECT status, COUNT(*) AS count FROM TRACKER_projects
              WHERE tenant_id = {$tenantId} GROUP BY status"
         )->fetchAll();
 
@@ -127,7 +127,7 @@ final class DashboardService
         return $this->pdo->query(
             "SELECT te.*, p.name AS project_name, u.display_name AS user_name
              FROM TRACKER_time_entries te
-             JOIN projects p ON p.id = te.project_id
+             JOIN TRACKER_projects p ON p.id = te.project_id
              JOIN users u ON u.id = te.user_id
              WHERE te.tenant_id = {$tenantId}
              ORDER BY te.created_at DESC

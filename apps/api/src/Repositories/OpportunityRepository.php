@@ -322,7 +322,7 @@ final class OpportunityRepository extends BaseRepository
             // 2. Verificar límite de proyectos (module = tracker en plan_limits)
             $this->enforceUsageLimit('tracker', 'projects_max');
 
-            $projectId = $this->create('projects', [
+            $projectId = $this->create('TRACKER_projects', [
                 'account_id' => $accountId,
                 'opportunity_id' => $opportunityId,
                 'name' => $projectName,

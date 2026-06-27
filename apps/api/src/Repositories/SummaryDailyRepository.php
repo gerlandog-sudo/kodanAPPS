@@ -54,7 +54,7 @@ final class SummaryDailyRepository extends BaseRepository
             [':user_id' => $userId, ':date_from' => $dateFrom, ':date_to' => $dateTo],
             'sd.date ASC',
             0,
-            'sd LEFT JOIN projects p ON p.id = sd.project_id'
+            'sd LEFT JOIN TRACKER_projects p ON p.id = sd.project_id'
         );
     }
 

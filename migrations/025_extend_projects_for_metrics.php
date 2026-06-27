@@ -60,30 +60,39 @@ try {
     ]);
     echo "✅ Database connection successful.\n";
 
-    echo "Extending 'projects' table...\n";
-    
-    if (!columnExists($pdo, 'projects', 'budget_money')) {
-        $pdo->exec("ALTER TABLE `projects` ADD COLUMN `budget_money` DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER `budget_hours`");
-        echo "✅ Column 'budget_money' added to 'projects'.\n";
+    // Nota: La tabla fue renombrada de 'projects' a 'TRACKER_projects'
+    // en la migración 026. Verificar ambas por compatibilidad.
+    $tableName = 'TRACKER_projects';
+    if (!columnExists($pdo, $tableName, 'budget_money')) {
+        // Fallback: intentar con el nombre antiguo por si la 026 no se ejecutó
+        if (columnExists($pdo, 'projects', 'budget_money')) {
+            $tableName = 'projects';
+        }
+    }
+    echo "Usando tabla '{$tableName}'.\n";
+
+    if (!columnExists($pdo, $tableName, 'budget_money')) {
+        $pdo->exec("ALTER TABLE `{$tableName}` ADD COLUMN `budget_money` DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER `budget_hours`");
+        echo "✅ Column 'budget_money' added to '{$tableName}'.\n";
     } else {
-        echo "ℹ️ Column 'budget_money' already exists in 'projects'.\n";
+        echo "ℹ️ Column 'budget_money' already exists in '{$tableName}'.\n";
     }
 
-    if (!columnExists($pdo, 'projects', 'start_date')) {
-        $pdo->exec("ALTER TABLE `projects` ADD COLUMN `start_date` DATE DEFAULT NULL AFTER `budget_money`");
-        echo "✅ Column 'start_date' added to 'projects'.\n";
+    if (!columnExists($pdo, $tableName, 'start_date')) {
+        $pdo->exec("ALTER TABLE `{$tableName}` ADD COLUMN `start_date` DATE DEFAULT NULL AFTER `budget_money`");
+        echo "✅ Column 'start_date' added to '{$tableName}'.\n";
     } else {
-        echo "ℹ️ Column 'start_date' already exists in 'projects'.\n";
+        echo "ℹ️ Column 'start_date' already exists in '{$tableName}'.\n";
     }
 
-    if (!columnExists($pdo, 'projects', 'end_date')) {
-        $pdo->exec("ALTER TABLE `projects` ADD COLUMN `end_date` DATE DEFAULT NULL AFTER `start_date`");
-        echo "✅ Column 'end_date' added to 'projects'.\n";
+    if (!columnExists($pdo, $tableName, 'end_date')) {
+        $pdo->exec("ALTER TABLE `{$tableName}` ADD COLUMN `end_date` DATE DEFAULT NULL AFTER `start_date`");
+        echo "✅ Column 'end_date' added to '{$tableName}'.\n";
     } else {
-        echo "ℹ️ Column 'end_date' already exists in 'projects'.\n";
+        echo "ℹ️ Column 'end_date' already exists in '{$tableName}'.\n";
     }
 
-    echo "✅ Table 'projects' extended successfully.\n";
+    echo "✅ Table '{$tableName}' extended successfully.\n";
 
 } catch (Throwable $e) {
     die("❌ Error during migration 025: " . $e->getMessage() . "\n");

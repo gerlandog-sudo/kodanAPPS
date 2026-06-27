@@ -7,7 +7,7 @@ namespace kodanAPPS\Repositories;
  */
 class ProjectRepository extends BaseRepository
 {
-    protected const TABLE = 'projects';
+    protected const TABLE = 'TRACKER_projects';
 
     protected function getLimitConfig(): ?array
     {

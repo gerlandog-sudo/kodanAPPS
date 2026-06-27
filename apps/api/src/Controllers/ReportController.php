@@ -84,7 +84,7 @@ final class ReportController
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name,
                        a.name AS account_name
                 FROM TRACKER_time_entries te
-                JOIN projects p ON p.id = te.project_id
+                JOIN TRACKER_projects p ON p.id = te.project_id
                 LEFT JOIN accounts a ON a.account_id = p.account_id
                 LEFT JOIN users u ON u.id = te.user_id
                 WHERE te.tenant_id = :tenant_id AND te.date >= :dfrom AND te.date <= :dto

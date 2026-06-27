@@ -54,7 +54,7 @@ final class TrackerMetricsController
     {
         $sql = "SELECT p.id, p.name, p.status, p.budget_hours, p.budget_money, p.start_date, p.end_date,
                        a.name AS client_name, o.value AS opp_value
-                FROM projects p
+                FROM TRACKER_projects p
                 LEFT JOIN accounts a ON a.account_id = p.account_id
                 LEFT JOIN CRM_opportunities o ON o.id = p.opportunity_id
                 WHERE p.tenant_id = :tenant_id AND p.status = 'active'";
@@ -143,7 +143,7 @@ final class TrackerMetricsController
     {
         $stmt = $this->pdo->prepare("
             SELECT p.*, a.name AS client_name, o.value AS opp_value
-            FROM projects p
+            FROM TRACKER_projects p
             LEFT JOIN accounts a ON a.account_id = p.account_id
             LEFT JOIN CRM_opportunities o ON o.id = p.opportunity_id
             WHERE p.id = :id AND p.tenant_id = :tenant_id

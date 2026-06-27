@@ -81,6 +81,7 @@ try {
         '020_rename_crm_tables.sql', '021_cross_app_config.sql',
         '022_tracker_project_tasks.sql', '023_tracker_time_entries.sql', '024_tracker_extensions.sql',
         '025_extend_projects_for_metrics.php',
+        '026_rename_projects_to_tracker_projects.php',
     ];
     
     foreach ($migrations as $migration) {

@@ -84,7 +84,7 @@ final class TrackerInsightController
 
         $projects = $this->fetchAll(
             "SELECT p.id, p.name, COALESCE(p.budget_hours, 0) AS budget_hours, p.status
-             FROM projects p
+             FROM TRACKER_projects p
              WHERE p.tenant_id = :tid AND (p.status IN ('active','paused'))
              ORDER BY p.name",
             [':tid' => $tenantId]
@@ -215,7 +215,7 @@ final class TrackerInsightController
                 "SELECT t.id, t.description, t.priority, t.estimated_hours,
                         COALESCE(p.name, '') AS project_name
                  FROM TRACKER_project_tasks t
-                 LEFT JOIN projects p ON p.id = t.project_id
+                 LEFT JOIN TRACKER_projects p ON p.id = t.project_id
                  WHERE t.assigned_to = :uid AND t.tenant_id = :tid AND t.kanban_status != 'done'",
                 [':uid' => $id, ':tid' => $tenantId]
             );
@@ -225,7 +225,7 @@ final class TrackerInsightController
                         COALESCE(p.name, '') AS project_name,
                         COALESCE(t.description, '') AS task_name
                  FROM TRACKER_time_entries te
-                 LEFT JOIN projects p ON p.id = te.project_id
+                 LEFT JOIN TRACKER_projects p ON p.id = te.project_id
                  LEFT JOIN TRACKER_project_tasks t ON t.id = te.task_id
                  WHERE te.user_id = :uid AND te.tenant_id = :tid AND te.date = :d
                    AND te.approval_status != 'rejected'
@@ -259,7 +259,7 @@ final class TrackerInsightController
             $project = $this->fetchOne(
                 "SELECT p.name AS project_name, p.budget_hours,
                         COALESCE(SUM(te.duration_minutes) / 60.0, 0) AS consumed_hours
-                 FROM projects p
+                 FROM TRACKER_projects p
                  LEFT JOIN TRACKER_time_entries te ON te.project_id = p.id AND te.tenant_id = p.tenant_id AND te.approval_status != 'rejected'
                  WHERE p.id = :pid AND p.tenant_id = :tid
                  GROUP BY p.id",
@@ -381,7 +381,7 @@ final class TrackerInsightController
         $tenantId = TenantContext::getTenantId();
 
         $projects = $this->fetchAll(
-            "SELECT id, name, budget_hours FROM projects
+            "SELECT id, name, budget_hours FROM TRACKER_projects
              WHERE tenant_id = :tid AND module = 'tracker' AND budget_hours > 0 AND status = 'active'",
             [':tid' => $tenantId]
         );

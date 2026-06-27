@@ -98,7 +98,7 @@ foreach ($tenants as $t) {
     // Recount Tracker
     $pdo->prepare(
         "UPDATE tenant_plan_usage u
-         JOIN (SELECT COUNT(*) AS cnt FROM projects WHERE tenant_id = ?) actual
+         JOIN (SELECT COUNT(*) AS cnt FROM TRACKER_projects WHERE tenant_id = ?) actual
          SET u.current_value = actual.cnt
          WHERE u.tenant_id = ? AND u.module = 'tracker' AND u.metric = 'projects_max'"
     )->execute([$tid, $tid]);

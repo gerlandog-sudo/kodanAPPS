@@ -128,7 +128,7 @@ export function KanbanPage() {
   return (
     <div className="space-y-6 h-full flex flex-col">
       {/* Barra de Filtros y Acciones */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50/40 dark:bg-slate-900/10 p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-800/40">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50/40 dark:bg-slate-900/10 p-3.5 rounded-lg border border-slate-200/50 dark:border-slate-800/40">
         <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
           <div className="w-full sm:w-80">
             <Input
@@ -156,7 +156,7 @@ export function KanbanPage() {
               onChange={(v) => setSelectedCollaboratorId(v)}
             />
           </div>
-          <div className="flex items-center h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
+          <div className="flex items-center h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md">
             <Toggle
               checked={showArchived}
               onChange={(e: any) => setShowArchived(e.target.checked)}
@@ -185,7 +185,7 @@ export function KanbanPage() {
             itemsByStage={itemsByStage}
             onDrop={handleDrop}
             emptyPlaceholder={
-              <div className="h-24 flex items-center justify-center text-xs border border-dashed rounded-xl border-slate-200 dark:border-slate-800" style={{ color: 'var(--sys-text-muted)' }}>
+              <div className="h-24 flex items-center justify-center text-xs border border-dashed rounded-lg border-slate-200 dark:border-slate-800" style={{ color: 'var(--sys-text-muted)' }}>
                 Sin tareas
               </div>
             }
@@ -193,17 +193,17 @@ export function KanbanPage() {
               const config = priorityConfig[task.priority] || priorityConfig.medium;
               return (
                 <div
-                  className={`p-4 rounded-xl border bg-white dark:bg-slate-900 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col gap-3.5 ${config.cardBorder}`}
+                  className={`p-4 rounded-lg border bg-white dark:bg-slate-900 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col gap-3.5 ${config.cardBorder}`}
                   onClick={() => setDetailTask(task)}
                 >
                   {/* Badges y Acciones */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md tracking-wider ${config.badgeClass}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-sm tracking-wider ${config.badgeClass}`}>
                         {config.label}
                       </span>
                       {task.task_type_name && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md tracking-wider bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60 uppercase">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm tracking-wider bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60 uppercase">
                           {task.task_type_name}
                         </span>
                       )}
@@ -403,7 +403,7 @@ function CreateTaskModal({ open, onClose, onSave, taskTypes, projects, initialPr
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Descripción</label>
           <textarea
-            className="w-full rounded-lg border px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25"
+            className="w-full rounded-md border px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25"
             style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface-raised)', color: 'var(--sys-text)' }}
             rows={3}
             value={description}

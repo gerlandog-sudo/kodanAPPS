@@ -110,7 +110,7 @@ export function ApprovalsPage() {
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Motivo de rechazo *</label>
             <textarea
-              className="w-full rounded-lg border px-3 py-2 text-sm resize-none"
+              className="w-full rounded-md border px-3 py-2 text-sm resize-none"
               style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text)' }}
               rows={3} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
               placeholder="Indicá el motivo del rechazo..."

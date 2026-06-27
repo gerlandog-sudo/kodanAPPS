@@ -188,11 +188,11 @@ export function MetricsPage() {
   if (loading && !selectedProjectId) {
     return (
       <div className="space-y-6 animate-pulse p-6">
-        <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl w-1/4"></div>
-        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-3xl"></div>
+        <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-md w-1/4"></div>
+        <div className="h-24 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
         <div className="space-y-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-14 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+            <div key={i} className="h-14 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
           ))}
         </div>
       </div>
@@ -205,7 +205,7 @@ export function MetricsPage() {
         .kpis-glass-card {
           background-color: var(--sys-surface-raised);
           border: 1px solid var(--sys-border-soft);
-          border-radius: 24px;
+          border-radius: var(--radius-lg);
           box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
         }
         .traffic-light-glow {
@@ -374,7 +374,7 @@ export function MetricsPage() {
           <div className="flex items-center gap-4">
             <button 
               onClick={handleBack}
-              className="p-2.5 rounded-xl bg-[var(--sys-surface-raised)] hover:bg-[var(--sys-surface-hover)] text-[var(--sys-text-muted)] hover:text-[var(--sys-text)] transition-all border border-[var(--sys-border)] flex items-center justify-center cursor-pointer"
+              className="p-2.5 rounded-md bg-[var(--sys-surface-raised)] hover:bg-[var(--sys-surface-hover)] text-[var(--sys-text-muted)] hover:text-[var(--sys-text)] transition-all border border-[var(--sys-border)] flex items-center justify-center cursor-pointer"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -385,10 +385,10 @@ export function MetricsPage() {
             <div className="space-y-6 animate-pulse">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-3xl"></div>
+                  <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
                 ))}
               </div>
-              <div className="h-80 bg-slate-200 dark:bg-slate-800 rounded-3xl"></div>
+              <div className="h-80 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
             </div>
           ) : (
             <>
@@ -653,7 +653,7 @@ export function MetricsPage() {
             onClick={() => setShowRiskModal(false)}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
           />
-          <div className="relative w-full max-w-md bg-[var(--sys-surface-raised)] rounded-3xl shadow-2xl overflow-hidden z-50 border border-[var(--sys-border)] animate-fade-in">
+          <div className="relative w-full max-w-md bg-[var(--sys-surface-raised)] rounded-lg shadow-2xl overflow-hidden z-50 border border-[var(--sys-border)] animate-fade-in">
             <div className="p-6 border-b border-[var(--sys-border-soft)] flex justify-between items-center bg-[var(--sys-surface)]">
               <div>
                 <h3 className="font-black text-[var(--sys-text)] text-lg">Registro de Riesgos Heurísticos</h3>
@@ -661,7 +661,7 @@ export function MetricsPage() {
               </div>
               <button 
                 onClick={() => setShowRiskModal(false)}
-                className="p-1 rounded-lg hover:bg-[var(--sys-surface-hover)] text-[var(--sys-text-muted)] font-bold text-sm"
+                className="p-1 rounded-md hover:bg-[var(--sys-surface-hover)] text-[var(--sys-text-muted)] font-bold text-sm"
               >
                 Cerrar
               </button>
@@ -675,7 +675,7 @@ export function MetricsPage() {
               ) : (
                 <div className="space-y-3">
                   {detailData.kpis.risks.warnings.map((warn: string, idx: number) => (
-                    <div key={idx} className="flex gap-3 p-3 bg-[var(--sys-error)]/10 border border-[var(--sys-error)]/20 rounded-xl text-xs text-[var(--sys-text)]">
+                    <div key={idx} className="flex gap-3 p-3 bg-[var(--sys-error)]/10 border border-[var(--sys-error)]/20 rounded-md text-xs text-[var(--sys-text)]">
                       <AlertTriangle className="w-5 h-5 text-[var(--sys-error)] shrink-0" />
                       <span>{warn}</span>
                     </div>

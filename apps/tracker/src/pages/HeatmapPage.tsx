@@ -74,8 +74,8 @@ export function HeatmapPage() {
             <LayoutGrid size={16} />{' '}Mensual
           </button>
         </div>
-        <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-          <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, -7) : new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1))} className="p-1 hover:bg-gray-100 rounded-lg">
+        <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+          <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, -7) : new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
             <ChevronLeft size={20} className="text-gray-600" />
           </button>
           <div className="flex items-center gap-2 font-medium text-gray-700 min-w-[200px] justify-center">
@@ -86,28 +86,28 @@ export function HeatmapPage() {
               <span className="capitalize">{fmtMonth(baseDate)}</span>
             )}
           </div>
-          <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, 7) : new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1))} className="p-1 hover:bg-gray-100 rounded-lg">
+          <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, 7) : new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
             <ChevronRight size={20} className="text-gray-600" />
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600"><TrendingUp size={16} /></div>
+        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-green-50 flex items-center justify-center text-green-600"><TrendingUp size={16} /></div>
           <div><p className="text-xs font-medium text-gray-500">Disponible</p><p className="text-lg font-bold text-gray-900">0% - 80%</p></div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600"><Users size={16} /></div>
+        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-yellow-50 flex items-center justify-center text-yellow-600"><Users size={16} /></div>
           <div><p className="text-xs font-medium text-gray-500">Óptimo</p><p className="text-lg font-bold text-gray-900">81% - 100%</p></div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600"><AlertTriangle size={16} /></div>
+        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-red-50 flex items-center justify-center text-red-600"><AlertTriangle size={16} /></div>
           <div><p className="text-xs font-medium text-gray-500">Sobrecarga</p><p className="text-lg font-bold text-gray-900">&gt; 100%</p></div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -142,7 +142,7 @@ export function HeatmapPage() {
                   </td>
                   {viewMode === 'weekly' ? user.days.map((day, i) => (
                     <td key={i} className="p-2 border-r border-gray-100 last:border-0">
-                      <div className={`h-full w-full rounded-xl border p-3 flex flex-col items-center justify-center transition-all ${colorClass(day.saturation)}`}>
+                      <div className={`h-full w-full rounded-md border p-3 flex flex-col items-center justify-center transition-all ${colorClass(day.saturation)}`}>
                         <span className="text-lg font-bold">{day.hours.toFixed(1)}h</span>
                         <span className="text-[10px] uppercase tracking-wider opacity-80 mt-1">{day.saturation.toFixed(0)}%</span>
                       </div>
@@ -153,7 +153,7 @@ export function HeatmapPage() {
                     const weekSat = user.weekly_capacity > 0 ? (weekHours / (user.weekly_capacity * weekDays.length / 7)) * 100 : 0;
                     return (
                       <td key={wi} className="p-2 border-r border-gray-100 last:border-0">
-                        <div className={`h-full w-full rounded-xl border p-3 flex flex-col items-center justify-center transition-all ${colorClass(weekSat)}`}>
+                        <div className={`h-full w-full rounded-md border p-3 flex flex-col items-center justify-center transition-all ${colorClass(weekSat)}`}>
                           <span className="text-lg font-bold">{weekHours.toFixed(1)}h</span>
                           <span className="text-[10px] uppercase tracking-wider opacity-80 mt-1">{weekSat.toFixed(0)}%</span>
                         </div>

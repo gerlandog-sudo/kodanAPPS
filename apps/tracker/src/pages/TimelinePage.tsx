@@ -103,26 +103,26 @@ export function TimelinePage() {
   return (
     <div className="relative">
       <div className={`space-y-4 transition-all duration-300 ${drawerOpen ? 'mr-[400px]' : ''}`}>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+        <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm space-y-6">
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex gap-4 flex-1 min-w-[200px]">
               <div className="flex-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase ml-1 block mb-1">Desde</label>
-                <input type="date" value={filters.from} onChange={(e) => setFilters(p => ({ ...p, from: e.target.value }))} className="w-full px-3 py-2.5 bg-gray-50 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+                <input type="date" value={filters.from} onChange={(e) => setFilters(p => ({ ...p, from: e.target.value }))} className="w-full px-3 py-2.5 bg-gray-50 border-none rounded-md text-sm outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div className="flex-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase ml-1 block mb-1">Hasta</label>
-                <input type="date" value={filters.to} onChange={(e) => setFilters(p => ({ ...p, to: e.target.value }))} className="w-full px-3 py-2.5 bg-gray-50 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+                <input type="date" value={filters.to} onChange={(e) => setFilters(p => ({ ...p, to: e.target.value }))} className="w-full px-3 py-2.5 bg-gray-50 border-none rounded-md text-sm outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
             </div>
-            <div className="bg-gray-100 p-1.5 rounded-2xl flex items-center">
-              <button onClick={() => setViewMode('projects')} className={`px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${viewMode === 'projects' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Briefcase size={16} /> Proyectos</button>
-              <button onClick={() => setViewMode('resources')} className={`px-6 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${viewMode === 'resources' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Users size={16} /> Colaboradores</button>
+            <div className="bg-gray-100 p-1.5 rounded-lg flex items-center">
+              <button onClick={() => setViewMode('projects')} className={`px-6 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${viewMode === 'projects' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Briefcase size={16} /> Proyectos</button>
+              <button onClick={() => setViewMode('resources')} className={`px-6 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${viewMode === 'resources' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}><Users size={16} /> Colaboradores</button>
             </div>
           </div>
         </div>
 
-        <div ref={containerRef} className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm overflow-x-auto min-h-[400px]">
+        <div ref={containerRef} className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm overflow-x-auto min-h-[400px]">
           {loading ? (
             <div className="h-64 flex items-center justify-center"><div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>
           ) : data.length === 0 ? (
@@ -192,7 +192,7 @@ export function TimelinePage() {
                 <h2 className="text-lg font-black text-gray-900">{selectedBucket?.name}</h2>
                 <p className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1.5 mt-2"><Calendar size={14} className="text-primary" /> {selectedBucket?.date}</p>
               </div>
-              <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-gray-200 rounded-xl"><X size={20} className="text-gray-500" /></button>
+              <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-gray-200 rounded-md"><X size={20} className="text-gray-500" /></button>
             </div>
 
             <div className="p-6 space-y-6">
@@ -202,18 +202,18 @@ export function TimelinePage() {
                 <>
                   {viewMode === 'projects' && (
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="p-4 rounded-2xl border bg-gray-50 border-gray-100">
+                      <div className="p-4 rounded-lg border bg-gray-50 border-gray-100">
                         <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Horas</p>
                         <p className="text-sm font-black text-gray-900"><Clock size={14} className="inline text-primary mr-1" /> {data.find((d: any) => d.id === selectedBucket?.id)?.actual_hours ?? '-'}h</p>
                       </div>
-                      <div className="p-4 rounded-2xl border bg-gray-50 border-gray-100">
+                      <div className="p-4 rounded-lg border bg-gray-50 border-gray-100">
                         <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Presupuesto</p>
                         <p className="text-sm font-black text-gray-900"><DollarSign size={14} className="inline text-emerald-500 mr-1" /> {data.find((d: any) => d.id === selectedBucket?.id)?.budget_hours ?? '-'}h</p>
                       </div>
                     </div>
                   )}
                   {viewMode === 'resources' && (
-                    <div className="p-4 rounded-2xl border bg-gray-50 border-gray-100">
+                    <div className="p-4 rounded-lg border bg-gray-50 border-gray-100">
                       <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Carga de Trabajo</p>
                       <p className="text-sm font-black text-gray-900"><Scale size={14} className="inline text-primary mr-1" /> {data.find((d: any) => d.id === selectedBucket?.id)?.total_load ?? 0}h asignadas vs {data.find((d: any) => d.id === selectedBucket?.id)?.weekly_capacity ?? 8}h capacidad</p>
                     </div>
@@ -223,8 +223,8 @@ export function TimelinePage() {
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Clock size={12} /> Horas Registradas</h3>
                     <div className="space-y-2">
                       {details.entries.length === 0 ? <p className="text-sm italic text-gray-400">Sin registros.</p> : details.entries.map((e: any) => (
-                        <div key={e.id} className="bg-white border border-gray-100 p-3 rounded-2xl">
-                          <div className="flex justify-between items-start mb-1"><span className="bg-primary/10 text-primary text-[11px] font-black px-2 py-0.5 rounded-lg">{e.hours}h</span><span className="text-[10px] font-bold text-gray-400">{e.collaborator_name}</span></div>
+                        <div key={e.id} className="bg-white border border-gray-100 p-3 rounded-lg">
+                          <div className="flex justify-between items-start mb-1"><span className="bg-primary/10 text-primary text-[11px] font-black px-2 py-0.5 rounded-sm">{e.hours}h</span><span className="text-[10px] font-bold text-gray-400">{e.collaborator_name}</span></div>
                           <p className="text-xs font-bold text-gray-800">{e.task_name}</p>
                           {e.description && <p className="text-[11px] text-gray-500 mt-1 italic">"{e.description}"</p>}
                         </div>
@@ -236,13 +236,13 @@ export function TimelinePage() {
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">⚡ Tareas Kanban</h3>
                     <div className="space-y-2">
                       {details.tasks.length === 0 ? <p className="text-sm italic text-gray-400">Sin tareas pendientes.</p> : details.tasks.map((t: any) => (
-                        <div key={t.id} className="bg-white border border-gray-100 p-3 rounded-2xl">
-                          <div className="flex justify-between items-start mb-1"><span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${priorityColor(t.priority)}`}>{t.priority}</span><span className="text-[10px] font-bold text-gray-400">{t.collaborator_name || t.project_name}</span></div>
+                        <div key={t.id} className="bg-white border border-gray-100 p-3 rounded-lg">
+                          <div className="flex justify-between items-start mb-1"><span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-sm ${priorityColor(t.priority)}`}>{t.priority}</span><span className="text-[10px] font-bold text-gray-400">{t.collaborator_name || t.project_name}</span></div>
                           <p className="text-xs font-bold text-gray-800">{t.description}</p>
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-[10px] font-bold text-gray-500"><Clock size={10} className="inline mr-1" />{t.estimated_hours}h est.</span>
                             {viewMode === 'resources' && (
-                              <button onClick={() => { setSelectedBucket(p => p ? { ...p, id: t.id } : null); analyzeWithAI(); }} className="flex items-center gap-1 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-xl"><UserPlus size={12} /> Reasignar</button>
+                              <button onClick={() => { setSelectedBucket(p => p ? { ...p, id: t.id } : null); analyzeWithAI(); }} className="flex items-center gap-1 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-md"><UserPlus size={12} /> Reasignar</button>
                             )}
                           </div>
                         </div>
@@ -251,7 +251,7 @@ export function TimelinePage() {
                   </div>
 
                   {viewMode === 'projects' && (
-                    <button onClick={analyzeWithAI} disabled={aiLoading} className="w-full flex items-center justify-center gap-2 bg-primary text-white text-xs font-bold px-4 py-3 rounded-xl shadow-sm hover:brightness-110 transition-all disabled:opacity-50">
+                    <button onClick={analyzeWithAI} disabled={aiLoading} className="w-full flex items-center justify-center gap-2 bg-primary text-white text-xs font-bold px-4 py-3 rounded-md shadow-sm hover:brightness-110 transition-all disabled:opacity-50">
                       <Sparkles size={14} className={aiLoading ? 'animate-pulse' : ''} /> {aiLoading ? 'Analizando...' : 'Analizar con IA'}
                     </button>
                   )}
@@ -268,29 +268,29 @@ export function TimelinePage() {
         <>
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md" onClick={() => setModalOpen(false)} />
-            <div className="relative bg-white w-full max-w-2xl max-h-[90vh] rounded-[32px] shadow-2xl overflow-hidden flex flex-col">
+            <div className="relative bg-white w-full max-w-2xl max-h-[90vh] rounded-lg shadow-2xl overflow-hidden flex flex-col">
               <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-xl text-primary"><Sparkles size={20} /></div>
+                  <div className="p-2 bg-primary/10 rounded-md text-primary"><Sparkles size={20} /></div>
                   <div><h3 className="text-base font-black text-gray-900">Análisis Estratégico de IA</h3><p className="text-[10px] font-bold text-gray-400 uppercase">Procesamiento Inteligente</p></div>
                 </div>
-                <button onClick={() => setModalOpen(false)} className="p-2 hover:bg-red-500 rounded-xl group"><X size={20} className="text-gray-400 group-hover:text-white" /></button>
+                <button onClick={() => setModalOpen(false)} className="p-2 hover:bg-red-500 rounded-md group"><X size={20} className="text-gray-400 group-hover:text-white" /></button>
               </div>
               <div className="flex-1 overflow-y-auto p-8 space-y-6">
                 {suggestions.candidates ? (
                   <>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 border border-gray-100 p-6 rounded-2xl">
+                      <div className="bg-gray-50 border border-gray-100 p-6 rounded-lg">
                         <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Desviación</p>
                         <p className="text-3xl font-black" style={{ color: '#22c55e' }}>-</p>
                       </div>
-                      <div className="bg-gray-50 border border-gray-100 p-6 rounded-2xl">
+                      <div className="bg-gray-50 border border-gray-100 p-6 rounded-lg">
                         <p className="text-[10px] font-black text-gray-400 uppercase mb-2">Carga Total</p>
                         <p className="text-3xl font-black text-gray-900">{suggestions.task?.estimated_hours ?? 0}h</p>
                       </div>
                     </div>
-                    <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 flex gap-4">
-                      <div className="bg-amber-500 text-white p-2 rounded-xl"><AlertTriangle size={20} /></div>
+                    <div className="bg-amber-50 p-6 rounded-lg border border-amber-100 flex gap-4">
+                      <div className="bg-amber-500 text-white p-2 rounded-md"><AlertTriangle size={20} /></div>
                       <div>
                         <p className="text-xs font-black text-amber-900 uppercase mb-1">Recomendación</p>
                         <p className="text-sm text-amber-700 font-medium">{getStrategicConclusion(suggestions.ai_insight)}</p>
@@ -300,12 +300,12 @@ export function TimelinePage() {
                       <h4 className="text-[11px] font-black text-gray-400 uppercase mb-4 tracking-wider flex items-center gap-2"><Users size={14} className="text-primary" /> Candidatos Sugeridos</h4>
                       <div className="grid grid-cols-1 gap-3">
                         {suggestions.candidates.map((c: any) => (
-                          <div key={c.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl">
+                          <div key={c.id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-lg">
                             <div>
                               <p className="text-sm font-black text-gray-900">{c.name}</p>
                               <p className="text-[10px] text-gray-400 font-bold">{c.current_load || 0}h carga actual</p>
                             </div>
-                            <button onClick={() => executeReassign(suggestions.task.id, c.id)} disabled={executing} className="px-4 py-2 bg-primary text-white text-[10px] font-black rounded-xl hover:brightness-110 disabled:opacity-50 uppercase tracking-wider">
+                            <button onClick={() => executeReassign(suggestions.task.id, c.id)} disabled={executing} className="px-4 py-2 bg-primary text-white text-[10px] font-black rounded-md hover:brightness-110 disabled:opacity-50 uppercase tracking-wider">
                               {executing ? '...' : 'Reasignar'}
                             </button>
                           </div>
@@ -314,7 +314,7 @@ export function TimelinePage() {
                     </div>
                   </>
                 ) : (
-                  <div className="bg-white border border-gray-100 p-8 rounded-3xl shadow-sm">
+                  <div className="bg-white border border-gray-100 p-8 rounded-lg shadow-sm">
                     <h4 className="text-xs font-black text-gray-400 mb-4 uppercase tracking-wider flex items-center gap-2"><Sparkles size={14} className="text-primary" /> Reporte de Salud</h4>
                     <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{suggestions.ai_insight?.replace(/\[STRATEGIC_CONCLUSION(?:_START|_END)?\]/gi, '')}</div>
                   </div>

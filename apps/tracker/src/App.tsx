@@ -46,6 +46,17 @@ function AppContent() {
   const { messages: sseMessages, unreadCount, refetchUnreadCount } = useSSE(authenticated ? 'tracker' : '');
 
   useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const customEv = e as CustomEvent<{ route: Route }>;
+      if (customEv.detail && customEv.detail.route) {
+        setRoute(customEv.detail.route);
+      }
+    };
+    window.addEventListener('tracker:navigate', handleNavigate);
+    return () => window.removeEventListener('tracker:navigate', handleNavigate);
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('token')) {
       setView('set-password');

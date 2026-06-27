@@ -24,6 +24,7 @@ export interface EntityCardProps {
   onClone?: () => void
   onEdit?: () => void
   onDelete?: () => void
+  estimatedHours?: number
 }
 
 function formatDate(dateStr?: string) {
@@ -39,6 +40,7 @@ export function EntityCard({
   title, amount, badge, accountName, startDate, closeDate,
   lineItemsCount, quoteTotal, ownerName, ownerAvatar, stageColor, isDropped, selected,
   onClick, onChat, chatUnreadCount, onMail, onCheck, onClone, onEdit, onDelete,
+  estimatedHours,
 }: EntityCardProps) {
   const hasActions = !!(onChat || onMail || onEdit || onDelete || onCheck || onClone)
 
@@ -155,8 +157,8 @@ export function EntityCard({
         </div>
       )}
 
-      {/* Línea 6: Cant Productos + Total Cotización (alineado a la derecha) */}
-      {(lineItemsCount != null || quoteTotal != null) && (
+      {/* Línea 6: Cant Productos + Total Cotización + Horas Estimadas (alineado a la derecha) */}
+      {(lineItemsCount != null || quoteTotal != null || estimatedHours != null) && (
         <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem', userSelect: 'none' }}>
           {lineItemsCount != null && (
             <div style={{ fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -183,6 +185,14 @@ export function EntityCard({
               <span>Valor Cotización:</span>
               <span style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '11px', color: 'var(--sys-primary)' }}>
                 $ {Number(quoteTotal).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+          {estimatedHours != null && (
+            <div style={{ fontSize: '11px', fontFamily: 'var(--font-hanken-grotesk, system-ui)', color: 'var(--sys-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <span>Horas estimadas:</span>
+              <span style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '11px', color: 'var(--sys-primary)' }}>
+                {Number(estimatedHours).toFixed(2)} hs
               </span>
             </div>
           )}

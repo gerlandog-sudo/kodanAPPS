@@ -36,6 +36,8 @@ export { useDebouncedSearch } from './hooks/useDebouncedSearch'
 
 export { EntityCard } from './components/EntityCard'
 export type { EntityCardProps } from './components/EntityCard'
+export { ProjectCard } from './components/ProjectCard'
+export type { ProjectCardProps } from './components/ProjectCard'
 export { ConfirmDialog } from './components/ConfirmDialog'
 export type { ConfirmDialogProps } from './components/ConfirmDialog'
 export { QuotaUtilization } from './components/QuotaUtilization'

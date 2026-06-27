@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button, ConfirmDialog, Input, EntityCard, Card } from '@kodan-apps/ui-core';
+import { Button, ConfirmDialog, Input, ProjectCard, Card } from '@kodan-apps/ui-core';
 import { trackerApi, Project } from '../api/client';
 import { ProjectForm } from '../components/ProjectForm';
 import { Plus, Search, FolderKanban } from 'lucide-react';
@@ -88,48 +88,28 @@ export function ProjectsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((p) => {
-            // Badge status styling
-            let statusLabel = 'ACTIVO';
-            let statusClass = 'bg-emerald-50 text-emerald-600 border border-emerald-100';
-            if (p.status === 'paused') {
-              statusLabel = 'PAUSADO';
-              statusClass = 'bg-amber-50 text-amber-600 border border-amber-100';
-            } else if (p.status === 'completed') {
-              statusLabel = 'COMPLETADO';
-              statusClass = 'bg-blue-50 text-blue-600 border border-blue-100';
-            }
-
-            const badge = (
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusClass}`}>
-                {statusLabel}
-              </span>
-            );
-
-            // Display actual hours / budget hours in a clean way
-            const actualHoursNum = Number(p.actual_hours || 0);
-            const budgetHoursNum = Number(p.budget_hours || 0);
-            const hoursDisplay = p.budget_hours 
-              ? `${actualHoursNum.toFixed(1)}h / ${budgetHoursNum.toFixed(1)}h`
-              : undefined;
-
-            return (
-              <EntityCard
-                key={p.id}
-                title={p.name}
-                badge={badge}
-                amount={p.budget_money || undefined}
-                quoteTotal={p.actual_cost || undefined}
-                accountName={p.client_name || 'Cliente General'}
-                startDate={p.start_date || undefined}
-                closeDate={p.end_date || undefined}
-                ownerName={hoursDisplay}
-                stageColor={p.color_hex || 'var(--sys-primary)'}
-                onEdit={() => { setEditing(p); setFormOpen(true); }}
-                onDelete={() => setDeleteId(p.id)}
-              />
-            );
-          })}
+          {filtered.map((p) => (
+            <ProjectCard
+              key={p.id}
+              id={p.id}
+              name={p.name}
+              clientName={p.client_name || 'Cliente General'}
+              startDate={p.start_date || undefined}
+              endDate={p.end_date || undefined}
+              status={p.status}
+              colorHex={p.color_hex || undefined}
+              budgetMoney={p.budget_money || 0}
+              actualCost={p.actual_cost || 0}
+              budgetHours={p.budget_hours || 0}
+              actualHours={p.actual_hours || 0}
+              onEdit={() => { setEditing(p); setFormOpen(true); }}
+              onDelete={() => setDeleteId(p.id)}
+              onNavigateToBoard={() => {
+                localStorage.setItem('tracker_selected_project_id', String(p.id));
+                window.dispatchEvent(new CustomEvent('tracker:navigate', { detail: { route: 'kanban' } }));
+              }}
+            />
+          ))}
         </div>
       )}
 

@@ -9,8 +9,14 @@ export interface Project {
   description: string | null
   color_hex: string | null
   budget_hours: number | null
+  budget_money?: number
+  start_date?: string | null
+  end_date?: string | null
   status: 'active' | 'paused' | 'completed'
   created_at: string
+  client_name?: string
+  actual_hours?: number
+  actual_cost?: number
 }
 
 export interface TaskType {
@@ -242,6 +248,10 @@ export interface PredictiveAlertsResponse {
 export const trackerApi = {
   listProjects: () => api.get<Project[]>('/api/tracker/projects'),
   getProject: (id: number) => api.get<Project>(`/api/tracker/projects/${id}`),
+  createProject: (data: Partial<Project>) => api.post<{ success: boolean; id: number; message: string }>('/api/tracker/projects', data),
+  updateProject: (id: number, data: Partial<Project>) => api.patch<{ success: boolean; message: string }>(`/api/tracker/projects/${id}`, data),
+  deleteProject: (id: number) => api.delete<{ success: boolean; message: string }>(`/api/tracker/projects/${id}`),
+  listAccounts: () => api.get<Array<{ account_id: number; name: string }>>('/api/crm/accounts'),
 
   getBoard: (projectId: number, includeArchived = false) => {
     const params: Record<string, string> = {};

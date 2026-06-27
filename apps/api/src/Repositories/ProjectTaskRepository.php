@@ -30,8 +30,8 @@ final class ProjectTaskRepository extends BaseRepository
         return $this->findAll(
             self::TABLE,
             't.*, tt.name AS task_type_name, tt.color_hex AS task_type_color, tt.icon AS task_type_icon, u.display_name AS assigned_name',
-            't.project_id = :project_id',
-            [':project_id' => $projectId],
+            't.tenant_id = :tenant_id AND t.project_id = :project_id',
+            [':tenant_id' => 0, ':project_id' => $projectId],
             't.position ASC',
             0,
             't LEFT JOIN task_types tt ON tt.id = t.task_type_id LEFT JOIN users u ON u.id = t.assigned_to'

@@ -101,32 +101,13 @@ final class TrackerMetricsController
                 'id' => $pId,
                 'name' => $proj['name'],
                 'client_name' => $proj['client_name'] ?? 'Cliente General',
-                'metrics' => [
-                    'scope' => [
-                        'value' => $scope['percentage'],
-                        'status' => 'approved' // Verde por defecto
-                    ],
-                    'schedule' => [
-                        'value' => round($schedule['spi'] * 100),
-                        'status' => $schedule['status']
-                    ],
-                    'budget' => [
-                        'value' => $budget['burn_rate'],
-                        'status' => $budget['status']
-                    ],
-                    'risks' => [
-                        'value' => $risks['total'],
-                        'status' => $risks['status'],
-                        'breakdown' => $risks
-                    ],
-                    'quality' => [
-                        'value' => $quality['percentage'],
-                        'status' => $quality['status']
-                    ],
-                    'value' => [
-                        'value' => $value['percentage'],
-                        'status' => $value['status']
-                    ]
+                'kpis' => [
+                    'scope' => $scope['percentage'],
+                    'schedule' => round($schedule['spi'] * 100),
+                    'budget' => $budget['burn_rate'],
+                    'quality' => $quality['percentage'],
+                    'value' => $value['percentage'],
+                    'risk_count' => $risks['total'],
                 ]
             ];
         }

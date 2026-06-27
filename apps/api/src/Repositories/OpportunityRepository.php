@@ -266,10 +266,10 @@ final class OpportunityRepository extends BaseRepository
     }
 
     /**
-     * Verifica si el plan del tenant tiene configurado el límite projects_max
-     * (indica que el plan incluye el módulo Tracker y soporta creación de proyectos).
+     * Verifica si el plan del tenant incluye el módulo Tracker
+     * (tiene al menos un límite configurado con module = 'tracker').
      */
-    private function tenantHasProjectsModule(): bool
+    private function tenantHasTrackerModule(): bool
     {
         $tenantId = \kodanAPPS\DB\TenantContext::getTenantId();
         $result = $this->rawSelect(
@@ -278,8 +278,7 @@ final class OpportunityRepository extends BaseRepository
              JOIN subscription_plans sp ON sp.id = pl.plan_id
              JOIN tenants t ON t.subscription_plan_id = sp.id
              WHERE t.tenant_id = ?
-               AND pl.module = 'crm'
-               AND pl.metric = 'projects_max'
+               AND pl.module = 'tracker'
                AND t.is_active = 1
                AND sp.deleted_at IS NULL
              LIMIT 1",
@@ -291,14 +290,14 @@ final class OpportunityRepository extends BaseRepository
     /**
      * Marca la oportunidad como ganada e inicializa el proyecto asociado en Tracker en una transacción atómica.
      * 
-     * Si el plan del tenant no incluye el módulo Tracker (no tiene projects_max configurado),
+     * Si el plan del tenant no incluye el módulo Tracker,
      * solo marca la oportunidad como ganada sin crear proyecto.
      * 
      * @return int ID del proyecto creado (0 si no se creó proyecto)
      */
     public function markAsWonAndCreateProject(int $opportunityId, int $wonStageId, string $projectName, float $budgetHours, ?string $closeReason = null): int
     {
-        $hasTracker = $this->tenantHasProjectsModule();
+        $hasTracker = $this->tenantHasTrackerModule();
 
         return $this->transactional(function () use ($opportunityId, $wonStageId, $projectName, $budgetHours, $closeReason, $hasTracker) {
             // 1. Actualizar etapa de la oportunidad a ganada, establecer close_date y guardar motivo
@@ -320,8 +319,8 @@ final class OpportunityRepository extends BaseRepository
             );
             $accountId = isset($oppResult[0]['account_id']) && is_scalar($oppResult[0]['account_id']) ? (int)$oppResult[0]['account_id'] : 0;
 
-            // 2. Verificar límite de proyectos antes de crear
-            $this->enforceUsageLimit('crm', 'projects_max');
+            // 2. Verificar límite de proyectos (module = tracker en plan_limits)
+            $this->enforceUsageLimit('tracker', 'projects_max');
 
             $projectId = $this->create('projects', [
                 'account_id' => $accountId,
@@ -331,7 +330,7 @@ final class OpportunityRepository extends BaseRepository
                 'status' => 'active'
             ]);
 
-            $this->incrementUsage('crm', 'projects_max');
+            $this->incrementUsage('tracker', 'projects_max');
             
             return $projectId;
         });

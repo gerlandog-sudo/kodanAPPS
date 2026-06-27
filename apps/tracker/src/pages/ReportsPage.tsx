@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Card, Select, DatePicker } from '@kodan-apps/ui-core';
 import { trackerApi } from '../api/client';
-import { FileSpreadsheet, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 const REPORT_TYPES = [
   { value: 'by-project', label: 'Horas por Proyecto', desc: 'Detalle de horas y costos agrupado por proyecto' },
@@ -33,10 +33,7 @@ export function ReportsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-xl font-semibold flex items-center gap-2">
-        <FileSpreadsheet size={22} /> Reportes
-      </h1>
-
+      
       <Card>
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

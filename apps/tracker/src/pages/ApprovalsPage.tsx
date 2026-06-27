@@ -80,10 +80,7 @@ export function ApprovalsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <CheckCircle size={22} /> Aprobaciones
-        </h1>
+      <div className="flex items-center justify-end">
         {selectedIds.size > 0 && (
           <Button variant="primary" onClick={handleBulkApprove}>
             <CheckCheck size={16} className="mr-1" /> Aprobar seleccionados ({selectedIds.size})

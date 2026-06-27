@@ -922,7 +922,6 @@ export function Tasks() {
       <div className="flex flex-col gap-3 shrink-0 pb-2 w-full border-b border-border-soft/60">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-extrabold tracking-tight text-text">Agenda y Tareas</h1>
             {/* View Selector Buttons */}
             <div className="flex items-center gap-0.5 p-0.5 rounded-lg border border-border-soft" style={{ background: 'var(--sys-surface)' }}>
               <button

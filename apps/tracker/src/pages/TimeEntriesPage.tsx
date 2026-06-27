@@ -113,10 +113,7 @@ export function TimeEntriesPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <Clock size={22} /> Horas
-        </h1>
+      <div className="flex items-center justify-end">
         <Button variant="primary" onClick={() => { setFormDuration(undefined); setFormOpen(true); }}>
           Registrar tiempo
         </Button>

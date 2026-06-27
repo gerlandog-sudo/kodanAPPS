@@ -258,11 +258,7 @@ export function MetricsPage() {
       {/* ESTADO 1: MATRIZ DE PORTAFOLIO */}
       {!selectedProjectId ? (
         <div className="space-y-4 animate-fade-in">
-          <div>
-            <h1 className="text-2xl font-black text-[var(--sys-text)]">Métricas de Portafolio</h1>
-            <p className="text-xs text-[var(--sys-text-muted)]">Semáforo de salud y control consolidado de KPIs en tiempo real.</p>
-          </div>
-
+          
           {projects.length === 0 ? (
             <div className="kpis-glass-card p-12 text-center text-[var(--sys-text-muted)]">
               No hay proyectos activos registrados o que coincidan con el rango de fechas.
@@ -382,10 +378,7 @@ export function MetricsPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
-              <h1 className="text-2xl font-black text-[var(--sys-text)]">{detailData?.project?.name}</h1>
-              <p className="text-xs text-[var(--sys-text-muted)]">Cliente: {detailData?.project?.client_name} | Vista Bento de métricas específicas del proyecto.</p>
-            </div>
+
           </div>
 
           {detailLoading || !detailData ? (

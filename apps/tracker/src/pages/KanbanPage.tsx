@@ -64,7 +64,6 @@ export function KanbanPage() {
     <div className="p-6 space-y-4 h-full flex flex-col">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1">
-          <h1 className="text-xl font-semibold">Tablero Kanban</h1>
           <div className="w-64">
             <Select
               options={projectOptions}

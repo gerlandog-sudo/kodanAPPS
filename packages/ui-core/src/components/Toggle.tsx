@@ -18,7 +18,7 @@ export function Toggle({ label, className = '', id, ...props }: ToggleProps) {
           width: '2.25rem',
           height: '1.25rem',
           borderRadius: '999px',
-          background: props.checked ? 'var(--sys-success-bg)' : 'var(--sys-error-container)',
+          background: props.checked ? 'var(--sys-primary)' : 'var(--sys-border)',
           transition: 'background var(--transition-fast)',
           flexShrink: 0,
         }}
@@ -31,7 +31,7 @@ export function Toggle({ label, className = '', id, ...props }: ToggleProps) {
             width: '1rem',
             height: '1rem',
             borderRadius: '50%',
-            background: props.checked ? 'var(--sys-success)' : 'var(--sys-error)',
+            background: '#ffffff',
             transition: 'left var(--transition-fast)',
             boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
           }}

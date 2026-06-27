@@ -89,10 +89,9 @@ export function KanbanBoard<T>({
       onDragEnd={handleDragEnd}
     >
       <div
-        className={`flex overflow-auto flex-1 min-h-0 rounded-lg border items-stretch ${className}`}
+        className={`flex overflow-x-auto gap-5 flex-1 min-h-0 w-full pb-4 ${className}`}
         style={{
-          borderColor: 'var(--sys-border-soft)',
-          background: 'var(--sys-surface)',
+          background: 'transparent',
         }}
       >
         {columns.map((col) => {

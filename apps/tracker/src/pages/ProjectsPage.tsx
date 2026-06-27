@@ -132,8 +132,8 @@ export function ProjectsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filtered.map((p) => {
             // Dinero
-            const budgetMoney = p.budget_money || 0;
-            const actualCost = p.actual_cost || 0;
+            const budgetMoney = Number(p.budget_money) || 0;
+            const actualCost = Number(p.actual_cost) || 0;
             const moneyPercent = budgetMoney > 0 ? (actualCost / budgetMoney) * 100 : 0;
             const moneyDiff = budgetMoney - actualCost;
             const moneyIsExceeded = moneyDiff < 0;
@@ -141,7 +141,7 @@ export function ProjectsPage() {
 
             // Horas
             const budgetHours = Number(p.budget_hours) || 0;
-            const actualHours = p.actual_hours || 0;
+            const actualHours = Number(p.actual_hours) || 0;
             const hoursPercent = budgetHours > 0 ? (actualHours / budgetHours) * 100 : 0;
             const hoursDiff = budgetHours - actualHours;
             const hoursIsExceeded = hoursDiff < 0;

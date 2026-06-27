@@ -1,30 +1,54 @@
 import { useState, useEffect, useCallback } from 'react';
-import { KanbanBoard, Modal, Button, Select, Input, SlidePanel } from '@kodan-apps/ui-core';
+import { KanbanBoard, Modal, Button, Select, Input, SlidePanel, Toggle } from '@kodan-apps/ui-core';
 import type { ColumnDef } from '@kodan-apps/ui-core';
 import { trackerApi, Project, ProjectTask, TaskType } from '../api/client';
-import { Plus, Archive, ArchiveRestore, LayoutList } from 'lucide-react';
+import { Plus, Archive, ArchiveRestore, Search, FolderKanban, Clock, Pencil, Trash2 } from 'lucide-react';
 
 const BASE_COLUMNS: ColumnDef[] = [
-  { id: 'todo', label: 'Por hacer', dotColor: '#6b7280' },
-  { id: 'in_progress', label: 'En progreso', dotColor: '#3b82f6' },
-  { id: 'review', label: 'Revisión', dotColor: '#f59e0b' },
-  { id: 'done', label: 'Terminado', dotColor: '#10b981' },
+  { id: 'todo', label: 'PARA HACER' },
+  { id: 'in_progress', label: 'HACIENDO' },
+  { id: 'review', label: 'REVISIÓN' },
+  { id: 'done', label: 'HECHO' },
 ];
 
-const priorityColors: Record<string, string> = {
-  low: '#9ca3af', medium: '#3b82f6', high: '#f59e0b', critical: '#ef4444',
+const priorityConfig: Record<string, { label: string; badgeClass: string; cardBorder: string }> = {
+  low: {
+    label: 'BAJA',
+    badgeClass: 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30',
+    cardBorder: 'border-slate-200 dark:border-slate-800'
+  },
+  medium: {
+    label: 'MEDIA',
+    badgeClass: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30',
+    cardBorder: 'border-amber-300 dark:border-amber-800/60'
+  },
+  high: {
+    label: 'ALTA',
+    badgeClass: 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30',
+    cardBorder: 'border-rose-300 dark:border-rose-800/60'
+  },
+  critical: {
+    label: 'CRÍTICA',
+    badgeClass: 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/30',
+    cardBorder: 'border-red-500 dark:border-red-700'
+  }
 };
+
+function getInitials(name: string) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
 
 export function KanbanPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [tasks, setTasks] = useState<ProjectTask[]>([]);
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [createOpen, setCreateOpen] = useState(false);
   const [detailTask, setDetailTask] = useState<ProjectTask | null>(null);
   const [showArchived, setShowArchived] = useState(false);
-
-  const isTodosMode = selectedProjectId === null;
 
   const loadProjects = useCallback(async () => {
     const data = await trackerApi.listProjects();
@@ -33,7 +57,6 @@ export function KanbanPage() {
 
   const loadBoard = useCallback(async () => {
     if (selectedProjectId === null) {
-      // Modo TODOS: cargar tareas de todos los proyectos
       const board = await trackerApi.getAllBoards(showArchived);
       setTasks(Object.values(board.itemsByStage).flat());
     } else {
@@ -46,22 +69,35 @@ export function KanbanPage() {
   useEffect(() => {
     loadBoard();
     trackerApi.listTaskTypes().then(setTaskTypes).catch(() => {});
+    trackerApi.listProfiles().then(setCollaborators).catch(() => {});
   }, [loadBoard]);
 
-  // Construir columnas: base + archivada condicional
   const columns = useCallback((): ColumnDef[] => {
     const cols = [...BASE_COLUMNS];
     if (showArchived) {
-      cols.push({ id: 'archived', label: 'Archivada', dotColor: '#6B7280' });
+      cols.push({ id: 'archived', label: 'ARCHIVO' });
     }
     return cols;
   }, [showArchived]);
 
-  // Agrupar tareas por status, incluyendo archived siempre
+  // Filtrado local de tareas por buscador y colaborador
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch = !searchQuery.trim() || 
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (task.project_name && task.project_name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCollaborator = selectedCollaboratorId === 'all' || 
+      String(task.assigned_to) === String(selectedCollaboratorId);
+
+    return matchesSearch && matchesCollaborator;
+  });
+
+  // Agrupar tareas por status
   const itemsByStage: Record<string, ProjectTask[]> = {
     todo: [], in_progress: [], review: [], done: [], archived: [],
   };
-  tasks.forEach((t) => {
+  filteredTasks.forEach((t) => {
     const key = t.kanban_status as string;
     if (itemsByStage[key]) itemsByStage[key].push(t);
   });
@@ -73,123 +109,197 @@ export function KanbanPage() {
 
   const handleToggleArchive = async (task: ProjectTask) => {
     const nextStatus = task.kanban_status === 'archived' ? 'todo' : 'archived';
-    // Optimistic update
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, kanban_status: nextStatus as any } : t)));
     await trackerApi.moveTask(task.id, { to_stage: nextStatus });
     loadBoard();
   };
 
-  const handleCreate = async (data: Partial<ProjectTask>) => {
-    if (selectedProjectId === null) return;
-    await trackerApi.createTask({ ...data, project_id: selectedProjectId! });
+  const handleCreate = async (data: Partial<ProjectTask> & { project_id: number }) => {
+    await trackerApi.createTask(data);
     setCreateOpen(false);
     loadBoard();
   };
 
   const projectOptions = [
-    { value: '', label: 'TODOS' },
+    { value: '', label: 'Todos los proyectos' },
     ...projects.map((p) => ({ value: String(p.id), label: p.name })),
   ];
 
   return (
-    <div className="p-6 space-y-4 h-full flex flex-col">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="w-64">
+    <div className="space-y-6 h-full flex flex-col">
+      {/* Barra de Filtros y Acciones */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50/40 dark:bg-slate-900/10 p-3.5 rounded-xl border border-slate-200/50 dark:border-slate-800/40">
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+          <div className="w-full sm:w-80">
+            <Input
+              icon={<Search size={16} className="text-slate-400" />}
+              placeholder="Buscar tareas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-64">
             <Select
               options={projectOptions}
               value={selectedProjectId !== null ? String(selectedProjectId) : ''}
               onChange={(v) => setSelectedProjectId(v !== '' ? Number(v) : null)}
-              placeholder="Seleccionar proyecto..."
+              placeholder="Todos los proyectos"
             />
           </div>
-          <button
-            onClick={() => setShowArchived(!showArchived)}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all duration-200"
-            style={{
-              background: showArchived ? 'var(--sys-primary-container)' : 'transparent',
-              color: showArchived ? 'var(--sys-on-primary)' : 'var(--sys-text-muted)',
-              borderColor: showArchived ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
-            }}
-            title={showArchived ? 'Ocultar archivadas' : 'Mostrar archivadas'}
-          >
-            {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
-            <span>{showArchived ? 'Archivadas' : 'Activas'}</span>
-          </button>
+          <div className="w-full sm:w-64">
+            <Select
+              options={[
+                { value: 'all', label: 'Todos los colaboradores' },
+                ...collaborators.map((c) => ({ value: String(c.user_id), label: c.user_name })),
+              ]}
+              value={selectedCollaboratorId}
+              onChange={(v) => setSelectedCollaboratorId(v)}
+            />
+          </div>
+          <div className="flex items-center h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
+            <Toggle
+              checked={showArchived}
+              onChange={(e: any) => setShowArchived(e.target.checked)}
+              label="VER COLUMNA ARCHIVO"
+            />
+          </div>
         </div>
-        {!isTodosMode && (
-          <Button variant="primary" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} className="mr-1" /> Nueva tarea
-          </Button>
-        )}
+        <Button
+          variant="primary"
+          onClick={() => setCreateOpen(true)}
+          className="h-11 px-5 shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0"
+        >
+          <Plus size={16} /> Nueva Tarea
+        </Button>
       </div>
 
-      {isTodosMode && projects.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--sys-text-muted)' }}>
+      {/* Tablero Kanban */}
+      {filteredTasks.length === 0 && tasks.length === 0 && selectedProjectId === null && projects.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center py-20 text-sm" style={{ color: 'var(--sys-text-muted)' }}>
           No hay proyectos. Creá uno desde Gestión de Proyectos.
         </div>
       ) : (
-        <KanbanBoard
-          columns={columns()}
-          itemsByStage={itemsByStage}
-          onDrop={handleDrop}
-          emptyPlaceholder={<div className="h-24 flex items-center justify-center text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin tareas</div>}
-          renderCard={(task) => (
-            <div
-              className="p-3 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow group"
-              style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-card)', color: 'var(--sys-text)' }}
-              onClick={() => setDetailTask(task)}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                {task.task_type_color && (
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: task.task_type_color }} />
-                )}
-                <span className="text-xs font-medium truncate" style={{ color: task.task_type_color || 'var(--sys-text-muted)' }}>
-                  {task.task_type_name || 'Sin tipo'}
-                </span>
-                <span className="w-2 h-2 rounded-full ml-auto flex-shrink-0" style={{ background: priorityColors[task.priority] || '#9ca3af' }} />
+        <div className="flex-1 min-h-0">
+          <KanbanBoard
+            columns={columns()}
+            itemsByStage={itemsByStage}
+            onDrop={handleDrop}
+            emptyPlaceholder={
+              <div className="h-24 flex items-center justify-center text-xs border border-dashed rounded-xl border-slate-200 dark:border-slate-800" style={{ color: 'var(--sys-text-muted)' }}>
+                Sin tareas
               </div>
-              <p className="text-sm font-medium leading-snug">{task.title}</p>
-              {task.assigned_name && (
-                <p className="text-xs mt-2" style={{ color: 'var(--sys-text-muted)' }}>
-                  {task.assigned_name}
-                </p>
-              )}
-              {isTodosMode && task.project_name && (
-                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--sys-text-muted)' }}>
-                  <LayoutList size={10} />
-                  {task.project_name}
-                </p>
-              )}
-              <div className="mt-2 pt-2 border-t flex justify-end opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ borderColor: 'var(--sys-border-soft)' }}>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleToggleArchive(task); }}
-                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  style={{ color: 'var(--sys-text-muted)' }}
-                  title={task.kanban_status === 'archived' ? 'Restaurar' : 'Archivar'}
+            }
+            renderCard={(task) => {
+              const config = priorityConfig[task.priority] || priorityConfig.medium;
+              return (
+                <div
+                  className={`p-4 rounded-xl border bg-white dark:bg-slate-900 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col gap-3.5 ${config.cardBorder}`}
+                  onClick={() => setDetailTask(task)}
                 >
-                  {task.kanban_status === 'archived' ? <ArchiveRestore size={12} /> : <Archive size={12} />}
-                  {task.kanban_status === 'archived' ? 'Restaurar' : 'Archivar'}
-                </button>
-              </div>
-            </div>
-          )}
-          renderOverlayCard={(task) => (
-            <div className="p-3 rounded-lg border shadow-lg" style={{ background: 'var(--sys-card)', borderColor: 'var(--sys-border-soft)' }}>
-              <p className="text-sm font-medium">{task.title}</p>
-            </div>
-          )}
-        />
+                  {/* Badges y Acciones */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md tracking-wider ${config.badgeClass}`}>
+                        {config.label}
+                      </span>
+                      {task.task_type_name && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md tracking-wider bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60 uppercase">
+                          {task.task_type_name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDetailTask(task);
+                        }}
+                        className="p-1 rounded-md border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                        title="Editar tarea"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
+                            await trackerApi.deleteTask(task.id);
+                            loadBoard();
+                          }
+                        }}
+                        className="p-1 rounded-md border border-slate-200 dark:border-slate-800 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                        title="Eliminar tarea"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Título de la tarea */}
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug line-clamp-2">
+                    {task.title}
+                  </h4>
+
+                  {/* Proyecto */}
+                  {task.project_name && (
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                      <FolderKanban size={13} className="text-slate-400 dark:text-slate-500 flex-shrink-0" />
+                      <span className="truncate">{task.project_name}</span>
+                    </div>
+                  )}
+
+                  {/* Separador */}
+                  {(task.assigned_name || task.estimated_hours) && (
+                    <div className="border-t border-slate-100 dark:border-slate-800/80 my-0.5" />
+                  )}
+
+                  {/* Asignado y Horas */}
+                  <div className="flex items-center justify-between gap-2 mt-auto">
+                    {task.assigned_name ? (
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] font-bold border border-indigo-100 dark:border-indigo-900/30 flex-shrink-0">
+                          {getInitials(task.assigned_name)}
+                        </div>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+                          {task.assigned_name}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 flex items-center justify-center text-[10px] font-bold border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                          -
+                        </div>
+                        <span className="text-xs text-slate-400 italic truncate">
+                          Sin asignar
+                        </span>
+                      </div>
+                    )}
+
+                    {task.estimated_hours != null && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold text-slate-600 dark:text-slate-300 flex-shrink-0">
+                        <Clock size={12} className="text-slate-400" />
+                        <span>{task.estimated_hours.toFixed(2)} hs</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }}
+          />
+        </div>
       )}
 
+      {/* Modal Crear Tarea */}
       <CreateTaskModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         onSave={handleCreate}
         taskTypes={taskTypes}
+        projects={projects}
+        initialProjectId={selectedProjectId}
       />
 
+      {/* Panel de Detalle */}
       <SlidePanel open={!!detailTask} onClose={() => setDetailTask(null)} title={detailTask?.title ?? ''}>
         {detailTask && (
           <div className="p-6 space-y-4" style={{ color: 'var(--sys-text)' }}>
@@ -209,7 +319,7 @@ export function KanbanPage() {
                 { todo: 'Por hacer', in_progress: 'En progreso', review: 'Revisión', done: 'Terminado', archived: 'Archivada' }[detailTask.kanban_status] || detailTask.kanban_status
               }</div>
             </div>
-            <div className="pt-2">
+            <div className="pt-2 flex gap-2">
               <Button
                 variant="secondary"
                 onClick={() => { handleToggleArchive(detailTask); setDetailTask(null); }}
@@ -224,27 +334,45 @@ export function KanbanPage() {
   );
 }
 
-function CreateTaskModal({ open, onClose, onSave, taskTypes }: {
-  open: boolean; onClose: () => void; onSave: (data: Partial<ProjectTask>) => void;
+function CreateTaskModal({ open, onClose, onSave, taskTypes, projects, initialProjectId }: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: Partial<ProjectTask> & { project_id: number }) => void;
   taskTypes: TaskType[];
+  projects: Project[];
+  initialProjectId: number | null;
 }) {
+  const [projectId, setProjectId] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [taskTypeId, setTaskTypeId] = useState('');
   const [priority, setPriority] = useState('medium');
   const [estimatedHours, setEstimatedHours] = useState('');
 
+  useEffect(() => {
+    if (open) {
+      setProjectId(initialProjectId ? String(initialProjectId) : '');
+      setTitle('');
+      setDescription('');
+      setTaskTypeId('');
+      setPriority('medium');
+      setEstimatedHours('');
+    }
+  }, [open, initialProjectId]);
+
   const handleSave = () => {
+    if (!projectId) return;
     onSave({
+      project_id: Number(projectId),
       title,
       description: description || undefined,
       task_type_id: taskTypeId ? Number(taskTypeId) : undefined,
       priority: priority as any,
       estimated_hours: estimatedHours ? Number(estimatedHours) : undefined,
     });
-    setTitle(''); setDescription(''); setTaskTypeId(''); setPriority('medium'); setEstimatedHours('');
   };
 
+  const projectOptions = projects.map((p) => ({ value: String(p.id), label: p.name }));
   const typeOptions = taskTypes.map((t) => ({ value: String(t.id), label: t.name }));
   const priorityOptions = [
     { value: 'low', label: 'Baja' }, { value: 'medium', label: 'Media' },
@@ -255,33 +383,55 @@ function CreateTaskModal({ open, onClose, onSave, taskTypes }: {
     <Modal open={open} onClose={onClose}>
       <div className="p-6 space-y-4 min-w-[420px]">
         <h2 className="text-lg font-semibold">Nueva tarea</h2>
+        
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Título</label>
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Proyecto</label>
+          <Select
+            options={projectOptions}
+            value={projectId}
+            onChange={setProjectId}
+            disabled={initialProjectId !== null}
+            placeholder="Seleccionar proyecto..."
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Título</label>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
+
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Descripción</label>
-          <textarea className="w-full rounded-lg border px-3 py-2 text-sm resize-none" style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text)' }} rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Descripción</label>
+          <textarea
+            className="w-full rounded-lg border px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25"
+            style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface-raised)', color: 'var(--sys-text)' }}
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Tipo</label>
-            <Select options={typeOptions} value={taskTypeId} onChange={setTaskTypeId} />
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tipo</label>
+            <Select options={typeOptions} value={taskTypeId} onChange={setTaskTypeId} placeholder="Seleccionar tipo..." />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Prioridad</label>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Prioridad</label>
             <Select options={priorityOptions} value={priority} onChange={setPriority} />
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Horas estimadas</label>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Horas estimadas</label>
             <Input type="number" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
           </div>
         </div>
+
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave} disabled={!title.trim()}>Crear</Button>
+          <Button variant="primary" onClick={handleSave} disabled={!title.trim() || !projectId}>Crear</Button>
         </div>
       </div>
     </Modal>

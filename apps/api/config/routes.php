@@ -887,6 +887,10 @@ return function (Router $router, array $app): void {
     });
 
     // Tracker Kanban
+    $router->get('/api/tracker/kanban/all', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['kanban']->getAll());
+    });
     $router->get('/api/tracker/kanban/{projectId}', function (array $p) use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['kanban']->getBoard((int)$p['projectId']));

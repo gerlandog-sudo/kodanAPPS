@@ -38,6 +38,24 @@ final class ProjectTaskRepository extends BaseRepository
         );
     }
 
+    /**
+     * Obtiene todas las tareas de todos los proyectos del tenant.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findAllByTenant(): array
+    {
+        return $this->findAll(
+            self::TABLE,
+            't.*, tt.name AS task_type_name, tt.color_hex AS task_type_color, tt.icon AS task_type_icon, u.display_name AS assigned_name, p.name AS project_name',
+            't.tenant_id = :tenant_id',
+            [':tenant_id' => 0],
+            't.position ASC',
+            0,
+            't LEFT JOIN task_types tt ON tt.id = t.task_type_id LEFT JOIN users u ON u.id = t.assigned_to LEFT JOIN TRACKER_projects p ON p.id = t.project_id'
+        );
+    }
+
     public function moveTask(int $taskId, string $toStage, int $position): int
     {
         $task = $this->findById($taskId);

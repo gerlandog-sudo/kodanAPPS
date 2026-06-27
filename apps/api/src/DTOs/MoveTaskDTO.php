@@ -38,7 +38,7 @@ final readonly class MoveTaskDTO
         if (!isset($data['to_stage']) || !is_string($data['to_stage'])) {
             $errors['to_stage'] = 'La columna destino es requerida';
         } else {
-            $allowed = ['todo', 'in_progress', 'review', 'done'];
+            $allowed = ['todo', 'in_progress', 'review', 'done', 'archived'];
             if (!in_array($data['to_stage'], $allowed, true)) {
                 $errors['to_stage'] = 'Columna destino inválida';
             }

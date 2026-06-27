@@ -23,7 +23,20 @@ final class KanbanController
      */
     public function getBoard(int $projectId): array
     {
-        return $this->kanbanService->getBoard($projectId);
+        $includeArchived = isset($_GET['include_archived']) && ($_GET['include_archived'] === '1' || $_GET['include_archived'] === 'true');
+        return $this->kanbanService->getBoard($projectId, $includeArchived);
+    }
+
+    /**
+     * GET /api/tracker/kanban/all
+     * Devuelve todas las tareas de todos los proyectos (vista "TODOS").
+     *
+     * @return array<string, mixed>
+     */
+    public function getAll(): array
+    {
+        $includeArchived = isset($_GET['include_archived']) && ($_GET['include_archived'] === '1' || $_GET['include_archived'] === 'true');
+        return $this->kanbanService->getAllBoards($includeArchived);
     }
 
     /**

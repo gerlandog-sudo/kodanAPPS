@@ -56,7 +56,7 @@ final readonly class CreateProjectTaskDTO
         }
 
         if (isset($data['kanban_status'])) {
-            $allowed = ['todo', 'in_progress', 'review', 'done'];
+            $allowed = ['todo', 'in_progress', 'review', 'done', 'archived'];
             if (!in_array($data['kanban_status'], $allowed, true)) {
                 $errors['kanban_status'] = 'Estado kanban inválido';
             }

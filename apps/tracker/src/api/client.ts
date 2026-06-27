@@ -30,7 +30,7 @@ export interface ProjectTask {
   description: string | null
   assigned_to: number | null
   assigned_name: string | null
-  kanban_status: 'todo' | 'in_progress' | 'review' | 'done'
+  kanban_status: 'todo' | 'in_progress' | 'review' | 'done' | 'archived'
   position: number
   priority: 'low' | 'medium' | 'high' | 'critical'
   start_date: string | null
@@ -41,6 +41,7 @@ export interface ProjectTask {
   task_type_name: string | null
   task_type_color: string | null
   task_type_icon: string | null
+  project_name?: string
 }
 
 export interface KanbanBoardData {
@@ -242,7 +243,16 @@ export const trackerApi = {
   listProjects: () => api.get<Project[]>('/api/tracker/projects'),
   getProject: (id: number) => api.get<Project>(`/api/tracker/projects/${id}`),
 
-  getBoard: (projectId: number) => api.get<KanbanBoardData>(`/api/tracker/kanban/${projectId}`),
+  getBoard: (projectId: number, includeArchived = false) => {
+    const params: Record<string, string> = {};
+    if (includeArchived) params.include_archived = 'true';
+    return api.get<KanbanBoardData>(`/api/tracker/kanban/${projectId}`, params);
+  },
+  getAllBoards: (includeArchived = false) => {
+    const params: Record<string, string> = {};
+    if (includeArchived) params.include_archived = 'true';
+    return api.get<KanbanBoardData>('/api/tracker/kanban/all', params);
+  },
   createTask: (data: Partial<ProjectTask>) => api.post<ProjectTask>('/api/tracker/kanban/tasks', data),
   getTask: (id: number) => api.get<ProjectTask>(`/api/tracker/kanban/tasks/${id}`),
   updateTask: (id: number, data: Partial<ProjectTask>) => api.patch<ProjectTask>(`/api/tracker/kanban/tasks/${id}`, data),

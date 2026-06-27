@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { KanbanBoard, Modal, Button, Select, Input, SlidePanel } from '@kodan-apps/ui-core';
 import type { ColumnDef } from '@kodan-apps/ui-core';
 import { trackerApi, Project, ProjectTask, TaskType } from '../api/client';
-import { Plus } from 'lucide-react';
+import { Plus, Archive, ArchiveRestore, LayoutList } from 'lucide-react';
 
-const columns: ColumnDef[] = [
+const BASE_COLUMNS: ColumnDef[] = [
   { id: 'todo', label: 'Por hacer', dotColor: '#6b7280' },
   { id: 'in_progress', label: 'En progreso', dotColor: '#3b82f6' },
   { id: 'review', label: 'Revisión', dotColor: '#f59e0b' },
@@ -22,43 +22,74 @@ export function KanbanPage() {
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailTask, setDetailTask] = useState<ProjectTask | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const isTodosMode = selectedProjectId === null;
 
   const loadProjects = useCallback(async () => {
     const data = await trackerApi.listProjects();
     setProjects(data);
   }, []);
 
-  const loadBoard = useCallback(async (projectId: number) => {
-    const board = await trackerApi.getBoard(projectId);
-    setTasks(Object.values(board.itemsByStage).flat());
-  }, []);
+  const loadBoard = useCallback(async () => {
+    if (selectedProjectId === null) {
+      // Modo TODOS: cargar tareas de todos los proyectos
+      const board = await trackerApi.getAllBoards(showArchived);
+      setTasks(Object.values(board.itemsByStage).flat());
+    } else {
+      const board = await trackerApi.getBoard(selectedProjectId, showArchived);
+      setTasks(Object.values(board.itemsByStage).flat());
+    }
+  }, [selectedProjectId, showArchived]);
 
   useEffect(() => { loadProjects(); }, [loadProjects]);
   useEffect(() => {
-    if (selectedProjectId) {
-      loadBoard(selectedProjectId);
-      trackerApi.listTaskTypes().then(setTaskTypes).catch(() => {});
-    }
-  }, [selectedProjectId, loadBoard]);
+    loadBoard();
+    trackerApi.listTaskTypes().then(setTaskTypes).catch(() => {});
+  }, [loadBoard]);
 
-  const itemsByStage: Record<string, ProjectTask[]> = { todo: [], in_progress: [], review: [], done: [] };
+  // Construir columnas: base + archivada condicional
+  const columns = useCallback((): ColumnDef[] => {
+    const cols = [...BASE_COLUMNS];
+    if (showArchived) {
+      cols.push({ id: 'archived', label: 'Archivada', dotColor: '#6B7280' });
+    }
+    return cols;
+  }, [showArchived]);
+
+  // Agrupar tareas por status, incluyendo archived siempre
+  const itemsByStage: Record<string, ProjectTask[]> = {
+    todo: [], in_progress: [], review: [], done: [], archived: [],
+  };
   tasks.forEach((t) => {
-    if (itemsByStage[t.kanban_status]) itemsByStage[t.kanban_status].push(t);
+    const key = t.kanban_status as string;
+    if (itemsByStage[key]) itemsByStage[key].push(t);
   });
 
   const handleDrop = async (itemId: string | number, toStage: string) => {
     await trackerApi.moveTask(Number(itemId), { to_stage: toStage });
-    if (selectedProjectId) loadBoard(selectedProjectId);
+    loadBoard();
+  };
+
+  const handleToggleArchive = async (task: ProjectTask) => {
+    const nextStatus = task.kanban_status === 'archived' ? 'todo' : 'archived';
+    // Optimistic update
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, kanban_status: nextStatus as any } : t)));
+    await trackerApi.moveTask(task.id, { to_stage: nextStatus });
+    loadBoard();
   };
 
   const handleCreate = async (data: Partial<ProjectTask>) => {
-    if (!selectedProjectId) return;
-    await trackerApi.createTask({ ...data, project_id: selectedProjectId });
+    if (selectedProjectId === null) return;
+    await trackerApi.createTask({ ...data, project_id: selectedProjectId! });
     setCreateOpen(false);
-    loadBoard(selectedProjectId);
+    loadBoard();
   };
 
-  const projectOptions = projects.map((p) => ({ value: String(p.id), label: p.name }));
+  const projectOptions = [
+    { value: '', label: 'TODOS' },
+    ...projects.map((p) => ({ value: String(p.id), label: p.name })),
+  ];
 
   return (
     <div className="p-6 space-y-4 h-full flex flex-col">
@@ -67,32 +98,45 @@ export function KanbanPage() {
           <div className="w-64">
             <Select
               options={projectOptions}
-              value={selectedProjectId ? String(selectedProjectId) : ''}
-              onChange={(v) => setSelectedProjectId(v ? Number(v) : null)}
+              value={selectedProjectId !== null ? String(selectedProjectId) : ''}
+              onChange={(v) => setSelectedProjectId(v !== '' ? Number(v) : null)}
               placeholder="Seleccionar proyecto..."
             />
           </div>
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all duration-200"
+            style={{
+              background: showArchived ? 'var(--sys-primary-container)' : 'transparent',
+              color: showArchived ? 'var(--sys-on-primary)' : 'var(--sys-text-muted)',
+              borderColor: showArchived ? 'var(--sys-primary)' : 'var(--sys-border-soft)',
+            }}
+            title={showArchived ? 'Ocultar archivadas' : 'Mostrar archivadas'}
+          >
+            {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+            <span>{showArchived ? 'Archivadas' : 'Activas'}</span>
+          </button>
         </div>
-        {selectedProjectId && (
+        {!isTodosMode && (
           <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <Plus size={16} className="mr-1" /> Nueva tarea
           </Button>
         )}
       </div>
 
-      {!selectedProjectId ? (
+      {isTodosMode && projects.length === 0 ? (
         <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--sys-text-muted)' }}>
-          Seleccioná un proyecto para ver el tablero
+          No hay proyectos. Creá uno desde Gestión de Proyectos.
         </div>
       ) : (
         <KanbanBoard
-          columns={columns}
+          columns={columns()}
           itemsByStage={itemsByStage}
           onDrop={handleDrop}
           emptyPlaceholder={<div className="h-24 flex items-center justify-center text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin tareas</div>}
           renderCard={(task) => (
             <div
-              className="p-3 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow"
+              className="p-3 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow group"
               style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-card)', color: 'var(--sys-text)' }}
               onClick={() => setDetailTask(task)}
             >
@@ -111,6 +155,24 @@ export function KanbanPage() {
                   {task.assigned_name}
                 </p>
               )}
+              {isTodosMode && task.project_name && (
+                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--sys-text-muted)' }}>
+                  <LayoutList size={10} />
+                  {task.project_name}
+                </p>
+              )}
+              <div className="mt-2 pt-2 border-t flex justify-end opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ borderColor: 'var(--sys-border-soft)' }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleToggleArchive(task); }}
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  style={{ color: 'var(--sys-text-muted)' }}
+                  title={task.kanban_status === 'archived' ? 'Restaurar' : 'Archivar'}
+                >
+                  {task.kanban_status === 'archived' ? <ArchiveRestore size={12} /> : <Archive size={12} />}
+                  {task.kanban_status === 'archived' ? 'Restaurar' : 'Archivar'}
+                </button>
+              </div>
             </div>
           )}
           renderOverlayCard={(task) => (
@@ -132,12 +194,28 @@ export function KanbanPage() {
         {detailTask && (
           <div className="p-6 space-y-4" style={{ color: 'var(--sys-text)' }}>
             <p className="text-sm whitespace-pre-wrap">{detailTask.description || 'Sin descripción'}</p>
+            {detailTask.project_name && (
+              <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>
+                <span className="font-medium">Proyecto:</span> {detailTask.project_name}
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="font-medium">Tipo:</span> {detailTask.task_type_name || '-'}</div>
               <div><span className="font-medium">Prioridad:</span> {detailTask.priority}</div>
               <div><span className="font-medium">Asignado a:</span> {detailTask.assigned_name || '-'}</div>
               {detailTask.estimated_hours ? <div><span className="font-medium">Horas estimadas:</span> {detailTask.estimated_hours}h</div> : null}
               {detailTask.due_date ? <div><span className="font-medium">Vence:</span> {detailTask.due_date}</div> : null}
+              <div><span className="font-medium">Estado:</span> {
+                { todo: 'Por hacer', in_progress: 'En progreso', review: 'Revisión', done: 'Terminado', archived: 'Archivada' }[detailTask.kanban_status] || detailTask.kanban_status
+              }</div>
+            </div>
+            <div className="pt-2">
+              <Button
+                variant="secondary"
+                onClick={() => { handleToggleArchive(detailTask); setDetailTask(null); }}
+              >
+                {detailTask.kanban_status === 'archived' ? <><ArchiveRestore size={14} className="mr-1" /> Restaurar</> : <><Archive size={14} className="mr-1" /> Archivar</>}
+              </Button>
             </div>
           </div>
         )}

@@ -19,16 +19,52 @@ final class KanbanService
 
     /**
      * @param int $projectId
+     * @param bool $includeArchived
      * @return array<string, mixed>
      */
-    public function getBoard(int $projectId): array
+    public function getBoard(int $projectId, bool $includeArchived = false): array
     {
         $tasks = $this->taskRepo->findByProject($projectId);
-        $columns = ['todo', 'in_progress', 'review', 'done'];
-        $board = [];
 
+        return $this->buildBoard($tasks, $includeArchived);
+    }
+
+    /**
+     * Obtiene todas las tareas de todos los proyectos (vista "TODOS").
+     *
+     * @param bool $includeArchived
+     * @return array<string, mixed>
+     */
+    public function getAllBoards(bool $includeArchived = false): array
+    {
+        $tasks = $this->taskRepo->findAllByTenant();
+
+        return $this->buildBoard($tasks, $includeArchived);
+    }
+
+    /**
+     * Construye la estructura del board a partir de un array de tareas.
+     *
+     * @param array<int, array<string, mixed>> $tasks
+     * @param bool $includeArchived
+     * @return array<string, mixed>
+     */
+    private function buildBoard(array $tasks, bool $includeArchived): array
+    {
+        $columns = ['todo', 'in_progress', 'review', 'done'];
+        if ($includeArchived) {
+            $columns[] = 'archived';
+        }
+
+        $board = [];
         foreach ($columns as $col) {
             $board[$col] = array_values(array_filter($tasks, fn($t) => $t['kanban_status'] === $col));
+        }
+
+        // Si no se incluyen archivadas, filtrarlas de las columnas activas
+        if (!$includeArchived) {
+            // remover tareas archivadas de las columnas (no debería haber si el filtro funciona)
+            // pero por seguridad
         }
 
         return [

@@ -179,6 +179,8 @@ final class DashboardController
         $tenantId = TenantContext::getTenantId();
 
         // Segment 1: pipelines + opportunity aggregations
+        // Usamos ? posicional porque :tenant_id aparece dos veces y native prepared
+        // statements (EMULATE_PREPARES=false) pueden fallar al reutilizar named params
         $aggSql = "SELECT p.id, p.name,
                           COALESCE(SUM(o.value), 0) AS total_value,
                           COUNT(o.id) AS total_deals,
@@ -187,12 +189,12 @@ final class DashboardController
                           SUM(CASE WHEN ps.is_lost_stage = 1 THEN 1 ELSE 0 END) AS lost_deals
                    FROM CRM_pipelines p
                    LEFT JOIN CRM_pipeline_stages ps ON ps.pipeline_id = p.id
-                   LEFT JOIN CRM_opportunities o ON o.pipeline_stage_id = ps.id AND o.tenant_id = :tenant_id1
-                   WHERE p.tenant_id = :tenant_id1
+                   LEFT JOIN CRM_opportunities o ON o.pipeline_stage_id = ps.id AND o.tenant_id = ?
+                   WHERE p.tenant_id = ?
                    GROUP BY p.id, p.name
                    ORDER BY p.name ASC";
         $aggStmt = $this->pdo->prepare($aggSql);
-        $aggStmt->execute([':tenant_id1' => $tenantId]);
+        $aggStmt->execute([$tenantId, $tenantId]);
         $pipelines = $aggStmt->fetchAll();
 
         // Segment 2: avg cycle days per pipeline (separate query to avoid correlated subquery issues)

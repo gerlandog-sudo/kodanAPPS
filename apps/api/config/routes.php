@@ -1097,6 +1097,40 @@ return function (Router $router, array $app): void {
         $app['controllers']['report']->weeklySummary();
     });
 
+    // Tracker F3 — Insights (IA)
+    $router->get('/api/tracker/insights/heatmap', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->heatmap());
+    });
+    $router->get('/api/tracker/insights/timeline/projects', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->timelineProjects());
+    });
+    $router->get('/api/tracker/insights/timeline/resources', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->timelineResources());
+    });
+    $router->get('/api/tracker/insights/timeline/details', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->timelineDetails());
+    });
+    $router->post('/api/tracker/insights/timeline/reassign-suggestions', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->reassignSuggestions());
+    });
+    $router->post('/api/tracker/insights/timeline/reassign-execute', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->reassignExecute());
+    });
+    $router->get('/api/tracker/insights/predictive-alerts', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->predictiveAlerts());
+    });
+    $router->post('/api/tracker/insights/ai/generate-text', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['trackerInsight']->generateText());
+    });
+
     // ============================================================
     // Middleware & Routes: Unified Messaging System
     // ============================================================

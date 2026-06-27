@@ -2,7 +2,7 @@ import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, 
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
-import { LayoutDashboard, FolderKanban, KanbanSquare, Clock, CheckCircle, Settings, FileSpreadsheet, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, KanbanSquare, Clock, CheckCircle, Settings, FileSpreadsheet, TrendingUp, Thermometer, GitBranch, BrainCircuit } from 'lucide-react';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -15,6 +15,9 @@ const ApprovalsPage = lazy(() => import('./pages/ApprovalsPage').then(m => ({ de
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
 const MetricsPage = lazy(() => import('./pages/MetricsPage').then(m => ({ default: m.MetricsPage })));
+const HeatmapPage = lazy(() => import('./pages/HeatmapPage').then(m => ({ default: m.HeatmapPage })));
+const TimelinePage = lazy(() => import('./pages/TimelinePage').then(m => ({ default: m.TimelinePage })));
+const PredictiveAlertsPage = lazy(() => import('./pages/PredictiveAlertsPage').then(m => ({ default: m.PredictiveAlertsPage })));
 const LogoTRACKER3D = lazy(() => import('./components/LogoTRACKER3D').then(m => ({ default: m.LogoTRACKER3D })));
 
 function Logo3DPlaceholder({ size }: { size?: number }) {
@@ -22,7 +25,7 @@ function Logo3DPlaceholder({ size }: { size?: number }) {
 }
 
 type View = 'login' | 'set-password' | 'app';
-type Route = 'dashboard' | 'projects' | 'kanban' | 'time-entries' | 'approvals' | 'reports' | 'accounts' | 'contacts' | 'settings' | 'metrics';
+type Route = 'dashboard' | 'projects' | 'kanban' | 'time-entries' | 'approvals' | 'reports' | 'accounts' | 'contacts' | 'settings' | 'metrics' | 'heatmap' | 'timeline' | 'ai-reports';
 
 function AppContent() {
   const { theme, toggleTheme } = useTheme();
@@ -73,12 +76,15 @@ function AppContent() {
 
   const navItems = useMemo<NavItem[]>(() => [
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { key: 'metrics', label: 'Métricas', icon: <TrendingUp size={18} /> },
     { key: 'projects', label: 'Proyectos', icon: <FolderKanban size={18} /> },
     { key: 'kanban', label: 'Tablero', icon: <KanbanSquare size={18} /> },
     { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
     { key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> },
+    { key: 'heatmap', label: 'Mapa de Calor', icon: <Thermometer size={18} /> },
+    { key: 'timeline', label: 'Línea de Tiempo', icon: <GitBranch size={18} /> },
+    { key: 'ai-reports', label: 'Reporte IA', icon: <BrainCircuit size={18} /> },
     { key: 'reports', label: 'Reportes', icon: <FileSpreadsheet size={18} /> },
-    { key: 'metrics', label: 'Métricas', icon: <TrendingUp size={18} /> },
     { key: 'accounts', label: 'Cuentas', icon: B2BAccountNavItem.icon },
     { key: 'contacts', label: 'Contactos', icon: B2BContactNavItem.icon },
   ], []);
@@ -163,6 +169,9 @@ function AppContent() {
               {route === 'approvals' && <ApprovalsPage />}
               {route === 'reports' && <ReportsPage />}
               {route === 'metrics' && <MetricsPage />}
+              {route === 'heatmap' && <HeatmapPage />}
+              {route === 'timeline' && <TimelinePage />}
+              {route === 'ai-reports' && <PredictiveAlertsPage />}
               {route === 'settings' && <SettingsPage />}
               {route === 'accounts' && <Accounts />}
               {route === 'contacts' && <Contacts />}

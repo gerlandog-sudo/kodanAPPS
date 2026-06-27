@@ -190,6 +190,54 @@ export interface DetailedProjectMetrics {
   }>;
 }
 
+// F3 — Insight types
+export interface HeatmapUser {
+  id: number;
+  name: string;
+  weekly_capacity: number;
+  days: { date: string; hours: number; capacity: number; saturation: number }[];
+}
+
+export interface TimelineProject {
+  id: number;
+  name: string;
+  budget_hours: number;
+  actual_hours: number;
+  status: string;
+  data: { date: string; total_hours: number }[];
+}
+
+export interface TimelineResource {
+  id: number;
+  name: string;
+  position: string;
+  seniority: string;
+  weekly_capacity: number;
+  total_load: number;
+  logged_hours: { date: string; total_hours: number }[];
+}
+
+export interface TimelineDetails {
+  tasks: { id: number; description: string; priority: string; estimated_hours: number; collaborator_name?: string; project_name?: string }[];
+  entries: { id: number; hours: number; description: string; collaborator_name: string; task_name: string }[];
+}
+
+export interface PredictiveAlertsResponse {
+  alerts: {
+    projectId: number;
+    projectName: string;
+    priority: 'High' | 'Medium' | 'Low';
+    metrics: {
+      budget_hours: number;
+      consumed_hours: number;
+      budget_exhausted_percent: number;
+      avg_weekly_hours: number;
+      weeks_to_depletion: number | string;
+      seniority_mix: { senior_percent: number };
+    };
+  }[];
+}
+
 export const trackerApi = {
   listProjects: () => api.get<Project[]>('/api/tracker/projects'),
   getProject: (id: number) => api.get<Project>(`/api/tracker/projects/${id}`),
@@ -235,6 +283,24 @@ export const trackerApi = {
   listSeniorities: () => api.get<CatalogItem[]>('/api/tracker/seniorities'),
   createSeniority: (name: string) => api.post<CatalogItem>('/api/tracker/seniorities', { name }),
   deleteSeniority: (id: number) => api.delete(`/api/tracker/seniorities/${id}`),
+
+  // F3 — Insights
+  getHeatmap: (startDate: string, endDate: string) =>
+    api.get<HeatmapUser[]>('/api/tracker/insights/heatmap', { start_date: startDate, end_date: endDate }),
+  getTimelineProjects: (params?: Record<string, string>) =>
+    api.get<TimelineProject[]>('/api/tracker/insights/timeline/projects', params),
+  getTimelineResources: (params?: Record<string, string>) =>
+    api.get<TimelineResource[]>('/api/tracker/insights/timeline/resources', params),
+  getTimelineDetails: (type: string, id: number, date: string) =>
+    api.get<TimelineDetails>('/api/tracker/insights/timeline/details', { type, id: String(id), date }),
+  reassignSuggestions: (data: { project_id?: number; task_id?: number }) =>
+    api.post<any>('/api/tracker/insights/timeline/reassign-suggestions', data),
+  reassignExecute: (taskId: number, userId: number) =>
+    api.post<any>('/api/tracker/insights/timeline/reassign-execute', { task_id: taskId, user_id: userId }),
+  getPredictiveAlerts: () =>
+    api.get<PredictiveAlertsResponse>('/api/tracker/insights/predictive-alerts'),
+  generateAiText: (prompt: string) =>
+    api.post<{ success: boolean; text: string }>('/api/tracker/insights/ai/generate-text', { prompt }),
 
   downloadReport: async (type: string, params?: Record<string, string>) => {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';

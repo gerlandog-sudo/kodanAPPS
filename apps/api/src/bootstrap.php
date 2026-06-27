@@ -54,10 +54,12 @@ use kodanAPPS\Repositories\ProjectRepository;
 use kodanAPPS\Repositories\ProjectTaskRepository;
 use kodanAPPS\Repositories\TimeEntryRepository;
 use kodanAPPS\Repositories\SummaryDailyRepository;
+use kodanAPPS\Services\AiService;
 use kodanAPPS\Controllers\TrackerController;
 use kodanAPPS\Controllers\TenantUserController;
 use kodanAPPS\Controllers\KanbanController;
 use kodanAPPS\Controllers\TimeEntryController;
+use kodanAPPS\Controllers\TrackerInsightController;
 use kodanAPPS\Controllers\TrackerDashboardController;
 use kodanAPPS\Controllers\TrackerProfileController;
 use kodanAPPS\Controllers\CatalogController;
@@ -255,6 +257,7 @@ $mailService = new \kodanAPPS\Services\MailService($pdo, $smtpConfigRepo);
 $kanbanService = new KanbanService($projectTaskRepo, $taskTypeRepo);
 $timeEntryService = new TimeEntryService($timeEntryRepo, $summaryDailyRepo);
 $dashboardService = new DashboardService($pdo);
+$aiService = new AiService($pdo);
 
 // ------------------------------------------------------------
 // Inyectar limit enforcer en repositorios
@@ -356,6 +359,7 @@ $workflowController = new WorkflowController($workflowRepo, $oppRepo, $taskRepo)
 $mailController = new \kodanAPPS\Controllers\MailController($emailTemplateRepo, $smtpConfigRepo, $mailService);
 $dashboardController = new \kodanAPPS\Controllers\DashboardController($pdo);
 $reportController = new ReportController($timeEntryRepo);
+$trackerInsightController = new TrackerInsightController($pdo, $aiService);
 
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);
@@ -428,5 +432,6 @@ return [
         'dashboard' => $dashboardController,
         'report' => $reportController,
         'trackerMetrics' => $trackerMetricsController,
+        'trackerInsight' => $trackerInsightController,
         ],
 ];

@@ -268,14 +268,18 @@ final class OpportunityRepository extends BaseRepository
     /**
      * Marca la oportunidad como ganada e inicializa el proyecto asociado en Tracker en una transacción atómica.
      * 
-     * @return int ID del proyecto creado
+     * Si el plan del tenant no incluye el módulo Tracker (projects_max no configurado),
+     * solo marca la oportunidad como ganada sin crear proyecto.
+     * 
+     * @return int ID del proyecto creado (0 si no se creó proyecto)
      */
     public function markAsWonAndCreateProject(int $opportunityId, int $wonStageId, string $projectName, float $budgetHours, ?string $closeReason = null): int
     {
         return $this->transactional(function () use ($opportunityId, $wonStageId, $projectName, $budgetHours, $closeReason) {
-            // 1. Actualizar etapa de la oportunidad a ganada y guardar el motivo de cierre
+            // 1. Actualizar etapa de la oportunidad a ganada, establecer close_date y guardar motivo
             $this->update(self::TABLE, [
                 'pipeline_stage_id' => $wonStageId,
+                'close_date' => date('Y-m-d H:i:s'),
                 'close_reason' => $closeReason
             ], 'id = :id', [':id' => $opportunityId]);
             
@@ -285,18 +289,29 @@ final class OpportunityRepository extends BaseRepository
             );
             $accountId = isset($oppResult[0]['account_id']) && is_scalar($oppResult[0]['account_id']) ? (int)$oppResult[0]['account_id'] : 0;
 
-            // 2. Verificar límite de proyectos antes de crear
-            $this->enforceUsageLimit('crm', 'projects_max');
+            // 2. Intentar crear proyecto en Tracker (solo si el plan lo permite)
+            $projectId = 0;
+            try {
+                $this->enforceUsageLimit('crm', 'projects_max');
 
-            $projectId = $this->create('projects', [
-                'account_id' => $accountId,
-                'opportunity_id' => $opportunityId,
-                'name' => $projectName,
-                'budget_hours' => $budgetHours,
-                'status' => 'active'
-            ]);
+                $projectId = $this->create('projects', [
+                    'account_id' => $accountId,
+                    'opportunity_id' => $opportunityId,
+                    'name' => $projectName,
+                    'budget_hours' => $budgetHours,
+                    'status' => 'active'
+                ]);
 
-            $this->incrementUsage('crm', 'projects_max');
+                $this->incrementUsage('crm', 'projects_max');
+            } catch (\RuntimeException $e) {
+                // Si el límite no está configurado (el plan no incluye Tracker),
+                // solo marcar como ganada sin crear proyecto
+                if (str_contains($e->getMessage(), 'Límite no configurado')) {
+                    error_log("[WonOpportunity] projects_max no configurado para tenant. Se omite creación de proyecto. Oportunidad #{$opportunityId} marcada como ganada.");
+                } else {
+                    throw $e;
+                }
+            }
             
             return $projectId;
         });

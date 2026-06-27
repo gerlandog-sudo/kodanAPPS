@@ -461,10 +461,16 @@ final class OpportunityController
             'account_name' => $opp['account_name'] ?? '',
         ]);
 
+        if ($projectId > 0) {
+            $message = "Negociación ganada y proyecto '{$projectName}' creado exitosamente en kodanTracker.";
+        } else {
+            $message = "Negociación marcada como ganada exitosamente.";
+        }
+
         return [
             'success' => true,
             'project_id' => $projectId,
-            'message' => "Negociación ganada y proyecto '{$projectName}' creado exitosamente en kodanTracker."
+            'message' => $message
         ];
     }
 

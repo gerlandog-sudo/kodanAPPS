@@ -191,6 +191,7 @@ class Router
             if ($code < 400 || $code > 599) {
                 $code = 500;
             }
+            error_log('[Router] RuntimeException: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             http_response_code($code);
             header('Content-Type: application/json');
             $data = ['error' => $e->getMessage()];
@@ -203,6 +204,8 @@ class Router
             }
             echo json_encode($data);
         } catch (\Throwable $e) {
+            error_log('[Router] Unhandled Throwable: ' . get_class($e) . ' - ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            error_log('[Router] Stack trace: ' . $e->getTraceAsString());
             http_response_code(500);
             header('Content-Type: application/json');
             $data = ['error' => 'Internal server error'];

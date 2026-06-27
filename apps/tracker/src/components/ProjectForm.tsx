@@ -103,68 +103,106 @@ export function ProjectForm({ open, onClose, onSave, initial }: ProjectFormProps
   }));
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <div className="p-6 space-y-4 min-w-[500px]">
-        <h2 className="text-lg font-semibold">{initial ? 'Editar' : 'Nuevo'} Proyecto</h2>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1 col-span-2">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Nombre</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          
-          <div className="flex flex-col gap-1 col-span-2">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Descripción</label>
-            <textarea
-              className="w-full rounded-md border px-3 py-2 text-sm resize-none"
-              style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text)' }}
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Cliente (Cuenta)</label>
-            <Select options={accountOptions} value={accountId} onChange={setAccountId} placeholder="Seleccionar cliente" />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Estado</label>
-            <Select options={statusOptions} value={status} onChange={setStatus} />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Presupuesto (Dinero)</label>
-            <Input type="number" value={budgetMoney} onChange={(e) => setBudgetMoney(e.target.value)} placeholder="0.00" />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Horas Presupuestadas (Hs)</label>
-            <Input type="number" value={budgetHours} onChange={(e) => setBudgetHours(e.target.value)} placeholder="0.0" />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Fecha de Inicio</label>
-            <DatePicker value={startDate} onChange={setStartDate} placeholder="AAAA-MM-DD" />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Fecha de Fin</label>
-            <DatePicker value={endDate} onChange={setEndDate} placeholder="AAAA-MM-DD" />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Color del Proyecto</label>
-            <div>
-              <ColorPicker value={colorHex} onChange={setColorHex} />
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={initial ? 'Editar Proyecto' : 'Nuevo Proyecto'}
+      className="modal-wide"
+    >
+      <div className="space-y-6 py-2">
+        {/* Section 1: Información General */}
+        <div className="space-y-4">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-border-soft pb-1.5 mb-3">
+            Información Principal
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nombre del Proyecto</label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ej. Rediseño de Portal Corporativo"
+              />
+            </div>
+            
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Descripción</label>
+              <textarea
+                className="w-full rounded-md border px-3 py-2.5 text-sm resize-none focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25 transition-all"
+                style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface-raised)', color: 'var(--sys-text)' }}
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Escribe una breve descripción del proyecto, sus objetivos o alcance..."
+              />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+        {/* Section 2: Asociación y Estado */}
+        <div className="space-y-4">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-border-soft pb-1.5 mb-3">
+            Clasificación y Estado
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cliente (Cuenta)</label>
+              <Select options={accountOptions} value={accountId} onChange={setAccountId} placeholder="Seleccionar cliente..." />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estado del Proyecto</label>
+              <Select options={statusOptions} value={status} onChange={setStatus} />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Presupuesto y Tiempos */}
+        <div className="space-y-4">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-border-soft pb-1.5 mb-3">
+            Planificación y Presupuesto
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Presupuesto ($)</label>
+              <Input type="number" value={budgetMoney} onChange={(e) => setBudgetMoney(e.target.value)} placeholder="0.00" />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Horas Presupuestadas</label>
+              <Input type="number" value={budgetHours} onChange={(e) => setBudgetHours(e.target.value)} placeholder="0.0" />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Color Distintivo</label>
+              <div className="h-11 flex items-center">
+                <ColorPicker value={colorHex} onChange={setColorHex} />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fecha de Inicio</label>
+              <DatePicker value={startDate} onChange={setStartDate} placeholder="AAAA-MM-DD" />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fecha de Fin</label>
+              <DatePicker value={endDate} onChange={setEndDate} placeholder="AAAA-MM-DD" />
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-border-soft/60">
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave} disabled={!name.trim() || !accountId}>Guardar</Button>
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            disabled={!name.trim() || !accountId}
+            className="px-6 py-2.5 font-bold shadow-sm"
+          >
+            Guardar
+          </Button>
         </div>
       </div>
     </Modal>

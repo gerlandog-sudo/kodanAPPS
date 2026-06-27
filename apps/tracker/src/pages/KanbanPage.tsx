@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { KanbanBoard, Modal, Button, Select, Input, SlidePanel, Toggle, EntityCard } from '@kodan-apps/ui-core';
+import { KanbanBoard, Button, Select, Input, Toggle, EntityCard } from '@kodan-apps/ui-core';
 import type { ColumnDef } from '@kodan-apps/ui-core';
 import { trackerApi, Project, ProjectTask, TaskType } from '../api/client';
-import { Plus, Archive, ArchiveRestore, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { TaskForm } from '../components/TaskForm';
 
 const BASE_COLUMNS: ColumnDef[] = [
   { id: 'todo', label: 'PARA HACER' },
@@ -51,8 +52,8 @@ export function KanbanPage() {
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [selectedCollaboratorId, setSelectedCollaboratorId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [createOpen, setCreateOpen] = useState(false);
-  const [detailTask, setDetailTask] = useState<ProjectTask | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [justDroppedId, setJustDroppedId] = useState<number | null>(null);
 
@@ -154,18 +155,30 @@ export function KanbanPage() {
       try {
         await trackerApi.moveTask(task.id, { to_stage: nextStatus });
         toast.success(nextStatus === 'archived' ? 'Tarea archivada.' : 'Tarea restaurada.');
+        loadBoard();
       } catch {
         setTasks(prevTasks);
         toast.error('Error al cambiar el estado de archivado.');
       }
     },
-    [tasks]
+    [tasks, loadBoard]
   );
 
-  const handleCreate = async (data: Partial<ProjectTask> & { project_id: number }) => {
-    await trackerApi.createTask(data);
-    setCreateOpen(false);
-    loadBoard();
+  const handleSave = async (data: Partial<ProjectTask> & { project_id: number }) => {
+    try {
+      if (editingTask) {
+        await trackerApi.updateTask(editingTask.id, data);
+        toast.success('Tarea actualizada.');
+      } else {
+        await trackerApi.createTask(data);
+        toast.success('Tarea creada.');
+      }
+      setFormOpen(false);
+      setEditingTask(null);
+      loadBoard();
+    } catch (err: any) {
+      toast.error(err?.message || 'Error al guardar la tarea.');
+    }
   };
 
   const projectOptions = [
@@ -214,7 +227,7 @@ export function KanbanPage() {
         </div>
         <Button
           variant="primary"
-          onClick={() => setCreateOpen(true)}
+          onClick={() => { setEditingTask(null); setFormOpen(true); }}
           className="h-11 px-5 shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold shrink-0"
         >
           <Plus size={16} /> Nueva Tarea
@@ -262,8 +275,8 @@ export function KanbanPage() {
                   badge={badge}
                   isDropped={isDropped}
                   estimatedHours={task.estimated_hours != null ? Number(task.estimated_hours) : undefined}
-                  onClick={() => setDetailTask(task)}
-                  onEdit={() => setDetailTask(task)}
+                  onClick={() => { setEditingTask(task); setFormOpen(true); }}
+                  onEdit={() => { setEditingTask(task); setFormOpen(true); }}
                   onDelete={async () => {
                     if (confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
                       await trackerApi.deleteTask(task.id);
@@ -277,151 +290,20 @@ export function KanbanPage() {
         </div>
       )}
 
-      {/* Modal Crear Tarea */}
-      <CreateTaskModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onSave={handleCreate}
-        taskTypes={taskTypes}
+      <TaskForm
+        open={formOpen}
+        onClose={() => {
+          setFormOpen(false);
+          setEditingTask(null);
+        }}
+        onSave={handleSave}
         projects={projects}
+        taskTypes={taskTypes}
+        collaborators={collaborators}
+        initial={editingTask}
         initialProjectId={selectedProjectId}
+        onToggleArchive={handleToggleArchive}
       />
-
-      {/* Panel de Detalle */}
-      <SlidePanel open={!!detailTask} onClose={() => setDetailTask(null)} title={detailTask?.title ?? ''}>
-        {detailTask && (
-          <div className="p-6 space-y-4" style={{ color: 'var(--sys-text)' }}>
-            <p className="text-sm whitespace-pre-wrap">{detailTask.description || 'Sin descripción'}</p>
-            {detailTask.project_name && (
-              <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>
-                <span className="font-medium">Proyecto:</span> {detailTask.project_name}
-              </p>
-            )}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="font-medium">Tipo:</span> {detailTask.task_type_name || '-'}</div>
-              <div><span className="font-medium">Prioridad:</span> {detailTask.priority}</div>
-              <div><span className="font-medium">Asignado a:</span> {detailTask.assigned_name || '-'}</div>
-              {detailTask.estimated_hours ? <div><span className="font-medium">Horas estimadas:</span> {detailTask.estimated_hours}h</div> : null}
-              {detailTask.due_date ? <div><span className="font-medium">Vence:</span> {detailTask.due_date}</div> : null}
-              <div><span className="font-medium">Estado:</span> {
-                { todo: 'Por hacer', in_progress: 'En progreso', review: 'Revisión', done: 'Terminado', archived: 'Archivada' }[detailTask.kanban_status] || detailTask.kanban_status
-              }</div>
-            </div>
-            <div className="pt-2 flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => { handleToggleArchive(detailTask); setDetailTask(null); }}
-              >
-                {detailTask.kanban_status === 'archived' ? <><ArchiveRestore size={14} className="mr-1" /> Restaurar</> : <><Archive size={14} className="mr-1" /> Archivar</>}
-              </Button>
-            </div>
-          </div>
-        )}
-      </SlidePanel>
     </div>
-  );
-}
-
-function CreateTaskModal({ open, onClose, onSave, taskTypes, projects, initialProjectId }: {
-  open: boolean;
-  onClose: () => void;
-  onSave: (data: Partial<ProjectTask> & { project_id: number }) => void;
-  taskTypes: TaskType[];
-  projects: Project[];
-  initialProjectId: number | null;
-}) {
-  const [projectId, setProjectId] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [taskTypeId, setTaskTypeId] = useState('');
-  const [priority, setPriority] = useState('medium');
-  const [estimatedHours, setEstimatedHours] = useState('');
-
-  useEffect(() => {
-    if (open) {
-      setProjectId(initialProjectId ? String(initialProjectId) : '');
-      setTitle('');
-      setDescription('');
-      setTaskTypeId('');
-      setPriority('medium');
-      setEstimatedHours('');
-    }
-  }, [open, initialProjectId]);
-
-  const handleSave = () => {
-    if (!projectId) return;
-    onSave({
-      project_id: Number(projectId),
-      title,
-      description: description || undefined,
-      task_type_id: taskTypeId ? Number(taskTypeId) : undefined,
-      priority: priority as any,
-      estimated_hours: estimatedHours ? Number(estimatedHours) : undefined,
-    });
-  };
-
-  const projectOptions = projects.map((p) => ({ value: String(p.id), label: p.name }));
-  const typeOptions = taskTypes.map((t) => ({ value: String(t.id), label: t.name }));
-  const priorityOptions = [
-    { value: 'low', label: 'Baja' }, { value: 'medium', label: 'Media' },
-    { value: 'high', label: 'Alta' }, { value: 'critical', label: 'Crítica' },
-  ];
-
-  return (
-    <Modal open={open} onClose={onClose}>
-      <div className="p-6 space-y-4 min-w-[420px]">
-        <h2 className="text-lg font-semibold">Nueva tarea</h2>
-        
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Proyecto</label>
-          <Select
-            options={projectOptions}
-            value={projectId}
-            onChange={setProjectId}
-            disabled={initialProjectId !== null}
-            placeholder="Seleccionar proyecto..."
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Título</label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Descripción</label>
-          <textarea
-            className="w-full rounded-md border px-3 py-2 text-sm resize-none focus:outline-none focus:border-primary-container focus:ring-[3px] focus:ring-primary-container/25"
-            style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface-raised)', color: 'var(--sys-text)' }}
-            rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tipo</label>
-            <Select options={typeOptions} value={taskTypeId} onChange={setTaskTypeId} placeholder="Seleccionar tipo..." />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Prioridad</label>
-            <Select options={priorityOptions} value={priority} onChange={setPriority} />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Horas estimadas</label>
-            <Input type="number" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave} disabled={!title.trim() || !projectId}>Crear</Button>
-        </div>
-      </div>
-    </Modal>
   );
 }

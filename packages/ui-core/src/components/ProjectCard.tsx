@@ -1,4 +1,4 @@
-import { Trash2, Briefcase, Info, Clock } from 'lucide-react'
+import { Trash2, Briefcase, Info, Clock, Pencil } from 'lucide-react'
 
 export interface ProjectCardProps {
   id: number
@@ -167,69 +167,27 @@ export function ProjectCard({
       }}
     >
       {/* Top Header section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
-          {/* Status Badge */}
-          <div>
-            <span style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              padding: '0.125rem 0.5rem',
-              borderRadius: '999px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              display: 'inline-block',
-              ...statusStyle
-            }}>
-              {statusLabel}
-            </span>
-          </div>
-
-          {/* Project Title */}
-          <h3 style={{
-            margin: 0,
-            fontSize: '1.25rem',
-            fontWeight: 700,
-            color: 'var(--sys-text)',
-            lineHeight: 1.25,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            fontFamily: 'var(--font-hanken-grotesk, system-ui)',
-            marginTop: '0.25rem'
-          }}>
-            {name}
-          </h3>
-
-          {/* Client Name */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Status Badge */}
+        <div>
           <span style={{
-            fontSize: '0.875rem',
-            color: 'var(--sys-text-muted)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            fontFamily: 'var(--font-hanken-grotesk, system-ui)'
+            fontSize: '10px',
+            fontWeight: 700,
+            padding: '0.125rem 0.5rem',
+            borderRadius: '999px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            display: 'inline-block',
+            ...statusStyle
           }}>
-            {clientName}
+            {statusLabel}
           </span>
-
-          {/* Dates */}
-          {displayDates && (
-            <span style={{
-              fontSize: '0.75rem',
-              color: 'var(--sys-text-muted)',
-              fontFamily: 'monospace',
-              marginTop: '0.125rem'
-            }}>
-              {displayDates}
-            </span>
-          )}
         </div>
 
         {/* Action buttons on the right */}
         <div 
           onClick={(e) => e.stopPropagation()} 
-          style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center', marginLeft: '1rem' }}
+          style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', alignItems: 'center' }}
         >
           {onNavigateToBoard && (
             <button
@@ -266,6 +224,41 @@ export function ProjectCard({
             </button>
           )}
 
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              title="Editar Proyecto"
+              style={{
+                width: '2.25rem',
+                height: '2.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--sys-border-soft)',
+                background: 'var(--sys-surface-raised)',
+                color: 'var(--sys-text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                const b = e.currentTarget
+                b.style.color = 'var(--sys-primary)'
+                b.style.borderColor = 'color-mix(in srgb, var(--sys-primary) 40%, transparent)'
+                b.style.background = 'color-mix(in srgb, var(--sys-primary) 8%, transparent)'
+              }}
+              onMouseLeave={e => {
+                const b = e.currentTarget
+                b.style.color = 'var(--sys-text-muted)'
+                b.style.borderColor = 'var(--sys-border-soft)'
+                b.style.background = 'var(--sys-surface-raised)'
+              }}
+            >
+              <Pencil size={15} />
+            </button>
+          )}
+
           {onDelete && (
             <button
               type="button"
@@ -299,6 +292,45 @@ export function ProjectCard({
             </button>
           )}
         </div>
+      </div>
+
+      {/* Info section: Title, Client Name, Dates */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <h3 style={{
+          margin: 0,
+          fontSize: '1.25rem',
+          fontWeight: 700,
+          color: 'var(--sys-text)',
+          lineHeight: 1.25,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          fontFamily: 'var(--font-hanken-grotesk, system-ui)',
+        }}>
+          {name}
+        </h3>
+
+        <span style={{
+          fontSize: '0.875rem',
+          color: 'var(--sys-text-muted)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          fontFamily: 'var(--font-hanken-grotesk, system-ui)'
+        }}>
+          {clientName}
+        </span>
+
+        {displayDates && (
+          <span style={{
+            fontSize: '0.75rem',
+            color: 'var(--sys-text-muted)',
+            fontFamily: 'monospace',
+            marginTop: '0.125rem'
+          }}>
+            {displayDates}
+          </span>
+        )}
       </div>
 
       {/* Columns Container */}

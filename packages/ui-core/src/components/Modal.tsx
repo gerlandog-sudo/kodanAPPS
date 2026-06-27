@@ -26,7 +26,7 @@ export function Modal({ open, onClose, children, title, className = '' }: ModalP
           )}
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center gap-2 px-2 py-2 rounded-md font-medium text-sm leading-5 whitespace-nowrap cursor-pointer border-none active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-transparent text-text-muted hover:bg-surface hover:text-text"
+            className="ml-auto inline-flex items-center justify-center gap-2 px-2 py-2 rounded-md font-medium text-sm leading-5 whitespace-nowrap cursor-pointer border-none active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none bg-transparent text-text-muted hover:bg-surface hover:text-text"
             style={{ lineHeight: 1 }}
             aria-label="Close"
           >

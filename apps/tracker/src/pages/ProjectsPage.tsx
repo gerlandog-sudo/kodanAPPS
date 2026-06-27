@@ -1,45 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button, ConfirmDialog, Input, Card } from '@kodan-apps/ui-core';
+import { Button, ConfirmDialog, Input, EntityCard, Card } from '@kodan-apps/ui-core';
 import { trackerApi, Project } from '../api/client';
 import { ProjectForm } from '../components/ProjectForm';
-import { Plus, Search, FolderKanban, Pencil, Trash2, Briefcase, Calendar, DollarSign, Clock } from 'lucide-react';
-
-function CircularProgress({ percent, color }: { percent: number; color: string }) {
-  const radius = 24;
-  const stroke = 3;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (Math.min(percent, 100) / 100) * circumference;
-
-  return (
-    <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: '48px', height: '48px' }}>
-      <svg height="48" width="48" className="transform -rotate-90">
-        <circle
-          stroke="var(--sys-border-soft)"
-          fill="transparent"
-          strokeWidth={stroke}
-          r={normalizedRadius}
-          cx="24"
-          cy="24"
-        />
-        <circle
-          stroke={color}
-          fill="transparent"
-          strokeWidth={stroke}
-          strokeDasharray={circumference + ' ' + circumference}
-          style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.35s' }}
-          strokeLinecap="round"
-          r={normalizedRadius}
-          cx="24"
-          cy="24"
-        />
-      </svg>
-      <span className="absolute text-[10px] font-bold" style={{ color: 'var(--sys-text)' }}>
-        {Math.round(percent)}%
-      </span>
-    </div>
-  );
-}
+import { Plus, Search, FolderKanban } from 'lucide-react';
 
 export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -86,11 +49,6 @@ export function ProjectsPage() {
     }
   };
 
-  const formatDate = (dStr?: string | null) => {
-    if (!dStr) return '';
-    return new Date(dStr).toISOString().slice(0, 10);
-  };
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -129,24 +87,8 @@ export function ProjectsPage() {
           )}
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((p) => {
-            // Dinero
-            const budgetMoney = Number(p.budget_money) || 0;
-            const actualCost = Number(p.actual_cost) || 0;
-            const moneyPercent = budgetMoney > 0 ? (actualCost / budgetMoney) * 100 : 0;
-            const moneyDiff = budgetMoney - actualCost;
-            const moneyIsExceeded = moneyDiff < 0;
-            const moneyColor = moneyIsExceeded ? '#EF4444' : moneyPercent > 85 ? '#F97316' : '#22C55E';
-
-            // Horas
-            const budgetHours = Number(p.budget_hours) || 0;
-            const actualHours = Number(p.actual_hours) || 0;
-            const hoursPercent = budgetHours > 0 ? (actualHours / budgetHours) * 100 : 0;
-            const hoursDiff = budgetHours - actualHours;
-            const hoursIsExceeded = hoursDiff < 0;
-            const hoursColor = hoursIsExceeded ? '#EF4444' : hoursPercent > 85 ? '#F97316' : '#22C55E';
-
             // Badge status styling
             let statusLabel = 'ACTIVO';
             let statusClass = 'bg-emerald-50 text-emerald-600 border border-emerald-100';
@@ -158,131 +100,32 @@ export function ProjectsPage() {
               statusClass = 'bg-blue-50 text-blue-600 border border-blue-100';
             }
 
+            const badge = (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusClass}`}>
+                {statusLabel}
+              </span>
+            );
+
+            // Display actual hours / budget hours in a clean way
+            const hoursDisplay = p.budget_hours 
+              ? `${(p.actual_hours || 0).toFixed(1)}h / ${p.budget_hours.toFixed(1)}h`
+              : undefined;
+
             return (
-              <Card key={p.id} className="p-6 relative hover:shadow-lg transition-all duration-300 border">
-                {/* Header row: badge (left) + icons (right) */}
-                <div className="flex justify-between items-start mb-4">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusClass}`}>
-                    {statusLabel}
-                  </span>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-gray-50 border rounded-lg flex items-center justify-center" style={{ borderColor: 'var(--sys-border-soft)' }}>
-                      <Briefcase size={16} className="text-gray-500" />
-                    </div>
-                    <button
-                      onClick={() => { setEditing(p); setFormOpen(true); }}
-                      className="p-2 border rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                      style={{ borderColor: 'var(--sys-border-soft)' }}
-                      title="Editar"
-                    >
-                      <Pencil size={14} className="text-gray-500" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteId(p.id)}
-                      className="p-2 border rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
-                      style={{ borderColor: 'var(--sys-border-soft)' }}
-                      title="Eliminar"
-                    >
-                      <Trash2 size={14} className="text-red-500" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Project Details */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{
-                      background: p.color_hex || 'var(--sys-primary)'
-                    }} />
-                    <h2 className="text-xl font-bold tracking-tight text-ellipsis overflow-hidden whitespace-nowrap" style={{ color: 'var(--sys-text)' }}>
-                      {p.name}
-                    </h2>
-                  </div>
-                  <p className="text-sm font-medium text-gray-500 ml-6" style={{ color: 'var(--sys-text-muted)' }}>
-                    {p.client_name || 'Cliente General'}
-                  </p>
-                  {p.start_date && (
-                    <div className="flex items-center gap-1.5 mt-2 ml-6 text-xs text-gray-400">
-                      <Calendar size={12} />
-                      <span>
-                        {formatDate(p.start_date)} {p.end_date ? `→ ${formatDate(p.end_date)}` : ''}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* DINERO PANEL */}
-                  <div className="p-4 border rounded-xl flex flex-col justify-between" style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface)' }}>
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex items-center gap-1.5 font-bold text-xs tracking-wider" style={{ color: moneyColor }}>
-                        <DollarSign size={14} />
-                        <span>DINERO</span>
-                      </div>
-                      <CircularProgress percent={moneyPercent} color={moneyColor} />
-                    </div>
-                    
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sys-text-muted)' }}>Presupuesto</span>
-                        <span className="font-medium" style={{ color: 'var(--sys-text)' }}>
-                          ${budgetMoney.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sys-text-muted)' }}>Costo Actual</span>
-                        <span className="font-medium" style={{ color: 'var(--sys-text)' }}>
-                          ${actualCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      {budgetMoney > 0 && (
-                        <div className="pt-1.5 border-t border-dashed flex justify-between font-semibold" style={{ borderColor: 'var(--sys-border-soft)' }}>
-                          <span style={{ color: 'var(--sys-text-muted)' }}>
-                            {moneyIsExceeded ? 'Desvío' : 'Sin Consumir'}
-                          </span>
-                          <span style={{ color: moneyColor }}>
-                            {moneyIsExceeded ? '-' : ''}${Math.abs(moneyDiff).toLocaleString('es-AR', { minimumFractionDigits: 2 })} ({Math.round(Math.abs(moneyDiff) / budgetMoney * 100)}%)
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* HORAS PANEL */}
-                  <div className="p-4 border rounded-xl flex flex-col justify-between" style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-surface)' }}>
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex items-center gap-1.5 font-bold text-xs tracking-wider" style={{ color: hoursColor }}>
-                        <Clock size={14} />
-                        <span>HORAS</span>
-                      </div>
-                      <CircularProgress percent={hoursPercent} color={hoursColor} />
-                    </div>
-
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sys-text-muted)' }}>Presupuesto (Hs)</span>
-                        <span className="font-medium" style={{ color: 'var(--sys-text)' }}>{budgetHours}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--sys-text-muted)' }}>Consumido</span>
-                        <span className="font-medium" style={{ color: 'var(--sys-text)' }}>{actualHours.toFixed(1)}h</span>
-                      </div>
-                      {budgetHours > 0 && (
-                        <div className="pt-1.5 border-t border-dashed flex justify-between font-semibold" style={{ borderColor: 'var(--sys-border-soft)' }}>
-                          <span style={{ color: 'var(--sys-text-muted)' }}>
-                            {hoursIsExceeded ? 'Desvío' : 'Sin Consumir'}
-                          </span>
-                          <span style={{ color: hoursColor }}>
-                            {hoursIsExceeded ? '-' : ''}{Math.abs(hoursDiff).toFixed(1)}h ({Math.round(Math.abs(hoursDiff) / budgetHours * 100)}%)
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <EntityCard
+                key={p.id}
+                title={p.name}
+                badge={badge}
+                amount={p.budget_money || undefined}
+                quoteTotal={p.actual_cost || undefined}
+                accountName={p.client_name || 'Cliente General'}
+                startDate={p.start_date || undefined}
+                closeDate={p.end_date || undefined}
+                ownerName={hoursDisplay}
+                stageColor={p.color_hex || 'var(--sys-primary)'}
+                onEdit={() => { setEditing(p); setFormOpen(true); }}
+                onDelete={() => setDeleteId(p.id)}
+              />
             );
           })}
         </div>

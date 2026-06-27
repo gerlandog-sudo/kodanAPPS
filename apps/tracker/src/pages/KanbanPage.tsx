@@ -278,7 +278,7 @@ export function KanbanPage() {
                     {task.estimated_hours != null && (
                       <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold text-slate-600 dark:text-slate-300 flex-shrink-0">
                         <Clock size={12} className="text-slate-400" />
-                        <span>{task.estimated_hours.toFixed(2)} hs</span>
+                        <span>{Number(task.estimated_hours).toFixed(2)} hs</span>
                       </div>
                     )}
                   </div>

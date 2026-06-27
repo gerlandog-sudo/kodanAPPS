@@ -150,7 +150,11 @@ abstract class BaseRepository
             $params[':tenant_id'] = $tenantId;
         } else {
             // Sin WHERE: agregar al final antes de ORDER/LIMIT
-            $sql = preg_replace('/\s+(ORDER BY|LIMIT|$)/i', ' WHERE tenant_id = :tenant_id $1', $sql, 1) ?? $sql;
+            $sql = preg_replace('/\s+(ORDER BY|LIMIT)\b/i', ' WHERE tenant_id = :tenant_id $1', $sql, 1) ?? $sql;
+            // Si el regex no matcheó (ej. tabla sin trailing whitespace), agregar al final
+            if (!str_contains($sql, ':tenant_id')) {
+                $sql .= ' WHERE tenant_id = :tenant_id';
+            }
             $params[':tenant_id'] = $tenantId;
         }
     }

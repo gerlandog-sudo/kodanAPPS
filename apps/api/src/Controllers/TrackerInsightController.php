@@ -45,7 +45,9 @@ final class TrackerInsightController
         }
 
         // Construir consulta de usuarios
-        $usersQuery = "SELECT u.id, u.display_name AS name, COALESCE(up.hours_capacity, 8) AS weekly_capacity
+        $usersQuery = "SELECT u.id, u.display_name AS name,
+                              COALESCE(up.weekly_capacity / 60.0, 40.0) AS weekly_capacity,
+                              COALESCE(up.weekly_capacity / 300.0, 8.0) AS daily_capacity
                        FROM users u
                        LEFT JOIN TRACKER_user_profiles up ON up.user_id = u.id AND up.tenant_id = u.tenant_id
                        WHERE u.tenant_id = :tid";
@@ -56,7 +58,12 @@ final class TrackerInsightController
             $usersParams[':uid'] = $userIdFilter;
         } else {
             // Si no se filtra por un usuario específico, excluir admin/super_admin como antes
-            $usersQuery .= " AND u.role NOT IN ('super_admin','admin')";
+            $usersQuery .= " AND u.is_super_admin = 0 AND u.id NOT IN (
+                SELECT ur.user_id 
+                FROM user_roles ur 
+                JOIN roles r ON r.id = ur.role_id 
+                WHERE ur.app_id = 'tracker' AND r.name = 'admin'
+            )";
         }
         $usersQuery .= " ORDER BY u.display_name";
 
@@ -98,7 +105,7 @@ final class TrackerInsightController
             while ($current <= $end) {
                 $date = $current->format('Y-m-d');
                 $hours = $entriesByUser[$user['id']][$date] ?? 0.0;
-                $capacity = (float) $user['weekly_capacity'];
+                $capacity = (float) $user['daily_capacity'];
                 $saturation = $capacity > 0 ? ($hours / $capacity) * 100 : 0;
                 $days[] = [
                     'date' => $date,
@@ -176,13 +183,20 @@ final class TrackerInsightController
         $tenantId = TenantContext::getTenantId();
 
         $users = $this->fetchAll(
-            "SELECT u.id, u.display_name AS name, COALESCE(up.hours_capacity, 8) AS weekly_capacity,
+            "SELECT u.id, u.display_name AS name, COALESCE(up.weekly_capacity / 60.0, 40.0) AS weekly_capacity,
                     COALESCE(pos.name, '') AS position_name, COALESCE(sen.name, '') AS seniority_name
              FROM users u
              LEFT JOIN TRACKER_user_profiles up ON up.user_id = u.id AND up.tenant_id = u.tenant_id
              LEFT JOIN TRACKER_positions pos ON pos.id = up.position_id
              LEFT JOIN TRACKER_seniorities sen ON sen.id = up.seniority_id
-             WHERE u.tenant_id = :tid AND u.role NOT IN ('super_admin','admin')
+             WHERE u.tenant_id = :tid 
+                AND u.is_super_admin = 0 
+                AND u.id NOT IN (
+                    SELECT ur.user_id 
+                    FROM user_roles ur 
+                    JOIN roles r ON r.id = ur.role_id 
+                    WHERE ur.app_id = 'tracker' AND r.name = 'admin'
+                )
              ORDER BY u.display_name",
             [':tid' => $tenantId]
         );
@@ -361,12 +375,20 @@ final class TrackerInsightController
             }
 
             $candidates = $this->fetchAll(
-                "SELECT u.id, u.display_name AS name, COALESCE(up.hours_capacity, 8) AS weekly_capacity,
+                "SELECT u.id, u.display_name AS name, COALESCE(up.weekly_capacity / 60.0, 40.0) AS weekly_capacity,
                         COALESCE(SUM(pt.estimated_hours), 0) AS current_load
                  FROM users u
                  LEFT JOIN TRACKER_user_profiles up ON up.user_id = u.id AND up.tenant_id = u.tenant_id
                  LEFT JOIN TRACKER_project_tasks pt ON pt.assigned_to = u.id AND pt.tenant_id = u.tenant_id AND pt.kanban_status != 'done'
-                 WHERE u.tenant_id = :tid AND u.role NOT IN ('super_admin','admin') AND u.id != :uid
+                 WHERE u.tenant_id = :tid 
+                    AND u.is_super_admin = 0 
+                    AND u.id NOT IN (
+                        SELECT ur.user_id 
+                        FROM user_roles ur 
+                        JOIN roles r ON r.id = ur.role_id 
+                        WHERE ur.app_id = 'tracker' AND r.name = 'admin'
+                    ) 
+                    AND u.id != :uid
                  GROUP BY u.id
                  ORDER BY current_load ASC
                  LIMIT 5",

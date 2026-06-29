@@ -23,24 +23,68 @@ final class TrackerInsightController
         $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-7 days'));
         $endDate = $_GET['end_date'] ?? date('Y-m-d');
         $tenantId = TenantContext::getTenantId();
+        $currentUserId = TenantContext::getUserId();
 
-        $users = $this->fetchAll(
-            "SELECT u.id, u.display_name AS name, COALESCE(up.hours_capacity, 8) AS weekly_capacity
-             FROM users u
-             LEFT JOIN TRACKER_user_profiles up ON up.user_id = u.id AND up.tenant_id = u.tenant_id
-             WHERE u.tenant_id = :tid AND u.role NOT IN ('super_admin','admin')
-             ORDER BY u.display_name",
-            [':tid' => $tenantId]
-        );
+        $canSeeAll = TenantContext::hasRole('admin') || TenantContext::canApproveHours();
 
-        $entries = $this->fetchAll(
-            "SELECT te.user_id, te.date, SUM(te.duration_minutes) / 60.0 AS hours
-             FROM TRACKER_time_entries te
-             WHERE te.tenant_id = :tid AND te.date >= :dfrom AND te.date <= :dto
-               AND te.approval_status != 'rejected'
-             GROUP BY te.user_id, te.date",
-            [':tid' => $tenantId, ':dfrom' => $startDate, ':dto' => $endDate]
-        );
+        // Determinar qué usuario(s) buscar
+        $userIdFilter = null;
+        if (!$canSeeAll) {
+            // Usuario común: solo puede verse a sí mismo
+            $userIdFilter = $currentUserId;
+        } else {
+            // Admin/Aprobador: opcionalmente filtrar por colaborador
+            if (isset($_GET['user_id']) && $_GET['user_id'] !== '') {
+                $userIdFilter = (int)$_GET['user_id'];
+            }
+        }
+
+        $projectFilter = null;
+        if (isset($_GET['project_id']) && $_GET['project_id'] !== '') {
+            $projectFilter = (int)$_GET['project_id'];
+        }
+
+        // Construir consulta de usuarios
+        $usersQuery = "SELECT u.id, u.display_name AS name, COALESCE(up.hours_capacity, 8) AS weekly_capacity
+                       FROM users u
+                       LEFT JOIN TRACKER_user_profiles up ON up.user_id = u.id AND up.tenant_id = u.tenant_id
+                       WHERE u.tenant_id = :tid";
+        $usersParams = [':tid' => $tenantId];
+
+        if ($userIdFilter !== null) {
+            $usersQuery .= " AND u.id = :uid";
+            $usersParams[':uid'] = $userIdFilter;
+        } else {
+            // Si no se filtra por un usuario específico, excluir admin/super_admin como antes
+            $usersQuery .= " AND u.role NOT IN ('super_admin','admin')";
+        }
+        $usersQuery .= " ORDER BY u.display_name";
+
+        $users = $this->fetchAll($usersQuery, $usersParams);
+
+        // Construir consulta de registros de tiempo
+        $entriesQuery = "SELECT te.user_id, te.date, SUM(te.duration_minutes) / 60.0 AS hours
+                         FROM TRACKER_time_entries te
+                         WHERE te.tenant_id = :tid AND te.date >= :dfrom AND te.date <= :dto
+                           AND te.approval_status != 'rejected'";
+        $entriesParams = [
+            ':tid' => $tenantId,
+            ':dfrom' => $startDate,
+            ':dto' => $endDate
+        ];
+
+        if ($userIdFilter !== null) {
+            $entriesQuery .= " AND te.user_id = :uid";
+            $entriesParams[':uid'] = $userIdFilter;
+        }
+        if ($projectFilter !== null) {
+            $entriesQuery .= " AND te.project_id = :pid";
+            $entriesParams[':pid'] = $projectFilter;
+        }
+
+        $entriesQuery .= " GROUP BY te.user_id, te.date";
+
+        $entries = $this->fetchAll($entriesQuery, $entriesParams);
 
         $entriesByUser = [];
         foreach ($entries as $e) {

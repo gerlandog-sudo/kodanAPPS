@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Users, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
-import { trackerApi, type HeatmapUser } from '../api/client';
+import { trackerApi, type HeatmapUser, type Project, type UserProfile } from '../api/client';
+import { Select, useAuth } from '@kodan-apps/ui-core';
 
 function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 function startOfWeek(d: Date) { const r = new Date(d); r.setDate(r.getDate() - ((r.getDay() + 6) % 7)); return r; }
@@ -10,10 +11,39 @@ function fmtDay(d: Date) { return d.toLocaleDateString('es', { weekday: 'long' }
 function fmtMonth(d: Date) { return d.toLocaleDateString('es', { month: 'long', year: 'numeric' }); }
 
 export function HeatmapPage() {
+  const { roles, canApproveHours } = useAuth('tracker');
+  const isTenantAdmin = roles.includes('admin');
+  const canSeeAll = isTenantAdmin || canApproveHours;
+
   const [viewMode, setViewMode] = useState<'weekly' | 'monthly'>('weekly');
   const [baseDate, setBaseDate] = useState(startOfWeek(new Date()));
   const [data, setData] = useState<HeatmapUser[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filtros
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [collaborators, setCollaborators] = useState<UserProfile[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(undefined);
+  const [selectedUserId, setSelectedUserId] = useState<number | undefined>(undefined);
+
+  // Cargar proyectos y colaboradores si tiene privilegios
+  useEffect(() => {
+    if (canSeeAll) {
+      const loadFilters = async () => {
+        try {
+          const [projectsRes, profilesRes] = await Promise.all([
+            trackerApi.listProjects(),
+            trackerApi.listProfiles(),
+          ]);
+          setProjects(projectsRes);
+          setCollaborators(profilesRes);
+        } catch (e) {
+          console.error('Error al cargar filtros de mapa de calor:', e);
+        }
+      };
+      loadFilters();
+    }
+  }, [canSeeAll]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -29,7 +59,7 @@ export function HeatmapPage() {
         startDate = fmt(startOfWeek(ms));
         endDate = fmt(addDays(startOfWeek(me), 6 + (6 - startOfWeek(me).getDay() + 6) % 7 || 6));
       }
-      const res = await trackerApi.getHeatmap(startDate, endDate);
+      const res = await trackerApi.getHeatmap(startDate, endDate, selectedProjectId, selectedUserId);
       const processed = res.map((u) => ({
         ...u,
         days: u.days.map((d) => ({ ...d, saturation: d.capacity > 0 ? (d.hours / d.capacity) * 100 : 0 })),
@@ -38,7 +68,7 @@ export function HeatmapPage() {
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, [baseDate, viewMode]);
+  useEffect(() => { fetchData(); }, [baseDate, viewMode, selectedProjectId, selectedUserId]);
 
   const weekDays = viewMode === 'weekly'
     ? Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(baseDate), i))
@@ -63,32 +93,68 @@ export function HeatmapPage() {
     return 'bg-red-100 text-red-800 border-red-200 font-bold';
   };
 
+  const projectOptions = [
+    { value: '', label: 'Todos los proyectos' },
+    ...projects.map((p) => ({ value: p.id, label: p.name })),
+  ];
+
+  const collaboratorOptions = [
+    { value: '', label: 'Todos los colaboradores' },
+    ...collaborators.map((c) => ({ value: c.user_id, label: c.user_name })),
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-end items-center gap-4 flex-wrap">
-        <div className="flex bg-gray-100 p-1 rounded-lg">
-          <button onClick={() => setViewMode('weekly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'weekly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            <List size={16} />{' '}Semanal
-          </button>
-          <button onClick={() => setViewMode('monthly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'monthly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            <LayoutGrid size={16} />{' '}Mensual
-          </button>
-        </div>
-        <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
-          <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, -7) : new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
-            <ChevronLeft size={20} className="text-gray-600" />
-          </button>
-          <div className="flex items-center gap-2 font-medium text-gray-700 min-w-[200px] justify-center">
-            <Calendar size={16} className="text-primary" />
-            {viewMode === 'weekly' ? (
-              <>{fmtShort(startOfWeek(baseDate))} - {fmtShort(addDays(startOfWeek(baseDate), 6))}</>
-            ) : (
-              <span className="capitalize">{fmtMonth(baseDate)}</span>
-            )}
+      <div className="flex justify-between items-center gap-4 flex-wrap">
+        {canSeeAll ? (
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="w-56">
+              <Select
+                options={projectOptions}
+                value={selectedProjectId ?? ''}
+                onChange={(val) => setSelectedProjectId(val ? Number(val) : undefined)}
+                placeholder="Todos los proyectos"
+                searchable
+              />
+            </div>
+            <div className="w-56">
+              <Select
+                options={collaboratorOptions}
+                value={selectedUserId ?? ''}
+                onChange={(val) => setSelectedUserId(val ? Number(val) : undefined)}
+                placeholder="Todos los colaboradores"
+                searchable
+              />
+            </div>
           </div>
-          <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, 7) : new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
-            <ChevronRight size={20} className="text-gray-600" />
-          </button>
+        ) : (
+          <div />
+        )}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            <button onClick={() => setViewMode('weekly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'weekly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <List size={16} />{' '}Semanal
+            </button>
+            <button onClick={() => setViewMode('monthly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'monthly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <LayoutGrid size={16} />{' '}Mensual
+            </button>
+          </div>
+          <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+            <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, -7) : new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
+              <ChevronLeft size={20} className="text-gray-600" />
+            </button>
+            <div className="flex items-center gap-2 font-medium text-gray-700 min-w-[200px] justify-center">
+              <Calendar size={16} className="text-primary" />
+              {viewMode === 'weekly' ? (
+                <>{fmtShort(startOfWeek(baseDate))} - {fmtShort(addDays(startOfWeek(baseDate), 6))}</>
+              ) : (
+                <span className="capitalize">{fmtMonth(baseDate)}</span>
+              )}
+            </div>
+            <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, 7) : new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
+              <ChevronRight size={20} className="text-gray-600" />
+            </button>
+          </div>
         </div>
       </div>
 

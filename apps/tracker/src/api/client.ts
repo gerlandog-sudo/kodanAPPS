@@ -316,8 +316,12 @@ export const trackerApi = {
   deleteSeniority: (id: number) => api.delete(`/api/tracker/seniorities/${id}`),
 
   // F3 — Insights
-  getHeatmap: (startDate: string, endDate: string) =>
-    api.get<HeatmapUser[]>('/api/tracker/insights/heatmap', { start_date: startDate, end_date: endDate }),
+  getHeatmap: (startDate: string, endDate: string, projectId?: number, userId?: number) => {
+    const params: Record<string, string> = { start_date: startDate, end_date: endDate };
+    if (projectId !== undefined) params.project_id = String(projectId);
+    if (userId !== undefined) params.user_id = String(userId);
+    return api.get<HeatmapUser[]>('/api/tracker/insights/heatmap', params);
+  },
   getTimelineProjects: (params?: Record<string, string>) =>
     api.get<TimelineProject[]>('/api/tracker/insights/timeline/projects', params),
   getTimelineResources: (params?: Record<string, string>) =>

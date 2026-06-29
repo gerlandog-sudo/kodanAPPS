@@ -447,7 +447,7 @@ final class SuperAdminController
     public function listRoles(): array
     {
         return $this->planRepo->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT r.id, r.app_id, r.name, r.description, r.is_active, r.created_at
+            "/* BYPASS_TENANT_SCOPE */ SELECT r.id, r.app_id, r.name, r.description, r.is_active, r.can_approve, r.created_at
              FROM roles r ORDER BY r.app_id, r.name"
         );
     }
@@ -468,10 +468,11 @@ final class SuperAdminController
             ], JSON_UNESCAPED_UNICODE), 422);
         }
 
+        $canApprove = isset($input['can_approve']) ? (int)$input['can_approve'] : 0;
         $this->planRepo->rawExecute(
-            "/* BYPASS_TENANT_SCOPE */ INSERT INTO roles (app_id, name, description, is_active, created_at)
-             VALUES (?, ?, ?, 1, NOW())",
-            [$input['app_id'], $input['name'], $input['description'] ?? '']
+            "/* BYPASS_TENANT_SCOPE */ INSERT INTO roles (app_id, name, description, is_active, can_approve, created_at)
+             VALUES (?, ?, ?, 1, ?, NOW())",
+            [$input['app_id'], strtolower(trim($input['name'])), $input['description'] ?? '', $canApprove]
         );
 
         $roleId = (int)$this->planRepo->rawSelect("/* BYPASS_TENANT_SCOPE */ SELECT LAST_INSERT_ID() as id")[0]['id'];
@@ -490,12 +491,16 @@ final class SuperAdminController
      */
     public function updateRole(int $roleId, array $input): array
     {
-        $allowed = ['name', 'description', 'is_active'];
+        $allowed = ['name', 'description', 'is_active', 'can_approve'];
         $data = array_intersect_key($input, array_flip($allowed));
         if (empty($data)) {
             throw new InvalidArgumentException(json_encode([
                 'message' => 'Ningún campo válido',
             ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        if (isset($data['name'])) {
+            $data['name'] = strtolower(trim($data['name']));
         }
 
         $sets = implode(', ', array_map(fn($c) => "`{$c}` = :{$c}", array_keys($data)));

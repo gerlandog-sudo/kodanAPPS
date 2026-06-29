@@ -42,9 +42,9 @@ export const superAdminApi = {
     api.post('/api/super-admin/change-password', data),
 
   listRoles: () => api.get<any[]>('/api/super-admin/roles'),
-  createRole: (data: { app_id: string; name: string; description?: string }) =>
+  createRole: (data: { app_id: string; name: string; description?: string; can_approve?: number }) =>
     api.post('/api/super-admin/roles', data),
-  updateRole: (id: number, data: { name?: string; description?: string; is_active?: boolean }) =>
+  updateRole: (id: number, data: { name?: string; description?: string; is_active?: boolean; can_approve?: number }) =>
     api.patch(`/api/super-admin/roles/${id}`, data),
   deleteRole: (id: number) => api.delete(`/api/super-admin/roles/${id}`),
 

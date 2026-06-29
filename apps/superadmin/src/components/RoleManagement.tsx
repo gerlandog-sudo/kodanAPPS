@@ -18,6 +18,7 @@ interface Role {
   name: string;
   description: string;
   is_active: number;
+  can_approve: number;
   created_at: string;
 }
 
@@ -29,7 +30,7 @@ export function RoleManagement() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ app_id: 'crm', name: '', description: '' });
+  const [form, setForm] = useState({ app_id: 'crm', name: '', description: '', can_approve: 0 });
   const [error, setError] = useState('');
 
   useEffect(() => { loadRoles(); }, []);
@@ -46,14 +47,19 @@ export function RoleManagement() {
 
   const handleOpenCreate = () => {
     setSelectedRole(null);
-    setForm({ app_id: 'crm', name: '', description: '' });
+    setForm({ app_id: 'crm', name: '', description: '', can_approve: 0 });
     setError('');
     setShowModal(true);
   };
 
   const handleOpenEdit = (role: Role) => {
     setSelectedRole(role);
-    setForm({ app_id: role.app_id, name: role.name, description: role.description });
+    setForm({
+      app_id: role.app_id,
+      name: role.name,
+      description: role.description,
+      can_approve: role.can_approve ?? 0,
+    });
     setError('');
     setShowModal(true);
   };
@@ -75,7 +81,7 @@ export function RoleManagement() {
         toast.success('Rol creado');
       }
       setShowModal(false);
-      setForm({ app_id: 'crm', name: '', description: '' });
+      setForm({ app_id: 'crm', name: '', description: '', can_approve: 0 });
       await loadRoles();
     } catch (err: any) {
       setError(err.message || 'Error guardando rol');
@@ -110,6 +116,15 @@ export function RoleManagement() {
     }
   };
 
+  const toggleCanApprove = async (role: Role) => {
+    try {
+      await superAdminApi.updateRole(role.id, { can_approve: role.can_approve ? 0 : 1 });
+      await loadRoles();
+    } catch (err: any) {
+      toast.error(err.message || 'Error actualizando permisos de aprobación');
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-end mb-4">
@@ -137,6 +152,19 @@ export function RoleManagement() {
             key: 'description',
             header: 'Descripción',
             render: role => <span className="text-xs font-normal" style={{ color: 'var(--sys-text-muted)' }}>{role.description || '—'}</span>,
+          },
+          {
+            key: 'can_approve',
+            header: 'Aprobación',
+            render: role => (
+              <button onClick={() => toggleCanApprove(role)} className="flex items-center gap-1.5 text-xs">
+                {role.can_approve ? (
+                  <><Check size={12} style={{ color: 'var(--sys-success)' }} /> Habilitado</>
+                ) : (
+                  <><X size={12} style={{ color: 'var(--sys-text-muted)' }} /> Deshabilitado</>
+                )}
+              </button>
+            ),
           },
           {
             key: 'active',
@@ -216,6 +244,19 @@ export function RoleManagement() {
                   onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                   placeholder="Opcional"
                 />
+              </div>
+              <div className="flex items-center gap-2 py-1.5">
+                <input
+                  type="checkbox"
+                  id="can_approve"
+                  className="w-4 h-4 accent-primary cursor-pointer animate-none"
+                  style={{ accentColor: 'var(--color-primary)' }}
+                  checked={form.can_approve === 1}
+                  onChange={e => setForm(p => ({ ...p, can_approve: e.target.checked ? 1 : 0 }))}
+                />
+                <label htmlFor="can_approve" className="text-xs font-medium cursor-pointer" style={{ color: 'var(--sys-text)' }}>
+                  Puede aprobar horas (kodanTracker)
+                </label>
               </div>
               <Button variant="primary" type="submit" disabled={submitting}>
                 {submitting ? <><Loader2 size={16} className="animate-spin" /> Guardando...</> : selectedRole ? 'Actualizar Rol' : 'Crear Rol'}

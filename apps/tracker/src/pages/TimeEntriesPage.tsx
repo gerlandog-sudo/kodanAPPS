@@ -130,13 +130,6 @@ export function TimeEntriesPage() {
     }
   };
 
-  const handleClearFilters = () => {
-    setFilterProject('');
-    setFilterUser('');
-    setFilterDateFrom('');
-    setFilterDateTo('');
-    setPage(1);
-  };
 
   // Generar label de mes dinámico en base al filtro DESDE o fecha actual
   const getMonthYearLabel = () => {
@@ -318,14 +311,14 @@ export function TimeEntriesPage() {
   return (
     <div className="h-full flex flex-col space-y-6 overflow-hidden">
       {/* Tarjeta de Filtros y Acciones */}
-      <div className="bg-surface-raised border border-border-soft p-5 rounded-xl shadow-sm flex flex-wrap lg:flex-nowrap items-end gap-4 w-full shrink-0">
+      <div className="bg-surface-raised border border-border-soft p-5 rounded-xl shadow-sm flex flex-wrap xl:flex-nowrap items-end gap-4 w-full shrink-0">
         <div className="flex flex-col gap-1 w-full sm:w-auto">
           <label className="text-[10px] font-bold tracking-wider text-text-muted uppercase">Desde</label>
-          <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} />
+          <DatePicker value={filterDateFrom} onChange={(val) => { setFilterDateFrom(val); setPage(1); }} />
         </div>
         <div className="flex flex-col gap-1 w-full sm:w-auto">
           <label className="text-[10px] font-bold tracking-wider text-text-muted uppercase">Hasta</label>
-          <DatePicker value={filterDateTo} onChange={setFilterDateTo} />
+          <DatePicker value={filterDateTo} onChange={(val) => { setFilterDateTo(val); setPage(1); }} />
         </div>
         <div className="flex flex-col gap-1 w-full sm:w-48 shrink-0">
           <label className="text-[10px] font-bold tracking-wider text-text-muted uppercase">Proyecto</label>
@@ -337,15 +330,6 @@ export function TimeEntriesPage() {
             <Select options={userOptions} value={filterUser} onChange={(val) => { setFilterUser(val); setPage(1); }} />
           </div>
         )}
-        <div className="flex items-center h-10 pb-1.5 shrink-0">
-          <button 
-            type="button" 
-            onClick={handleClearFilters}
-            className="text-xs font-semibold text-text-muted hover:text-text cursor-pointer transition-colors underline select-none"
-          >
-            Limpiar
-          </button>
-        </div>
 
         {/* Botones de acción del timer y registro */}
         <div className="ml-auto flex items-center gap-3 shrink-0 pb-0.5">

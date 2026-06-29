@@ -63,7 +63,7 @@ export function ApprovalsPage() {
     { key: 'user_name', header: 'Usuario', render: (e) => e.user_name },
     { key: 'project_name', header: 'Proyecto', render: (e) => e.project_name },
     { key: 'duration_minutes', header: 'Horas', render: (e) => `${Math.floor(e.duration_minutes / 60)}h ${e.duration_minutes % 60}m` },
-    { key: 'calculated_cost', header: 'Costo', render: (e) => `$${e.calculated_cost.toFixed(2)}` },
+    { key: 'calculated_cost', header: 'Costo', render: (e) => `$${Number(e.calculated_cost).toFixed(2)}` },
   ];
 
   const actions: TableAction<TimeEntry>[] = [

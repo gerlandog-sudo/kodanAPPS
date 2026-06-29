@@ -109,10 +109,15 @@ function AppContent() {
     return items;
   }, [roles]);
 
-  const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
-    { label: 'Perfil', icon: <User size={16} />, onClick: () => setProfileOpen(true) },
-    { label: 'Configuración', icon: <Settings size={16} />, onClick: () => setRoute('settings') },
-  ], []);
+  const userMenuExtraItems = useMemo<UserMenuItem[]>(() => {
+    const items: UserMenuItem[] = [
+      { label: 'Perfil', icon: <User size={16} />, onClick: () => setProfileOpen(true) },
+    ];
+    if (roles.includes('admin')) {
+      items.push({ label: 'Configuración', icon: <Settings size={16} />, onClick: () => setRoute('settings') });
+    }
+    return items;
+  }, [roles]);
 
   if (view === 'initial' || loading) {
     return <AuthLoading />;

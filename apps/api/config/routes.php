@@ -1063,6 +1063,16 @@ return function (Router $router, array $app): void {
             echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
         }
     });
+    $router->post('/api/tracker/time-entries/bulk-reject', function () use ($app) {
+        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['timeEntry']->bulkReject($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()]]);
+        }
+    });
     $router->get('/api/tracker/time-entries/pending-approvals', function () use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['timeEntry']->pendingApprovals());

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { KanbanBoard, Button, Select, Input, Toggle, EntityCard } from '@kodan-apps/ui-core';
+import { KanbanBoard, Button, Select, Input, EntityCard } from '@kodan-apps/ui-core';
 import type { ColumnDef } from '@kodan-apps/ui-core';
 import { trackerApi, Project, ProjectTask, TaskType } from '../api/client';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Archive, ArchiveRestore } from 'lucide-react';
 import { toast } from 'sonner';
 import { TaskForm } from '../components/TaskForm';
 
@@ -221,13 +221,20 @@ export function KanbanPage() {
               onChange={(v) => setSelectedCollaboratorId(v)}
             />
           </div>
-          <div className="flex items-center h-11 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shrink-0">
-            <Toggle
-              checked={showArchived}
-              onChange={(e: any) => setShowArchived(e.target.checked)}
-              label="VER COLUMNA ARCHIVO"
-            />
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowArchived(!showArchived)}
+            style={{
+              background: showArchived ? 'var(--sys-primary-container)' : 'transparent',
+              color: showArchived ? 'var(--sys-primary)' : 'var(--sys-text-muted)',
+              borderColor: 'var(--sys-border-soft)',
+            }}
+            title={showArchived ? 'Ocultar archivadas' : 'Mostrar archivadas'}
+            className="h-11 px-4 flex items-center justify-center border rounded-md hover:bg-surface-raised cursor-pointer transition-all shrink-0 font-semibold text-xs animate-fade-in"
+          >
+            {showArchived ? <ArchiveRestore size={15} className="mr-1.5" /> : <Archive size={15} className="mr-1.5" />}
+            {showArchived ? 'Archivadas' : 'Activas'}
+          </button>
         </div>
         <Button
           variant="primary"

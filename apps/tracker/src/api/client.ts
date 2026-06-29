@@ -278,6 +278,7 @@ export const trackerApi = {
   approveTimeEntry: (id: number) => api.post<TimeEntry>(`/api/tracker/time-entries/${id}/approve`, {}),
   rejectTimeEntry: (id: number, reason: string) => api.post<TimeEntry>(`/api/tracker/time-entries/${id}/reject`, { reason }),
   bulkApproveTimeEntries: (ids: number[]) => api.post<{ approved: number }>('/api/tracker/time-entries/bulk-approve', { ids }),
+  bulkRejectTimeEntries: (ids: number[], reason: string) => api.post<{ rejected: number }>('/api/tracker/time-entries/bulk-reject', { ids, reason }),
   pendingApprovals: (params?: Record<string, string>) => api.get<TimeEntry[]>('/api/tracker/time-entries/pending-approvals', params),
 
   getMetrics: (projectId?: number, from?: string, to?: string) => {

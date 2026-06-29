@@ -160,6 +160,20 @@ final class TimeEntryService
     }
 
     /**
+     * @param array<int, int|string> $ids
+     * @param string $reason
+     * @return array<string, int>
+     */
+    public function bulkReject(array $ids, string $reason): array
+    {
+        if (!TenantContext::hasRole('admin')) {
+            throw new \RuntimeException('Acceso denegado', 403);
+        }
+        $affected = $this->entryRepo->bulkReject($ids, $reason);
+        return ['rejected' => $affected];
+    }
+
+    /**
      * @param TimeEntryFilterDTO $filter
      * @return array<string, mixed>
      */

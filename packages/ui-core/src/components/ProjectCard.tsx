@@ -70,6 +70,16 @@ function CircularProgress({ percentage, color }: { percentage: number; color: st
   )
 }
 
+function getProgressColor(progress: number) {
+  if (progress > 100) {
+    return 'var(--sys-error, #ef4444)'
+  }
+  if (progress >= 85) {
+    return 'var(--sys-warning, #f59e0b)'
+  }
+  return 'var(--sys-success, #10b981)'
+}
+
 export function ProjectCard({
   name,
   clientName = 'Cliente General',
@@ -111,8 +121,7 @@ export function ProjectCard({
 
   // Cost calculations
   const moneyProgress = budgetMoney > 0 ? (actualCost / budgetMoney) * 100 : 0
-  const isMoneyOverBudget = actualCost > budgetMoney
-  const moneyProgressColor = isMoneyOverBudget ? '#991b1b' : 'var(--sys-success)'
+  const moneyProgressColor = getProgressColor(moneyProgress)
 
   const deviation = budgetMoney - actualCost
   const percentDev = budgetMoney > 0 ? Math.round((deviation / budgetMoney) * 100) : 0
@@ -120,8 +129,7 @@ export function ProjectCard({
 
   // Hours calculations
   const hoursProgress = budgetHours > 0 ? (actualHours / budgetHours) * 100 : 0
-  const isHoursOverBudget = actualHours > budgetHours
-  const hoursProgressColor = isHoursOverBudget ? '#991b1b' : '#c2410c' // Orange/brown as reference
+  const hoursProgressColor = getProgressColor(hoursProgress)
 
   const remainingHours = budgetHours - actualHours
   const percentRemaining = budgetHours > 0 ? Math.round((remainingHours / budgetHours) * 100) : 0

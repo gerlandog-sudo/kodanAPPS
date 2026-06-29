@@ -236,4 +236,22 @@ final class TimeEntryRepository extends BaseRepository
         }
         return $affected;
     }
+
+    /**
+     * @param array<int, int|string> $ids
+     * @param string $reason
+     */
+    public function bulkReject(array $ids, string $reason): int
+    {
+        $affected = 0;
+        foreach ($ids as $id) {
+            try {
+                $this->reject((int)$id, $reason);
+                $affected++;
+            } catch (RuntimeException $e) {
+                continue;
+            }
+        }
+        return $affected;
+    }
 }

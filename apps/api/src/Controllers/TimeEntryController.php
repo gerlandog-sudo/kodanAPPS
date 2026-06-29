@@ -125,6 +125,26 @@ final class TimeEntryController
     }
 
     /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
+    public function bulkReject(array $input): array
+    {
+        if (!\kodanAPPS\DB\TenantContext::hasRole('admin')) {
+            throw new \RuntimeException('Acceso denegado', 403);
+        }
+        $ids = $input['ids'] ?? [];
+        if (empty($ids) || !is_array($ids)) {
+            throw new InvalidArgumentException(json_encode(['ids' => 'Lista de IDs requerida'], JSON_UNESCAPED_UNICODE));
+        }
+        $reason = $input['reason'] ?? '';
+        if (trim($reason) === '') {
+            throw new InvalidArgumentException(json_encode(['reason' => 'El motivo de rechazo es obligatorio'], JSON_UNESCAPED_UNICODE));
+        }
+        return $this->timeEntryService->bulkReject($ids, $reason);
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function pendingApprovals(): array

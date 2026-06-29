@@ -17,6 +17,7 @@ export function ApprovalsPage() {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [isBulkRejectOpen, setIsBulkRejectOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,9 +47,15 @@ export function ApprovalsPage() {
   };
 
   const handleReject = async () => {
-    if (!rejectEntry || !rejectReason.trim()) return;
-    await trackerApi.rejectTimeEntry(rejectEntry.id, rejectReason);
-    setRejectEntry(null);
+    if (!rejectReason.trim()) return;
+    if (isBulkRejectOpen) {
+      await trackerApi.bulkRejectTimeEntries(Array.from(selectedIds), rejectReason);
+      setSelectedIds(new Set());
+      setIsBulkRejectOpen(false);
+    } else if (rejectEntry) {
+      await trackerApi.rejectTimeEntry(rejectEntry.id, rejectReason);
+      setRejectEntry(null);
+    }
     setRejectReason('');
     load();
   };
@@ -123,9 +130,14 @@ export function ApprovalsPage() {
         </div>
         <div className="flex items-center gap-3 ml-auto shrink-0">
           {selectedIds.size > 0 && (
-            <Button variant="primary" onClick={handleBulkApprove}>
-              <CheckCheck size={16} className="mr-1" /> Aprobar seleccionados ({selectedIds.size})
-            </Button>
+            <>
+              <Button variant="danger" onClick={() => setIsBulkRejectOpen(true)}>
+                <XCircle size={16} className="mr-1" /> Rechazar seleccionados ({selectedIds.size})
+              </Button>
+              <Button variant="primary" onClick={handleBulkApprove}>
+                <CheckCheck size={16} className="mr-1" /> Aprobar seleccionados ({selectedIds.size})
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -143,11 +155,13 @@ export function ApprovalsPage() {
         actions={actions}
       />
 
-      <Modal open={!!rejectEntry} onClose={() => setRejectEntry(null)}>
+      <Modal open={!!rejectEntry || isBulkRejectOpen} onClose={() => { setRejectEntry(null); setIsBulkRejectOpen(false); }}>
         <div className="p-6 space-y-4 min-w-[400px]">
           <h2 className="text-lg font-semibold">Rechazar registro de horas</h2>
           <p className="text-sm" style={{ color: 'var(--sys-text-muted)' }}>
-            {rejectEntry?.user_name} — {rejectEntry ? `${Math.floor(rejectEntry.duration_minutes / 60)}h ${rejectEntry.duration_minutes % 60}m` : ''} — {rejectEntry?.project_name}
+            {isBulkRejectOpen 
+              ? `Se rechazarán ${selectedIds.size} registros seleccionados.` 
+              : `${rejectEntry?.user_name} — ${rejectEntry ? `${Math.floor(rejectEntry.duration_minutes / 60)}h ${rejectEntry.duration_minutes % 60}m` : ''} — ${rejectEntry?.project_name}`}
           </p>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Motivo de rechazo *</label>
@@ -159,7 +173,7 @@ export function ApprovalsPage() {
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setRejectEntry(null)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => { setRejectEntry(null); setIsBulkRejectOpen(false); }}>Cancelar</Button>
             <Button variant="danger" onClick={handleReject} disabled={!rejectReason.trim()}>Rechazar</Button>
           </div>
         </div>

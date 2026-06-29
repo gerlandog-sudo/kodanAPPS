@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Table, Modal } from '@kodan-apps/ui-core';
+import { Button, Table, Modal, DatePicker, Select } from '@kodan-apps/ui-core';
 import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
-import { trackerApi, TimeEntry } from '../api/client';
-import { CheckCircle, XCircle, CheckCheck } from 'lucide-react';
+import { trackerApi, TimeEntry, Project } from '../api/client';
+import { CheckCircle, XCircle, CheckCheck, Filter } from 'lucide-react';
 
 export function ApprovalsPage() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -11,17 +11,34 @@ export function ApprovalsPage() {
   const [rejectEntry, setRejectEntry] = useState<TimeEntry | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  const [filterProject, setFilterProject] = useState('');
+  const [filterUser, setFilterUser] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await trackerApi.pendingApprovals();
+      const params: Record<string, string> = {};
+      if (filterProject) params.project_id = filterProject;
+      if (filterUser) params.user_id = filterUser;
+      if (filterDateFrom) params.date_from = filterDateFrom;
+      if (filterDateTo) params.date_to = filterDateTo;
+      const data = await trackerApi.pendingApprovals(params);
       setEntries(data);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filterProject, filterUser, filterDateFrom, filterDateTo]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    trackerApi.listProjects().then(setProjects).catch(() => {});
+    trackerApi.listProfiles().then(setCollaborators).catch(() => {});
+  }, []);
 
   const handleApprove = async (id: number) => {
     await trackerApi.approveTimeEntry(id);
@@ -77,15 +94,40 @@ export function ApprovalsPage() {
       onClick: (e) => { setRejectEntry(e); setRejectReason(''); },
     },
   ];
+  const projectOptions = [
+    { value: '', label: 'Todos los proyectos' },
+    ...projects.map((p) => ({ value: String(p.id), label: p.name })),
+  ];
+  const userOptions = [
+    { value: '', label: 'Todos los colaboradores' },
+    ...collaborators.map((c) => ({ value: String(c.user_id), label: c.user_name })),
+  ];
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-end">
-        {selectedIds.size > 0 && (
-          <Button variant="primary" onClick={handleBulkApprove}>
-            <CheckCheck size={16} className="mr-1" /> Aprobar seleccionados ({selectedIds.size})
-          </Button>
-        )}
+      <div className="flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
+          <Filter size={16} style={{ color: 'var(--sys-text-muted)', flexShrink: 0 }} />
+          <div className="w-48 shrink-0">
+            <Select options={projectOptions} value={filterProject} onChange={setFilterProject} />
+          </div>
+          <div className="w-48 shrink-0">
+            <Select options={userOptions} value={filterUser} onChange={setFilterUser} />
+          </div>
+          <div className="shrink-0">
+            <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="Desde" />
+          </div>
+          <div className="shrink-0">
+            <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Hasta" />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 ml-auto shrink-0">
+          {selectedIds.size > 0 && (
+            <Button variant="primary" onClick={handleBulkApprove}>
+              <CheckCheck size={16} className="mr-1" /> Aprobar seleccionados ({selectedIds.size})
+            </Button>
+          )}
+        </div>
       </div>
 
       <Table

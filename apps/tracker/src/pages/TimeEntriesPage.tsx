@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Table, DatePicker, Select, ConfirmDialog } from '@kodan-apps/ui-core';
+import { Button, Table, DatePicker, Select, ConfirmDialog, useAuth } from '@kodan-apps/ui-core';
 import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
 import { trackerApi, TimeEntry, Project, ProjectTask } from '../api/client';
 import { TimerWidget } from '../components/TimerWidget';
@@ -7,14 +7,19 @@ import { TimeEntryForm } from '../components/TimeEntryForm';
 import { Clock, Filter, Send, Trash2 } from 'lucide-react';
 
 export function TimeEntriesPage() {
+  const { roles } = useAuth('tracker');
+  const isAdmin = roles.includes('admin');
+
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<ProjectTask[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
   const [filterProject, setFilterProject] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterUser, setFilterUser] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [formOpen, setFormOpen] = useState(false);
@@ -27,6 +32,7 @@ export function TimeEntriesPage() {
       const params: Record<string, string> = { page: String(page), per_page: '50' };
       if (filterProject) params.project_id = filterProject;
       if (filterStatus) params.approval_status = filterStatus;
+      if (filterUser) params.user_id = filterUser;
       if (filterDateFrom) params.date_from = filterDateFrom;
       if (filterDateTo) params.date_to = filterDateTo;
       const res = await trackerApi.listTimeEntries(params);
@@ -35,7 +41,7 @@ export function TimeEntriesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, filterProject, filterStatus, filterDateFrom, filterDateTo]);
+  }, [page, filterProject, filterStatus, filterUser, filterDateFrom, filterDateTo]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
@@ -43,7 +49,10 @@ export function TimeEntriesPage() {
     trackerApi.getAllBoards().then((board) => {
       setTasks(Object.values(board.itemsByStage).flat());
     }).catch(() => {});
-  }, []);
+    if (isAdmin) {
+      trackerApi.listProfiles().then(setCollaborators).catch(() => {});
+    }
+  }, [isAdmin]);
 
   const handleTimerSave = (duration: number) => {
     setFormDuration(duration);
@@ -116,6 +125,10 @@ export function TimeEntriesPage() {
     { value: 'approved', label: 'Aprobado' },
     { value: 'rejected', label: 'Rechazado' },
   ];
+  const userOptions = [
+    { value: '', label: 'Todos los colaboradores' },
+    ...collaborators.map((c) => ({ value: String(c.user_id), label: c.user_name })),
+  ];
 
   return (
     <div className="h-full flex flex-col space-y-6 overflow-hidden">
@@ -135,6 +148,11 @@ export function TimeEntriesPage() {
         <div className="w-48 shrink-0">
           <Select options={projectOptions} value={filterProject} onChange={setFilterProject} />
         </div>
+        {isAdmin && (
+          <div className="w-48 shrink-0">
+            <Select options={userOptions} value={filterUser} onChange={setFilterUser} />
+          </div>
+        )}
         <div className="w-40 shrink-0">
           <Select options={statusOptions} value={filterStatus} onChange={setFilterStatus} />
         </div>

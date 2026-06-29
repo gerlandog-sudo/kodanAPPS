@@ -40,6 +40,7 @@ function AppContent() {
     loading,
     authenticated,
     user,
+    roles = [],
     planStatus,
     planName,
   } = useAuth('tracker');
@@ -86,20 +87,27 @@ function AppContent() {
     return () => window.removeEventListener('auth:force-logout', onForceLogout);
   }, [handleLogout]);
 
-  const navItems = useMemo<NavItem[]>(() => [
-    { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { key: 'metrics', label: 'Métricas', icon: <TrendingUp size={18} /> },
-    { key: 'projects', label: 'Proyectos', icon: <FolderKanban size={18} /> },
-    { key: 'kanban', label: 'Tablero Tareas', icon: <KanbanSquare size={18} /> },
-    { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
-    { key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> },
-    { key: 'heatmap', label: 'Mapa de Calor', icon: <Thermometer size={18} /> },
-    { key: 'timeline', label: 'Línea de Tiempo', icon: <GitBranch size={18} /> },
-    { key: 'ai-reports', label: 'Reporte IA', icon: <BrainCircuit size={18} /> },
-    { key: 'reports', label: 'Reportes', icon: <FileSpreadsheet size={18} /> },
-    { key: 'accounts', label: 'Cuentas', icon: B2BAccountNavItem.icon },
-    { key: 'contacts', label: 'Contactos', icon: B2BContactNavItem.icon },
-  ], []);
+  const navItems = useMemo<NavItem[]>(() => {
+    const items: NavItem[] = [
+      { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+      { key: 'metrics', label: 'Métricas', icon: <TrendingUp size={18} /> },
+      { key: 'projects', label: 'Proyectos', icon: <FolderKanban size={18} /> },
+      { key: 'kanban', label: 'Tablero Tareas', icon: <KanbanSquare size={18} /> },
+      { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
+    ];
+    if (roles.includes('admin')) {
+      items.push({ key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> });
+    }
+    items.push(
+      { key: 'heatmap', label: 'Mapa de Calor', icon: <Thermometer size={18} /> },
+      { key: 'timeline', label: 'Línea de Tiempo', icon: <GitBranch size={18} /> },
+      { key: 'ai-reports', label: 'Reporte IA', icon: <BrainCircuit size={18} /> },
+      { key: 'reports', label: 'Reportes', icon: <FileSpreadsheet size={18} /> },
+      { key: 'accounts', label: 'Cuentas', icon: B2BAccountNavItem.icon },
+      { key: 'contacts', label: 'Contactos', icon: B2BContactNavItem.icon }
+    );
+    return items;
+  }, [roles]);
 
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
     { label: 'Perfil', icon: <User size={16} />, onClick: () => setProfileOpen(true) },

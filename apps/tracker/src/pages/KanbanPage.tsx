@@ -281,7 +281,7 @@ export function KanbanPage() {
                   badge={badge}
                   isDropped={isDropped}
                   estimatedHours={task.estimated_hours != null ? Number(task.estimated_hours) : undefined}
-                  onClick={isArchived ? () => toast.warning('Las tareas archivadas no se pueden modificar.') : () => { setEditingTask(task); setFormOpen(true); }}
+                  onClick={undefined}
                   onEdit={isArchived ? undefined : () => { setEditingTask(task); setFormOpen(true); }}
                   onDelete={isArchived ? undefined : async () => {
                     if (confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {

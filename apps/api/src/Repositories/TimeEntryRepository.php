@@ -181,17 +181,42 @@ final class TimeEntryRepository extends BaseRepository
 
     /**
      * @param int $approverId
+     * @param array<string, mixed> $filters
      * @return array<int, array<string, mixed>>
      */
-    public function getPendingApprovals(int $approverId): array
+    public function getPendingApprovals(int $approverId, array $filters = []): array
     {
+        $where = [];
+        $params = [];
+
+        if (!empty($filters['project_id'])) {
+            $where[] = 'te.project_id = :project_id';
+            $params[':project_id'] = $filters['project_id'];
+        }
+        if (!empty($filters['user_id'])) {
+            $where[] = 'te.user_id = :user_id';
+            $params[':user_id'] = $filters['user_id'];
+        }
+        if (!empty($filters['date_from'])) {
+            $where[] = 'te.date >= :date_from';
+            $params[':date_from'] = $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $where[] = 'te.date <= :date_to';
+            $params[':date_to'] = $filters['date_to'];
+        }
+
+        $whereSql = !empty($where) ? ' AND ' . implode(' AND ', $where) : '';
+
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
                 FROM `" . self::TABLE . "` te
                 JOIN TRACKER_projects p ON p.id = te.project_id
                 JOIN users u ON u.id = te.user_id
-                WHERE te.tenant_id = :tenant_id AND te.approval_status = 'submitted'
+                WHERE te.tenant_id = :tenant_id AND te.approval_status = 'submitted'{$whereSql}
                 ORDER BY te.date ASC, te.created_at ASC";
-        return $this->rawSelect($sql, [':tenant_id' => \kodanAPPS\DB\TenantContext::getTenantId()]);
+
+        $params[':tenant_id'] = \kodanAPPS\DB\TenantContext::getTenantId();
+        return $this->rawSelect($sql, $params);
     }
 
     /**

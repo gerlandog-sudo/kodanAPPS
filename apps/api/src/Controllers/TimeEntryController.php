@@ -67,7 +67,12 @@ final class TimeEntryController
      */
     public function list(): array
     {
-        $filter = new TimeEntryFilterDTO($_GET);
+        $input = $_GET;
+        $isAdmin = \kodanAPPS\DB\TenantContext::hasRole('admin');
+        if (!$isAdmin) {
+            $input['user_id'] = \kodanAPPS\DB\TenantContext::getUserId();
+        }
+        $filter = new TimeEntryFilterDTO($input);
         return $this->timeEntryService->list($filter);
     }
 
@@ -124,7 +129,10 @@ final class TimeEntryController
      */
     public function pendingApprovals(): array
     {
+        if (!\kodanAPPS\DB\TenantContext::hasRole('admin')) {
+            throw new \RuntimeException('Acceso denegado', 403);
+        }
         $approverId = \kodanAPPS\DB\TenantContext::getUserId();
-        return $this->timeEntryService->getPendingApprovals($approverId);
+        return $this->timeEntryService->getPendingApprovals($approverId, $_GET);
     }
 }

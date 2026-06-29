@@ -124,6 +124,9 @@ final class TimeEntryService
      */
     public function approve(int $id, int $approverId): array
     {
+        if (!TenantContext::hasRole('admin')) {
+            throw new \RuntimeException('Acceso denegado', 403);
+        }
         $this->entryRepo->approve($id, $approverId);
         return $this->entryRepo->findById($id) ?? [];
     }
@@ -135,6 +138,9 @@ final class TimeEntryService
      */
     public function reject(int $id, string $reason): array
     {
+        if (!TenantContext::hasRole('admin')) {
+            throw new \RuntimeException('Acceso denegado', 403);
+        }
         $this->entryRepo->reject($id, $reason);
         return $this->entryRepo->findById($id) ?? [];
     }
@@ -146,6 +152,9 @@ final class TimeEntryService
      */
     public function bulkApprove(array $ids, int $approverId): array
     {
+        if (!TenantContext::hasRole('admin')) {
+            throw new \RuntimeException('Acceso denegado', 403);
+        }
         $affected = $this->entryRepo->bulkApprove($ids, $approverId);
         return ['approved' => $affected];
     }
@@ -173,11 +182,15 @@ final class TimeEntryService
 
     /**
      * @param int $approverId
+     * @param array<string, mixed> $filters
      * @return array<int, array<string, mixed>>
      */
-    public function getPendingApprovals(int $approverId): array
+    public function getPendingApprovals(int $approverId, array $filters = []): array
     {
-        return $this->entryRepo->getPendingApprovals($approverId);
+        if (!TenantContext::hasRole('admin')) {
+            throw new \RuntimeException('Acceso denegado', 403);
+        }
+        return $this->entryRepo->getPendingApprovals($approverId, $filters);
     }
 
     private function updateSummary(int $userId, int $projectId, string $date): void

@@ -45,40 +45,53 @@ export function TimeEntryForm({ open, onClose, onSave, projects, tasks, initialD
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <div className="p-6 space-y-4 min-w-[400px]">
-        <h2 className="text-lg font-semibold">Registrar tiempo</h2>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Proyecto</label>
-          <Select options={projectOptions} value={projectId} onChange={setProjectId} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Tarea (opcional)</label>
-          <Select options={taskOptions} value={taskId} onChange={setTaskId} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Fecha</label>
-          <DatePicker value={date} onChange={setDate} />
-        </div>
-        <div className="flex gap-2">
-          <div className="flex-1 flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Horas</label>
-            <Input type="number" min="0" value={hours} onChange={(e) => setHours(e.target.value)} />
+    <Modal open={open} onClose={onClose} title="Registrar tiempo" className="max-w-2xl">
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Left Column */}
+          <div className="space-y-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Proyecto</label>
+              <Select options={projectOptions} value={projectId} onChange={setProjectId} />
+            </div>
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Tarea (opcional)</label>
+              <Select options={taskOptions} value={taskId} onChange={setTaskId} />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Fecha</label>
+              <DatePicker value={date} onChange={setDate} />
+            </div>
           </div>
-          <div className="flex-1 flex flex-col gap-1">
-            <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Minutos</label>
-            <Input type="number" min="0" max="59" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+
+          {/* Right Column */}
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Horas</label>
+                <Input type="number" min="0" value={hours} onChange={(e) => setHours(e.target.value)} />
+              </div>
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Minutos</label>
+                <Input type="number" min="0" max="59" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Descripción</label>
+              <textarea
+                className="w-full rounded-md border px-3 py-2 text-sm resize-none"
+                style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text)', height: '110px' }}
+                value={description} onChange={(e) => setDescription(e.target.value)}
+                placeholder="Escribe una breve descripción del trabajo realizado..."
+              />
+            </div>
           </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Descripción</label>
-          <textarea
-            className="w-full rounded-md border px-3 py-2 text-sm resize-none"
-            style={{ borderColor: 'var(--sys-border-soft)', background: 'var(--sys-bg)', color: 'var(--sys-text)' }}
-            rows={3} value={description} onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-border-soft/60">
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <Button variant="primary" onClick={handleSave} disabled={!projectId}>Guardar</Button>
         </div>

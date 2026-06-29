@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button, Table, DatePicker, Select, ConfirmDialog } from '@kodan-apps/ui-core';
 import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
-import { trackerApi, TimeEntry, Project } from '../api/client';
+import { trackerApi, TimeEntry, Project, ProjectTask } from '../api/client';
 import { TimerWidget } from '../components/TimerWidget';
 import { TimeEntryForm } from '../components/TimeEntryForm';
 import { Clock, Filter, Send, Trash2 } from 'lucide-react';
@@ -12,6 +12,7 @@ export function TimeEntriesPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<ProjectTask[]>([]);
   const [filterProject, setFilterProject] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -37,7 +38,12 @@ export function TimeEntriesPage() {
   }, [page, filterProject, filterStatus, filterDateFrom, filterDateTo]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { trackerApi.listProjects().then(setProjects).catch(() => {}); }, []);
+  useEffect(() => {
+    trackerApi.listProjects().then(setProjects).catch(() => {});
+    trackerApi.getAllBoards().then((board) => {
+      setTasks(Object.values(board.itemsByStage).flat());
+    }).catch(() => {});
+  }, []);
 
   const handleTimerSave = (duration: number) => {
     setFormDuration(duration);
@@ -169,7 +175,7 @@ export function TimeEntriesPage() {
         onClose={() => { setFormOpen(false); setFormDuration(undefined); }}
         onSave={handleFormSave}
         projects={projects}
-        tasks={[]}
+        tasks={tasks}
         initialDuration={formDuration}
       />
 

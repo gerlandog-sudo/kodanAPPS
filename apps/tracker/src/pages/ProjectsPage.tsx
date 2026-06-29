@@ -87,7 +87,7 @@ export function ProjectsPage() {
           )}
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto flex-1 pr-1 pb-4 scrollbar-thin">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto flex-1 p-2 pt-3 pb-4 scrollbar-thin content-start">
           {filtered.map((p) => (
             <ProjectCard
               key={p.id}

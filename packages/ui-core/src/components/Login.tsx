@@ -47,7 +47,11 @@ export function Login({
       });
 
       if (response && response.success) {
-        onLoginSuccess({ ...response.user, roles: response.roles || [] });
+        onLoginSuccess({
+          ...response.user,
+          roles: response.roles || [],
+          can_approve_hours: response.can_approve_hours
+        });
       } else {
         toast.error('Error en la autenticación.');
       }

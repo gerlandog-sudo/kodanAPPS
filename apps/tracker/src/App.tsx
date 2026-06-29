@@ -95,7 +95,7 @@ function AppContent() {
       { key: 'kanban', label: 'Tablero Tareas', icon: <KanbanSquare size={18} /> },
       { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
     ];
-    if (roles.includes('admin')) {
+    if (roles.includes('admin') || roles.includes('pm')) {
       items.push({ key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> });
     }
     items.push(

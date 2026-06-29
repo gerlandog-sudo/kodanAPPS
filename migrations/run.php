@@ -82,6 +82,8 @@ try {
         '022_tracker_project_tasks.sql', '023_tracker_time_entries.sql', '024_tracker_extensions.sql',
         '025_extend_projects_for_metrics.php',
         '026_rename_projects_to_tracker_projects.php',
+        '027_add_archived_to_kanban.php',
+        '028_tracker_time_entry_audit.php',
     ];
     
     foreach ($migrations as $migration) {

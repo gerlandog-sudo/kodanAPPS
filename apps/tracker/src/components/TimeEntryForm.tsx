@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Input, Modal, Select, DatePicker } from '@kodan-apps/ui-core';
-import type { Project, ProjectTask } from '../api/client';
+import type { Project, ProjectTask, TimeEntry } from '../api/client';
 
 interface TimeEntryFormProps {
   open: boolean
@@ -9,9 +9,10 @@ interface TimeEntryFormProps {
   projects: Project[]
   tasks: ProjectTask[]
   initialDuration?: number
+  initialEntry?: TimeEntry | null
 }
 
-export function TimeEntryForm({ open, onClose, onSave, projects, tasks, initialDuration }: TimeEntryFormProps) {
+export function TimeEntryForm({ open, onClose, onSave, projects, tasks, initialDuration, initialEntry }: TimeEntryFormProps) {
   const [projectId, setProjectId] = useState('');
   const [taskId, setTaskId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -20,11 +21,31 @@ export function TimeEntryForm({ open, onClose, onSave, projects, tasks, initialD
   const [description, setDescription] = useState('');
 
   useEffect(() => {
-    if (initialDuration) {
-      setHours(Math.floor(initialDuration / 60).toString());
-      setMinutes((initialDuration % 60).toString());
+    if (open) {
+      if (initialEntry) {
+        setProjectId(String(initialEntry.project_id));
+        setTaskId(initialEntry.task_id ? String(initialEntry.task_id) : '');
+        setDate(initialEntry.date.split('T')[0]);
+        setHours(Math.floor(initialEntry.duration_minutes / 60).toString());
+        setMinutes((initialEntry.duration_minutes % 60).toString());
+        setDescription(initialEntry.description || '');
+      } else if (initialDuration) {
+        setProjectId('');
+        setTaskId('');
+        setDate(new Date().toISOString().split('T')[0]);
+        setHours(Math.floor(initialDuration / 60).toString());
+        setMinutes((initialDuration % 60).toString());
+        setDescription('');
+      } else {
+        setProjectId('');
+        setTaskId('');
+        setDate(new Date().toISOString().split('T')[0]);
+        setHours('');
+        setMinutes('');
+        setDescription('');
+      }
     }
-  }, [initialDuration]);
+  }, [open, initialEntry, initialDuration]);
 
   const projectOptions = projects.map((p) => ({ value: String(p.id), label: p.name }));
   const taskOptions = tasks
@@ -45,7 +66,7 @@ export function TimeEntryForm({ open, onClose, onSave, projects, tasks, initialD
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Registrar tiempo" className="max-w-2xl">
+    <Modal open={open} onClose={onClose} title={initialEntry ? "Editar registro de tiempo" : "Registrar tiempo"} className="max-w-2xl">
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Left Column */}

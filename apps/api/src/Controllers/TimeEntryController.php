@@ -68,8 +68,8 @@ final class TimeEntryController
     public function list(): array
     {
         $input = $_GET;
-        $isAdmin = \kodanAPPS\DB\TenantContext::hasRole('admin');
-        if (!$isAdmin) {
+        $canSeeAll = \kodanAPPS\DB\TenantContext::hasRole('admin') || \kodanAPPS\DB\TenantContext::hasRole('pm');
+        if (!$canSeeAll) {
             $input['user_id'] = \kodanAPPS\DB\TenantContext::getUserId();
         }
         $filter = new TimeEntryFilterDTO($input);
@@ -130,7 +130,7 @@ final class TimeEntryController
      */
     public function bulkReject(array $input): array
     {
-        if (!\kodanAPPS\DB\TenantContext::hasRole('admin')) {
+        if (!\kodanAPPS\DB\TenantContext::hasRole('admin') && !\kodanAPPS\DB\TenantContext::hasRole('pm')) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $ids = $input['ids'] ?? [];
@@ -149,10 +149,20 @@ final class TimeEntryController
      */
     public function pendingApprovals(): array
     {
-        if (!\kodanAPPS\DB\TenantContext::hasRole('admin')) {
+        if (!\kodanAPPS\DB\TenantContext::hasRole('admin') && !\kodanAPPS\DB\TenantContext::hasRole('pm')) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $approverId = \kodanAPPS\DB\TenantContext::getUserId();
         return $this->timeEntryService->getPendingApprovals($approverId, $_GET);
+    }
+
+    /**
+     * @param int $id
+     * @return array<int, array<string, mixed>>
+     */
+    public function history(int $id): array
+    {
+        $authUserId = \kodanAPPS\DB\TenantContext::getUserId();
+        return $this->timeEntryService->getHistory($id, $authUserId);
     }
 }

@@ -1035,6 +1035,10 @@ return function (Router $router, array $app): void {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['timeEntry']->delete((int)$p['id']));
     });
+    $router->get('/api/tracker/time-entries/{id}/history', function (array $p) use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['timeEntry']->history((int)$p['id']));
+    });
     $router->post('/api/tracker/time-entries/{id}/submit', function (array $p) use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['timeEntry']->submit((int)$p['id']));

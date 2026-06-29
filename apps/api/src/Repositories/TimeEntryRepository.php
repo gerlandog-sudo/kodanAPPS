@@ -27,7 +27,9 @@ final class TimeEntryRepository extends BaseRepository
     public function createEntry(array $data): int
     {
         $data['approval_status'] = 'draft';
-        return $this->create(self::TABLE, $data);
+        $id = $this->create(self::TABLE, $data);
+        $this->logAudit($id, \kodanAPPS\DB\TenantContext::getUserId(), 'created', 'draft', 'Registro creado');
+        return $id;
     }
 
     /**
@@ -40,10 +42,13 @@ final class TimeEntryRepository extends BaseRepository
         if ($entry === null) {
             throw new RuntimeException('Time entry no encontrada', 404);
         }
-        if ($entry['approval_status'] !== 'draft') {
+        $isAdminOrPm = \kodanAPPS\DB\TenantContext::hasRole('admin') || \kodanAPPS\DB\TenantContext::hasRole('pm');
+        if (!$isAdminOrPm && $entry['approval_status'] !== 'draft') {
             throw new RuntimeException('No se puede modificar una entry ya enviada a aprobación', 403);
         }
-        return $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
+        $affected = $this->update(self::TABLE, $data, 'id = :id', [':id' => $id]);
+        $this->logAudit($id, \kodanAPPS\DB\TenantContext::getUserId(), 'updated', $entry['approval_status'], 'Registro modificado');
+        return $affected;
     }
 
     public function deleteEntry(int $id): int
@@ -57,10 +62,12 @@ final class TimeEntryRepository extends BaseRepository
         if ($entry === null) {
             throw new RuntimeException('Time entry no encontrada', 404);
         }
-        return $this->update(self::TABLE, [
+        $affected = $this->update(self::TABLE, [
             'approval_status' => 'submitted',
             'submitted_at' => date('Y-m-d H:i:s'),
         ], 'id = :id', [':id' => $id]);
+        $this->logAudit($id, \kodanAPPS\DB\TenantContext::getUserId(), 'submitted', 'submitted', 'Registro creado');
+        return $affected;
     }
 
     public function approve(int $id, int $approvedBy): int
@@ -72,11 +79,13 @@ final class TimeEntryRepository extends BaseRepository
         if ($entry['approval_status'] !== 'submitted') {
             throw new RuntimeException('Solo se pueden aprobar entries en estado submitted', 400);
         }
-        return $this->update(self::TABLE, [
+        $affected = $this->update(self::TABLE, [
             'approval_status' => 'approved',
             'approved_by' => $approvedBy,
             'approved_at' => date('Y-m-d H:i:s'),
         ], 'id = :id', [':id' => $id]);
+        $this->logAudit($id, $approvedBy, 'approved', 'approved', 'Cambio de estado');
+        return $affected;
     }
 
     public function reject(int $id, string $reason): int
@@ -88,10 +97,12 @@ final class TimeEntryRepository extends BaseRepository
         if ($entry['approval_status'] !== 'submitted') {
             throw new RuntimeException('Solo se pueden rechazar entries en estado submitted', 400);
         }
-        return $this->update(self::TABLE, [
+        $affected = $this->update(self::TABLE, [
             'approval_status' => 'rejected',
             'rejected_reason' => $reason,
         ], 'id = :id', [':id' => $id]);
+        $this->logAudit($id, \kodanAPPS\DB\TenantContext::getUserId(), 'rejected', 'rejected', 'Registro rechazado', $reason);
+        return $affected;
     }
 
     /**
@@ -129,10 +140,15 @@ final class TimeEntryRepository extends BaseRepository
         $whereSql = !empty($where) ? ' AND ' . implode(' AND ', $where) : '';
         $offset = ($page - 1) * $perPage;
 
-        $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
+        $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name,
+                       tk.title AS task_title, tt.name AS task_type_name, tt.color_hex AS task_type_color,
+                       appr.display_name AS approved_by_name
                 FROM `" . self::TABLE . "` te
                 JOIN TRACKER_projects p ON p.id = te.project_id
                 LEFT JOIN users u ON u.id = te.user_id
+                LEFT JOIN TRACKER_project_tasks tk ON tk.id = te.task_id
+                LEFT JOIN task_types tt ON tt.id = tk.task_type_id
+                LEFT JOIN users appr ON appr.id = te.approved_by
                 WHERE te.tenant_id = :tenant_id{$whereSql}
                 ORDER BY te.date DESC, te.created_at DESC
                 LIMIT {$perPage} OFFSET {$offset}";
@@ -208,10 +224,13 @@ final class TimeEntryRepository extends BaseRepository
 
         $whereSql = !empty($where) ? ' AND ' . implode(' AND ', $where) : '';
 
-        $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name
+        $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name,
+                       tk.title AS task_title, tt.name AS task_type_name, tt.color_hex AS task_type_color
                 FROM `" . self::TABLE . "` te
                 JOIN TRACKER_projects p ON p.id = te.project_id
                 JOIN users u ON u.id = te.user_id
+                LEFT JOIN TRACKER_project_tasks tk ON tk.id = te.task_id
+                LEFT JOIN task_types tt ON tt.id = tk.task_type_id
                 WHERE te.tenant_id = :tenant_id AND te.approval_status = 'submitted'{$whereSql}
                 ORDER BY te.date ASC, te.created_at ASC";
 
@@ -253,5 +272,33 @@ final class TimeEntryRepository extends BaseRepository
             }
         }
         return $affected;
+    }
+
+    private function logAudit(int $entryId, int $userId, string $action, string $status, string $description, ?string $details = null): void
+    {
+        $this->create('TRACKER_time_entry_audit', [
+            'time_entry_id' => $entryId,
+            'user_id' => $userId,
+            'action' => $action,
+            'status' => $status,
+            'description' => $description,
+            'details' => $details,
+        ]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getAuditHistory(int $entryId): array
+    {
+        $sql = "SELECT a.*, u.display_name AS user_name
+                FROM `TRACKER_time_entry_audit` a
+                LEFT JOIN users u ON u.id = a.user_id
+                WHERE a.tenant_id = :tenant_id AND a.time_entry_id = :entry_id
+                ORDER BY a.created_at DESC";
+        return $this->rawSelect($sql, [
+            ':tenant_id' => \kodanAPPS\DB\TenantContext::getTenantId(),
+            ':entry_id' => $entryId
+        ]);
     }
 }

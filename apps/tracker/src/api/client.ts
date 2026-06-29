@@ -73,6 +73,10 @@ export interface TimeEntry {
   created_at: string
   project_name?: string
   user_name?: string
+  task_title?: string | null
+  task_type_name?: string | null
+  task_type_color?: string | null
+  approved_by_name?: string | null
 }
 
 export interface TimeEntryListResponse {
@@ -279,6 +283,7 @@ export const trackerApi = {
   rejectTimeEntry: (id: number, reason: string) => api.post<TimeEntry>(`/api/tracker/time-entries/${id}/reject`, { reason }),
   bulkApproveTimeEntries: (ids: number[]) => api.post<{ approved: number }>('/api/tracker/time-entries/bulk-approve', { ids }),
   bulkRejectTimeEntries: (ids: number[], reason: string) => api.post<{ rejected: number }>('/api/tracker/time-entries/bulk-reject', { ids, reason }),
+  getTimeEntryHistory: (id: number) => api.get<any[]>(`/api/tracker/time-entries/${id}/history`),
   pendingApprovals: (params?: Record<string, string>) => api.get<TimeEntry[]>('/api/tracker/time-entries/pending-approvals', params),
 
   getMetrics: (projectId?: number, from?: string, to?: string) => {

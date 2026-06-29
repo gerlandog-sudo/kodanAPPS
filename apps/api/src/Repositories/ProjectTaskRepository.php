@@ -119,11 +119,11 @@ final class ProjectTaskRepository extends BaseRepository
             $totMins = (int)($sumRow['total_minutes'] ?? 0);
             $totCost = (float)($sumRow['total_cost'] ?? 0);
 
-            $upsertSql = "INSERT INTO `TRACKER_summary_daily` (tenant_id, user_id, project_id, date, total_minutes, total_cost, created_at, updated_at)
+            $upsertSql = "INSERT INTO `TRACKER_summary_daily` (tenant_id, user_id, project_id, date, total_minutes, calculated_cost, created_at, updated_at)
                           VALUES (:tid, :uid, :pid, :d, :tm, :tc, :cat, :uat)
                           ON DUPLICATE KEY UPDATE
                             total_minutes = VALUES(total_minutes),
-                            total_cost = VALUES(total_cost),
+                            calculated_cost = VALUES(calculated_cost),
                             updated_at = VALUES(updated_at)";
             $upsStmt = $this->pdo->prepare($upsertSql);
             $nowStr = date('Y-m-d H:i:s');

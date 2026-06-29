@@ -25,6 +25,10 @@ final class DashboardService
             "SELECT COUNT(*) FROM TRACKER_projects WHERE tenant_id = {$tenantId} AND status = 'active'"
         )->fetchColumn();
 
+        $activeProjectsDetails = $pdo->query(
+            "SELECT name FROM TRACKER_projects WHERE tenant_id = {$tenantId} AND status = 'active' LIMIT 5"
+        )->fetchAll(\PDO::FETCH_COLUMN);
+
         $today = date('Y-m-d');
         $weekStart = date('Y-m-d', strtotime('monday this week'));
         $weekEnd = date('Y-m-d', strtotime('sunday this week'));
@@ -35,6 +39,14 @@ final class DashboardService
              WHERE tenant_id = {$tenantId} AND date = '{$today}' AND approval_status != 'rejected'"
         )->fetchColumn();
 
+        $hoursTodayDetails = $pdo->query(
+            "SELECT p.name, ROUND(SUM(te.duration_minutes) / 60.0, 1) AS hours
+             FROM TRACKER_time_entries te
+             JOIN TRACKER_projects p ON p.id = te.project_id
+             WHERE te.tenant_id = {$tenantId} AND te.date = '{$today}' AND te.approval_status != 'rejected'
+             GROUP BY p.name LIMIT 5"
+        )->fetchAll();
+
         $hoursWeek = (float)$pdo->query(
             "SELECT COALESCE(SUM(duration_minutes), 0) / 60.0
              FROM TRACKER_time_entries
@@ -42,22 +54,52 @@ final class DashboardService
                AND approval_status != 'rejected'"
         )->fetchColumn();
 
+        $hoursWeekDetails = $pdo->query(
+            "SELECT p.name, ROUND(SUM(te.duration_minutes) / 60.0, 1) AS hours
+             FROM TRACKER_time_entries te
+             JOIN TRACKER_projects p ON p.id = te.project_id
+             WHERE te.tenant_id = {$tenantId} AND te.date >= '{$weekStart}' AND te.date <= '{$weekEnd}'
+               AND te.approval_status != 'rejected'
+             GROUP BY p.name LIMIT 5"
+        )->fetchAll();
+
         $openTasks = (int)$pdo->query(
             "SELECT COUNT(*) FROM TRACKER_project_tasks
              WHERE tenant_id = {$tenantId} AND kanban_status IN ('todo', 'in_progress')"
         )->fetchColumn();
+
+        $openTasksDetails = $pdo->query(
+            "SELECT p.name, COUNT(*) AS count
+             FROM TRACKER_project_tasks t
+             JOIN TRACKER_projects p ON p.id = t.project_id
+             WHERE t.tenant_id = {$tenantId} AND t.kanban_status IN ('todo', 'in_progress')
+             GROUP BY p.name LIMIT 5"
+        )->fetchAll();
 
         $pendingApprovals = (int)$pdo->query(
             "SELECT COUNT(*) FROM TRACKER_time_entries
              WHERE tenant_id = {$tenantId} AND approval_status = 'submitted'"
         )->fetchColumn();
 
+        $pendingApprovalsDetails = $pdo->query(
+            "SELECT u.display_name AS name, COUNT(*) AS count
+             FROM TRACKER_time_entries te
+             JOIN users u ON u.id = te.user_id
+             WHERE te.tenant_id = {$tenantId} AND te.approval_status = 'submitted'
+             GROUP BY u.display_name LIMIT 5"
+        )->fetchAll();
+
         return [
             'active_projects' => $activeProjects,
+            'active_projects_details' => $activeProjectsDetails,
             'hours_today' => round($hoursToday, 1),
+            'hours_today_details' => $hoursTodayDetails,
             'hours_week' => round($hoursWeek, 1),
+            'hours_week_details' => $hoursWeekDetails,
             'open_tasks' => $openTasks,
+            'open_tasks_details' => $openTasksDetails,
             'pending_approvals' => $pendingApprovals,
+            'pending_approvals_details' => $pendingApprovalsDetails,
         ];
     }
 

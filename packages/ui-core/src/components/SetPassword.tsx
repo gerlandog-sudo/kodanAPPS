@@ -106,7 +106,7 @@ export function SetPassword({
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="flex flex-col gap-1.5">
               <label className={labelClassName} style={{ color: 'var(--sys-text-muted)' }} htmlFor="set-email">
-                CORREO ELECTRÓNICO
+                kodanID (Correo Electrónico)
               </label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted/60" />

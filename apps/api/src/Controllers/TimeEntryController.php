@@ -68,7 +68,7 @@ final class TimeEntryController
     public function list(): array
     {
         $input = $_GET;
-        $canSeeAll = \kodanAPPS\DB\TenantContext::hasRole('admin') || \kodanAPPS\DB\TenantContext::hasRole('pm');
+        $canSeeAll = \kodanAPPS\DB\TenantContext::canApproveHours();
         if (!$canSeeAll) {
             $input['user_id'] = \kodanAPPS\DB\TenantContext::getUserId();
         }
@@ -130,7 +130,7 @@ final class TimeEntryController
      */
     public function bulkReject(array $input): array
     {
-        if (!\kodanAPPS\DB\TenantContext::hasRole('admin') && !\kodanAPPS\DB\TenantContext::hasRole('pm')) {
+        if (!\kodanAPPS\DB\TenantContext::canApproveHours()) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $ids = $input['ids'] ?? [];
@@ -149,7 +149,7 @@ final class TimeEntryController
      */
     public function pendingApprovals(): array
     {
-        if (!\kodanAPPS\DB\TenantContext::hasRole('admin') && !\kodanAPPS\DB\TenantContext::hasRole('pm')) {
+        if (!\kodanAPPS\DB\TenantContext::canApproveHours()) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $approverId = \kodanAPPS\DB\TenantContext::getUserId();

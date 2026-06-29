@@ -19,18 +19,20 @@ final class TenantContext
     /** @var string[]|null */
     private static ?array $roles = null;
     private static ?string $appId = null;
+    private static bool $canApproveHours = false;
 
     private function __construct() {}
 
     /**
      * @param string[] $roles
      */
-    public static function set(int $tenantId, int $userId, array $roles, string $appId): void
+    public static function set(int $tenantId, int $userId, array $roles, string $appId, bool $canApproveHours = false): void
     {
         self::$tenantId = $tenantId;
         self::$userId = $userId;
         self::$roles = $roles;
         self::$appId = $appId;
+        self::$canApproveHours = $canApproveHours;
     }
 
     public static function getTenantId(): int
@@ -62,6 +64,11 @@ final class TenantContext
         return self::$appId ?? '';
     }
 
+    public static function canApproveHours(): bool
+    {
+        return self::$canApproveHours;
+    }
+
     public static function hasRole(string $role): bool
     {
         return in_array($role, self::$roles ?? [], true);
@@ -83,5 +90,6 @@ final class TenantContext
         self::$userId = null;
         self::$roles = null;
         self::$appId = null;
+        self::$canApproveHours = false;
     }
 }

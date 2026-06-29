@@ -61,7 +61,7 @@ final class TimeEntryService
             throw new RuntimeException('Time entry no encontrada', 404);
         }
         if ((int)$entry['user_id'] !== $authUserId) {
-            $isAdmin = TenantContext::hasRole('admin') || TenantContext::hasRole('pm');
+            $isAdmin = TenantContext::canApproveHours();
             if (!$isAdmin) {
                 throw new RuntimeException('No tienes permiso para modificar esta entry', 403);
             }
@@ -124,7 +124,7 @@ final class TimeEntryService
      */
     public function approve(int $id, int $approverId): array
     {
-        if (!TenantContext::hasRole('admin') && !TenantContext::hasRole('pm')) {
+        if (!TenantContext::canApproveHours()) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $this->entryRepo->approve($id, $approverId);
@@ -138,7 +138,7 @@ final class TimeEntryService
      */
     public function reject(int $id, string $reason): array
     {
-        if (!TenantContext::hasRole('admin') && !TenantContext::hasRole('pm')) {
+        if (!TenantContext::canApproveHours()) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $this->entryRepo->reject($id, $reason);
@@ -152,7 +152,7 @@ final class TimeEntryService
      */
     public function bulkApprove(array $ids, int $approverId): array
     {
-        if (!TenantContext::hasRole('admin') && !TenantContext::hasRole('pm')) {
+        if (!TenantContext::canApproveHours()) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $affected = $this->entryRepo->bulkApprove($ids, $approverId);
@@ -166,7 +166,7 @@ final class TimeEntryService
      */
     public function bulkReject(array $ids, string $reason): array
     {
-        if (!TenantContext::hasRole('admin') && !TenantContext::hasRole('pm')) {
+        if (!TenantContext::canApproveHours()) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         $affected = $this->entryRepo->bulkReject($ids, $reason);
@@ -201,7 +201,7 @@ final class TimeEntryService
      */
     public function getPendingApprovals(int $approverId, array $filters = []): array
     {
-        if (!TenantContext::hasRole('admin') && !TenantContext::hasRole('pm')) {
+        if (!TenantContext::canApproveHours()) {
             throw new \RuntimeException('Acceso denegado', 403);
         }
         return $this->entryRepo->getPendingApprovals($approverId, $filters);
@@ -217,7 +217,7 @@ final class TimeEntryService
         if ($entry === null) {
             throw new RuntimeException('Time entry no encontrada', 404);
         }
-        $canSeeAll = TenantContext::hasRole('admin') || TenantContext::hasRole('pm');
+        $canSeeAll = TenantContext::canApproveHours();
         if (!$canSeeAll && (int)$entry['user_id'] !== $authUserId) {
             throw new RuntimeException('Acceso denegado', 403);
         }

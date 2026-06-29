@@ -88,10 +88,15 @@ export interface TimeEntryListResponse {
 
 export interface DashboardKpis {
   active_projects: number
+  active_projects_details?: string[]
   hours_today: number
+  hours_today_details?: Array<{ name: string; hours: number }>
   hours_week: number
+  hours_week_details?: Array<{ name: string; hours: number }>
   open_tasks: number
+  open_tasks_details?: Array<{ name: string; count: number }>
   pending_approvals: number
+  pending_approvals_details?: Array<{ name: string; count: number }>
 }
 
 export interface HoursByDay {

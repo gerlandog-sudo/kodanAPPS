@@ -42,7 +42,7 @@ final class TimeEntryRepository extends BaseRepository
         if ($entry === null) {
             throw new RuntimeException('Time entry no encontrada', 404);
         }
-        $isAdminOrPm = \kodanAPPS\DB\TenantContext::hasRole('admin') || \kodanAPPS\DB\TenantContext::hasRole('pm');
+        $isAdminOrPm = \kodanAPPS\DB\TenantContext::canApproveHours();
         if (!$isAdminOrPm && $entry['approval_status'] !== 'draft') {
             throw new RuntimeException('No se puede modificar una entry ya enviada a aprobación', 403);
         }

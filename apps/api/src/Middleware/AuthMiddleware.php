@@ -53,11 +53,14 @@ final class AuthMiddleware
 
         $this->validateCsrf();
 
+        $canApproveHours = isset($payload['can_approve_hours']) && (int)$payload['can_approve_hours'] === 1;
+
         TenantContext::set(
             (int)$payload['tid'],
             (int)$payload['sub'],
             $payload['roles'] ?? [],
-            $payload['app_id'] ?? ''
+            $payload['app_id'] ?? '',
+            $canApproveHours
         );
 
         return [
@@ -65,6 +68,7 @@ final class AuthMiddleware
             'tenant_id' => (int)$payload['tid'],
             'roles' => $payload['roles'] ?? [],
             'app_id' => $payload['app_id'] ?? '',
+            'can_approve_hours' => $canApproveHours,
         ];
     }
 

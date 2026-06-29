@@ -256,6 +256,7 @@ export function KanbanPage() {
             columns={columns()}
             itemsByStage={itemsByStage}
             onDrop={handleDrop}
+            className="h-full"
             emptyPlaceholder={
               <div className="h-24 flex items-center justify-center text-xs border border-dashed rounded-lg border-slate-200 dark:border-slate-800" style={{ color: 'var(--sys-text-muted)' }}>
                 Sin tareas

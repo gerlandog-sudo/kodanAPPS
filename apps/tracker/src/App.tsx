@@ -41,6 +41,7 @@ function AppContent() {
     authenticated,
     user,
     roles = [],
+    canApproveHours,
     planStatus,
     planName,
   } = useAuth('tracker');
@@ -78,6 +79,7 @@ function AppContent() {
 
   const handleLogout = useCallback(() => {
     authLogout();
+    setRoute('dashboard');
     setView('login');
   }, [authLogout]);
 
@@ -95,7 +97,7 @@ function AppContent() {
       { key: 'kanban', label: 'Tablero Tareas', icon: <KanbanSquare size={18} /> },
       { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
     ];
-    if (roles.includes('admin') || roles.includes('pm')) {
+    if (canApproveHours) {
       items.push({ key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> });
     }
     items.push(
@@ -107,7 +109,7 @@ function AppContent() {
       { key: 'contacts', label: 'Contactos', icon: B2BContactNavItem.icon }
     );
     return items;
-  }, [roles]);
+  }, [canApproveHours]);
 
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => {
     const items: UserMenuItem[] = [

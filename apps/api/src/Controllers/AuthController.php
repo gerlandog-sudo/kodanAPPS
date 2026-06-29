@@ -84,7 +84,7 @@ final class AuthController
                 throw new RuntimeException('Acceso denegado: el Super Admin debe operar desde el tenant del sistema.', 403);
             }
             // Super Admin pasa directo, sin chequear roles
-            return $this->buildLoginResponse($user, $appId, []);
+            return $this->buildLoginResponse($user, $appId, [], false);
         }
 
         // Validar acceso al plan + roles usando PlanAccessValidator
@@ -94,8 +94,9 @@ final class AuthController
             (int)$user['id']
         );
         $roles = $appAccess['roles'];
+        $canApproveHours = $appAccess['can_approve_hours'];
 
-        return $this->buildLoginResponse($user, $appId, $roles);
+        return $this->buildLoginResponse($user, $appId, $roles, $canApproveHours);
     }
 
     /**
@@ -183,9 +184,10 @@ final class AuthController
      * 
      * @param array{id: int, tenant_id: int, email: string, password_hash: string, display_name: string, is_super_admin: int, language: string, is_active: int, created_at: string} $user
      * @param string[] $roles
+     * @param bool $canApproveHours
      * @return array<string, mixed>
      */
-    private function buildLoginResponse(array $user, string $appId, array $roles): array
+    private function buildLoginResponse(array $user, string $appId, array $roles, bool $canApproveHours = false): array
     {
         $jwtTtl = 14400; // 4 horas
         $issuedAt = time();
@@ -198,6 +200,7 @@ final class AuthController
             'roles' => $roles,
             'app_id' => $appId,
             'is_super_admin' => (int)$user['is_super_admin'],
+            'can_approve_hours' => $canApproveHours ? 1 : 0,
         ];
 
         $jwt = $this->generateJwt($payload);
@@ -231,6 +234,7 @@ final class AuthController
             ],
             'app_id' => $appId,
             'roles' => $roles,
+            'can_approve_hours' => $canApproveHours,
         ];
     }
 
@@ -282,6 +286,7 @@ final class AuthController
                 'is_super_admin' => (int)$user['is_super_admin'] === 1,
             ],
             'roles' => $roles,
+            'can_approve_hours' => TenantContext::canApproveHours(),
             'app_id' => $appId,
             'plan_status' => $planStatus ?: [],
             'plan_name' => $planName ?: 'Free',

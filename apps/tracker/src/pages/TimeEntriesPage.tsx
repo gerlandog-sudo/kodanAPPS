@@ -8,8 +8,8 @@ import { TimeEntryHistoryModal } from '../components/TimeEntryHistoryModal';
 import { Clock, Send, Trash2, Edit3, CheckCircle, History, Calendar } from 'lucide-react';
 
 export function TimeEntriesPage() {
-  const { roles } = useAuth('tracker');
-  const canSeeAll = roles.includes('admin') || roles.includes('pm');
+  const { canApproveHours } = useAuth('tracker');
+  const canSeeAll = canApproveHours;
 
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -317,19 +317,7 @@ export function TimeEntriesPage() {
 
   return (
     <div className="h-full flex flex-col space-y-6 overflow-hidden">
-      {/* Botones de acción superiores */}
-      <div className="flex items-center justify-end gap-3 shrink-0">
-        <TimerWidget onSave={handleTimerSave} />
-        <Button 
-          variant="primary" 
-          onClick={() => { setEditingEntry(null); setFormDuration(undefined); setFormOpen(true); }}
-          className="h-11 px-5 shadow-sm font-semibold"
-        >
-          Registrar tiempo
-        </Button>
-      </div>
-
-      {/* Tarjeta de Filtros */}
+      {/* Tarjeta de Filtros y Acciones */}
       <div className="bg-surface-raised border border-border-soft p-5 rounded-xl shadow-sm flex flex-wrap lg:flex-nowrap items-end gap-4 w-full shrink-0">
         <div className="flex flex-col gap-1 w-full sm:w-auto">
           <label className="text-[10px] font-bold tracking-wider text-text-muted uppercase">Desde</label>
@@ -349,7 +337,7 @@ export function TimeEntriesPage() {
             <Select options={userOptions} value={filterUser} onChange={(val) => { setFilterUser(val); setPage(1); }} />
           </div>
         )}
-        <div className="ml-auto shrink-0 flex items-center h-10 pb-1">
+        <div className="flex items-center h-10 pb-1.5 shrink-0">
           <button 
             type="button" 
             onClick={handleClearFilters}
@@ -357,6 +345,18 @@ export function TimeEntriesPage() {
           >
             Limpiar
           </button>
+        </div>
+
+        {/* Botones de acción del timer y registro */}
+        <div className="ml-auto flex items-center gap-3 shrink-0 pb-0.5">
+          <TimerWidget onSave={handleTimerSave} />
+          <Button 
+            variant="primary" 
+            onClick={() => { setEditingEntry(null); setFormDuration(undefined); setFormOpen(true); }}
+            className="h-10 px-5 shadow-sm font-semibold flex items-center justify-center animate-none"
+          >
+            Registrar tiempo
+          </Button>
         </div>
       </div>
 

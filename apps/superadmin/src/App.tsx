@@ -136,6 +136,7 @@ function AppContent() {
 
   const handleLogout = useCallback(() => {
     authLogout();
+    setRoute('dashboard');
     setView('login');
   }, [authLogout]);
 

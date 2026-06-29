@@ -15,7 +15,7 @@ final class PlanAccessValidator
         $this->pdo = $pdo;
     }
 
-    /** @return array{allowed: bool, roles: array<int, string>, plan_id: int} */
+    /** @return array{allowed: bool, roles: array<int, string>, plan_id: int, can_approve_hours: bool} */
     public function validateAppAccess(int $tenantId, string $appId, int $userId): array
     {
         $tenant = $this->pdo->query(
@@ -33,17 +33,31 @@ final class PlanAccessValidator
             throw new \RuntimeException('Plan no incluye esta app', 403);
         }
 
-        $roles = $this->pdo->query(
-            "SELECT r.name FROM user_roles ur
+        $rows = $this->pdo->query(
+            "SELECT LOWER(r.name) AS name, r.can_approve FROM user_roles ur
              JOIN roles r ON r.id = ur.role_id
              WHERE ur.user_id = {$userId} AND ur.app_id = '{$appId}' AND r.is_active = 1"
-        )->fetchAll(\PDO::FETCH_COLUMN);
+        )->fetchAll();
 
-        if (empty($roles)) {
+        if (empty($rows)) {
             throw new \RuntimeException('Sin rol en esta app', 403);
         }
 
-        return ['allowed' => true, 'roles' => $roles, 'plan_id' => $planId];
+        $roles = [];
+        $canApproveHours = false;
+        foreach ($rows as $row) {
+            $roles[] = $row['name'];
+            if ((int)$row['can_approve'] === 1) {
+                $canApproveHours = true;
+            }
+        }
+
+        return [
+            'allowed' => true,
+            'roles' => $roles,
+            'plan_id' => $planId,
+            'can_approve_hours' => $canApproveHours
+        ];
     }
 
     /** @return array{has_capacity: bool, current_usage: int, limit_value: int} */

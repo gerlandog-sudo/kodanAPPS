@@ -84,6 +84,7 @@ try {
         '026_rename_projects_to_tracker_projects.php',
         '027_add_archived_to_kanban.php',
         '028_tracker_time_entry_audit.php',
+        '029_add_can_approve_to_roles.php',
     ];
     
     foreach ($migrations as $migration) {

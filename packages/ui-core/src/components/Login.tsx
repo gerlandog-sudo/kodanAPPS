@@ -76,7 +76,7 @@ export function Login({
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="flex flex-col gap-1.5">
               <label className={`${labelClassName} text-text-muted`} htmlFor="email">
-                CORREO ELECTRÓNICO
+                kodanID (Correo Electrónico)
               </label>
               <Input
                 id="email"
@@ -92,7 +92,7 @@ export function Login({
 
             <div className="flex flex-col gap-1.5">
               <label className={`${labelClassName} text-text-muted`} htmlFor="password">
-                CONTRASEÑA
+                Contraseña
               </label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />

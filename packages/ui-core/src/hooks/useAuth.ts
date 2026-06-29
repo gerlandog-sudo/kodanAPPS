@@ -8,6 +8,7 @@ export interface AuthState {
   authenticated: boolean;
   user: any;
   roles: string[];
+  canApproveHours: boolean;
   appId: string;
   planStatus: any[];
   planName: string;
@@ -19,6 +20,7 @@ export function useAuth(appId: string) {
     authenticated: false,
     user: null,
     roles: [],
+    canApproveHours: false,
     appId,
     planStatus: [],
     planName: '',
@@ -48,6 +50,7 @@ export function useAuth(appId: string) {
         authenticated: true,
         user: data.user,
         roles: data.roles || [],
+        canApproveHours: !!data.can_approve_hours,
         appId: data.app_id || appId,
         planStatus: data.plan_status || [],
         planName: data.plan_name || '',
@@ -68,6 +71,7 @@ export function useAuth(appId: string) {
       authenticated: true,
       user: { ...userData },
       roles: userData.roles || [],
+      canApproveHours: !!userData.can_approve_hours,
       appId,
       planStatus: [],
       planName: '',
@@ -97,6 +101,7 @@ export function useAuth(appId: string) {
       authenticated: false,
       user: null,
       roles: [],
+      canApproveHours: false,
       appId,
       planStatus: [],
       planName: '',

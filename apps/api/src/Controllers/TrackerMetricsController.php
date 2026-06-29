@@ -30,8 +30,8 @@ final class TrackerMetricsController
 
         $tenantId = TenantContext::getTenantId();
 
-        if (!TenantContext::hasRole('admin')) {
-            throw new RuntimeException('Acceso denegado. Se requieren privilegios de administrador para Métricas.', 403);
+        if (!TenantContext::canApproveHours()) {
+            throw new RuntimeException('Acceso denegado. Se requieren privilegios de administración para Métricas.', 403);
         }
 
         $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : null;

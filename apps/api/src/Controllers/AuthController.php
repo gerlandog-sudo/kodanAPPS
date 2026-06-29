@@ -212,12 +212,21 @@ final class AuthController
             'samesite' => 'Lax',
         ]);
 
+        // Obtener avatar_url desde user_configs para esta app
+        $avatarStmt = $this->pdo->prepare(
+            "SELECT avatar_url FROM user_configs WHERE user_id = ? AND app_id = ? LIMIT 1"
+        );
+        $avatarStmt->execute([$user['id'], $appId]);
+        $avatarUrl = $avatarStmt->fetchColumn();
+
         return [
             'success' => true,
             'user' => [
                 'id' => (int)$user['id'],
                 'email' => $user['email'],
                 'display_name' => $user['display_name'],
+                'avatar_url' => $avatarUrl ?: null,
+                'language' => $user['language'] ?? 'es',
                 'is_super_admin' => (int)$user['is_super_admin'] === 1,
             ],
             'app_id' => $appId,
@@ -255,18 +264,175 @@ final class AuthController
         $planStmt->execute([$tenantId]);
         $planName = $planStmt->fetchColumn();
 
+        // Obtener avatar_url desde user_configs para la app actual
+        $avatarStmt = $this->pdo->prepare(
+            "SELECT avatar_url FROM user_configs WHERE user_id = ? AND app_id = ? LIMIT 1"
+        );
+        $avatarStmt->execute([$userId, $appId]);
+        $avatarUrl = $avatarStmt->fetchColumn();
+
         return [
             'authenticated' => true,
             'user' => [
                 'id' => $userId,
                 'email' => $user['email'],
                 'display_name' => $user['display_name'],
+                'avatar_url' => $avatarUrl ?: null,
+                'language' => $user['language'] ?? 'es',
                 'is_super_admin' => (int)$user['is_super_admin'] === 1,
             ],
             'roles' => $roles,
             'app_id' => $appId,
             'plan_status' => $planStatus ?: [],
             'plan_name' => $planName ?: 'Free',
+        ];
+    }
+
+    /**
+     * PATCH /api/auth/profile
+     *
+     * Actualiza datos del perfil del usuario autenticado.
+     *
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
+    public function updateProfile(array $input): array
+    {
+        $userId = TenantContext::getUserId();
+        $tenantId = TenantContext::getTenantId();
+        $appId = TenantContext::getAppId();
+
+        $displayName = isset($input['display_name']) ? trim((string)$input['display_name']) : '';
+        $avatarDataUrl = isset($input['avatar_url']) ? (string)$input['avatar_url'] : '';
+        $language = isset($input['language']) ? trim((string)$input['language']) : '';
+
+        if ($displayName === '') {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'El nombre es requerido',
+            ]));
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            // 1. Actualizar users
+            $updateSql = "UPDATE users SET display_name = :name";
+            $params = [':name' => $displayName, ':id' => $userId, ':tid' => $tenantId];
+
+            if ($language !== '') {
+                $updateSql .= ", language = :lang";
+                $params[':lang'] = $language;
+            }
+
+            $updateSql .= " WHERE id = :id AND tenant_id = :tid";
+            $stmt = $this->pdo->prepare($updateSql);
+            $stmt->execute($params);
+
+            // 2. Actualizar avatar en user_configs si se envió
+            if ($avatarDataUrl !== '') {
+                // Validar que sea una data URL válida
+                if (!str_starts_with($avatarDataUrl, 'data:image/')) {
+                    throw new InvalidArgumentException(json_encode([
+                        'message' => 'Formato de imagen inválido',
+                    ]));
+                }
+
+                $upsertAvatar = $this->pdo->prepare(
+                    "INSERT INTO user_configs (user_id, app_id, avatar_url) VALUES (:uid, :app, :avatar)
+                     ON DUPLICATE KEY UPDATE avatar_url = VALUES(avatar_url)"
+                );
+                $upsertAvatar->execute([
+                    ':uid' => $userId,
+                    ':app' => $appId,
+                    ':avatar' => $avatarDataUrl,
+                ]);
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw new RuntimeException('Error al actualizar el perfil: ' . $e->getMessage(), 500);
+        }
+
+        return [
+            'success' => true,
+            'user' => [
+                'id' => $userId,
+                'display_name' => $displayName,
+                'language' => $language ?: null,
+            ],
+        ];
+    }
+
+    /**
+     * POST /api/auth/change-password
+     *
+     * Cambia la contraseña del usuario autenticado.
+     *
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
+    public function changePassword(array $input): array
+    {
+        $userId = TenantContext::getUserId();
+        $tenantId = TenantContext::getTenantId();
+
+        $currentPassword = $input['current_password'] ?? '';
+        $newPassword = $input['new_password'] ?? '';
+        $confirmPassword = $input['confirm_password'] ?? '';
+
+        if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'Todos los campos de contraseña son requeridos',
+            ]));
+        }
+
+        if (strlen($newPassword) < 8) {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'La nueva contraseña debe tener al menos 8 caracteres',
+            ]));
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'Las contraseñas no coinciden',
+            ]));
+        }
+
+        // Obtener usuario actual
+        $stmt = $this->pdo->prepare(
+            "SELECT id, password_hash FROM users WHERE id = :id AND tenant_id = :tid LIMIT 1"
+        );
+        $stmt->execute([':id' => $userId, ':tid' => $tenantId]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            throw new RuntimeException('Usuario no encontrado', 404);
+        }
+
+        // Verificar contraseña actual
+        if (!password_verify($currentPassword, $user['password_hash'])) {
+            throw new RuntimeException('La contraseña actual no es correcta', 400);
+        }
+
+        // Actualizar contraseña
+        $passwordHash = password_hash($newPassword, PASSWORD_ARGON2ID, [
+            'memory_cost' => 65536,
+            'time_cost' => 4,
+            'threads' => 3,
+        ]);
+
+        $updateStmt = $this->pdo->prepare(
+            "UPDATE users SET password_hash = :hash WHERE id = :id AND tenant_id = :tid"
+        );
+        $updateStmt->execute([
+            ':hash' => $passwordHash,
+            ':id' => $userId,
+            ':tid' => $tenantId,
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Contraseña actualizada exitosamente.',
         ];
     }
 

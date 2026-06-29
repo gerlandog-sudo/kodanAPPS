@@ -1,8 +1,8 @@
-import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization, useSSE, MessageDrawer, useAuth, AuthLoading } from '@kodan-apps/ui-core';
+import { ThemeProvider, useTheme, Toaster, Login, SetPassword, Sidebar, TopBar, QuotaUtilization, useSSE, MessageDrawer, useAuth, AuthLoading, ProfileModal } from '@kodan-apps/ui-core';
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
-import { LayoutDashboard, FolderKanban, KanbanSquare, Clock, CheckCircle, Settings, FileSpreadsheet, TrendingUp, Thermometer, GitBranch, BrainCircuit } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, KanbanSquare, Clock, CheckCircle, Settings, FileSpreadsheet, TrendingUp, Thermometer, GitBranch, BrainCircuit, User } from 'lucide-react';
 import './index.css';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -32,6 +32,7 @@ function AppContent() {
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
   const [chatOpen, setChatOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const {
     logout: authLogout,
@@ -89,7 +90,7 @@ function AppContent() {
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { key: 'metrics', label: 'Métricas', icon: <TrendingUp size={18} /> },
     { key: 'projects', label: 'Proyectos', icon: <FolderKanban size={18} /> },
-    { key: 'kanban', label: 'Tablero', icon: <KanbanSquare size={18} /> },
+    { key: 'kanban', label: 'Tablero Tareas', icon: <KanbanSquare size={18} /> },
     { key: 'time-entries', label: 'Horas', icon: <Clock size={18} /> },
     { key: 'approvals', label: 'Aprobaciones', icon: <CheckCircle size={18} /> },
     { key: 'heatmap', label: 'Mapa de Calor', icon: <Thermometer size={18} /> },
@@ -101,7 +102,8 @@ function AppContent() {
   ], []);
 
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
-    { label: 'Configuración', icon: <Settings size={16} />, onClick: () => setRoute('settings'), dividerBefore: false },
+    { label: 'Perfil', icon: <User size={16} />, onClick: () => setProfileOpen(true) },
+    { label: 'Configuración', icon: <Settings size={16} />, onClick: () => setRoute('settings') },
   ], []);
 
   if (view === 'initial' || loading) {
@@ -200,6 +202,18 @@ function AppContent() {
         sseMessages={sseMessages}
         title="Mensajería General"
         onMessagesRead={refetchUnreadCount}
+      />
+
+      <ProfileModal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        user={user}
+        appId="tracker"
+        onProfileUpdated={(updated) => {
+          if (user) {
+            Object.assign(user, updated)
+          }
+        }}
       />
     </div>
   );

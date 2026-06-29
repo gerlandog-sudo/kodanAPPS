@@ -174,6 +174,48 @@ return function (Router $router, array $app): void {
         echo json_encode($data);
     });
 
+    $router->patch('/api/auth/profile', function () use ($app) {
+        try {
+            $app['auth']->handle();
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $app['controllers']['auth']->updateProfile($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Profile update error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    });
+
+    $router->post('/api/auth/change-password', function () use ($app) {
+        try {
+            $app['auth']->handle();
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $app['controllers']['auth']->changePassword($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Change password error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    });
+
     // ============================================================
     // Middleware: Super Admin (JWT + SuperAdmin role)
     // ============================================================

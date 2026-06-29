@@ -26,6 +26,20 @@ final class TimeEntryService
     public function create(CreateTimeEntryDTO $dto): array
     {
         $data = $dto->toArray();
+
+        // Retrieve user's hourly cost from profile if not provided
+        if (($data['hourly_cost'] ?? 0.0) === 0.0) {
+            $res = $this->entryRepo->rawSelect(
+                "SELECT hourly_cost FROM TRACKER_user_profiles WHERE user_id = :uid",
+                [':uid' => $dto->userId]
+            );
+            if (!empty($res)) {
+                $hourlyCost = (float)$res[0]['hourly_cost'];
+                $data['hourly_cost'] = $hourlyCost;
+                $data['calculated_cost'] = round(($hourlyCost / 60) * $dto->durationMinutes, 2);
+            }
+        }
+
         $id = $this->entryRepo->createEntry($data);
         $entry = $this->entryRepo->findById($id);
 

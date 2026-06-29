@@ -119,14 +119,15 @@ export function TimeEntriesPage() {
 
   return (
     <div className="h-full flex flex-col space-y-6 overflow-hidden">
-      <div className="flex items-center justify-end shrink-0">
-        <Button variant="primary" onClick={() => { setFormDuration(undefined); setFormOpen(true); }}>
+      <div className="flex items-center justify-end gap-3 shrink-0">
+        <TimerWidget onSave={handleTimerSave} />
+        <Button 
+          variant="primary" 
+          onClick={() => { setFormDuration(undefined); setFormOpen(true); }}
+          className="h-11 px-5 shadow-sm font-semibold"
+        >
           Registrar tiempo
         </Button>
-      </div>
-
-      <div className="shrink-0">
-        <TimerWidget onSave={handleTimerSave} />
       </div>
 
       <div className="flex items-center gap-3 overflow-x-auto shrink-0 pb-1 scrollbar-none">

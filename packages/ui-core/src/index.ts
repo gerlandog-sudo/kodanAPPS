@@ -66,6 +66,7 @@ export { EmailComposer } from './components/EmailComposer'
 export type { EmailComposerProps } from './components/EmailComposer'
 export { SmtpSettingsPanel } from './components/SmtpSettingsPanel'
 
+export { ProfileModal } from './components/ProfileModal'
 export { KanbanBoard } from './components/KanbanBoard'
 export type { KanbanBoardProps, ColumnDef } from './components/KanbanBoard'
 export { KanbanColumn } from './components/KanbanColumn'

@@ -1,5 +1,5 @@
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, ProfileModal } from '@kodan-apps/ui-core';
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
@@ -105,6 +105,7 @@ function AppContent() {
   const [view, setView] = useState<View | 'initial'>('initial');
   const [route, setRoute] = useState<Route>('dashboard');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const { loadUserTheme, theme, toggleTheme } = useTheme();
   const { logout: authLogout, setAuthenticated, loading, authenticated, user, planStatus, planName } = useAuth('superadmin');
@@ -145,7 +146,7 @@ function AppContent() {
   }, [handleLogout]);
 
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
-    { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
+    { label: 'Perfil', icon: <User size={16} />, onClick: () => setProfileOpen(true) },
     { label: 'Configuracion Global', icon: <Settings size={16} />, onClick: () => {} },
   ], []);
 
@@ -183,6 +184,17 @@ function AppContent() {
         }
       />
       {showPasswordModal && <ChangePassword onClose={() => setShowPasswordModal(false)} />}
+      <ProfileModal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        user={user}
+        appId="superadmin"
+        onProfileUpdated={(updated) => {
+          if (user) {
+            Object.assign(user, updated)
+          }
+        }}
+      />
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <TopBar
           title="kodanAPPS"

@@ -23,6 +23,9 @@ final class TimeEntryController
      */
     public function create(array $input): array
     {
+        if (!isset($input['user_id'])) {
+            $input['user_id'] = \kodanAPPS\DB\TenantContext::getUserId();
+        }
         $dto = new CreateTimeEntryDTO($input);
         return $this->timeEntryService->create($dto);
     }

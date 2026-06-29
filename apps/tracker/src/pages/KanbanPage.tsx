@@ -139,6 +139,10 @@ export function KanbanPage() {
 
       // Don't update if same stage
       if (task.kanban_status === toStage) return;
+      if (task.kanban_status === 'archived') {
+        toast.error('Las tareas archivadas no se pueden mover.');
+        return;
+      }
 
       updateTaskStage(taskId, toStage);
     },
@@ -266,6 +270,8 @@ export function KanbanPage() {
                 </div>
               );
 
+              const isArchived = task.kanban_status === 'archived';
+
               return (
                 <EntityCard
                   title={task.title}
@@ -275,9 +281,9 @@ export function KanbanPage() {
                   badge={badge}
                   isDropped={isDropped}
                   estimatedHours={task.estimated_hours != null ? Number(task.estimated_hours) : undefined}
-                  onClick={() => { setEditingTask(task); setFormOpen(true); }}
-                  onEdit={() => { setEditingTask(task); setFormOpen(true); }}
-                  onDelete={async () => {
+                  onClick={isArchived ? () => toast.warning('Las tareas archivadas no se pueden modificar.') : () => { setEditingTask(task); setFormOpen(true); }}
+                  onEdit={isArchived ? undefined : () => { setEditingTask(task); setFormOpen(true); }}
+                  onDelete={isArchived ? undefined : async () => {
                     if (confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
                       await trackerApi.deleteTask(task.id);
                       loadBoard();

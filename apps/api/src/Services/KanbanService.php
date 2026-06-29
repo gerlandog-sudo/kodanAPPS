@@ -110,6 +110,10 @@ final class KanbanService
      */
     public function updateTask(int $id, array $data): array
     {
+        $task = $this->getTask($id);
+        if ($task['kanban_status'] === 'archived') {
+            throw new \RuntimeException('Las tareas archivadas no se pueden modificar', 400);
+        }
         $this->taskRepo->rawExecute(
             'UPDATE `TRACKER_project_tasks` SET ' . implode(', ', array_map(fn($c) => "`{$c}` = :{$c}", array_keys($data))) . ' WHERE id = :id',
             array_merge($data, [':id' => $id])
@@ -119,6 +123,10 @@ final class KanbanService
 
     public function deleteTask(int $id): void
     {
+        $task = $this->getTask($id);
+        if ($task['kanban_status'] === 'archived') {
+            throw new \RuntimeException('Las tareas archivadas no se pueden eliminar', 400);
+        }
         $this->taskRepo->deleteTask($id);
     }
 

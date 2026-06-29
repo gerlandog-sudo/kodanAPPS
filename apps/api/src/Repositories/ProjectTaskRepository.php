@@ -63,6 +63,84 @@ final class ProjectTaskRepository extends BaseRepository
             throw new RuntimeException('Tarea no encontrada', 404);
         }
 
+        if ($task['kanban_status'] === 'archived') {
+            throw new RuntimeException('Las tareas archivadas no se pueden mover ni modificar', 400);
+        }
+
+        if ($toStage === 'done') {
+            $userId = isset($task['assigned_to']) && (int)$task['assigned_to'] > 0
+                ? (int)$task['assigned_to']
+                : \kodanAPPS\DB\TenantContext::getUserId();
+
+            $hourlyCost = 0.0;
+            $tenantId = \kodanAPPS\DB\TenantContext::getTenantId();
+            $stmt = $this->pdo->prepare("SELECT hourly_cost FROM TRACKER_user_profiles WHERE user_id = :uid AND tenant_id = :tid");
+            $stmt->execute([':uid' => $userId, ':tid' => $tenantId]);
+            $profile = $stmt->fetch();
+            if ($profile) {
+                $hourlyCost = (float)$profile['hourly_cost'];
+            }
+
+            $durationMinutes = isset($task['estimated_hours']) && (float)$task['estimated_hours'] > 0
+                ? (int)((float)$task['estimated_hours'] * 60)
+                : 60; // default 1 hour
+
+            $calculatedCost = round(($hourlyCost / 60) * $durationMinutes, 2);
+
+            $timeEntryData = [
+                'project_id' => $task['project_id'],
+                'task_id' => $taskId,
+                'user_id' => $userId,
+                'date' => date('Y-m-d'),
+                'duration_minutes' => $durationMinutes,
+                'description' => 'Registro automático: Tarea finalizada "' . $task['title'] . '"',
+                'hourly_cost' => $hourlyCost,
+                'calculated_cost' => $calculatedCost,
+                'approval_status' => 'submitted',
+                'submitted_at' => date('Y-m-d H:i:s'),
+                'created_at' => date('Y-m-d H:i:s'),
+                'tenant_id' => $tenantId,
+            ];
+
+            $cols = implode(', ', array_map(fn($c) => "`{$c}`", array_keys($timeEntryData)));
+            $placeholders = ':' . implode(', :', array_keys($timeEntryData));
+            $sql = "INSERT INTO `TRACKER_time_entries` ({$cols}) VALUES ({$placeholders})";
+            $insStmt = $this->pdo->prepare($sql);
+            $insStmt->execute($timeEntryData);
+
+            // Update daily summary
+            $sqlSum = "SELECT SUM(duration_minutes) AS total_minutes, SUM(calculated_cost) AS total_cost
+                       FROM `TRACKER_time_entries`
+                       WHERE user_id = :uid AND project_id = :pid AND date = :d
+                         AND approval_status != 'rejected'";
+            $sumStmt = $this->pdo->prepare($sqlSum);
+            $sumStmt->execute([':uid' => $userId, ':pid' => $task['project_id'], ':d' => date('Y-m-d')]);
+            $sumRow = $sumStmt->fetch();
+            $totMins = (int)($sumRow['total_minutes'] ?? 0);
+            $totCost = (float)($sumRow['total_cost'] ?? 0);
+
+            $upsertSql = "INSERT INTO `TRACKER_summary_daily` (tenant_id, user_id, project_id, date, total_minutes, total_cost, created_at, updated_at)
+                          VALUES (:tid, :uid, :pid, :d, :tm, :tc, :cat, :uat)
+                          ON DUPLICATE KEY UPDATE
+                            total_minutes = VALUES(total_minutes),
+                            total_cost = VALUES(total_cost),
+                            updated_at = VALUES(updated_at)";
+            $upsStmt = $this->pdo->prepare($upsertSql);
+            $nowStr = date('Y-m-d H:i:s');
+            $upsStmt->execute([
+                ':tid' => $tenantId,
+                ':uid' => $userId,
+                ':pid' => $task['project_id'],
+                ':d' => date('Y-m-d'),
+                ':tm' => $totMins,
+                ':tc' => $totCost,
+                ':cat' => $nowStr,
+                ':uat' => $nowStr,
+            ]);
+
+            $toStage = 'archived';
+        }
+
         return $this->update(self::TABLE, [
             'kanban_status' => $toStage,
             'position' => $position,

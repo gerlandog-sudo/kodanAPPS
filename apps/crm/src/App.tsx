@@ -1,4 +1,4 @@
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, SlidePanel, EmailComposer } from '@kodan-apps/ui-core';
+import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, SlidePanel, EmailComposer, ProfileModal } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -57,6 +57,7 @@ function AppContent() {
   const [chatEntity, setChatEntity] = useState<{ type: string; id: number; title?: string } | null>(null);
   const [emailComposerOpen, setEmailComposerOpen] = useState(false);
   const [emailEntity, setEmailEntity] = useState<{ type: string; id: number; recipientEmail?: string; entityData?: Record<string, any> } | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // States for Smart Notifications
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -169,7 +170,7 @@ function AppContent() {
   }, [roles])
 
   const userMenuExtraItems = useMemo<UserMenuItem[]>(() => [
-    { label: 'Perfil', icon: <User size={16} />, onClick: () => {} },
+    { label: 'Perfil', icon: <User size={16} />, onClick: () => setProfileOpen(true) },
     ...(roles.includes('admin') ? [{ label: 'Configuracion', icon: <SettingsIcon size={16} />, onClick: () => setRoute('settings' as Route) }] : []),
   ], [roles])
 
@@ -312,6 +313,18 @@ function AppContent() {
         recipientEmail={emailEntity?.recipientEmail}
         entityData={emailEntity?.entityData}
         moduleContext="crm"
+      />
+
+      <ProfileModal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        user={user}
+        appId="crm"
+        onProfileUpdated={(updated) => {
+          if (user) {
+            Object.assign(user, updated)
+          }
+        }}
       />
 
       <SlidePanel

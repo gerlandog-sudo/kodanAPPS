@@ -1,6 +1,6 @@
 ﻿import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, ChevronRight, ChevronDown, ChevronsLeft, ChevronsRight, ChevronsLeftRight, LogOut } from 'lucide-react';
+import { Sun, Moon, ChevronRight, ChevronDown, ChevronsLeft, ChevronsRight, LogOut } from 'lucide-react';
 
 export interface NavItem {
   key: string;
@@ -398,23 +398,19 @@ export function Sidebar({
           role="separator"
           aria-orientation="vertical"
           aria-label="Redimensionar barra lateral"
-          className="absolute top-0 right-0 h-full w-3 cursor-col-resize z-30 group touch-none select-none flex items-center justify-center"
+          className="absolute top-0 right-0 h-full w-3 cursor-col-resize z-30 group touch-none select-none"
           style={{ touchAction: 'none' }}
         >
-          {/* Línea visual del borde */}
-          <div className="absolute right-0 top-0 h-full w-px bg-border-soft group-hover:bg-primary group-active:bg-primary transition-colors" />
-          {/* Grip de doble flecha (affordance de redimensionado) */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-text-muted group-hover:text-primary pointer-events-none">
-            <ChevronsLeftRight size={14} />
-          </div>
-          {/* Botón de colapso flotante sobre la barra */}
+          {/* Línea visual del borde, centrada en el riel de drag */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 h-full w-px bg-border-soft group-hover:bg-primary group-active:bg-primary transition-colors" />
+          {/* Botón de colapso flotante, centrado sobre la línea de drag */}
           <button
             type="button"
             onClick={toggleCollapse}
             onPointerDown={(e) => e.stopPropagation()}
             title={isIconOnly ? 'Expandir' : 'Colapsar'}
             aria-label={isIconOnly ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-            className="absolute -left-3 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
+            className="absolute left-1/2 -translate-x-1/2 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
           >
             {isIconOnly ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
           </button>

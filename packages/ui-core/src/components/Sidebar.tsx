@@ -1,6 +1,6 @@
 ﻿import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, ChevronRight, ChevronDown, ChevronsLeft, ChevronsRight, LogOut } from 'lucide-react';
+import { Sun, Moon, ChevronRight, ChevronDown, ChevronsLeft, ChevronsRight, ChevronsLeftRight, LogOut } from 'lucide-react';
 
 export interface NavItem {
   key: string;
@@ -339,18 +339,6 @@ export function Sidebar({
           <div className="flex flex-col gap-1 px-3 py-6 flex-1">
             {navItems.map((item) => renderItem(item))}
           </div>
-
-          <div className="px-3 pb-2">
-            <button
-              type="button"
-              onClick={toggleCollapse}
-              title={isIconOnly ? 'Expandir' : 'Colapsar'}
-              className={`${linkBase} ${isIconOnly ? 'justify-center' : ''}`}
-            >
-              {isIconOnly ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
-              {!isIconOnly && <span>Colapsar</span>}
-            </button>
-          </div>
         </div>
 
         {footerItems && <div className="border-t border-border-soft px-3 py-2">{footerItems}</div>}
@@ -401,7 +389,7 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Handle de redimensionado por drag & drop */}
+        {/* Handle de redimensionado por drag & drop + botón de colapso flotante */}
         <div
           ref={handleRef}
           onPointerDown={handlePointerDown}
@@ -410,10 +398,26 @@ export function Sidebar({
           role="separator"
           aria-orientation="vertical"
           aria-label="Redimensionar barra lateral"
-          className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize z-20 group touch-none select-none"
+          className="absolute top-0 right-0 h-full w-3 cursor-col-resize z-30 group touch-none select-none flex items-center justify-center"
           style={{ touchAction: 'none' }}
         >
+          {/* Línea visual del borde */}
           <div className="absolute right-0 top-0 h-full w-px bg-border-soft group-hover:bg-primary group-active:bg-primary transition-colors" />
+          {/* Grip de doble flecha (affordance de redimensionado) */}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity text-text-muted group-hover:text-primary pointer-events-none">
+            <ChevronsLeftRight size={14} />
+          </div>
+          {/* Botón de colapso flotante sobre la barra */}
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            onPointerDown={(e) => e.stopPropagation()}
+            title={isIconOnly ? 'Expandir' : 'Colapsar'}
+            aria-label={isIconOnly ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+            className="absolute -left-3 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
+          >
+            {isIconOnly ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
+          </button>
         </div>
       </nav>
 

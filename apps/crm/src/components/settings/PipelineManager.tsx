@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Button, Input, ColorPicker, Modal, EntityCard } from '@kodan-apps/ui-core'
+import { Button, Input, ColorPicker, Modal, EntityCard, COLOR_PRESETS, withAlpha } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import type { StageBulkInput } from '../../api/client'
 import type { Pipeline, Stage } from '../../types/admin'
-import { STAGE_PRESET_LIST } from '../../utils/stageColorPresets'
 import { STAGE_TEMPLATES } from './stageTemplates'
 import { usePipelineSync } from '../../hooks/usePipelineSync'
 import { Plus, Trash2, Layout, X, Settings } from 'lucide-react'
@@ -195,7 +194,7 @@ export function PipelineManager() {
 
   const addEditingStage = () => {
     const nextOrder = editingStages.length > 0 ? Math.max(...editingStages.map(s => s.sort_order || 0)) + 10 : 10
-    setEditingStages(prev => [...prev, { name: '', color_hex: STAGE_PRESET_LIST[nextOrder % STAGE_PRESET_LIST.length], sort_order: nextOrder, probability: 0, is_won_stage: 0, is_lost_stage: 0, ui_config: null }])
+    setEditingStages(prev => [...prev, { name: '',         color_hex: COLOR_PRESETS[nextOrder % COLOR_PRESETS.length], sort_order: nextOrder, probability: 0, is_won_stage: 0, is_lost_stage: 0, ui_config: null }])
   }
 
   const removeEditingStage = (index: number) => { if (editingStages.length > 1) setEditingStages(prev => prev.filter((_, i) => i !== index)) }
@@ -384,7 +383,7 @@ export function PipelineManager() {
               <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--sys-text)' }}>{template.label}</span>
               <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 {template.stages.map((s, i) => (
-                  <span key={i} style={{ padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontSize: '0.625rem', fontWeight: 600, background: s.color_hex + '20', color: s.color_hex }}>{s.name}</span>
+                  <span key={i} style={{ padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontSize: '0.625rem', fontWeight: 600, background: withAlpha(s.color_hex || '#6366F1', 12.5), color: s.color_hex }}>{s.name}</span>
                 ))}
               </div>
             </button>

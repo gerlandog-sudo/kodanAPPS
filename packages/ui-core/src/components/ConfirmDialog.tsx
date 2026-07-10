@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { Modal } from './Modal'
 import { Button } from './Button'
 
 export interface ConfirmDialogProps {
   open: boolean
-  onClose: () => void
+  onClose?: () => void
+  /** Alias de onClose (mantiene compatibilidad con llamadas existentes). */
+  onCancel?: () => void
   title: string
-  message: string
+  message: ReactNode
   confirmLabel?: string
   cancelLabel?: string
-  variant?: 'danger' | 'warning' | 'info'
+  variant?: 'danger' | 'warning' | 'info' | 'success'
   onConfirm: () => void
   loading?: boolean
 }
@@ -17,6 +20,7 @@ export interface ConfirmDialogProps {
 export function ConfirmDialog({
   open,
   onClose,
+  onCancel,
   title,
   message,
   confirmLabel = 'Confirmar',
@@ -26,6 +30,7 @@ export function ConfirmDialog({
   loading = false,
 }: ConfirmDialogProps) {
   const confirmBtnRef = useRef<HTMLButtonElement>(null)
+  const close = onClose ?? onCancel ?? (() => {})
 
   useEffect(() => {
     if (open) {
@@ -34,7 +39,7 @@ export function ConfirmDialog({
   }, [open])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape' && !loading) onClose()
+    if (e.key === 'Escape' && !loading) close()
   }
 
   if (!open) return null
@@ -42,13 +47,13 @@ export function ConfirmDialog({
   const btnVariant = variant === 'danger' ? 'danger' : 'primary'
 
   return (
-    <Modal open={open} onClose={loading ? () => {} : onClose} title={title}>
+    <Modal open={open} onClose={loading ? () => {} : close} title={title}>
       <div onKeyDown={handleKeyDown} className="flex flex-col gap-6">
         <p className="m-0 text-sm text-text leading-relaxed">
           {message}
         </p>
         <div className="flex justify-end gap-3">
-          <Button variant="secondary" type="button" onClick={onClose} disabled={loading}>
+          <Button variant="secondary" type="button" onClick={close} disabled={loading}>
             {cancelLabel}
           </Button>
           <button

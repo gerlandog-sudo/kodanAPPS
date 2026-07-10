@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card } from '@kodan-apps/ui-core'
+import { Card, statusColor } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
@@ -15,12 +15,6 @@ interface WorkflowStats {
   top_events: { event: string; count: number }[]
   top_rules: { id: number; name: string; execution_count: number }[]
   recent_executions: any[]
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  success: '#10B981',
-  partial: '#F59E0B',
-  failed: '#EF4444',
 }
 
 const CHART_HEIGHT = 220
@@ -171,7 +165,7 @@ export function AutomationDashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={16} outerRadius={28} paddingAngle={2}>
-                        {donutData.map(d => <Cell key={d.name} fill={STATUS_COLORS[d.name] || '#6B7280'} />)}
+                        {donutData.map(d => <Cell key={d.name} fill={statusColor(d.name)} />)}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
@@ -179,7 +173,7 @@ export function AutomationDashboard() {
               )}
               <div className="flex gap-2" style={{ fontSize: '9px', fontWeight: 600 }}>
                 {donutData.map(d => (
-                  <span key={d.name} style={{ color: STATUS_COLORS[d.name] }}>
+                  <span key={d.name} style={{ color: statusColor(d.name) }}>
                     {d.name}: {d.value}
                   </span>
                 ))}
@@ -203,7 +197,7 @@ export function AutomationDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={donutData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={3}>
-                      {donutData.map(d => <Cell key={d.name} fill={STATUS_COLORS[d.name] || '#6B7280'} />)}
+                      {donutData.map(d => <Cell key={d.name} fill={statusColor(d.name)} />)}
                     </Pie>
                     <Tooltip
                       formatter={(v: any) => [v, 'Ejecuciones']}
@@ -215,7 +209,7 @@ export function AutomationDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                 {donutData.map(d => (
                   <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '11px' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[d.name] || '#6B7280' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(d.name) }} />
                     <span style={{ color: 'var(--sys-text-muted)', fontWeight: 600, textTransform: 'capitalize' }}>
                       {d.name === 'success' ? 'Exitosas' : d.name === 'partial' ? 'Parciales' : 'Fallidas'}
                     </span>
@@ -341,7 +335,7 @@ export function AutomationDashboard() {
                   background: 'color-mix(in srgb, var(--sys-surface-hover) 20%, transparent)',
                   fontSize: '10px',
                 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: STATUS_COLORS[ex.status] || '#6B7280' }} />
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: statusColor(ex.status) }} />
                   <span style={{ fontWeight: 700, color: 'var(--sys-text-muted)', flexShrink: 0 }}>#{ex.id}</span>
                   <span style={{ fontWeight: 600, color: 'var(--sys-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {ex.rule_name}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { formatCurrency } from '@kodan-apps/ui-core'
 import { crmApi } from '../../api/client'
 import { QuoteStatusBadge } from './QuoteStatusBadge'
 import type { Quote, QuoteLineItem } from '../../types/admin'
@@ -40,9 +41,6 @@ export function QuotePrintView({ quoteId }: QuotePrintViewProps) {
     )
   }
 
-  const formatCurrency = (val: string | number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(String(val)) || 0)
-  }
 
   const lineTotal = (item: QuoteLineItem): number => {
     const qty = Number(item.quantity) || 0

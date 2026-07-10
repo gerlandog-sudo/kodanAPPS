@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { SlidePanel, Table } from '@kodan-apps/ui-core'
+import { SlidePanel, Table, formatCurrency } from '@kodan-apps/ui-core'
 import { Users, Briefcase, FileDown, Download, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react'
 import { toast } from 'sonner'
 import { crmApi } from '../api/client'
@@ -67,9 +67,6 @@ export function Dashboard() {
     setSelectedPipelineId(id)
   }
 
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val)
-
   const handleOpenDrillDown = (type: 'pipeline' | 'active' | 'won' | 'accounts') => {
     setDrillDownType(type)
     setDrillDownOpen(true)
@@ -103,7 +100,7 @@ export function Dashboard() {
         columns={[
           { key: 'title', header: 'Negociación', render: (item: any) => <span className="font-semibold">{item.title}</span>, sortable: true },
           { key: 'stage_name', header: 'Etapa', render: (item: any) => <span className="px-2 py-0.5 rounded text-[10px] font-medium" style={{ background: 'var(--sys-surface-hover)', border: '1px solid var(--sys-border-soft)' }}>{item.stage_name || 'Inicial'}</span>, sortable: true },
-          { key: 'value', header: 'Valor', render: (item: any) => <span className="font-bold text-primary">{formatCurrency(parseFloat(item.value) || 0)}</span>, align: 'right' as const, sortable: true },
+          { key: 'value', header: 'Valor', render: (item: any) => <span className="font-bold text-primary">{formatCurrency(parseFloat(item.value) || 0, 0)}</span>, align: 'right' as const, sortable: true },
           { key: 'created_at', header: 'Creado el', render: (item: any) => item.created_at ? new Date(item.created_at).toLocaleDateString('es-AR') : '-' }
         ]}
         keyExtractor={(item) => item.id}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, Table, ConfirmDialog } from '@kodan-apps/ui-core'
+import { Button, Table, ConfirmDialog, formatCurrency } from '@kodan-apps/ui-core'
 import { Plus, FileText, Search, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { crmApi } from '../api/client'
@@ -107,9 +107,6 @@ export function Quotes() {
     }
   }
 
-  const formatCurrency = (val: string | number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(String(val)) || 0)
-  }
 
   const filteredQuotes = search
     ? quotes.filter(

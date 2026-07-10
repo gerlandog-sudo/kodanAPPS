@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ResponsiveContainer, ComposedChart, Bar, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { formatCurrency } from '@kodan-apps/ui-core';
 
 interface ForecastChartProps {
   opportunities: any[];
@@ -61,9 +62,6 @@ export function ForecastChart({ opportunities }: ForecastChartProps) {
     return next6Months;
   }, [opportunities]);
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
-  };
 
   return (
     <div className="w-full h-full flex flex-col justify-between">
@@ -108,16 +106,16 @@ export function ForecastChart({ opportunities }: ForecastChartProps) {
                       <div className="flex flex-col gap-1.5">
                         <div className="flex justify-between gap-8 text-[11px]">
                           <span style={{ color: 'var(--sys-text-muted)' }}>Valor Bruto:</span>
-                          <span className="font-bold" style={{ color: 'var(--sys-primary)' }}>{formatCurrency(data.grossValue)}</span>
+                          <span className="font-bold" style={{ color: 'var(--sys-primary)' }}>{formatCurrency(data.grossValue, 0)}</span>
                         </div>
                         <div className="flex justify-between gap-8 text-[11px]">
                           <span style={{ color: 'var(--sys-text-muted)' }}>Valor Ponderado:</span>
-                          <span className="font-bold" style={{ color: 'var(--sys-tertiary)' }}>{formatCurrency(data.weightedValue)}</span>
+                          <span className="font-bold" style={{ color: 'var(--sys-tertiary)' }}>{formatCurrency(data.weightedValue, 0)}</span>
                         </div>
                         <div className="h-px bg-border-soft my-1" style={{ height: '1px', background: 'var(--sys-border-soft)' }} />
                         <div className="flex justify-between gap-8 text-[10px]">
                           <span style={{ color: 'var(--sys-text-muted)' }}>Brecha de Conversión:</span>
-                          <span className="font-medium text-amber-500">{formatCurrency(gap)}</span>
+                          <span className="font-medium text-amber-500">{formatCurrency(gap, 0)}</span>
                         </div>
                       </div>
                     </div>

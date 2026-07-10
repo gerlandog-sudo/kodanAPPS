@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select, Table, DatePicker, useAuth } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, CustomFieldsForm, EntityCard, ConfirmDialog, Select, Table, DatePicker, useAuth, withAlpha, tintWithSurface } from '@kodan-apps/ui-core';
 import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import type { CustomFieldDef } from '../api/client';
@@ -612,8 +612,8 @@ export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAut
           <span 
             className="px-2 py-0.5 rounded text-[10px] font-medium border"
             style={{ 
-              background: `color-mix(in srgb, ${stageColor} 12%, var(--sys-surface))`, 
-              borderColor: `color-mix(in srgb, ${stageColor} 30%, transparent)`,
+              background: tintWithSurface(stageColor, 12), 
+              borderColor: withAlpha(stageColor, 30),
               color: stageColor
             }}
           >
@@ -846,8 +846,8 @@ export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAut
                           }}
                           className="w-full text-left p-1 rounded text-[10px] font-medium transition-all hover:scale-[1.01] truncate flex flex-col border"
                           style={{
-                            background: `color-mix(in srgb, ${stageColor} 8%, var(--sys-surface))`,
-                            borderColor: `color-mix(in srgb, ${stageColor} 20%, transparent)`,
+                            background: tintWithSurface(stageColor, 8),
+                            borderColor: withAlpha(stageColor, 20),
                             borderLeftWidth: '3px',
                             borderLeftColor: stageColor,
                             color: 'var(--sys-text)',

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 
-const presetColors = [
+export const COLOR_PRESETS = [
   '#6366F1', '#8B5CF6', '#EC4899', '#F43F5E',
   '#F97316', '#EAB308', '#22C55E', '#14B8A6',
   '#06B6D4', '#3B82F6', '#6B7280', '#1F2937',
@@ -54,7 +54,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
           display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '160px',
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.25rem' }}>
-            {presetColors.map(color => (
+            {COLOR_PRESETS.map(color => (
               <button key={color} type="button" onClick={() => { onChange(color); setOpen(false) }}
                 aria-label={color}
                 style={{

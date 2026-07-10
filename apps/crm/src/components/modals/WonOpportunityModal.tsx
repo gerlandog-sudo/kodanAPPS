@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Modal, Input, Select } from '@kodan-apps/ui-core';
+import { Button, Modal, Input, Select, formatCurrency } from '@kodan-apps/ui-core';
 import { Trophy, Clock, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { crmApi } from '../../api/client';
@@ -85,9 +85,6 @@ export function WonOpportunityModal({ isOpen, onClose, onSubmit, defaultName, op
     }
   };
 
-  const formatCurrency = (val: string | number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(String(val)) || 0)
-  }
 
   return (
     <Modal open={isOpen} onClose={onClose} title="¡Felicitaciones! Oportunidad Ganada">

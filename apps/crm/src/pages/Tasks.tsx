@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { Button, Input, Modal, ConfirmDialog, Select, MultiSelect, Table, EntityCard, useAuth, DatePicker } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, ConfirmDialog, Select, MultiSelect, Table, EntityCard, useAuth, DatePicker, formatDateTime, statusColor } from '@kodan-apps/ui-core';
 import type { TableColumn } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import { KanbanBoard } from '@kodan-apps/ui-core';
@@ -373,12 +373,12 @@ export function Tasks() {
   // --- KANBAN VIEW RENDER CONFIG ---
   const kanbanColumns = useMemo<ColumnDef[]>(() => {
     const cols: ColumnDef[] = [
-      { id: 'todo', label: 'Para Hacer', dotColor: '#3B82F6' },
-      { id: 'in_progress', label: 'Haciendo', dotColor: '#F59E0B' },
-      { id: 'done', label: 'Hecho', dotColor: '#10B981' },
+      { id: 'todo', label: 'Para Hacer', dotColor: statusColor('todo') },
+      { id: 'in_progress', label: 'Haciendo', dotColor: statusColor('in_progress') },
+      { id: 'done', label: 'Hecho', dotColor: statusColor('done') },
     ];
     if (showArchived) {
-      cols.push({ id: 'archived', label: 'Archivada', dotColor: '#6B7280' });
+      cols.push({ id: 'archived', label: 'Archivada', dotColor: statusColor('archived') });
     }
     return cols;
   }, [showArchived]);
@@ -864,22 +864,16 @@ export function Tasks() {
       key: 'dates',
       header: 'Fechas',
       render: (t) => {
-        const formatDate = (dStr?: string | null) => {
-          if (!dStr) return '';
-          return new Date(dStr).toLocaleDateString('es-AR', {
-            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-          });
-        };
         return (
           <div style={{ fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
             {t.start_date && (
               <div>
-                <span style={{ color: 'var(--sys-text-muted)' }}>Inicio:</span> {formatDate(t.start_date)}
+                <span style={{ color: 'var(--sys-text-muted)' }}>Inicio:</span> {formatDateTime(t.start_date)}
               </div>
             )}
             {t.end_date && (
               <div>
-                <span style={{ color: 'var(--sys-text-muted)' }}>Fin:</span> {formatDate(t.end_date)}
+                <span style={{ color: 'var(--sys-text-muted)' }}>Fin:</span> {formatDateTime(t.end_date)}
               </div>
             )}
           </div>
@@ -890,18 +884,13 @@ export function Tasks() {
       key: 'status',
       header: 'Estado',
       render: (t) => {
-        const labels: Record<string, string> = {
+        const labelMap: Record<string, string> = {
           todo: 'Para Hacer',
           in_progress: 'Haciendo',
           done: 'Hecho',
           archived: 'Archivada'
         };
-        const colors: Record<string, string> = {
-          todo: '#3B82F6',
-          in_progress: '#F59E0B',
-          done: '#10B981',
-          archived: '#6B7280'
-        };
+        const c = statusColor(t.status);
         return (
           <span style={{
             display: 'inline-block',
@@ -910,11 +899,11 @@ export function Tasks() {
             fontSize: '10px',
             fontWeight: 700,
             textTransform: 'uppercase',
-            color: colors[t.status] || '#6366F1',
-            background: `color-mix(in srgb, ${colors[t.status] || '#6366F1'} 10%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${colors[t.status] || '#6366F1'} 20%, transparent)`
+            color: c,
+            background: `color-mix(in srgb, ${c} 10%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${c} 20%, transparent)`
           }}>
-            {labels[t.status] || t.status}
+            {labelMap[t.status] || t.status}
           </span>
         );
       }

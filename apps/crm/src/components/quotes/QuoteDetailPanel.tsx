@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { SlidePanel, Button, ConfirmDialog } from '@kodan-apps/ui-core'
+import { SlidePanel, Button, ConfirmDialog, formatCurrency, formatDate } from '@kodan-apps/ui-core'
 import { FileText, Send, CheckCircle, XCircle, Printer, Trash2, Edit3 } from 'lucide-react'
 import { toast } from 'sonner'
 import { crmApi } from '../../api/client'
@@ -67,17 +67,6 @@ export function QuoteDetailPanel({ open, quoteId, onClose, onUpdated, onEdit }: 
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
-  const formatCurrency = (val: string | number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(String(val)) || 0)
-  }
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('es-AR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
 
   return (
     <>

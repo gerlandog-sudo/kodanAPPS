@@ -19,7 +19,7 @@ import {
   ChevronRight, 
   Info
 } from 'lucide-react';
-import { Input, Button } from '@kodan-apps/ui-core';
+import { Input, Button, formatCurrency, statusColor, statusBadgeClass } from '@kodan-apps/ui-core';
 import { trackerApi, PortfolioProject, DetailedProjectMetrics } from '../api/client';
 
 // Speedometer Gauge para Calidad
@@ -108,10 +108,6 @@ const SvgRing: React.FC<{ value: number, statusColor: string }> = ({ value, stat
   );
 };
 
-function formatCurrency(val: number): string {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
-}
-
 export function MetricsPage() {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
@@ -167,23 +163,6 @@ export function MetricsPage() {
     setDetailData(null);
   };
 
-  const getStatusColorValue = (status: string): string => {
-    switch (status) {
-      case 'approved': return 'var(--sys-success)';
-      case 'submitted': return 'var(--sys-tertiary)';
-      case 'rejected': return 'var(--sys-error)';
-      default: return 'var(--sys-text-muted)';
-    }
-  };
-
-  const getStatusBadgeClass = (status: string): string => {
-    switch (status) {
-      case 'approved': return 'text-[var(--sys-success)] bg-[var(--sys-success)]/10 border-[var(--sys-success)]/20';
-      case 'submitted': return 'text-[var(--sys-tertiary)] bg-[var(--sys-tertiary)]/10 border-[var(--sys-tertiary)]/20';
-      case 'rejected': return 'text-[var(--sys-error)] bg-[var(--sys-error)]/10 border-[var(--sys-error)]/20';
-      default: return 'text-[var(--sys-text-muted)] bg-[var(--sys-text-muted)]/10 border-[var(--sys-border)]';
-    }
-  };
 
   if (loading && !selectedProjectId) {
     return (
@@ -325,8 +304,8 @@ export function MetricsPage() {
                             <span 
                               className="w-3 h-3 rounded-full traffic-light-glow" 
                               style={{ 
-                                backgroundColor: getStatusColorValue(proj.kpis.risks),
-                                color: getStatusColorValue(proj.kpis.risks)
+                                backgroundColor: statusColor(proj.kpis.risks),
+                                color: statusColor(proj.kpis.risks)
                               }} 
                             />
                             <span className="text-[10px] font-bold uppercase font-mono">{proj.kpis.risks}</span>
@@ -405,7 +384,7 @@ export function MetricsPage() {
                   <div className="flex items-center justify-between gap-4 py-2">
                     <SvgRing 
                       value={detailData.kpis.scope.percentage} 
-                      statusColor={getStatusColorValue('approved')} 
+                      statusColor={statusColor('approved')} 
                     />
                     <div className="flex-1 text-right">
                       <span className="text-[10px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider block">Origen</span>
@@ -434,7 +413,7 @@ export function MetricsPage() {
                     <span className="text-[10px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
                       Cronograma
                     </span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${getStatusBadgeClass(detailData.kpis.schedule.status)}`}>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${statusBadgeClass(detailData.kpis.schedule.status)}`}>
                       SPI: {detailData.kpis.schedule.spi.toFixed(2)}
                     </span>
                   </div>
@@ -472,23 +451,23 @@ export function MetricsPage() {
                     <span className="text-[10px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
                       Presupuesto (Burn Rate)
                     </span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${getStatusBadgeClass(detailData.kpis.budget.status)}`}>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${statusBadgeClass(detailData.kpis.budget.status)}`}>
                       {detailData.kpis.budget.burn_rate}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 py-2">
                     <SvgRing 
                       value={detailData.kpis.budget.burn_rate} 
-                      statusColor={getStatusColorValue(detailData.kpis.budget.status)} 
+                      statusColor={statusColor(detailData.kpis.budget.status)} 
                     />
                     <div className="flex-1 text-right text-xs">
                       <div className="mb-2">
                         <span className="text-[9px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider block">Costo Real (AC)</span>
-                        <span className="font-bold text-[var(--sys-text)]">{formatCurrency(detailData.kpis.budget.cost)}</span>
+                        <span className="font-bold text-[var(--sys-text)]">{formatCurrency(detailData.kpis.budget.cost, 0)}</span>
                       </div>
                       <div>
                         <span className="text-[9px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider block">Presupuesto Limite</span>
-                        <span className="font-bold text-[var(--sys-text-muted)]">{formatCurrency(detailData.kpis.budget.budget)}</span>
+                        <span className="font-bold text-[var(--sys-text-muted)]">{formatCurrency(detailData.kpis.budget.budget, 0)}</span>
                       </div>
                     </div>
                   </div>
@@ -500,7 +479,7 @@ export function MetricsPage() {
                     <span className="text-[10px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
                       Perfil de Riesgos
                     </span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${getStatusBadgeClass(detailData.kpis.risks.status)}`}>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${statusBadgeClass(detailData.kpis.risks.status)}`}>
                       {detailData.kpis.risks.total} Activos
                     </span>
                   </div>
@@ -534,14 +513,14 @@ export function MetricsPage() {
                     <span className="text-[10px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
                       Calidad de Cierre (Tasa Aprobación)
                     </span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${getStatusBadgeClass(detailData.kpis.quality.status)}`}>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${statusBadgeClass(detailData.kpis.quality.status)}`}>
                       {detailData.kpis.quality.percentage}%
                     </span>
                   </div>
                   <div className="flex justify-center items-center py-2 h-28">
                     <SvgGauge 
                       value={detailData.kpis.quality.percentage} 
-                      statusColor={getStatusColorValue(detailData.kpis.quality.status)} 
+                      statusColor={statusColor(detailData.kpis.quality.status)} 
                     />
                   </div>
                   <div className="text-center text-[10px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
@@ -555,7 +534,7 @@ export function MetricsPage() {
                     <span className="text-[10px] font-bold text-[var(--sys-text-muted)] uppercase tracking-wider">
                       Valor Devengado (EV / PV)
                     </span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${getStatusBadgeClass(detailData.kpis.value.status)}`}>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${statusBadgeClass(detailData.kpis.value.status)}`}>
                       {detailData.kpis.value.percentage}%
                     </span>
                   </div>

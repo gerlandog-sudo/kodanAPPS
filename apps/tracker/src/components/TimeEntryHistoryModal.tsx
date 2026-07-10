@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@kodan-apps/ui-core';
+import { Modal, statusColor } from '@kodan-apps/ui-core';
 import { trackerApi } from '../api/client';
 import { Clock, AlertCircle } from 'lucide-react';
 
@@ -87,23 +87,15 @@ export function TimeEntryHistoryModal({ open, onClose, entryId }: TimeEntryHisto
 
             <div className="space-y-6">
               {history.map((log) => {
-                const statusColorMap: Record<string, string> = {
-                  draft: 'text-text-muted',
-                  submitted: 'text-indigo-600 dark:text-indigo-400',
-                  approved: 'text-indigo-600 dark:text-indigo-400',
-                  rejected: 'text-error',
-                };
-                const colorClass = statusColorMap[log.status] || 'text-[var(--sys-primary)]';
-
                 return (
                   <div key={log.id} className="relative pl-10">
                     {/* Círculo de la línea de tiempo */}
-                    <div className="absolute left-[9px] top-1.5 size-3.5 rounded-full border-2 border-indigo-600 dark:border-indigo-400 bg-white dark:bg-slate-900" />
+                    <div className="absolute left-[9px] top-1.5 size-3.5 rounded-full border-2 bg-white dark:bg-slate-900" style={{ borderColor: statusColor(log.status) }} />
 
                     <div className="space-y-1">
                       {/* Estado superior y Fecha */}
                       <div className="flex items-center justify-between gap-4">
-                        <span className={`text-xs font-bold tracking-wider uppercase ${colorClass}`}>
+                        <span className="text-xs font-bold tracking-wider uppercase" style={{ color: statusColor(log.status) }}>
                           {log.status}
                         </span>
                         <span className="text-[10px] text-text-muted font-medium">

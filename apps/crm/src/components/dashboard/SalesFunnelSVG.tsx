@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { formatCurrency } from '@kodan-apps/ui-core';
 
 interface FunnelStage {
   name: string;
@@ -89,9 +90,6 @@ export function SalesFunnelSVG({ opportunities }: SalesFunnelSVGProps) {
   // Definimos los anchos relativos del embudo para cada nivel (del 100% al 25%)
   const relativeWidths = [1.0, 0.8, 0.6, 0.42, 0.28];
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
-  };
 
   return (
     <div className="flex flex-col h-full justify-between">
@@ -173,7 +171,7 @@ export function SalesFunnelSVG({ opportunities }: SalesFunnelSVGProps) {
                   fill="var(--sys-text-muted)"
                   fontSize={10.5}
                 >
-                  {stage.count} {stage.count === 1 ? 'negociación' : 'negociaciones'} • {formatCurrency(stage.value)}
+                  {stage.count} {stage.count === 1 ? 'negociación' : 'negociaciones'} • {formatCurrency(stage.value, 0)}
                 </text>
 
                 {/* Indicador de conversión / pérdida (siguiente paso) */}
@@ -227,7 +225,7 @@ export function SalesFunnelSVG({ opportunities }: SalesFunnelSVGProps) {
           >
             <span className="text-xs font-bold text-primary">{stagesData[hoveredIndex].name}</span>
             <span className="text-[10px] text-muted">
-              Volumen: <strong>{formatCurrency(stagesData[hoveredIndex].value)}</strong>
+              Volumen: <strong>{formatCurrency(stagesData[hoveredIndex].value, 0)}</strong>
             </span>
             <span className="text-[10px] text-muted">
               Conversión etapa: <strong>{stagesData[hoveredIndex].conversionRate}%</strong>

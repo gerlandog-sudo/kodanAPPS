@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@kodan-apps/ui-core';
+import { Button, ConfirmDialog } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import { superAdminApi } from '../api/client';
 import { TenantList } from './TenantList';
 import { TenantCreateWizard } from './TenantCreateWizard';
 import { TenantEditModal } from './TenantEditModal';
-import { ConfirmDialog } from './ConfirmDialog';
 
 interface Tenant {
   tenant_id: number;

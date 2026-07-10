@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { DollarSign, Briefcase, TrendingUp, Users } from 'lucide-react'
-import { KpiCard } from '@kodan-apps/ui-core'
+import { KpiCard, formatCurrency } from '@kodan-apps/ui-core'
 
 interface KpiCardGridProps {
   stats: {
@@ -14,10 +14,6 @@ interface KpiCardGridProps {
   opportunities: any[]
   accounts: any[]
   onDrillDown: (type: 'pipeline' | 'active' | 'won' | 'accounts') => void
-}
-
-function formatCurrency(val: number) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val)
 }
 
 export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: KpiCardGridProps) {
@@ -81,7 +77,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
             <div className="flex items-baseline justify-between">
               <span className="text-[11px]" style={{ color: 'var(--sys-text-muted)' }}>Valor Ponderado</span>
               <span className="text-lg font-bold tabular-nums" style={{ color: 'var(--sys-primary)' }}>
-                {formatCurrency(weightedValue)}
+                {formatCurrency(weightedValue, 0)}
               </span>
             </div>
             <div style={{ height: 1, background: 'var(--sys-border-soft)', opacity: 0.3 }} />
@@ -97,7 +93,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
                       <span className="truncate text-[11px] font-medium" style={{ color: 'var(--sys-text)' }}>{d.title}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 ml-1">
-                      <span className="text-[11px] font-bold tabular-nums" style={{ color: 'var(--sys-primary)' }}>{formatCurrency(parseFloat(d.value) || 0)}</span>
+                      <span className="text-[11px] font-bold tabular-nums" style={{ color: 'var(--sys-primary)' }}>                {formatCurrency(parseFloat(d.value) || 0, 0)}</span>
                       <span className="text-[9px] px-1 py-0.5 rounded" style={{ background: 'var(--sys-surface-hover)', color: 'var(--sys-text-muted)' }}>{d.stage_name}</span>
                     </div>
                   </div>
@@ -137,7 +133,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
             <div style={{ height: 1, background: 'var(--sys-border-soft)', opacity: 0.3 }} />
             <div className="flex items-baseline justify-between">
               <span className="text-[11px]" style={{ color: 'var(--sys-text-muted)' }}>Ticket promedio</span>
-              <span className="text-base font-bold tabular-nums" style={{ color: 'var(--sys-text)' }}>{formatCurrency(stats.avgDealSize)}</span>
+              <span className="text-base font-bold tabular-nums" style={{ color: 'var(--sys-text)' }}>{formatCurrency(stats.avgDealSize, 0)}</span>
             </div>
           </div>
         }
@@ -165,7 +161,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
             <div style={{ height: 1, background: 'var(--sys-border-soft)', opacity: 0.3 }} />
             <div className="flex items-baseline justify-between">
               <span className="text-[11px]" style={{ color: 'var(--sys-text-muted)' }}>Valor ganado</span>
-              <span className="text-base font-bold tabular-nums" style={{ color: 'var(--sys-success)' }}>{formatCurrency(stats.wonValue)}</span>
+              <span className="text-base font-bold tabular-nums" style={{ color: 'var(--sys-success)' }}>{formatCurrency(stats.wonValue, 0)}</span>
             </div>
             <div className="flex items-baseline justify-between">
               <span className="text-[11px]" style={{ color: 'var(--sys-text-muted)' }}>Perdidas</span>

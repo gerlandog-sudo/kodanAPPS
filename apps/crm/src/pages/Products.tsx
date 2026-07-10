@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, Table, ConfirmDialog } from '@kodan-apps/ui-core';
+import { Button, Input, Modal, Table, ConfirmDialog, formatCurrency } from '@kodan-apps/ui-core';
 import { crmApi } from '../api/client';
 import { Plus, Tag, PackageOpen, Download } from 'lucide-react';
 import { toast } from 'sonner';
@@ -116,9 +116,6 @@ export function Products() {
     }
   };
 
-  const formatCurrency = (val: string | number) => {
-    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(parseFloat(String(val)) || 0);
-  };
 
   const handleExportExcel = async () => {
     try {

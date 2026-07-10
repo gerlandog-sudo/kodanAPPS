@@ -1,5 +1,4 @@
-import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, ProfileModal } from '@kodan-apps/ui-core';
+import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, ProfileModal } from '@kodan-apps/ui-core';
 import type { NavItem, UserMenuItem } from '@kodan-apps/ui-core';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
@@ -243,7 +242,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <ThemeProvider apiClient={{ getTheme: () => superAdminApi.getTheme(), updateTheme: async (t) => { await superAdminApi.updateTheme(t); } }}>
       <Toaster />
       <AppContent />
     </ThemeProvider>

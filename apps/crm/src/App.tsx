@@ -1,4 +1,4 @@
-import { Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, SlidePanel, EmailComposer, ProfileModal } from '@kodan-apps/ui-core';
+import { ThemeProvider, useTheme, Toaster, Sidebar, Login, SetPassword, TopBar, useAuth, AuthLoading, QuotaUtilization, useSSE, MessageDrawer, SlidePanel, EmailComposer, ProfileModal } from '@kodan-apps/ui-core';
 import type { NavItem } from '@kodan-apps/ui-core';
 import { lazy, Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import {
@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
 import type { UserMenuItem } from '@kodan-apps/ui-core';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { toast } from 'sonner';
 import { crmApi } from './api/client';
 import './index.css';
@@ -471,7 +470,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="dark" apiClient={{ getTheme: () => crmApi.getTheme(), updateTheme: async (t) => { await crmApi.updateTheme(t); } }}>
       <Toaster />
       <AppContent />
     </ThemeProvider>

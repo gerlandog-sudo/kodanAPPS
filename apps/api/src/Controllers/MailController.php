@@ -12,6 +12,8 @@ use RuntimeException;
 
 final class MailController
 {
+    private const VALID_MODULES = ['crm', 'tracker', 'superadmin'];
+
     private EmailTemplateRepository $templateRepo;
     private SmtpConfigRepository $smtpConfigRepo;
     private MailService $mailService;
@@ -38,6 +40,9 @@ final class MailController
     public function listTemplates(): array
     {
         $module = isset($_GET['module']) ? trim((string)$_GET['module']) : null;
+        if ($module !== null && !in_array($module, self::VALID_MODULES, true)) {
+            throw new RuntimeException('Módulo inválido.', 400);
+        }
         return $this->templateRepo->getTemplatesByModule($module);
     }
 

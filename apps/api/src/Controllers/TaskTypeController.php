@@ -10,6 +10,8 @@ use RuntimeException;
 
 final class TaskTypeController
 {
+    private const VALID_MODULES = ['crm', 'tracker', 'superadmin'];
+
     private TaskTypeRepository $taskTypeRepo;
 
     public function __construct(TaskTypeRepository $taskTypeRepo)
@@ -26,6 +28,9 @@ final class TaskTypeController
     public function list(): array
     {
         $module = isset($_GET['module']) && is_string($_GET['module']) ? $_GET['module'] : null;
+        if ($module !== null && !in_array($module, self::VALID_MODULES, true)) {
+            throw new \RuntimeException('Módulo inválido.', 400);
+        }
         return $this->taskTypeRepo->listAll($module);
     }
 

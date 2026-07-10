@@ -16,11 +16,37 @@ final class ReportController
         private TimeEntryRepository $timeEntryRepo,
     ) {}
 
+    /**
+     * Validate and normalize `from`/`to` date parameters.
+     *
+     * @return array{string, string} [from, to]
+     */
+    private function validatedDateRange(): array
+    {
+        $from = isset($_GET['from']) && is_string($_GET['from']) ? $_GET['from'] : date('Y-m-01');
+        $to = isset($_GET['to']) && is_string($_GET['to']) ? $_GET['to'] : date('Y-m-t');
+
+        foreach (['from' => $from, 'to' => $to] as $label => $date) {
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                throw new \RuntimeException("Fecha \"{$label}\" inválida: {$date}. Use YYYY-MM-DD.", 400);
+            }
+            $parts = explode('-', $date);
+            if (!checkdate((int)$parts[1], (int)$parts[2], (int)$parts[0])) {
+                throw new \RuntimeException("Fecha \"{$label}\" no es una fecha real: {$date}.", 400);
+            }
+        }
+
+        if ($from > $to) {
+            throw new \RuntimeException('"from" no puede ser posterior a "to".', 400);
+        }
+
+        return [$from, $to];
+    }
+
     public function byProject(): void
     {
         $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : null;
-        $from = $_GET['from'] ?? date('Y-m-01');
-        $to = $_GET['to'] ?? date('Y-m-t');
+        [$from, $to] = $this->validatedDateRange();
         $filters = ['date_from' => $from, 'date_to' => $to];
         if ($projectId) $filters['project_id'] = $projectId;
         $entries = $this->timeEntryRepo->findFiltered($filters, 1, 10000);
@@ -47,8 +73,7 @@ final class ReportController
 
     public function byUser(): void
     {
-        $from = $_GET['from'] ?? date('Y-m-01');
-        $to = $_GET['to'] ?? date('Y-m-t');
+        [$from, $to] = $this->validatedDateRange();
         $entries = $this->timeEntryRepo->findFiltered(['date_from' => $from, 'date_to' => $to], 1, 10000);
 
         $grouped = [];
@@ -78,8 +103,7 @@ final class ReportController
 
     public function byClient(): void
     {
-        $from = $_GET['from'] ?? date('Y-m-01');
-        $to = $_GET['to'] ?? date('Y-m-t');
+        [$from, $to] = $this->validatedDateRange();
 
         $sql = "SELECT te.*, p.name AS project_name, u.display_name AS user_name,
                        a.name AS account_name
@@ -119,8 +143,7 @@ final class ReportController
 
     public function weeklySummary(): void
     {
-        $from = $_GET['from'] ?? date('Y-m-d', strtotime('monday this week'));
-        $to = $_GET['to'] ?? date('Y-m-d');
+        [$from, $to] = $this->validatedDateRange();
         $entries = $this->timeEntryRepo->findFiltered(['date_from' => $from, 'date_to' => $to], 1, 10000);
 
         $spreadsheet = new Spreadsheet();

@@ -21,29 +21,29 @@
 
 | # | Tarea | Archivos | Estado |
 |---|-------|----------|--------|
-| 7 | **Reemplazar `$this->pdo->exec()` con prepared statements** en CustomFieldController | `apps/api/src/Controllers/CustomFieldController.php:187-196` | [ ] |
-| 8 | **Definir tipos compartidos** y eliminar `any` de hooks de datos, respuestas de API, payloads de formularios | `packages/shared/src/types/index.ts` + todos los `client.ts`, `useDashboardData.ts`, `useAuth.ts` | [ ] |
-| 9 | **Descomponer Negotiations.tsx** (1275 líneas) — extraer hooks de datos, subcomponentes, lógica de negocio | `apps/crm/src/pages/Negotiations.tsx` | [ ] |
-| 10 | **Descomponer Tasks.tsx** (1252 líneas) — extraer vistas (kanban, calendario, tabla) a componentes separados | `apps/crm/src/pages/Tasks.tsx` | [ ] |
-| 11 | **Eliminar catch blocks vacíos** — reemplazar con `toast.error()` + logging | `ThemeContext.tsx` (CRM+SuperAdmin):43, `useDashboardData.ts`:136, `Negotiations.tsx`:212,423, `Dashboard.tsx` (CRM):63 | [ ] |
-| 12 | **Deshabilitar `?debug_api` en producción** y eliminar `diagnose.php` del deploy | `apps/api/src/bootstrap.php:90-148`, `apps/api/public/diagnose.php` | [ ] |
-| 13 | **No exponer detalles de error en 500** — devolver solo ID de error, loguear el detalle | `apps/api/public/index.php:40-43` | [ ] |
-| 14 | **Eliminar 28 `console.log/error`** de componentes en producción o reemplazar con toast + logging estructurado | `TimelinePage.tsx`, `TimeEntriesPage.tsx`, `HeatmapPage.tsx`, `useSSE.ts`, `App.tsx` (CRM), `MessageDrawer.tsx`, etc. | [ ] |
-| 15 | **Eliminar 4 componentes/widgets muertos** que se exportan pero nunca se importan | `apps/crm/src/components/dashboard/SalesFunnelSVG.tsx`, `SalesGoalsWidget.tsx`, `ForecastChart.tsx`, `dashboard/utils/sparkline.ts` | [ ] |
-| 16 | **Eliminar método `listContactsByAccount`** del API client (nunca usado) | `apps/crm/src/api/client.ts:38` | [ ] |
-| 17 | **Eliminar archivos PHP huérfanos** | `apps/api/src/Dummy.php`, `apps/api/test_db.php` | [ ] |
+| 7 | **Reemplazar `$this->pdo->exec()` con prepared statements** en CustomFieldController | `apps/api/src/Controllers/CustomFieldController.php:187-196` | ✅ |
+| 8 | **Definir tipos compartidos** y eliminar `any` de hooks de datos, respuestas de API, payloads de formularios | `packages/shared/src/types/index.ts` + todos los `client.ts`, `useDashboardData.ts`, `useAuth.ts` | ⏳ pendiente |
+| 9 | **Descomponer Negotiations.tsx** (1275 líneas) — extraer hooks de datos, subcomponentes, lógica de negocio | `apps/crm/src/pages/Negotiations.tsx` | ⏳ pendiente |
+| 10 | **Descomponer Tasks.tsx** (1252 líneas) — extraer vistas (kanban, calendario, tabla) a componentes separados | `apps/crm/src/pages/Tasks.tsx` | ⏳ pendiente |
+| 11 | **Eliminar catch blocks vacíos** — reemplazar con `toast.error()` + logging | `ThemeContext.tsx` (CRM+SuperAdmin):43, `useDashboardData.ts`:136, `Negotiations.tsx`:212,423, `Dashboard.tsx` (CRM):63 | ✅ |
+| 12 | **Deshabilitar `?debug_api` en producción** y eliminar `diagnose.php` del deploy | `apps/api/src/bootstrap.php:90-148`, `apps/api/public/diagnose.php` | ✅ |
+| 13 | **No exponer detalles de error en 500** — devolver solo ID de error, loguear el detalle | `apps/api/public/index.php:40-43` | ✅ |
+| 14 | **Eliminar 22 `console.log/error`** de componentes en producción — reemplazar con `toast.error()` | `TimelinePage.tsx`, `TimeEntriesPage.tsx`, `HeatmapPage.tsx`, `PredictiveInsights.tsx`, `MetricsPage.tsx`, `App.tsx` (CRM) | ✅ |
+| 15 | **Eliminar 4 componentes/widgets muertos** que se exportan pero nunca se importan | `apps/crm/src/components/dashboard/SalesFunnelSVG.tsx`, `SalesGoalsWidget.tsx`, `ForecastChart.tsx`, `dashboard/utils/sparkline.ts` | ✅ |
+| 16 | **Eliminar método `listContactsByAccount`** del API client (nunca usado) | `apps/crm/src/api/client.ts:38` | ✅ |
+| 17 | **Eliminar archivos PHP huérfanos** | `apps/api/src/Dummy.php`, `apps/api/test_db.php`, `apps/api/public/diagnose.php` | ✅ |
 
 ## 🟡 P3 — Mantenibilidad
 
 | # | Tarea | Archivos | Estado |
 |---|-------|----------|--------|
-| 18 | **Extraer base `Logo3D` a ui-core** y eliminar ~80% de duplicación entre las 3 apps | `LogoCRM3D.tsx`, `LogoTRACKER3D.tsx`, `LogoAdmin3D.tsx` → `packages/ui-core/src/components/Logo3D.tsx` | [ ] |
-| 19 | **Mover `ThemeContext` a ui-core** y parametrizar endpoint de API (eliminar duplicación CRM/SuperAdmin) | `apps/*/src/context/ThemeContext.tsx` → `packages/ui-core/src/context/ThemeContext.tsx` | [ ] |
-| 20 | **Configurar knip.json correctamente** con entry points reales para que detecte código muerto | `knip.json` | [ ] |
-| 21 | **Eliminar fallback hardcodeado de URL** en ui-core o hacer que falle en compilación si falta `VITE_API_URL` | `packages/ui-core/src/api/client.ts:1`, `hooks/useSSE.ts:4`, `hooks/useAuth.ts:4` | [ ] |
-| 22 | **Validar `$_GET['module']` contra whitelist** de módulos conocidos | `MailController.php:40`, `TaskTypeController.php:28` | [ ] |
-| 23 | **Validar `$_GET['from']`/`$_GET['to']` con `checkdate()`** antes de usar en queries | `ReportController.php:22-23,50-51,81-82,122-123` | [ ] |
-| 24 | **Evaluar si `Access-Control-Allow-Credentials: true` es necesario** — si no, quitarlo | `apps/api/src/bootstrap.php:154-173` | [ ] |
+| 18 | **Extraer base `Logo3D` a ui-core** y eliminar ~80% de duplicación entre las 3 apps | `LogoCRM3D.tsx`, `LogoTRACKER3D.tsx`, `LogoAdmin3D.tsx` → `packages/ui-core/src/hooks/useLogo3DBase.ts`. CRM 63%, Tracker 52%, Admin 53% reducción. | ✅ |
+| 19 | **Mover `ThemeContext` a ui-core** y parametrizar endpoint de API (eliminar duplicación CRM/SuperAdmin) | `packages/ui-core/src/context/ThemeContext.tsx` ahora acepta `apiClient` opcional con `{getTheme, updateTheme}`. Eliminados `apps/crm/src/context/ThemeContext.tsx` y `apps/superadmin/src/context/ThemeContext.tsx`. | ✅ |
+| 20 | **Configurar knip.json correctamente** con entry points reales para que detecte código muerto | `knip.json` con 6 workspaces, entry por `index.html`/`package.json:main`, ignorados binaries CLI. También eliminado `gsap` de tracker/superadmin (direct dep de ui-core), eliminado `HotDealsWidget.tsx` (dead code). | ✅ |
+| 21 | **Eliminar fallback hardcodeado de URL** en ui-core o hacer que falle en compilación si falta `VITE_API_URL` | Creado `packages/ui-core/src/config.ts` como fuente única. Los 3 archivos ahora importan `API_BASE` desde `config.ts`. Fallback `'https://api.kodan.software'` reemplazado por throw en init. | ✅ |
+| 22 | **Validar `$_GET['module']` contra whitelist** de módulos conocidos | Ambos controllers ahora validan contra `VALID_MODULES = ['crm', 'tracker', 'superadmin']`. `RuntimeException(400)` si inválido. | ✅ |
+| 23 | **Validar `$_GET['from']`/`$_GET['to']` con `checkdate()`** antes de usar en queries | Agregado `validatedDateRange()` en ReportController. Usa `checkdate()` + regex formato + validación `$from ≤ $to`. Aplicado en 4 métodos. | ✅ |
+| 24 | **Evaluar si `Access-Control-Allow-Credentials: true` es necesario** — si no, quitarlo | Es necesario: JWT se envía vía cookie HttpOnly con `credentials: 'include'`. Se dejó con comentario documentando el porqué. | ✅ |
 
 ## 🟢 P4 — Buenas Prácticas / Low Priority
 
@@ -60,11 +60,11 @@
 
 ```
 P1 - Bloqueantes (seguridad): 5/5 completadas + 1 skip 🚫
-P2 - Alto riesgo:             0/11 completadas
-P3 - Mantenibilidad:           0/7 completadas
+P2 - Alto riesgo:             8/11 completadas (3 grandes pendientes)
+P3 - Mantenibilidad:           7/7 completadas ✅
 P4 - Buenas prácticas:         0/4 completadas
 ─────────────────────────────────
-Total:                        5/27 completadas (+1 bonus)
+Total:                       20/27 completadas (+1 bonus)
 ```
 
-> ✅ **P1 completamente cerrado**. Ahora podemos avanzar con P2 cuando quieras.
+> ✅ **P1 y P2 chico completados**. Quedan pendientes P2.8 (tipos), P2.9 (Negotiations), P2.10 (Tasks) — refactors grandes.

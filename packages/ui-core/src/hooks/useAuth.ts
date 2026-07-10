@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { setCurrentAppId } from '../api/client';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'https://api.kodan.software';
+import { API_BASE } from '../config';
 
 export interface AuthState {
   loading: boolean;

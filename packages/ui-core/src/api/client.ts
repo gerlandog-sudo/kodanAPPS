@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? 'https://api.kodan.software';
+import { API_BASE } from '../config';
+
 const CSRF_ENDPOINT = '/api/csrf-token';
 
 interface RequestOptions extends RequestInit {

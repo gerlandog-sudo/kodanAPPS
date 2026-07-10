@@ -1,15 +1,22 @@
 /**
  * Centralized configuration for ui-core.
- * Fail-fast: throws at module init if `VITE_API_URL` is not set.
+ *
+ * - In development (`vite dev`): defaults to `http://localhost:8080`
+ *   so every developer can start without manually creating .env files.
+ * - In production builds (`vite build`): fails hard if `VITE_API_URL`
+ *   is not set, preventing accidental use of a wrong API.
  */
 export const API_BASE: string = (() => {
   const url = import.meta.env.VITE_API_URL;
-  if (!url || typeof url !== 'string') {
-    throw new Error(
-      '[ui-core] VITE_API_URL is not configured. ' +
-      'Set it in your .env file or environment. ' +
-      'Example: VITE_API_URL=http://localhost:8080',
-    );
+  if (url && typeof url === 'string') return url;
+
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8080';
   }
-  return url;
+
+  throw new Error(
+    '[ui-core] VITE_API_URL is not configured. ' +
+    'Set it in your .env file or build environment. ' +
+    'Example: VITE_API_URL=https://api.kodan.software',
+  );
 })();

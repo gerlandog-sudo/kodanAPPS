@@ -172,6 +172,12 @@ export function Sidebar({
     setIsDragging(true);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    // Fuerza el cursor de redimensionado en todo el documento durante el drag,
+    // ya que los hijos (links, texto) sobreescribirían el cursor del body.
+    const style = document.createElement('style');
+    style.setAttribute('data-sidebar-drag-cursor', '');
+    style.textContent = '*, *::before, *::after { cursor: col-resize !important; }';
+    document.head.appendChild(style);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -189,6 +195,7 @@ export function Sidebar({
     setIsDragging(false);
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    document.head.querySelector('style[data-sidebar-drag-cursor]')?.remove();
     // Snap inteligente al soltar
     setWidth((w) => {
       if (w <= iconOnlyThreshold) return collapsedWidth;
@@ -321,13 +328,13 @@ export function Sidebar({
     <SidebarContext.Provider value={{ compact: isIconOnly }}>
       <nav
         ref={navRef}
-        className="relative flex flex-col h-screen sticky top-0 overflow-y-auto bg-surface-raised border-r border-border-soft"
+        className="relative flex flex-col h-screen sticky top-0 bg-surface-raised border-r border-border-soft"
         style={{
           width: isDragging ? width : isIconOnly ? collapsedWidth : width,
           transition: isDragging || reduceMotion ? 'none' : 'width 200ms cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
           <div
             className={`flex items-center gap-2.5 px-4 border-b border-border-soft ${headerClassName}`}
             style={{ height: 80, minHeight: 80, justifyContent: isIconOnly ? 'center' : 'flex-start' }}
@@ -339,7 +346,6 @@ export function Sidebar({
           <div className="flex flex-col gap-1 px-3 py-6 flex-1">
             {navItems.map((item) => renderItem(item))}
           </div>
-        </div>
 
         {footerItems && <div className="border-t border-border-soft px-3 py-2">{footerItems}</div>}
 
@@ -388,6 +394,8 @@ export function Sidebar({
             </div>
           </div>
         )}
+
+        </div>
 
         {/* Handle de redimensionado por drag & drop + botón de colapso flotante */}
         <div

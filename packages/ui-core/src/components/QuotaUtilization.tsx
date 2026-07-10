@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AlertTriangle, ChevronUp, Gauge, Infinity } from 'lucide-react';
+import { useSidebar } from './Sidebar';
 
 interface PlanLimit {
   module: string;
@@ -83,6 +84,26 @@ export function QuotaUtilization({ planStatus, planName, onUpgrade }: QuotaUtili
 
   const allUnlimited = normalized.length > 0 && normalized.every(l => l.limit_value === 0);
 
+  const bottleneckPct = bottleneck ? Math.round(bottleneck.ratio * 100) : 0;
+  const barColor = bottleneck ? getBarColor(bottleneck.ratio) : 'var(--sys-primary)';
+
+  // Modo compacto (sidebar colapsado a solo-iconos): mostrar solo el % general.
+  const { compact } = useSidebar();
+  if (compact) {
+    const pct = normalized.length === 0 || allUnlimited ? null : bottleneckPct;
+    const color = pct == null ? 'var(--sys-primary)' : barColor;
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-1 py-2"
+        title={planName || 'Plan'}
+        style={{ color }}
+      >
+        <Gauge size={16} style={{ color }} />
+        <span className="text-[11px] font-semibold tabular-nums">{pct == null ? '∞' : `${pct}%`}</span>
+      </div>
+    );
+  }
+
   if (normalized.length === 0) {
     return (
       <div
@@ -142,9 +163,6 @@ export function QuotaUtilization({ planStatus, planName, onUpgrade }: QuotaUtili
       </div>
     );
   }
-
-  const bottleneckPct = bottleneck ? Math.round(bottleneck.ratio * 100) : 0;
-  const barColor = bottleneck ? getBarColor(bottleneck.ratio) : 'var(--sys-primary)';
 
   return (
     <div

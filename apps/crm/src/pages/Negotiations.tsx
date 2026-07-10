@@ -812,14 +812,14 @@ export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAut
 
           {/* Rejilla de días */}
           <div className="grid grid-cols-7 flex-1 min-h-0 divide-x divide-y divide-border-soft/60 border-t border-l border-border-soft/60" style={{ gridAutoRows: '1fr' }}>
-            {calendarCells.map((cell, idx) => {
+            {calendarCells.map((cell) => {
               const cellDateStr = getLocalDateString(cell.date);
               const isToday = cellDateStr === todayStr;
               const dayOpps = opportunities.filter((opp) => opp.close_date === cellDateStr);
 
               return (
                 <div
-                  key={idx}
+                  key={cellDateStr}
                   onClick={() => handleDayClick(cell.date)}
                   className={`p-2 flex flex-col gap-1 min-h-[90px] overflow-hidden select-none transition-colors border-r border-b border-border-soft/60 cursor-pointer ${
                     cell.isCurrentMonth ? 'bg-surface-raised hover:bg-surface-hover/20' : 'bg-surface/30 opacity-40'

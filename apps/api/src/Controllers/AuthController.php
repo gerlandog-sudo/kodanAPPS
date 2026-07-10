@@ -130,10 +130,12 @@ final class AuthController
         }
 
         // Consultar password_resets
-        // Dado que password_resets no tiene tenant_id y es una tabla de seguridad global,
-        // necesitamos usar un bypass de tenant scope o realizar la consulta directamente.
+        // La tabla password_resets ahora incluye tenant_id para evitar que un token
+        // de un tenant pueda resetear la contraseña de un usuario con el mismo email
+        // en otro tenant. Todavía necesitamos BYPASS_TENANT_SCOPE porque esta
+        // operación no depende del tenant de la sesión actual.
         $resets = $this->userRepo->rawSelect(
-            "/* BYPASS_TENANT_SCOPE */ SELECT token_hash, expires_at FROM password_resets WHERE email = ?",
+            "/* BYPASS_TENANT_SCOPE */ SELECT token_hash, expires_at, tenant_id FROM password_resets WHERE email = ?",
             [$email]
         );
 
@@ -142,7 +144,8 @@ final class AuthController
         }
 
         $reset = $resets[0];
-        
+        $tenantId = isset($reset['tenant_id']) ? (int)$reset['tenant_id'] : 0;
+
         // Verificar expiración
         $expiresAt = new DateTime($reset['expires_at']);
         if ($expiresAt < new DateTime()) {
@@ -161,11 +164,21 @@ final class AuthController
             'threads' => 3,
         ]);
 
-        // Actualizar usuario (usamos bypass para actualizar sin restricciones de tenant si es admin de sistema)
-        $this->userRepo->rawExecute(
-            "/* BYPASS_TENANT_SCOPE */ UPDATE users SET password_hash = ?, is_active = 1 WHERE email = ?",
-            [$passwordHash, $email]
-        );
+        // Actualizar usuario — scoped por tenant_id para evitar BYPASS_TENANT_SCOPE
+        // entre tenants. Todavía se usa el hint BYPASS_TENANT_SCOPE porque esta
+        // operación no tiene un tenant de sesión (es pre-autenticación).
+        if ($tenantId > 0) {
+            $this->userRepo->rawExecute(
+                "/* BYPASS_TENANT_SCOPE */ UPDATE users SET password_hash = ?, is_active = 1 WHERE email = ? AND tenant_id = ?",
+                [$passwordHash, $email, $tenantId]
+            );
+        } else {
+            // Fallback para tokens legacy (sin tenant_id) — mantener compatibilidad
+            $this->userRepo->rawExecute(
+                "/* BYPASS_TENANT_SCOPE */ UPDATE users SET password_hash = ?, is_active = 1 WHERE email = ?",
+                [$passwordHash, $email]
+            );
+        }
 
         // Eliminar token usado
         $this->userRepo->rawExecute(

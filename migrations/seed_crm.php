@@ -163,8 +163,12 @@ try {
 
     // ------------------------------------------------------------
     // 4. Crear/Verificar Usuario de Prueba
+    // ⚠️  SEGURIDAD: En producción, el password se genera aleatoriamente
+    //    para evitar contraseñas predecibles. El password generado se
+    //    muestra UNA SOLA VEZ en la salida del script. Cámbielo después
+    //    del primer inicio de sesión.
     // ------------------------------------------------------------
-    $commercialPass = 'Admin123!';
+    $commercialPass = bin2hex(random_bytes(8)); // 16 chars aleatorios
     $passwordHash = password_hash($commercialPass, PASSWORD_ARGON2ID, [
         'memory_cost' => 65536,
         'time_cost' => 4,

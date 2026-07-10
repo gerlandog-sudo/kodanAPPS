@@ -124,8 +124,8 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
                 </td>
               </tr>
             )}
-            {items.map((item, i) => (
-              <tr key={i} className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
+            {items.map((item) => (
+              <tr key={item.product_id} className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
                 <td className="py-2 pr-2">
                   <span className="font-medium">{item.product_name || `Producto #${item.product_id}`}</span>
                   {item.product_sku && <span className="ml-1" style={{ color: 'var(--sys-text-muted)' }}>({item.product_sku})</span>}
@@ -168,7 +168,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
               </tr>
             )}
             {items.map((item, i) => (
-              <tr key={i} className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
+              <tr key={item.product_id} className="border-t" style={{ borderColor: 'var(--sys-border-soft)' }}>
                 <td className="py-2 pr-3">
                   <Select
                     options={productSelectOptions}

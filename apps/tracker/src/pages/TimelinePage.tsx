@@ -143,12 +143,12 @@ export function TimelinePage() {
           ) : (
             <svg width={chartW} height={h}>
               {/* Grid vertical */}
-              {dateInterval.map((d, i) => (
-                <line key={i} x1={xPos(fmt(d)) + dayW / 2} y1={20} x2={xPos(fmt(d)) + dayW / 2} y2={h - 60} stroke="#f1f5f9" strokeWidth={1} />
+              {dateInterval.map((d) => (
+                <line key={d.getTime()} x1={xPos(fmt(d)) + dayW / 2} y1={20} x2={xPos(fmt(d)) + dayW / 2} y2={h - 60} stroke="#f1f5f9" strokeWidth={1} />
               ))}
               {/* Date headers */}
-              {dateInterval.filter((_, i) => i % Math.max(1, Math.floor(dateInterval.length / 20)) === 0).map((d, i) => (
-                <text key={i} x={xPos(fmt(d)) + dayW / 2} y={14} textAnchor="middle" fill="#94a3b8" fontSize={10} fontWeight={500}>{fmtShort(d)}</text>
+              {dateInterval.filter((_, i) => i % Math.max(1, Math.floor(dateInterval.length / 20)) === 0).map((d) => (
+                <text key={d.getTime()} x={xPos(fmt(d)) + dayW / 2} y={14} textAnchor="middle" fill="#94a3b8" fontSize={10} fontWeight={500}>{fmtShort(d)}</text>
               ))}
               {/* Rows */}
               {data.map((row, ri) => {

@@ -80,16 +80,16 @@ function generatePassword(int $length = 16): string {
     return $password;
 }
 
-function createPasswordResetToken(PDO $pdo, string $email, string $token): void {
+function createPasswordResetToken(PDO $pdo, string $email, int $tenantId, string $token): void {
     $tokenHash = password_hash($token, PASSWORD_ARGON2ID, ['memory_cost' => 65536, 'time_cost' => 4, 'threads' => 3]);
     $expiresAt = (new DateTime())->modify('+1 hour')->format('Y-m-d H:i:s');
     
     $stmt = $pdo->prepare("
-        INSERT INTO `password_resets` (`email`, `token_hash`, `expires_at`)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE `token_hash` = VALUES(`token_hash`), `expires_at` = VALUES(`expires_at`), `created_at` = CURRENT_TIMESTAMP()
+        INSERT INTO `password_resets` (`email`, `tenant_id`, `token_hash`, `expires_at`)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE `tenant_id` = VALUES(`tenant_id`), `token_hash` = VALUES(`token_hash`), `expires_at` = VALUES(`expires_at`), `created_at` = CURRENT_TIMESTAMP
     ");
-    $stmt->execute([$email, $tokenHash, $expiresAt]);
+    $stmt->execute([$email, $tenantId, $tokenHash, $expiresAt]);
 }
 
 // ============================================================
@@ -193,10 +193,14 @@ try {
     // ------------------------------------------------------------
     // 4. Usuario Super Admin
     // NOTA: Si el usuario ya existe, NO se sobrescribe el password_hash
+    // ⚠️  SEGURIDAD: En producción, el password se genera aleatoriamente
+    //    para evitar contraseñas predecibles. El password generado se
+    //    muestra UNA SOLA VEZ en la salida del script. Guárdelo en un
+    //    gestor de contraseñas o use el token set-password (abajo).
     // ------------------------------------------------------------
     $superAdminEmail = 'superadmin@kodan.software';
     $superAdminName = 'Super Administrador';
-    $defaultPassword = 'SuperSecure123!';
+    $defaultPassword = generatePassword(); // aleatoria, no hardcodeada
     $passwordHash = password_hash($defaultPassword, PASSWORD_ARGON2ID, ['memory_cost' => 65536, 'time_cost' => 4, 'threads' => 3]);
 
     $existingUser = $pdo->prepare("SELECT id FROM users WHERE email = ?");
@@ -232,7 +236,7 @@ try {
     // 5. Token Set-Password para Super Admin (enviar por email)
     // ------------------------------------------------------------
     $setPasswordToken = bin2hex(random_bytes(32));
-    createPasswordResetToken($pdo, $superAdminEmail, $setPasswordToken);
+    createPasswordResetToken($pdo, $superAdminEmail, $systemTenantId, $setPasswordToken);
     echo "✅ Token set-password generado\n";
 
     $pdo->commit();
@@ -251,12 +255,13 @@ try {
     echo "  Set-Password Token: $setPasswordToken\n";
     echo "  Set-Password URL: https://superadmin.kodan.software/set-password?token=$setPasswordToken&email=" . urlencode($superAdminEmail) . "\n";
     echo "\n";
-    echo "⚠️  IMPORTANTE:\n";
+    echo "⚠️  IMPORTANTE (SEGURIDAD):\n";
     echo "  1. Guardar el token set-password en lugar seguro\n";
     echo "  2. Enviar email al superadmin con link de activación\n";
-    echo "  3. El password por defecto es: $defaultPassword\n";
+    echo "  3. El password por defecto es: $defaultPassword (generado aleatoriamente, NO hardcodeado)\n";
     echo "  4. Si el usuario ya existe, NO se sobrescribe el password\n";
     echo "  5. Agregar a .env: SYSTEM_TENANT_ID=$systemTenantId\n";
+    echo "  6. 🚨 NUNCA hardcodee passwords en seeders para producción\n";
     echo str_repeat('=', 60) . "\n";
 
 } catch (Throwable $e) {

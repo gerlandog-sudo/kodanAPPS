@@ -64,8 +64,8 @@ export function Dashboard() {
               backContent={
                 kpis.active_projects_details && kpis.active_projects_details.length > 0 ? (
                   <div className="space-y-1">
-                    {kpis.active_projects_details.map((name, i) => (
-                      <div key={i} className="flex items-center gap-1.5 py-0.5 truncate border-b border-border-soft/20 last:border-none">
+                    {kpis.active_projects_details.map((name) => (
+                      <div key={name} className="flex items-center gap-1.5 py-0.5 truncate border-b border-border-soft/20 last:border-none">
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                         <span className="truncate opacity-80">{name}</span>
                       </div>
@@ -87,8 +87,8 @@ export function Dashboard() {
               backContent={
                 kpis.hours_today_details && kpis.hours_today_details.length > 0 ? (
                   <div className="space-y-1">
-                    {kpis.hours_today_details.map((item, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
+                    {kpis.hours_today_details.map((item) => (
+                      <div key={item.name} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
                         <span className="truncate pr-2 opacity-80">{item.name}</span>
                         <span className="font-semibold shrink-0">{item.hours}h</span>
                       </div>
@@ -110,8 +110,8 @@ export function Dashboard() {
               backContent={
                 kpis.hours_week_details && kpis.hours_week_details.length > 0 ? (
                   <div className="space-y-1">
-                    {kpis.hours_week_details.map((item, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
+                    {kpis.hours_week_details.map((item) => (
+                      <div key={item.name} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
                         <span className="truncate pr-2 opacity-80">{item.name}</span>
                         <span className="font-semibold shrink-0">{item.hours}h</span>
                       </div>
@@ -132,8 +132,8 @@ export function Dashboard() {
               backContent={
                 kpis.open_tasks_details && kpis.open_tasks_details.length > 0 ? (
                   <div className="space-y-1">
-                    {kpis.open_tasks_details.map((item, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
+                    {kpis.open_tasks_details.map((item) => (
+                      <div key={item.name} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
                         <span className="truncate pr-2 opacity-80">{item.name}</span>
                         <span className="font-semibold shrink-0">{item.count}</span>
                       </div>
@@ -154,8 +154,8 @@ export function Dashboard() {
               backContent={
                 kpis.pending_approvals_details && kpis.pending_approvals_details.length > 0 ? (
                   <div className="space-y-1">
-                    {kpis.pending_approvals_details.map((item, i) => (
-                      <div key={i} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
+                    {kpis.pending_approvals_details.map((item) => (
+                      <div key={item.name} className="flex justify-between items-center py-0.5 border-b border-border-soft/20 last:border-none">
                         <span className="truncate pr-2 opacity-80">{item.name}</span>
                         <span className="font-semibold shrink-0 text-error">{item.count}</span>
                       </div>

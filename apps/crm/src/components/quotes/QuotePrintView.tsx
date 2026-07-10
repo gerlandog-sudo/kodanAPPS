@@ -120,8 +120,8 @@ export function QuotePrintView({ quoteId }: QuotePrintViewProps) {
             </tr>
           </thead>
           <tbody>
-            {items.map((item, i) => (
-              <tr key={i}>
+            {items.map((item) => (
+              <tr key={item.product_id}>
                 <td>
                   <span className="font-medium">{item.product_name || `Producto #${item.product_id}`}</span>
                   {item.product_sku && <span className="print-sku">SKU: {item.product_sku}</span>}

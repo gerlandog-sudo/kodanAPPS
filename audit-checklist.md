@@ -49,9 +49,9 @@
 
 | # | Tarea | Archivos | Estado |
 |---|-------|----------|--------|
-| 25 | **Reemplazar `key={i}` por keys estables** (IDs del modelo) en listas dinámicas | `HeatmapPage.tsx`, `Dashboard.tsx` (tracker), `TimelinePage.tsx` | [ ] |
-| 26 | **Documentar que passwords default de seeders deben cambiarse** o generar aleatorias | `migrations/seed_superadmin.php:199`, `seed_crm.php:167` | [ ] |
-| 27 | **Incluir `tenant_id` en token de reset password** para evitar BYPASS_TENANT_SCOPE | `apps/api/src/Controllers/AuthController.php:164-167` | [ ] |
+| 25 | **Reemplazar `key={i}` por keys estables** (IDs del modelo) en listas dinámicas | `HeatmapPage.tsx`, `Dashboard.tsx` (tracker), `TimelinePage.tsx`, `Tasks.tsx`, `Negotiations.tsx`, `QuoteLineItemsEditor.tsx`, `QuotePrintView.tsx` | ✅ |
+| 26 | **Documentar que passwords default de seeders deben cambiarse** o generar aleatorias | `migrations/seed_superadmin.php:199`, `seed_crm.php:167` | ✅ |
+| 27 | **Incluir `tenant_id` en token de reset password** para evitar BYPASS_TENANT_SCOPE | `apps/api/src/Controllers/AuthController.php:164-167`, `migrations/001_core_schema.sql:171-177`, `migrations/seed_superadmin.php:83-92` | ✅ |
 | 28 | **Descomponer componentes adicionales >400 líneas** (AppMetricsManager, UsersSettingsPanel, DatePicker, Sidebar, Table) | Múltiples en `packages/ui-core/src/components/` | [ ] |
 
 ---
@@ -62,9 +62,9 @@
 P1 - Bloqueantes (seguridad): 5/5 completadas + 1 skip 🚫
 P2 - Alto riesgo:             8/11 completadas (3 grandes pendientes)
 P3 - Mantenibilidad:           7/7 completadas ✅
-P4 - Buenas prácticas:         0/4 completadas
+P4 - Buenas prácticas:         3/4 completadas
 ─────────────────────────────────
-Total:                       20/27 completadas (+1 bonus)
+Total:                       23/28 completadas (+1 bonus)
 ```
 
 > ✅ **P1 y P2 chico completados**. Quedan pendientes P2.8 (tipos), P2.9 (Negotiations), P2.10 (Tasks) — refactors grandes.

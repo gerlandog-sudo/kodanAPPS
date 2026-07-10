@@ -170,10 +170,12 @@ CREATE TABLE `login_attempts` (
 -- ------------------------------------------------------------
 CREATE TABLE `password_resets` (
   `email` VARCHAR(255) NOT NULL,
+  `tenant_id` BIGINT(20) NOT NULL DEFAULT 0 COMMENT 'Requerido para evitar BYPASS_TENANT_SCOPE',
   `token_hash` VARCHAR(255) NOT NULL COMMENT 'bcrypt/argon2(token_raw) — NUNCA guardar token en texto plano',
   `expires_at` DATETIME NOT NULL COMMENT 'TTL 15-30 min desde creación',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  PRIMARY KEY (`email`)
+  PRIMARY KEY (`email`),
+  KEY `idx_tenant_id` (`tenant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

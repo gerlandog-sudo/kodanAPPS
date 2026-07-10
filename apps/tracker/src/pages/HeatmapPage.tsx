@@ -184,14 +184,14 @@ export function HeatmapPage() {
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50/95 backdrop-blur z-10 border-r border-gray-100 min-w-[120px]">Miembro</th>
-                {viewMode === 'weekly' ? weekDays.map((d, i) => (
-                  <th key={i} className="px-4 py-4 text-center border-r border-gray-100 last:border-0 min-w-[120px]">
+                {viewMode === 'weekly' ? weekDays.map((d) => (
+                  <th key={d.getTime()} className="px-4 py-4 text-center border-r border-gray-100 last:border-0 min-w-[120px]">
                     <div className="text-xs font-semibold text-gray-500 uppercase">{fmtDay(d)}</div>
                     <div className="text-sm font-bold text-gray-900">{fmtShort(d)}</div>
                   </th>
-                )) : weeks.map((w, i) => (
-                  <th key={i} className="px-4 py-4 text-center border-r border-gray-100 last:border-0 min-w-[140px]">
-                    <div className="text-xs font-semibold text-gray-500 uppercase">Semana {i + 1}</div>
+                )) : weeks.map((w) => (
+                  <th key={w.label} className="px-4 py-4 text-center border-r border-gray-100 last:border-0 min-w-[140px]">
+                    <div className="text-xs font-semibold text-gray-500 uppercase">{w.label}</div>
                     <div className="text-sm font-bold text-gray-900">{w.label}</div>
                   </th>
                 ))}

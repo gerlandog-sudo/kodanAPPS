@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Card } from '@kodan-apps/ui-core';
+import { KpiCard, Panel } from '@kodan-apps/ui-core';
 import { trackerApi, DashboardKpis, HoursByDay, ProjectsByStatus, TopUser, TimeEntry } from '../api/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { FolderKanban, Clock, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
-import { KpiCardAnimated } from '../components/KpiCardAnimated';
 
 const PIE_COLORS = ['#22c55e', '#f59e0b', '#3b82f6', '#6b7280'];
 
@@ -56,7 +55,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 shrink-0">
         {kpis && (
           <>
-            <KpiCardAnimated
+            <KpiCard
               label="Proyectos activos"
               value={kpis.active_projects}
               icon={<FolderKanban size={18} />}
@@ -78,7 +77,7 @@ export function Dashboard() {
               }
             />
 
-            <KpiCardAnimated
+            <KpiCard
               label="Horas hoy"
               value={kpis.hours_today}
               suffix="h"
@@ -101,7 +100,7 @@ export function Dashboard() {
               }
             />
 
-            <KpiCardAnimated
+            <KpiCard
               label="Horas esta semana"
               value={kpis.hours_week}
               suffix="h"
@@ -124,7 +123,7 @@ export function Dashboard() {
               }
             />
 
-            <KpiCardAnimated
+            <KpiCard
               label="Tareas abiertas"
               value={kpis.open_tasks}
               icon={<AlertTriangle size={18} />}
@@ -146,7 +145,7 @@ export function Dashboard() {
               }
             />
 
-            <KpiCardAnimated
+            <KpiCard
               label="Pendientes aprobar"
               value={kpis.pending_approvals}
               icon={<CheckCircle size={18} />}
@@ -173,116 +172,104 @@ export function Dashboard() {
 
       {/* Row 1: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 shrink-0">
-        <Card>
-          <div className="p-5">
-            <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--sys-text)' }}>Horas por día (últimos 30 días)</h2>
-            <div className="h-64">
+        <Panel title="Horas por día (últimos 30 días)">
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={hoursByDay}>
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', borderRadius: 8, fontSize: 12 }}
+                  labelFormatter={(v) => `Fecha: ${v}`}
+                  formatter={(v: number) => [`${Math.floor(v)}h ${Math.round((v % 1) * 60)}m`, 'Horas']}
+                />
+                <Bar dataKey="hours" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel title="Proyectos por estado">
+          <div className="h-64 flex items-center justify-center">
+            {totalByStatus === 0 ? (
+              <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin datos</span>
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={hoursByDay}>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                <PieChart>
+                  <Pie data={projectsByStatus} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3}>
+                    {projectsByStatus.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
                   <Tooltip
                     contentStyle={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', borderRadius: 8, fontSize: 12 }}
-                    labelFormatter={(v) => `Fecha: ${v}`}
-                    formatter={(v: number) => [`${Math.floor(v)}h ${Math.round((v % 1) * 60)}m`, 'Horas']}
+                    formatter={(v: number, n: string) => [v, statusLabel[n] || n]}
                   />
-                  <Bar dataKey="hours" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
-            </div>
+            )}
           </div>
-        </Card>
-
-        <Card>
-          <div className="p-5">
-            <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--sys-text)' }}>Proyectos por estado</h2>
-            <div className="h-64 flex items-center justify-center">
-              {totalByStatus === 0 ? (
-                <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin datos</span>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={projectsByStatus} dataKey="count" nameKey="status" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3}>
-                      {projectsByStatus.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ background: 'var(--sys-surface)', border: '1px solid var(--sys-border-soft)', borderRadius: 8, fontSize: 12 }}
-                      formatter={(v: number, n: string) => [v, statusLabel[n] || n]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <div className="flex justify-center gap-4 mt-2">
-              {projectsByStatus.map((p, i) => (
-                <div key={p.status} className="flex items-center gap-1 text-xs" style={{ color: 'var(--sys-text-muted)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                  {statusLabel[p.status] || p.status}: {p.count}
-                </div>
-              ))}
-            </div>
+          <div className="flex justify-center gap-4 mt-2">
+            {projectsByStatus.map((p, i) => (
+              <div key={p.status} className="flex items-center gap-1 text-xs" style={{ color: 'var(--sys-text-muted)' }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                {statusLabel[p.status] || p.status}: {p.count}
+              </div>
+            ))}
           </div>
-        </Card>
+        </Panel>
       </div>
 
       {/* Row 2: Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 shrink-0">
-        <Card>
-          <div className="p-5">
-            <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--sys-text)' }}>Top usuarios (horas esta semana)</h2>
-            {topUsers.length === 0 ? (
-              <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin datos</p>
-            ) : (
-              <div className="space-y-4">
-                {topUsers.map((u, i) => (
-                  <div key={u.user_id} className="flex items-center gap-3">
-                    <span className="text-xs font-bold w-5 text-center" style={{ color: i === 0 ? '#f59e0b' : 'var(--sys-text-muted)' }}>
-                      #{i + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--sys-text)' }}>{u.user_name}</p>
-                      <div className="h-2 rounded-full mt-1.5" style={{ background: 'var(--sys-border-soft)' }}>
-                        <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500" style={{
-                          width: `${Math.min(100, (u.total_hours / (topUsers[0]?.total_hours || 1)) * 100)}%`,
-                        }} />
-                      </div>
+        <Panel title="Top usuarios (horas esta semana)">
+          {topUsers.length === 0 ? (
+            <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin datos</p>
+          ) : (
+            <div className="space-y-4">
+              {topUsers.map((u, i) => (
+                <div key={u.user_id} className="flex items-center gap-3">
+                  <span className="text-xs font-bold w-5 text-center" style={{ color: i === 0 ? '#f59e0b' : 'var(--sys-text-muted)' }}>
+                    #{i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--sys-text)' }}>{u.user_name}</p>
+                    <div className="h-2 rounded-full mt-1.5" style={{ background: 'var(--sys-border-soft)' }}>
+                      <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500" style={{
+                        width: `${Math.min(100, (u.total_hours / (topUsers[0]?.total_hours || 1)) * 100)}%`,
+                      }} />
                     </div>
-                    <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: 'var(--sys-text)' }}>
-                      {fmtHours(u.total_hours)}
-                    </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+                  <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: 'var(--sys-text)' }}>
+                    {fmtHours(u.total_hours)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
 
-        <Card>
-          <div className="p-5">
-            <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--sys-text)' }}>Entradas recientes</h2>
-            {recentEntries.length === 0 ? (
-              <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin datos</p>
-            ) : (
-              <div className="space-y-3">
-                {recentEntries.map((e) => (
-                  <div key={e.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: 'var(--sys-border-soft)' }}>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--sys-text)' }}>{e.project_name}</p>
-                      <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>
-                        {e.user_name} · {new Date(e.date + 'T00:00:00').toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold ml-3 tabular-nums shrink-0" style={{ color: 'var(--sys-text)' }}>
-                      {fmtHours(e.duration_minutes / 60)}
-                    </span>
+        <Panel title="Entradas recientes">
+          {recentEntries.length === 0 ? (
+            <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>Sin datos</p>
+          ) : (
+            <div className="space-y-3">
+              {recentEntries.map((e) => (
+                <div key={e.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: 'var(--sys-border-soft)' }}>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--sys-text)' }}>{e.project_name}</p>
+                    <p className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>
+                      {e.user_name} · {new Date(e.date + 'T00:00:00').toLocaleDateString()}
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+                  <span className="text-xs font-bold ml-3 tabular-nums shrink-0" style={{ color: 'var(--sys-text)' }}>
+                    {fmtHours(e.duration_minutes / 60)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
       </div>
     </div>
   );

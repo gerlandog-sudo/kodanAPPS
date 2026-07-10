@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { DollarSign, Briefcase, TrendingUp, Users } from 'lucide-react'
-import { KpiCardAnimated } from './KpiCardAnimated'
+import { KpiCard } from '@kodan-apps/ui-core'
 
 interface KpiCardGridProps {
   stats: {
@@ -67,7 +67,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-      <KpiCardAnimated
+      <KpiCard
         label="Valor del Pipeline"
         value={stats.totalValue}
         formatCurrency
@@ -108,7 +108,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
         }
       />
 
-      <KpiCardAnimated
+      <KpiCard
         label="Negociaciones Activas"
         value={stats.activeDeals}
         subtitle="En proceso de cierre"
@@ -143,7 +143,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
         }
       />
 
-      <KpiCardAnimated
+      <KpiCard
         label="Negociaciones Ganadas"
         value={stats.wonDeals}
         subtitle="Proyectos activos creados"
@@ -175,7 +175,7 @@ export function KpiCardGrid({ stats, opportunities, accounts, onDrillDown }: Kpi
         }
       />
 
-      <KpiCardAnimated
+      <KpiCard
         label="Cuentas Activas"
         value={stats.totalAccounts}
         subtitle="Clientes registrados"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import { Card, Button } from '@kodan-apps/ui-core';
+import { Card, KpiCard, Panel, Button } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -46,10 +46,6 @@ interface DashboardData {
     name: string;
     user_count: number;
   }>;
-}
-
-function formatUSD(amount: number): string {
-  return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function ensureData(data: any): DashboardData {
@@ -144,77 +140,41 @@ export function SuperAdminDashboard() {
           </div>
         )) : (
           <>
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col justify-between" style={{ minHeight: '140px' }}>
-                <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--sys-surface)' }}>
-                    <span style={{ color: 'var(--sys-tertiary)' }}><Building2 size={18} /></span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Organizaciones</p>
-                  <p className="text-2xl font-bold font-montserrat mt-1" style={{ color: 'var(--sys-text)' }}>{String(m?.tenants_count ?? 0)}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--sys-text-muted)' }}>{m?.active_tenants_count ?? 0} activas</p>
-                </div>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '140px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Total de organizaciones registradas en la plataforma. Las activas tienen al menos un usuario con sesión en los últimos 30 días.</span>
-              </div>}
+            <KpiCard
+              label="Organizaciones"
+              value={m?.tenants_count ?? 0}
+              subtitle={`${m?.active_tenants_count ?? 0} activas`}
+              icon={<Building2 size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-tertiary)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Total de organizaciones registradas en la plataforma. Las activas tienen al menos un usuario con sesión en los últimos 30 días.</span>}
             />
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col justify-between" style={{ minHeight: '140px' }}>
-                <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--sys-surface)' }}>
-                    <span style={{ color: 'var(--sys-primary)' }}><Users size={18} /></span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Usuarios Globales</p>
-                  <p className="text-2xl font-bold font-montserrat mt-1" style={{ color: 'var(--sys-text)' }}>{String(m?.users_count ?? 0)}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--sys-text-muted)' }}>{m?.admin_users_count ?? 0} administradores</p>
-                </div>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '140px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Total de usuarios registrados en todas las organizaciones. Los administradores tienen permisos de gestión.</span>
-              </div>}
+            <KpiCard
+              label="Usuarios Globales"
+              value={m?.users_count ?? 0}
+              subtitle={`${m?.admin_users_count ?? 0} administradores`}
+              icon={<Users size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-primary)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Total de usuarios registrados en todas las organizaciones. Los administradores tienen permisos de gestión.</span>}
             />
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col justify-between" style={{ minHeight: '140px' }}>
-                <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--sys-surface)' }}>
-                    <span style={{ color: 'var(--sys-tertiary)' }}><FileText size={18} /></span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Registros Auditoría</p>
-                  <p className="text-2xl font-bold font-montserrat mt-1" style={{ color: 'var(--sys-text)' }}>{String(m?.audit_logs_count ?? 0)}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--sys-text-muted)' }}>Eventos registrados</p>
-                </div>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '140px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Eventos de seguridad y actividad registrados en el sistema. Incluye inicios de sesión, cambios de configuración y operaciones críticas.</span>
-              </div>}
+            <KpiCard
+              label="Registros Auditoría"
+              value={m?.audit_logs_count ?? 0}
+              subtitle="Eventos registrados"
+              icon={<FileText size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-tertiary)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Eventos de seguridad y actividad registrados en el sistema. Incluye inicios de sesión, cambios de configuración y operaciones críticas.</span>}
             />
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col justify-between" style={{ minHeight: '140px' }}>
-                <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--sys-surface)' }}>
-                    <span style={{ color: 'var(--sys-primary)' }}><CreditCard size={18} /></span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Planes Activos</p>
-                  <p className="text-2xl font-bold font-montserrat mt-1" style={{ color: 'var(--sys-text)' }}>{String(m?.plans_count ?? 0)}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--sys-text-muted)' }}>En uso por tenants</p>
-                </div>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '140px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Planes de suscripción actualmente activos y asignados a organizaciones. Los planes definen los límites de cada módulo.</span>
-              </div>}
+            <KpiCard
+              label="Planes Activos"
+              value={m?.plans_count ?? 0}
+              subtitle="En uso por tenants"
+              icon={<CreditCard size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-primary)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Planes de suscripción actualmente activos y asignados a organizaciones. Los planes definen los límites de cada módulo.</span>}
             />
           </>
         )}
@@ -229,53 +189,45 @@ export function SuperAdminDashboard() {
           </div>
         )) : (
           <>
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col gap-3" style={{ minHeight: '110px' }}>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Total Facturado</p>
-                  <span style={{ color: 'var(--sys-text)' }}><DollarSign size={16} /></span>
-                </div>
-                <p className="text-xl font-bold font-montserrat" style={{ color: 'var(--sys-text)' }}>{formatUSD(b?.total ?? 0)}</p>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '110px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Suma total de todas las facturas emitidas a organizaciones.</span>
-              </div>}
+            <KpiCard
+              label="Total Facturado"
+              value={b?.total ?? 0}
+              formatCurrency
+              decimalPlaces={2}
+              icon={<DollarSign size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-text)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Suma total de todas las facturas emitidas a organizaciones.</span>}
             />
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col gap-3" style={{ minHeight: '110px' }}>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Total Cobrado</p>
-                  <span style={{ color: 'var(--sys-success)' }}><CheckCircle2 size={16} /></span>
-                </div>
-                <p className="text-xl font-bold font-montserrat" style={{ color: 'var(--sys-success)' }}>{formatUSD(b?.paid ?? 0)}</p>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '110px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Facturas pagadas exitosamente. Representa el ingreso confirmado.</span>
-              </div>}
+            <KpiCard
+              label="Total Cobrado"
+              value={b?.paid ?? 0}
+              formatCurrency
+              decimalPlaces={2}
+              icon={<CheckCircle2 size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-success)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Facturas pagadas exitosamente. Representa el ingreso confirmado.</span>}
             />
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col gap-3" style={{ minHeight: '110px' }}>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Pendiente de Cobro</p>
-                  <span style={{ color: 'var(--sys-primary)' }}><Clock size={16} /></span>
-                </div>
-                <p className="text-xl font-bold font-montserrat" style={{ color: 'var(--sys-primary)' }}>{formatUSD(b?.pending ?? 0)}</p>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '110px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Facturas emitidas pero aún no pagadas por las organizaciones.</span>
-              </div>}
+            <KpiCard
+              label="Pendiente de Cobro"
+              value={b?.pending ?? 0}
+              formatCurrency
+              decimalPlaces={2}
+              icon={<Clock size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-primary)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Facturas emitidas pero aún no pagadas por las organizaciones.</span>}
             />
-            <Card variant="flip" className="h-full"
-              front={<div className="p-5 flex flex-col gap-3" style={{ minHeight: '110px' }}>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium" style={{ color: 'var(--sys-text-muted)' }}>Total Vencido</p>
-                  <span style={{ color: 'var(--sys-error)' }} className={(b?.overdue ?? 0) > 0 ? 'animate-pulse' : ''}><AlertCircle size={16} /></span>
-                </div>
-                <p className="text-xl font-bold font-montserrat" style={{ color: 'var(--sys-error)' }}>{formatUSD(b?.overdue ?? 0)}</p>
-              </div>}
-              back={<div className="p-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '110px' }}>
-                <span style={{ color: 'var(--sys-text-muted)' }} className="text-xs leading-relaxed">Facturas cuya fecha de vencimiento ya pasó y no han sido pagadas.</span>
-              </div>}
+            <KpiCard
+              label="Total Vencido"
+              value={b?.overdue ?? 0}
+              formatCurrency
+              decimalPlaces={2}
+              icon={<AlertCircle size={18} />}
+              iconBg="var(--sys-surface)"
+              iconColor="var(--sys-error)"
+              backContent={<span className="text-xs leading-relaxed" style={{ color: 'var(--sys-text-muted)' }}>Facturas cuya fecha de vencimiento ya pasó y no han sido pagadas.</span>}
             />
           </>
         )}
@@ -284,17 +236,17 @@ export function SuperAdminDashboard() {
       {/* Telemetry + Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Server Telemetry */}
-        <div className="lg:col-span-2 glass-panel rounded-xl p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <Server size={18} style={{ color: 'var(--sys-tertiary)' }} />
-              <h3 className="text-sm font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>Telemetría del Servidor</h3>
-            </div>
+        <Panel
+          className="lg:col-span-2"
+          title="Telemetría del Servidor"
+          icon={<Server size={18} style={{ color: 'var(--sys-tertiary)' }} />}
+          actions={
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: 'color-mix(in srgb, var(--sys-success) 15%, transparent)', color: 'var(--sys-success)' }}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
               {t?.status ?? 'SALUDABLE'}
             </div>
-          </div>
+          }
+        >
           {loading ? (
             <div className="grid grid-cols-2 gap-4">
               {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton h-16 rounded-lg" />)}
@@ -322,14 +274,13 @@ export function SuperAdminDashboard() {
           <p className="text-xs mt-4" style={{ color: 'var(--sys-text-muted)', opacity: 0.7 }}>
             El tamaño de la base de datos se calcula consultando los metadatos de las tablas y sus índices asignados en el motor MySQL.
           </p>
-        </div>
+        </Panel>
 
         {/* Tenant Distribution */}
-        <div className="glass-panel rounded-xl p-6">
-          <div className="flex items-center gap-2.5 mb-5">
-            <Building2 size={18} style={{ color: 'var(--sys-primary)' }} />
-            <h3 className="text-sm font-semibold font-montserrat" style={{ color: 'var(--sys-text)' }}>Distribución por Tenant</h3>
-          </div>
+        <Panel
+          title="Distribución por Tenant"
+          icon={<Building2 size={18} style={{ color: 'var(--sys-primary)' }} />}
+        >
           {loading ? (
             <div className="flex flex-col gap-3">
               {Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton h-8 rounded-lg" />)}
@@ -363,7 +314,7 @@ export function SuperAdminDashboard() {
               ))}
             </div>
           )}
-        </div>
+        </Panel>
       </div>
     </div>
   );

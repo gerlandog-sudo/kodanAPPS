@@ -341,7 +341,7 @@ export function Sidebar({
     <SidebarContext.Provider value={{ compact: isIconOnly }}>
       <nav
         ref={navRef}
-        className="relative flex flex-col h-screen sticky top-0 bg-surface-raised border-r border-border-soft"
+        className="relative flex flex-col h-screen sticky top-0 z-50 bg-surface-raised border-r border-border-soft"
         style={{
           width: isDragging ? width : isIconOnly ? collapsedWidth : width,
           transition: isDragging || reduceMotion ? 'none' : 'width 200ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -424,14 +424,14 @@ export function Sidebar({
         >
           {/* Línea visual del borde, en el borde derecho del sidebar */}
           <div className="absolute right-0 top-0 h-full w-px bg-border-soft group-hover:bg-primary group-active:bg-primary transition-colors" />
-          {/* Botón de colapso flotante, sobre la línea de drag y dentro del sidebar */}
+          {/* Botón de colapso flotante, centrado sobre la línea de drag (borde del sidebar) */}
           <button
             type="button"
             onClick={toggleCollapse}
             onPointerDown={(e) => e.stopPropagation()}
             title={isIconOnly ? 'Expandir' : 'Colapsar'}
             aria-label={isIconOnly ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-            className="absolute right-0 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
+            className="absolute right-0 translate-x-1/2 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
           >
             {isIconOnly ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
           </button>

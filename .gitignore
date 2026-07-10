@@ -42,6 +42,10 @@ ready_for_deploy/
 # Scratch scripts (testing/experimental)
 scratch/
 
+# Diagnostic / seed scripts with potential credentials (NEVER commit)
+_diag*.php
+_seed*.php
+
 # Planning docs (local AI/editor artifacts)
 plans/
 

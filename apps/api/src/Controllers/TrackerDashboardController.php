@@ -25,8 +25,21 @@ final class TrackerDashboardController
      */
     public function hoursByDay(): array
     {
-        $from = $_GET['from'] ?? date('Y-m-d', strtotime('-30 days'));
-        $to = $_GET['to'] ?? date('Y-m-d');
+        $from = isset($_GET['from']) && is_string($_GET['from']) ? trim($_GET['from']) : date('Y-m-d', strtotime('-30 days'));
+        $to = isset($_GET['to']) && is_string($_GET['to']) ? trim($_GET['to']) : date('Y-m-d');
+
+        // Validar formato ISO (Y-m-d) para evitar SQL injection o errores
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Formato de fecha inválido. Use YYYY-MM-DD.']);
+            exit;
+        }
+        if ($from > $to) {
+            http_response_code(400);
+            echo json_encode(['error' => 'La fecha "desde" no puede ser mayor que "hasta".']);
+            exit;
+        }
+
         return $this->dashboardService->getHoursByDay($from, $to);
     }
 

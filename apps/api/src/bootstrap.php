@@ -270,32 +270,28 @@ $taskRepo->setLimitEnforcer($usageLimitEnforcer);
 $projectRepo->setLimitEnforcer($usageLimitEnforcer);
 $projectTaskRepo->setLimitEnforcer($usageLimitEnforcer);
 $timeEntryRepo->setLimitEnforcer($usageLimitEnforcer);
-$planAccessValidator = new PlanAccessValidator($pdo);
-$usageLimitEnforcer = new UsageLimitEnforcer($usageTracker);
-$tenantOverrideManager = new TenantOverrideManager($pdo);
-$appAccessService = new AppAccessService(
-    $planAccessValidator,
-    $usageLimitEnforcer,
-    $tenantOverrideManager,
-    $usageTracker,
-);
-$apiUsageTracker = new ApiUsageTracker($usageTracker);
 
 // ------------------------------------------------------------
-// Configuración sensible
+// Configuración sensible — validación estricta
 // ------------------------------------------------------------
-$jwtSecret = 'change-me-in-production';
+$jwtSecret = '';
 if (isset($dotenv['JWT_SECRET']) && is_string($dotenv['JWT_SECRET'])) {
     $jwtSecret = $dotenv['JWT_SECRET'];
 } elseif (isset($_ENV['JWT_SECRET']) && is_string($_ENV['JWT_SECRET'])) {
     $jwtSecret = $_ENV['JWT_SECRET'];
 }
+if ($jwtSecret === '' || $jwtSecret === 'change-me-in-production') {
+    throw new \RuntimeException('JWT_SECRET no está configurado en .env. Generá uno seguro con openssl rand -hex 64.');
+}
 
-$csrfSecret = 'csrf-secret-change-in-production';
+$csrfSecret = '';
 if (isset($dotenv['CSRF_SECRET']) && is_string($dotenv['CSRF_SECRET'])) {
     $csrfSecret = $dotenv['CSRF_SECRET'];
 } elseif (isset($_ENV['CSRF_SECRET']) && is_string($_ENV['CSRF_SECRET'])) {
     $csrfSecret = $_ENV['CSRF_SECRET'];
+}
+if ($csrfSecret === '' || $csrfSecret === 'csrf-secret-change-in-production') {
+    throw new \RuntimeException('CSRF_SECRET no está configurado en .env. Generá uno seguro con openssl rand -hex 64.');
 }
 
 $systemTenantId = 1;

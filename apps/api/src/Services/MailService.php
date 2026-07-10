@@ -332,8 +332,9 @@ final class MailService
     {
         $key = $this->getEnvString('APP_ENCRYPTION_KEY');
         if ($key === '') {
-            // Fallback determinístico para desarrollo (NO usar en producción sin configurar)
-            $key = 'kodan-apps-default-encryption-key-change-me';
+            throw new \RuntimeException(
+                'APP_ENCRYPTION_KEY no está configurada. Definila en .env con un valor de al menos 32 caracteres.'
+            );
         }
         return hash('sha256', $key, true);
     }

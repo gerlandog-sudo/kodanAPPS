@@ -419,19 +419,19 @@ export function Sidebar({
           role="separator"
           aria-orientation="vertical"
           aria-label="Redimensionar barra lateral"
-          className="absolute top-0 right-0 h-full w-5 z-30 group touch-none select-none"
+          className="absolute top-0 right-0 h-full w-3 z-30 group touch-none select-none"
           style={{ touchAction: 'none', cursor: RESIZE_CURSOR }}
         >
           {/* Línea visual del borde, en el borde derecho del sidebar */}
           <div className="absolute right-0 top-0 h-full w-px bg-border-soft group-hover:bg-primary group-active:bg-primary transition-colors" />
-          {/* Botón de colapso flotante, centrado sobre la línea de drag */}
+          {/* Botón de colapso flotante, sobre la línea de drag y dentro del sidebar */}
           <button
             type="button"
             onClick={toggleCollapse}
             onPointerDown={(e) => e.stopPropagation()}
             title={isIconOnly ? 'Expandir' : 'Colapsar'}
             aria-label={isIconOnly ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-            className="absolute right-0 translate-x-1/2 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
+            className="absolute right-0 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
           >
             {isIconOnly ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
           </button>

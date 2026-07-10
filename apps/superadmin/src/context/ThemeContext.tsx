@@ -40,7 +40,9 @@ function ThemeInner({ children }: { children: ReactNode }) {
       if (data?.theme === 'light' || data?.theme === 'dark') {
         setTheme(data.theme)
       }
-    } catch {}
+    } catch {
+      console.warn('[ThemeContext] No se pudo cargar la preferencia de tema del usuario.');
+    }
   }, [setTheme])
 
   return (

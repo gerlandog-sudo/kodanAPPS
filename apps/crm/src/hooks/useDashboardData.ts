@@ -133,7 +133,10 @@ export function useDashboardData(pipelineId: string | number) {
         if (winRate.status === 'fulfilled') winRateByUser.push(...winRate.value)
         if (activity.status === 'fulfilled') recentActivity.push(...activity.value)
         if (comparison.status === 'fulfilled') pipelineComparison.push(...comparison.value)
-      } catch { }
+      } catch {
+        console.error('[DashboardData] Error al cargar métricas complementarias.');
+        toast.error('Error al cargar algunas métricas del Dashboard.');
+      }
 
       setData({ opportunities: opps, accounts: accs, stats, stageData, hotDeals, salesVelocity, winRateByUser, recentActivity, pipelineComparison, closeReasons })
     } catch (err: any) {

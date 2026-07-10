@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, TrendingDown, Sparkles, Loader2, ArrowRight, Calculator, X, Play } from 'lucide-react';
+import { toast } from 'sonner';
 import { trackerApi, type PredictiveAlertsResponse } from '../api/client';
 
 export function PredictiveInsights() {
@@ -26,6 +27,7 @@ export function PredictiveInsights() {
         setTimeout(() => generateInsights(apiAlerts), 800);
       } catch (e) {
         console.error(e);
+        toast.error('Error al cargar alertas predictivas.');
         setLoading(false);
       }
     };
@@ -63,6 +65,7 @@ Estructura deseada: 'Atencion: [Deteccion del problema]. Sugerencia: [Accion cor
         setInsightTexts((p) => ({ ...p, [alert.projectId]: text }));
       } catch (e) {
         console.error(e);
+        toast.error('Error al generar insights con IA.');
       } finally {
         setLoadingInsights((p) => ({ ...p, [alert.projectId]: false }));
       }
@@ -84,7 +87,10 @@ Datos actuales:
 Genera un veredicto corto (max 40 palabras) en espanol sobre el impacto en tiempo y rentabilidad.`;
       const res = await trackerApi.generateAiText(prompt);
       setSimResult(res.text || 'Error');
-    } catch (e) { console.error(e); } finally { setSimulating(false); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Error al simular escenario.');
+    } finally { setSimulating(false); }
   };
 
   if (loading) {

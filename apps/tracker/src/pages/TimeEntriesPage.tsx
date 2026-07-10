@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button, Table, DatePicker, Select, ConfirmDialog, useAuth } from '@kodan-apps/ui-core';
 import type { TableColumn } from '@kodan-apps/ui-core';
+import { toast } from 'sonner';
 import { trackerApi, TimeEntry, Project, ProjectTask } from '../api/client';
 import { TimerWidget } from '../components/TimerWidget';
 import { TimeEntryForm } from '../components/TimeEntryForm';
@@ -56,6 +57,7 @@ export function TimeEntriesPage() {
       setTotal(res.total);
     } catch (err) {
       console.error(err);
+      toast.error('Error al cargar registros de tiempo.');
     } finally {
       setLoading(false);
     }
@@ -99,6 +101,7 @@ export function TimeEntriesPage() {
       load();
     } catch (err) {
       console.error(err);
+      toast.error('Error al enviar registro a aprobación.');
     }
   };
 
@@ -115,6 +118,7 @@ export function TimeEntriesPage() {
       load();
     } catch (err) {
       console.error(err);
+      toast.error('Error al guardar el registro de tiempo.');
     }
   };
 
@@ -126,6 +130,7 @@ export function TimeEntriesPage() {
         load();
       } catch (err) {
         console.error(err);
+        toast.error('Error al eliminar el registro de tiempo.');
       }
     }
   };

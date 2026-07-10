@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Users, AlertTriangle, TrendingUp, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
+import { toast } from 'sonner';
 import { trackerApi, type HeatmapUser, type Project, type UserProfile } from '../api/client';
 import { Select, useAuth } from '@kodan-apps/ui-core';
 
@@ -39,6 +40,7 @@ export function HeatmapPage() {
           setCollaborators(profilesRes);
         } catch (e) {
           console.error('Error al cargar filtros de mapa de calor:', e);
+          toast.error('Error al cargar filtros.');
         }
       };
       loadFilters();
@@ -65,7 +67,10 @@ export function HeatmapPage() {
         days: u.days.map((d) => ({ ...d, saturation: d.capacity > 0 ? (d.hours / d.capacity) * 100 : 0 })),
       }));
       setData(processed);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Error al cargar datos del mapa de calor.');
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, [baseDate, viewMode, selectedProjectId, selectedUserId]);

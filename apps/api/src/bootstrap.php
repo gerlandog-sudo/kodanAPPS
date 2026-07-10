@@ -85,9 +85,10 @@ use kodanAPPS\Controllers\MessagingController;
 use kodanAPPS\Controllers\WorkflowController;
 
 // ------------------------------------------------------------
-// Debug endpoint (antes de cualquier init)
+// Debug endpoint — solo disponible si APP_ENV=development
 // ------------------------------------------------------------
-if (isset($_GET['debug_api'])) {
+$appEnv = isset($dotenv['APP_ENV']) && is_string($dotenv['APP_ENV']) ? $dotenv['APP_ENV'] : ($_ENV['APP_ENV'] ?? 'production');
+if (isset($_GET['debug_api']) && $appEnv === 'development') {
     header('Content-Type: application/json');
 
     $publicDir  = __DIR__ . '/../public';

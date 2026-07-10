@@ -182,14 +182,22 @@ final class CustomFieldController
             ];
             $table = $tableMap[$entityType] ?? null;
             if ($table) {
-                $pkMap = ['accounts' => 'account_id', 'contacts' => 'contact_id', 'opportunities' => 'id'];
-                $pk = $pkMap[$table];
-                $this->pdo->exec(
-                    "UPDATE `{$table}` SET custom_fields = JSON_REMOVE(custom_fields, '$.{$fieldKey}') WHERE tenant_id = {$tenantId}"
+                $stmt1 = $this->pdo->prepare(
+                    "UPDATE `{$table}` SET custom_fields = JSON_REMOVE(custom_fields, :field_key_json) WHERE tenant_id = :tenant_id"
                 );
-                $this->pdo->exec(
-                    "DELETE FROM custom_field_values WHERE tenant_id = {$tenantId} AND entity_type = '{$entityType}' AND field_key = '{$fieldKey}'"
+                $stmt1->execute([
+                    ':field_key_json' => '$.' . $fieldKey,
+                    ':tenant_id' => $tenantId,
+                ]);
+
+                $stmt2 = $this->pdo->prepare(
+                    "DELETE FROM custom_field_values WHERE tenant_id = :tenant_id AND entity_type = :entity_type AND field_key = :field_key"
                 );
+                $stmt2->execute([
+                    ':tenant_id' => $tenantId,
+                    ':entity_type' => $entityType,
+                    ':field_key' => $fieldKey,
+                ]);
             }
         }
 

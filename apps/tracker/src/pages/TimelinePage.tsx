@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Calendar, Briefcase, Users, X, Sparkles, AlertTriangle, Clock, Scale, UserPlus, DollarSign } from 'lucide-react';
+import { toast } from 'sonner';
 import { trackerApi, type TimelineDetails } from '../api/client';
 
 function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
@@ -28,7 +29,10 @@ export function TimelinePage() {
       const endpoint = viewMode === 'projects' ? 'getTimelineProjects' : 'getTimelineResources';
       const res = await (trackerApi as any)[endpoint]({ from: filters.from, to: filters.to });
       setData(res);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Error al cargar la línea de tiempo.');
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, [viewMode, filters]);
@@ -42,7 +46,10 @@ export function TimelinePage() {
       const type = viewMode === 'projects' ? 'project' : 'user';
       const res = await trackerApi.getTimelineDetails(type, id, date);
       setDetails(res);
-    } catch (e) { console.error(e); } finally { setDetailsLoading(false); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Error al cargar detalle del período.');
+    } finally { setDetailsLoading(false); }
   };
 
   const analyzeWithAI = async () => {
@@ -52,7 +59,10 @@ export function TimelinePage() {
       const res = await trackerApi.reassignSuggestions({ project_id: selectedBucket.id });
       setSuggestions(res);
       setModalOpen(true);
-    } catch (e) { console.error(e); } finally { setAiLoading(false); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Error al generar sugerencia con IA.');
+    } finally { setAiLoading(false); }
   };
 
   const executeReassign = async (taskId: number, userId: number) => {
@@ -62,7 +72,10 @@ export function TimelinePage() {
       setModalOpen(false);
       if (selectedBucket) fetchDetails(selectedBucket.id, selectedBucket.name, selectedBucket.date);
       fetchData();
-    } catch (e) { console.error(e); } finally { setExecuting(false); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Error al reasignar entrada de tiempo.');
+    } finally { setExecuting(false); }
   };
 
   const getStrategicConclusion = (text: string) => {

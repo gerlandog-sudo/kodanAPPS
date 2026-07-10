@@ -21,6 +21,7 @@ import {
 import { B2BAccountNavItem, B2BContactNavItem } from '@kodan-apps/shared';
 import type { UserMenuItem } from '@kodan-apps/ui-core';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { toast } from 'sonner';
 import { crmApi } from './api/client';
 import './index.css';
 
@@ -92,6 +93,7 @@ function AppContent() {
       await crmApi.markNotificationsRead();
     } catch (err) {
       console.error('Error marking all read:', err);
+      toast.error('Error al marcar notificaciones como leídas.');
       fetchNotifications();
     }
   };
@@ -102,6 +104,7 @@ function AppContent() {
       await crmApi.markNotificationsRead([id]);
     } catch (err) {
       console.error('Error marking read:', err);
+      toast.error('Error al marcar notificación como leída.');
       fetchNotifications();
     }
   };
@@ -112,6 +115,7 @@ function AppContent() {
       setNotifications([]);
     } catch (err) {
       console.error('Error clearing notifications:', err);
+      toast.error('Error al limpiar notificaciones.');
     }
   };
 
@@ -247,6 +251,7 @@ function AppContent() {
                 }
               } catch (err) {
                 console.error('Error fetching last unread chat:', err);
+                toast.error('Error al cargar el chat.');
                 setChatEntity(null);
               }
             } else {

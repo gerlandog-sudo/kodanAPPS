@@ -20,6 +20,7 @@ import {
   Info
 } from 'lucide-react';
 import { Input, Button, formatCurrency, statusColor, statusBadgeClass } from '@kodan-apps/ui-core';
+import { toast } from 'sonner';
 import { trackerApi, PortfolioProject, DetailedProjectMetrics } from '../api/client';
 
 // Speedometer Gauge para Calidad
@@ -128,6 +129,7 @@ export function MetricsPage() {
       setProjects(Array.isArray(res) ? res : []);
     } catch (e) {
       console.error("Error loading metrics matrix", e);
+      toast.error('Error al cargar matriz de métricas.');
     } finally {
       setLoading(false);
     }
@@ -141,6 +143,7 @@ export function MetricsPage() {
       setDetailData(res);
     } catch (e) {
       console.error("Error loading metrics details", e);
+      toast.error('Error al cargar detalle de métricas.');
     } finally {
       setDetailLoading(false);
     }

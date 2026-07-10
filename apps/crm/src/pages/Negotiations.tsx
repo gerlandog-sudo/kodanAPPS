@@ -209,7 +209,9 @@ export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAut
       setAccounts(accs);
       setContacts(conts);
       setUsers(userList);
-    } catch {}
+    } catch {
+      console.error('[Negotiations] Error al cargar entidades secundarias (accounts/contacts/users).');
+    }
   };
 
   const loadPipelineData = async (pipelineId: number, includeArchived = false) => {
@@ -420,7 +422,9 @@ export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAut
   const loadOppCustomFields = async () => {
     try {
       setFieldDefs(await crmApi.listCustomFields('opportunity'));
-    } catch { /* ignore */ }
+    } catch {
+      console.warn('[Negotiations] No se pudieron cargar los campos personalizados de oportunidad.');
+    }
   };
 
   const pipelineSelectOptions = useMemo(() => {

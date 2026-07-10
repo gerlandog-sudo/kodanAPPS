@@ -32,15 +32,13 @@ try {
     error_log('FATAL: ' . get_class($e) . ' - ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
     error_log('Stack trace: ' . $e->getTraceAsString());
 
-    // Si es un error de API, responder JSON
+    // Si es un error de API, responder JSON (sin exponer detalles internos)
     if (str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/api/')) {
         http_response_code(500);
         header('Content-Type: application/json');
         echo json_encode([
             'error' => 'Internal server error',
-            'type' => get_class($e),
-            'message' => $e->getMessage(),
-            'file' => basename($e->getFile()) . ':' . $e->getLine(),
+            'error_id' => md5(microtime() . random_int(0, PHP_INT_MAX)),
         ]);
     } else {
         http_response_code(500);

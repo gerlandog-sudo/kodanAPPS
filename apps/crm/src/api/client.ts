@@ -35,8 +35,6 @@ export const crmApi = {
   createContact: (data: Record<string, unknown>) => B2BService.createContact(data),
   updateContact: (id: number, data: Record<string, unknown>) => B2BService.updateContact(id, data),
   deleteContact: (id: number) => B2BService.deleteContact(id),
-  listContactsByAccount: (accountId: number) => B2BService.listContacts(accountId),
-
   // Custom Fields
   listCustomFields: (entity: string) => B2BService.listCustomFields(entity),
 

@@ -60,7 +60,9 @@ export function Dashboard() {
   useEffect(() => {
     crmApi.listPipelines().then(pps => {
       setPipelines(pps)
-    }).catch(() => {}).finally(() => setTimeout(() => setInitialLoading(false), 200))
+    }).catch((err) => {
+      console.error('[Dashboard] Error al cargar pipelines:', err);
+    }).finally(() => setTimeout(() => setInitialLoading(false), 200))
   }, [])
 
   const handlePipelineChange = (id: string | number) => {

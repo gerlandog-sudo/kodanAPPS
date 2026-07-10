@@ -82,6 +82,19 @@ function badgeText(b: number | string): string {
   return b;
 }
 
+// Cursor de redimensionado horizontal (flecha doble) como SVG embebido, con
+// trazo oscuro y halo blanco para ser visible en cualquier tema, y con fallback
+// al cursor nativo del SO. Se usa tanto en hover como durante el drag.
+const RESIZE_CURSOR_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'>" +
+  "<g fill='none' stroke='#ffffff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'>" +
+  "<path d='M9 8 L5 12 L9 16'/><path d='M15 8 L19 12 L15 16'/><line x1='12' y1='6' x2='12' y2='18'/>" +
+  "</g>" +
+  "<g fill='none' stroke='#111827' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>" +
+  "<path d='M9 8 L5 12 L9 16'/><path d='M15 8 L19 12 L15 16'/><line x1='12' y1='6' x2='12' y2='18'/>" +
+  "</g></svg>";
+const RESIZE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(RESIZE_CURSOR_SVG)}") 12 12, col-resize`;
+
 export function Sidebar({
   title,
   navItems,
@@ -170,13 +183,13 @@ export function Sidebar({
     handleRef.current?.setPointerCapture(e.pointerId);
     dragStart.current = { x: e.clientX, w: navRef.current?.offsetWidth ?? width };
     setIsDragging(true);
-    document.body.style.cursor = 'col-resize';
+    document.body.style.cursor = RESIZE_CURSOR;
     document.body.style.userSelect = 'none';
     // Fuerza el cursor de redimensionado en todo el documento durante el drag,
     // ya que los hijos (links, texto) sobreescribirían el cursor del body.
     const style = document.createElement('style');
     style.setAttribute('data-sidebar-drag-cursor', '');
-    style.textContent = '*, *::before, *::after { cursor: col-resize !important; }';
+    style.textContent = `*, *::before, *::after { cursor: ${RESIZE_CURSOR} !important; }`;
     document.head.appendChild(style);
   };
 
@@ -406,8 +419,8 @@ export function Sidebar({
           role="separator"
           aria-orientation="vertical"
           aria-label="Redimensionar barra lateral"
-          className="absolute top-0 right-0 h-full w-5 cursor-col-resize z-30 group touch-none select-none"
-          style={{ touchAction: 'none' }}
+          className="absolute top-0 right-0 h-full w-5 z-30 group touch-none select-none"
+          style={{ touchAction: 'none', cursor: RESIZE_CURSOR }}
         >
           {/* Línea visual del borde, en el borde derecho del sidebar */}
           <div className="absolute right-0 top-0 h-full w-px bg-border-soft group-hover:bg-primary group-active:bg-primary transition-colors" />
@@ -418,7 +431,7 @@ export function Sidebar({
             onPointerDown={(e) => e.stopPropagation()}
             title={isIconOnly ? 'Expandir' : 'Colapsar'}
             aria-label={isIconOnly ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-            className="absolute right-0 -translate-x-1/2 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
+            className="absolute right-0 translate-x-1/2 top-7 flex items-center justify-center size-6 rounded-full border border-border-soft bg-surface-raised text-text-muted shadow-md hover:text-primary hover:border-primary transition-colors cursor-pointer z-40"
           >
             {isIconOnly ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
           </button>

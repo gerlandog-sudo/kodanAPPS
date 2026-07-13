@@ -29,7 +29,7 @@ export async function exportToExcel<T>({
   headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
   headerRow.height = 26;
 
-  data.forEach((item: any) => {
+  data.forEach((item: T) => {
     const row = worksheet.addRow(item);
     row.height = 20;
     row.font = { name: 'Segoe UI', size: 10 };

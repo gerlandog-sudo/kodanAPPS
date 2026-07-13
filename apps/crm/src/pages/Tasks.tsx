@@ -120,7 +120,7 @@ export function Tasks() {
         crmApi.listOpportunities(),
         crmApi.listTenantUsers(),
       ]);
-      setTasks(taskList);
+      setTasks(taskList as any);
       setTaskTypes(typeList);
       setOpportunities(oppList);
       setUsers(userList);
@@ -250,7 +250,7 @@ export function Tasks() {
   const handleOpenEdit = async (t: Task) => {
     try {
       setLoading(true);
-      const details = await crmApi.getTask(t.id);
+      const details: any = await crmApi.getTask(t.id);
       setSelectedTask(details);
       setForm({
         title: details.title || '',
@@ -292,10 +292,10 @@ export function Tasks() {
       };
 
       if (selectedTask) {
-        await crmApi.updateTask(selectedTask.id, payload);
+        await crmApi.updateTask(selectedTask.id, payload as any);
         toast.success('Tarea comercial actualizada.');
       } else {
-        await crmApi.createTask(payload);
+        await crmApi.createTask(payload as any);
         toast.success('Tarea comercial creada.');
       }
       setShowModal(false);
@@ -315,7 +315,7 @@ export function Tasks() {
     setJustDroppedId(taskId);
     setTimeout(() => setJustDroppedId(null), 550);
     try {
-      await crmApi.updateTask(taskId, { status: toStage });
+      await crmApi.updateTask(taskId, { status: toStage } as any);
       toast.success('Estado de la tarea actualizado.');
       loadData(true);
     } catch {

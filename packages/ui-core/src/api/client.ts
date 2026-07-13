@@ -1,4 +1,5 @@
 import { API_BASE } from '../config';
+import type { PlanStatusResponse, TenantUsage } from '@kodan-apps/shared';
 
 const CSRF_ENDPOINT = '/api/csrf-token';
 
@@ -124,14 +125,19 @@ export async function apiClient<T = unknown>(
       triggerForceLogout();
       throw new ApiError(401, {}, 'Sesión expirada. Por favor inicia sesión nuevamente.');
     }
-    const errorBody = await response.json().catch(() => ({}));
-    const serverMsg = (errorBody as any)?.error || (errorBody as any)?.message || 'Credenciales inválidas.';
+    const errorBody: Record<string, unknown> = await response.json().catch(() => ({}));
+    const serverMsg = typeof errorBody?.error === 'string'
+      ? errorBody.error
+      : typeof errorBody?.message === 'string'
+        ? errorBody.message
+        : 'Credenciales inválidas.';
     throw new ApiError(401, errorBody, serverMsg);
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, errorData, (errorData as any)?.message || `API Error: ${response.status}`);
+    const errorData: Record<string, unknown> = await response.json().catch(() => ({}));
+    const errMsg = typeof errorData?.message === 'string' ? errorData.message : `API Error: ${response.status}`;
+    throw new ApiError(response.status, errorData, errMsg);
   }
 
   if (response.status === 204) {
@@ -142,25 +148,17 @@ export async function apiClient<T = unknown>(
 }
 
 export const usageApi = {
-  getPlanStatus: () => api.get<PlanLimitResponse[]>('/api/tenant-users/plan-status'),
+  getPlanStatus: () => api.get<PlanStatusResponse[]>('/api/tenant-users/plan-status'),
   getContractedApps: () => api.get<string[]>('/api/tenant-users/apps'),
 };
 
 export const overrideApi = {
-  getTenantUsage: (tenantId: number) => api.get<any>(`/api/super-admin/tenants/${tenantId}/usage`),
+  getTenantUsage: (tenantId: number) => api.get<TenantUsage>(`/api/super-admin/tenants/${tenantId}/usage`),
   setOverride: (tenantId: number, module: string, metric: string, customValue: number) =>
-    api.post<any>(`/api/super-admin/tenants/${tenantId}/overrides`, { module, metric, custom_value: customValue }),
+    api.post<{ success: boolean }>(`/api/super-admin/tenants/${tenantId}/overrides`, { module, metric, custom_value: customValue }),
   clearOverride: (tenantId: number, module: string, metric: string) =>
-    api.delete<any>(`/api/super-admin/tenants/${tenantId}/overrides/${module}/${metric}`),
+    api.delete<{ success: boolean }>(`/api/super-admin/tenants/${tenantId}/overrides/${module}/${metric}`),
 };
-
-interface PlanLimitResponse {
-  module: string;
-  metric: string;
-  limit_value: number | string;
-  current_usage: number | string;
-  has_capacity: number | string;
-}
 
 export const api = {
   get: <T>(endpoint: string, params?: Record<string, string>) =>

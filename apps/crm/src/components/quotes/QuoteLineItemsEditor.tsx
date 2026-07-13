@@ -22,7 +22,7 @@ export function QuoteLineItemsEditor({ items, onChange, readOnly }: QuoteLineIte
   const [productsLoading, setProductsLoading] = useState(true)
 
   useEffect(() => {
-    crmApi.listProducts().then((data) => {
+    crmApi.listProducts().then((data: any) => {
       setProducts(data.filter((p: any) => p.is_active !== 0))
     }).catch(() => {
       // silently fail, show empty

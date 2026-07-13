@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export function useForm<T extends Record<string, any>>({
+export function useForm<T extends Record<string, unknown>>({
   initialValues,
   onSubmit,
 }: {
@@ -12,7 +12,7 @@ export function useForm<T extends Record<string, any>>({
   const [dirty, setDirty] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const setField = (key: keyof T, value: any) => {
+  const setField = (key: keyof T, value: T[keyof T]) => {
     setValues(prev => ({ ...prev, [key]: value }))
     setDirty(true)
   }
@@ -29,8 +29,8 @@ export function useForm<T extends Record<string, any>>({
     try {
       await onSubmit(values)
       setDirty(false)
-    } catch (err: any) {
-      setErrors({ _form: err?.message || 'Error al guardar' })
+    } catch (err: unknown) {
+      setErrors({ _form: err instanceof Error ? err.message : 'Error al guardar' })
     } finally {
       setSubmitting(false)
     }

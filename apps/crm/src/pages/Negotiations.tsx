@@ -223,7 +223,7 @@ export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAut
       const params: Record<string, string> = { pipeline_id: String(pipelineId) }
       if (includeArchived) params.include_archived = '1'
       const oppsList = await crmApi.listOpportunities(params);
-      setOpportunities(oppsList);
+      setOpportunities(oppsList as any);
     } catch {
       toast.error('Error al cargar datos del canal.');
     }
@@ -365,10 +365,10 @@ export function Negotiations({ onOpenChat, onOpenMail, autoOpenOppId, onClearAut
 
       let currentOppId: number;
       if (isEdit) {
-        await crmApi.updateOpportunity(oppId!, payload);
+        await crmApi.updateOpportunity(oppId!, payload as any);
         currentOppId = oppId!;
       } else {
-        const created: any = await crmApi.createOpportunity(payload);
+        const created: any = await crmApi.createOpportunity(payload as any);
         currentOppId = created.id;
       }
 

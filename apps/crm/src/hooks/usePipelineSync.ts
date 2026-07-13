@@ -17,7 +17,7 @@ export function usePipelineSync() {
       const pipeParam = params.get('pipeline')
       const pipeId = pipeParam ? parseInt(pipeParam, 10) : NaN
 
-      if (!isNaN(pipeId) && data.some((p: any) => p.id === pipeId)) {
+      if (!isNaN(pipeId) && data.some((p) => p.id === pipeId)) {
         setSelectedPipelineId(pipeId)
       } else if (!selectedPipelineId && data.length > 0) {
         setSelectedPipelineId(data[0].id)

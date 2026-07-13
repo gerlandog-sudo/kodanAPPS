@@ -14,7 +14,7 @@ export interface EmailComposerProps {
   entityType?: string
   entityId?: number
   recipientEmail?: string
-  entityData?: Record<string, any>
+  entityData?: Record<string, unknown>
   moduleContext?: string // 'crm', 'tracker', etc.
   onSent?: () => void
 }
@@ -71,11 +71,11 @@ export function EmailComposer({
 
       // Buscar email de contacto automáticamente para crm_opportunity
       if (entityType === 'crm_opportunity' && entityId && !recipientEmail) {
-        api.get<any[]>('/api/crm/opportunities')
+        api.get<Array<{ id: number; contact_id?: number }>>('/api/crm/opportunities')
           .then(opps => {
             const opp = opps.find(o => o.id === entityId)
             if (opp && opp.contact_id) {
-              api.get<any[]>('/api/crm/contacts')
+              api.get<Array<{ contact_id: number; email: string }>>('/api/crm/contacts')
                 .then(contacts => {
                   const contact = contacts.find(c => c.contact_id === opp.contact_id)
                   if (contact && contact.email) {

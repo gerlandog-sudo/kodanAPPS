@@ -68,7 +68,7 @@ export function useSSE(appId: string) {
     };
 
     // Escuchar actualizaciones dinámicas de la campanita
-    eventSource.addEventListener('unread_update', (event: any) => {
+    eventSource.addEventListener('unread_update', (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
         if (typeof data.unread_count === 'number') {

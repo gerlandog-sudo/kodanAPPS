@@ -1,4 +1,5 @@
 import { api } from '@kodan-apps/ui-core';
+import type { TimeEntryHistoryItem, TrackerMetrics, ReassignSuggestion } from '@kodan-apps/shared';
 
 export interface Project {
   id: number
@@ -288,7 +289,7 @@ export const trackerApi = {
   rejectTimeEntry: (id: number, reason: string) => api.post<TimeEntry>(`/api/tracker/time-entries/${id}/reject`, { reason }),
   bulkApproveTimeEntries: (ids: number[]) => api.post<{ approved: number }>('/api/tracker/time-entries/bulk-approve', { ids }),
   bulkRejectTimeEntries: (ids: number[], reason: string) => api.post<{ rejected: number }>('/api/tracker/time-entries/bulk-reject', { ids, reason }),
-  getTimeEntryHistory: (id: number) => api.get<any[]>(`/api/tracker/time-entries/${id}/history`),
+  getTimeEntryHistory: (id: number) => api.get<TimeEntryHistoryItem[]>(`/api/tracker/time-entries/${id}/history`),
   pendingApprovals: (params?: Record<string, string>) => api.get<TimeEntry[]>('/api/tracker/time-entries/pending-approvals', params),
 
   getMetrics: (projectId?: number, from?: string, to?: string) => {
@@ -296,7 +297,7 @@ export const trackerApi = {
     if (projectId) params.project_id = String(projectId);
     if (from) params.from = from;
     if (to) params.to = to;
-    return api.get<any>('/api/tracker/metrics', params);
+    return api.get<TrackerMetrics>('/api/tracker/metrics', params);
   },
 
   getDashboardKpis: () => api.get<DashboardKpis>('/api/tracker/dashboard/kpis'),
@@ -329,9 +330,9 @@ export const trackerApi = {
   getTimelineDetails: (type: string, id: number, date: string) =>
     api.get<TimelineDetails>('/api/tracker/insights/timeline/details', { type, id: String(id), date }),
   reassignSuggestions: (data: { project_id?: number; task_id?: number }) =>
-    api.post<any>('/api/tracker/insights/timeline/reassign-suggestions', data),
+    api.post<ReassignSuggestion[]>('/api/tracker/insights/timeline/reassign-suggestions', data),
   reassignExecute: (taskId: number, userId: number) =>
-    api.post<any>('/api/tracker/insights/timeline/reassign-execute', { task_id: taskId, user_id: userId }),
+    api.post<{ success: boolean; message: string }>('/api/tracker/insights/timeline/reassign-execute', { task_id: taskId, user_id: userId }),
   getPredictiveAlerts: () =>
     api.get<PredictiveAlertsResponse>('/api/tracker/insights/predictive-alerts'),
   generateAiText: (prompt: string) =>

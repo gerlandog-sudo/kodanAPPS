@@ -88,7 +88,7 @@ export function PlanUsageWidget({ compact = true, planStatus: externalStatus, pl
   useEffect(() => {
     if (externalStatus) return;
     setLoading(true);
-    api.get<any[]>('/api/tenant-users/plan-status')
+    api.get<PlanLimit[]>('/api/tenant-users/plan-status')
       .then(data => setFetchedStatus(data))
       .catch(() => {})
       .finally(() => setLoading(false));

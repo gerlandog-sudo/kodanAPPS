@@ -7,6 +7,20 @@ import { Input } from './Input';
 import { LogIn, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface LoginResponse {
+  success: boolean;
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    display_name: string;
+    avatar: string | null;
+  };
+  roles: string[];
+  can_approve_hours: boolean;
+  app_id: string;
+}
+
 interface LoginProps {
   appId: string;
   title: string;
@@ -15,7 +29,7 @@ interface LoginProps {
   logoIcon?: ReactNode;
   cardClassName?: string;
   labelClassName?: string;
-  onLoginSuccess: (user: any) => void;
+  onLoginSuccess: (user: LoginResponse['user'] & { roles: string[]; can_approve_hours: boolean }) => void;
   onGoToSetPassword: () => void;
 }
 
@@ -40,7 +54,7 @@ export function Login({
     setLoading(true);
 
     try {
-      const response = await api.post<any>('/api/auth/login', {
+      const response = await api.post<LoginResponse>('/api/auth/login', {
         email,
         password,
         app_id: appId,
@@ -50,13 +64,14 @@ export function Login({
         onLoginSuccess({
           ...response.user,
           roles: response.roles || [],
-          can_approve_hours: response.can_approve_hours
+          can_approve_hours: response.can_approve_hours,
         });
       } else {
         toast.error('Error en la autenticación.');
       }
-    } catch (err: any) {
-      const msg = err?.data?.error || err?.message || 'Error al iniciar sesión. Por favor verifica tus credenciales.';
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { error?: string }; message?: string };
+      const msg = apiErr?.data?.error || apiErr?.message || 'Error al iniciar sesión. Por favor verifica tus credenciales.';
       toast.error(msg);
     } finally {
       setLoading(false);

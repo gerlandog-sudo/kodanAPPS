@@ -85,7 +85,7 @@ export function Dashboard() {
             { key: 'industry', header: 'Industria', render: (item: any) => item.industry || 'No especificada', sortable: true },
             { key: 'created_at', header: 'Fecha Registro', render: (item: any) => item.created_at ? new Date(item.created_at).toLocaleDateString('es-AR') : '-' }
           ]}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.account_id}
           pageSize={10}
           emptyState={{ icon: <Users size={32} className="text-muted" />, title: 'Sin cuentas', description: 'No se encontraron clientes corporativos registrados.' }}
         />

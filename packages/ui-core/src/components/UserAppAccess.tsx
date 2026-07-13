@@ -41,17 +41,17 @@ export function UserAppAccess({ tenantId }: UserAppAccessProps) {
     setLoading(true);
     Promise.all([
       tenantId
-        ? api.get<any[]>('/api/tenant-users')
-        : api.get<any[]>('/api/tenant-users'),
+        ? api.get<TenantUser[]>('/api/tenant-users')
+        : api.get<TenantUser[]>('/api/tenant-users'),
       api.get<Record<string, AppRole[]>>('/api/tenant-users/roles'),
-      api.get<any[]>('/api/tenant-users/plan-status'),
+      api.get<Array<{ module: string; metric: string; current_usage: number | string; limit_value: number | string }>>('/api/tenant-users/plan-status'),
     ])
       .then(([usersData, rolesData, planStatus]) => {
-        setUsers(usersData as TenantUser[]);
+        setUsers(usersData);
         setRolesByApp(rolesData);
 
         const cap: Record<string, { used: number; max: number | string }> = {};
-        planStatus.forEach((m: any) => {
+        planStatus.forEach((m) => {
           if (m.metric === 'users_max') {
             cap[m.module] = {
               used: Number(m.current_usage),

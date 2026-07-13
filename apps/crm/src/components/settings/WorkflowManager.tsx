@@ -47,7 +47,7 @@ export function WorkflowManager() {
   const loadRules = async () => {
     setLoading(true)
     try {
-      const data = await crmApi.listWorkflowRules()
+      const data: any = await crmApi.listWorkflowRules()
       setRules(data)
     } catch {
       toast.error('Error al cargar reglas de workflow')
@@ -105,7 +105,7 @@ export function WorkflowManager() {
     setShowExecutions(rule)
     setExecutionsLoading(true)
     try {
-      const data = await crmApi.getWorkflowExecutions(rule.id)
+      const data: any = await crmApi.getWorkflowExecutions(rule.id)
       setExecutions(data)
     } catch {
       toast.error('Error al cargar historial')

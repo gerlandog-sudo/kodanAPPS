@@ -33,7 +33,7 @@ export function TimeEntryHistoryModal({ open, onClose, entryId }: TimeEntryHisto
       setError('');
       trackerApi.getTimeEntryHistory(entryId)
         .then((res) => {
-          setHistory(res);
+          setHistory(res as any);
         })
         .catch((err) => {
           console.error(err);

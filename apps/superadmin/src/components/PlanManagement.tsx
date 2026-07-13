@@ -2,21 +2,11 @@ import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
 import { PlanBuilder } from '@kodan-apps/ui-core';
 import type { PlanMetric } from '@kodan-apps/ui-core';
+import type { SubscriptionPlan } from '@kodan-apps/shared';
 import { toast } from 'sonner';
 
-interface Plan {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  created_at: string;
-  updated_at: string;
-  limits: Array<{ module: string; metric: string; value: number }>;
-}
-
 export function PlanManagement() {
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [metrics, setMetrics] = useState<PlanMetric[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,11 +18,11 @@ export function PlanManagement() {
     try {
       setLoading(true);
       const [plansData, metricsData] = await Promise.all([
-        superAdminApi.listPlans() as Promise<Plan[]>,
-        superAdminApi.listAppMetrics() as Promise<PlanMetric[]>,
+        superAdminApi.listPlans(),
+        superAdminApi.listAppMetrics(),
       ]);
       setPlans(plansData);
-      setMetrics(metricsData);
+      setMetrics(metricsData as PlanMetric[]);
     } catch (err: any) {
       toast.error(err.message || 'Error cargando datos');
     } finally {

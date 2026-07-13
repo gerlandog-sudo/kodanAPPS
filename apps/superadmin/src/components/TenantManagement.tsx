@@ -40,9 +40,9 @@ export function TenantManagement() {
       const [tenantsRes, plansRes] = await Promise.all([
         superAdminApi.listTenants(),
         superAdminApi.listPlans(),
-      ]) as [Tenant[], Array<{ id: number; name: string; price: number; currency: string }>];
+      ]);
       setTenants(tenantsRes);
-      setPlans(plansRes.map((p: any) => ({ id: p.id, name: p.name, price: p.price, currency: p.currency })));
+      setPlans(plansRes.map((p) => ({ id: p.id, name: p.name, price: p.price, currency: p.currency })));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error cargando datos');
     } finally {

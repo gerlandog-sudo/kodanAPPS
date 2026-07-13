@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react'
 
 export interface AdminCrudApi<T> {
   list: () => Promise<T[]>
-  create: (data: any) => Promise<T>
-  update: (id: number, data: any) => Promise<T>
+  create: (data: Partial<T>) => Promise<T>
+  update: (id: number, data: Partial<T>) => Promise<T>
   delete: (id: number) => Promise<void>
 }
 
@@ -23,20 +23,20 @@ export function useAdminCrud<T extends { id: number }>({
       const result = await api.list()
       setData(result)
       setError(null)
-    } catch (e: any) {
-      setError(e?.message || 'Error al cargar datos')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error al cargar datos')
     } finally {
       setLoading(false)
     }
   }, [api])
 
-  const createItem = async (input: any) => {
+  const createItem = async (input: Partial<T>) => {
     const item = await api.create(input)
     setData(prev => [...prev, item])
     return item
   }
 
-  const updateItem = async (id: number, input: any) => {
+  const updateItem = async (id: number, input: Partial<T>) => {
     const item = await api.update(id, input)
     setData(prev => prev.map(d => d.id === id ? item : d))
     return item

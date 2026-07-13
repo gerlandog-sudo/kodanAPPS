@@ -26,7 +26,7 @@ export function AutomationDashboard() {
   useEffect(() => {
     async function load() {
       try {
-        const data = await crmApi.getWorkflowStats()
+        const data: any = await crmApi.getWorkflowStats()
         setStats(data)
       } catch {
         // Silently fail — automation section is supplementary

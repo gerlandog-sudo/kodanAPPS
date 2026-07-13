@@ -56,7 +56,7 @@ export function SetPassword({
     setLoading(true);
 
     try {
-      const response = await api.post<any>('/api/auth/set-password', {
+      const response = await api.post<{ success: boolean }>('/api/auth/set-password', {
         email,
         token,
         password,
@@ -71,8 +71,9 @@ export function SetPassword({
       } else {
         setError('Error al procesar la solicitud.');
       }
-    } catch (err: any) {
-      const msg = err?.data?.error || err?.message || 'Error al establecer la contraseña. El token podría estar vencido.';
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { error?: string }; message?: string };
+      const msg = apiErr?.data?.error || apiErr?.message || 'Error al establecer la contraseña. El token podría estar vencido.';
       setError(msg);
     } finally {
       setLoading(false);

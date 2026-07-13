@@ -140,7 +140,7 @@ export function MetricsPage() {
     setDetailLoading(true);
     try {
       const res = await trackerApi.getMetrics(id, from || undefined, to || undefined);
-      setDetailData(res);
+      setDetailData(res as any);
     } catch (e) {
       console.error("Error loading metrics details", e);
       toast.error('Error al cargar detalle de métricas.');

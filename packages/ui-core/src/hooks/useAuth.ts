@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { setCurrentAppId } from '../api/client';
-
 import { API_BASE } from '../config';
+import type { AuthUser, PlanStatusResponse } from '@kodan-apps/shared';
 
 export interface AuthState {
   loading: boolean;
   authenticated: boolean;
-  user: any;
+  user: AuthUser | null;
   roles: string[];
   canApproveHours: boolean;
   appId: string;
-  planStatus: any[];
+  planStatus: PlanStatusResponse[];
   planName: string;
 }
 
@@ -36,7 +36,7 @@ export function useAuth(appId: string) {
             'X-Requested-With': 'XMLHttpRequest',
             'X-App-ID': appId,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -44,7 +44,14 @@ export function useAuth(appId: string) {
         return;
       }
 
-      const data = await response.json();
+      const data: {
+        user: AuthUser;
+        roles: string[];
+        can_approve_hours: boolean;
+        app_id: string;
+        plan_status: PlanStatusResponse[];
+        plan_name: string;
+      } = await response.json();
       setState({
         loading: false,
         authenticated: true,
@@ -65,18 +72,21 @@ export function useAuth(appId: string) {
     validate();
   }, [appId, validate]);
 
-  const setAuthenticated = useCallback((userData: any) => {
-    setState({
-      loading: false,
-      authenticated: true,
-      user: { ...userData },
-      roles: userData.roles || [],
-      canApproveHours: !!userData.can_approve_hours,
-      appId,
-      planStatus: [],
-      planName: '',
-    });
-  }, [appId]);
+  const setAuthenticated = useCallback(
+    (userData: AuthUser & { roles?: string[]; can_approve_hours?: boolean }) => {
+      setState({
+        loading: false,
+        authenticated: true,
+        user: { ...userData },
+        roles: userData.roles || [],
+        canApproveHours: !!userData.can_approve_hours,
+        appId,
+        planStatus: [],
+        planName: '',
+      });
+    },
+    [appId],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -90,7 +100,7 @@ export function useAuth(appId: string) {
             'X-App-ID': appId,
           },
           body: JSON.stringify({ app_id: appId }),
-        }
+        },
       );
     } catch {
       // Even if request fails, clear local state

@@ -39,7 +39,7 @@ export function RoleManagement() {
     try {
       setLoading(true);
       const data = await superAdminApi.listRoles();
-      setRoles(data as Role[]);
+      setRoles(data);
     } catch (err: any) {
       toast.error(err.message || 'Error cargando roles');
     } finally { setLoading(false); }

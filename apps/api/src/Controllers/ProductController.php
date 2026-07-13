@@ -85,7 +85,11 @@ final class ProductController
             $id = $this->productRepo->createProduct($data);
         } catch (Throwable $e) {
             error_log('[ProductController] Error creating product: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            throw new RuntimeException('Error al crear el producto. Intente nuevamente.', 500);
+            // Temporal: si se envía header X-Debug: 1, exponemos el error real para diagnóstico
+            $msg = isset($_SERVER['HTTP_X_DEBUG']) && $_SERVER['HTTP_X_DEBUG'] === '1'
+                ? $e->getMessage()
+                : 'Error al crear el producto. Intente nuevamente.';
+            throw new RuntimeException($msg, 500);
         }
 
         return [

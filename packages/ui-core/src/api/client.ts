@@ -133,7 +133,12 @@ export async function apiClient<T = unknown>(
 
   if (!response.ok) {
     const errorData: Record<string, unknown> = await response.json().catch(() => ({}));
-    const errMsg = typeof errorData?.message === 'string' ? errorData.message : `API Error: ${response.status}`;
+    // El backend envía {error: "..."} en los catch de rutas; soportar ambos formatos
+    const errMsg = typeof errorData?.error === 'string'
+      ? errorData.error
+      : typeof errorData?.message === 'string'
+        ? errorData.message
+        : `API Error: ${response.status}`;
     throw new ApiError(response.status, errorData, errMsg);
   }
 

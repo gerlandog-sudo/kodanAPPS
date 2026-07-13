@@ -80,13 +80,20 @@ final class TenantAwarePDO extends PDO
             $sql
         ) === 1;
 
+        // INSERT con tenant_id en la lista de columnas (p.ej. `products` (`name`, `tenant_id`, ...))
+        // es válido porque el valor viene de TenantContext desde BaseRepository::create()
+        $hasTenantInInsertColumns = preg_match(
+            '/INSERT\s+INTO\s+[`"\w]+\s*\([^)]*\btenant_id\b[^)]*\)\s*(VALUES|SELECT|SET)/i',
+            $sql
+        ) === 1;
+
         // Excepción: INSERT en tenants (crear tenant) no tiene tenant_id aún
         $isTenantInsert = preg_match('/^\s*INSERT\s+INTO\s+[`"]?tenants[`"]?\s+/i', $sql) === 1;
 
         // Excepción: DELETE en tenants con is_system_tenant check (trigger lo maneja)
         $isTenantDelete = preg_match('/^\s*DELETE\s+FROM\s+[`"]?tenants[`"]?\s+/i', $sql) === 1;
 
-        if (!$hasTenantScope && !$isTenantInsert && !$isTenantDelete) {
+        if (!$hasTenantScope && !$hasTenantInInsertColumns && !$isTenantInsert && !$isTenantDelete) {
             $msg = "[TENANT_SCOPE_MISSING] $method: $sql";
             error_log($msg);
             

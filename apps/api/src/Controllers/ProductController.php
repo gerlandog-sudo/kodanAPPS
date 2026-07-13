@@ -7,6 +7,7 @@ namespace kodanAPPS\Controllers;
 use kodanAPPS\Repositories\ProductRepository;
 use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
 final class ProductController
 {
@@ -24,7 +25,12 @@ final class ProductController
      */
     public function list(): array
     {
-        return $this->productRepo->listAll();
+        try {
+            return $this->productRepo->listAll();
+        } catch (Throwable $e) {
+            error_log('[ProductController] Error listing products: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            throw new RuntimeException('Error al cargar el catálogo de productos.', 500);
+        }
     }
 
     /**
@@ -75,7 +81,12 @@ final class ProductController
             'is_active' => isset($input['is_active']) ? (int)$input['is_active'] : 1,
         ];
 
-        $id = $this->productRepo->createProduct($data);
+        try {
+            $id = $this->productRepo->createProduct($data);
+        } catch (Throwable $e) {
+            error_log('[ProductController] Error creating product: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            throw new RuntimeException('Error al crear el producto. Intente nuevamente.', 500);
+        }
 
         return [
             'success' => true,

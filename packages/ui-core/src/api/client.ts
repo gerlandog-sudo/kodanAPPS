@@ -28,11 +28,8 @@ export function setCurrentAppId(appId: string): void {
 // --- Force logout event ---
 function triggerForceLogout(): void {
   sessionStorage.removeItem('csrf_token');
-  if (currentAppId) {
-    document.cookie = `access_token_${currentAppId}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-  } else {
-    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-  }
+  // NOTA: No podemos borrar cookies HttpOnly desde JS (document.cookie no tiene efecto).
+  // La cookie se limpia correctamente via POST /api/auth/logout en useAuth.logout().
   window.dispatchEvent(new CustomEvent('auth:force-logout'));
 }
 

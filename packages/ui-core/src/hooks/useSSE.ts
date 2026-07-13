@@ -42,49 +42,69 @@ export function useSSE(appId: string) {
   useEffect(() => {
     if (!appId) return;
 
-    let lastEventId = localStorage.getItem(`last_event_id_${appId}`) || '0';
-    const url = new URL(`${API_BASE}/api/messages/stream`, window.location.origin);
-    url.searchParams.append('app_id', appId);
-    url.searchParams.append('last_event_id', lastEventId);
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 10;
 
-    const eventSource = new EventSource(url.toString(), { withCredentials: true });
+    function connect() {
+      let lastEventId = localStorage.getItem(`last_event_id_${appId}`) || '0';
+      const url = new URL(`${API_BASE}/api/messages/stream`, window.location.origin);
+      url.searchParams.append('app_id', appId);
+      url.searchParams.append('last_event_id', lastEventId);
 
-    eventSource.onmessage = (event) => {
-      try {
-        const msg: SSEMessage = JSON.parse(event.data);
-        setMessages((prev) => {
-          if (prev.some(p => p.id === msg.id)) {
-            return prev;
+      const eventSource = new EventSource(url.toString(), { withCredentials: true });
+
+      eventSource.onmessage = (event) => {
+        // Reset reconnect attempts on successful message
+        reconnectAttempts = 0;
+        try {
+          const msg: SSEMessage = JSON.parse(event.data);
+          setMessages((prev) => {
+            if (prev.some(p => p.id === msg.id)) {
+              return prev;
+            }
+            return [...prev, msg];
+          });
+
+          if (event.lastEventId) {
+            localStorage.setItem(`last_event_id_${appId}`, event.lastEventId);
           }
-          return [...prev, msg];
-        });
-
-        if (event.lastEventId) {
-          localStorage.setItem(`last_event_id_${appId}`, event.lastEventId);
+        } catch (err) {
+          console.error('Error parsing SSE message:', err);
         }
-      } catch (err) {
-        console.error('Error parsing SSE message:', err);
-      }
-    };
+      };
 
-    // Escuchar actualizaciones dinámicas de la campanita
-    eventSource.addEventListener('unread_update', (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (typeof data.unread_count === 'number') {
-          setUnreadCount(data.unread_count);
+      // Escuchar actualizaciones dinámicas de la campanita
+      eventSource.addEventListener('unread_update', (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (typeof data.unread_count === 'number') {
+            setUnreadCount(data.unread_count);
+          }
+        } catch (err) {
+          console.error('Error parsing unread_update:', err);
         }
-      } catch (err) {
-        console.error('Error parsing unread_update:', err);
-      }
-    });
+      });
 
-    eventSource.onerror = () => {
-      setError('Conexión de tiempo real interrumpida. Reintentando...');
-    };
+      eventSource.onerror = () => {
+        eventSource.close();
+
+        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts++;
+          // Exponential backoff: 1s, 2s, 4s, 8s ... up to ~8.5min
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 60000);
+          setError('Conexión de tiempo real interrumpida. Reintentando...');
+          reconnectTimeout = setTimeout(connect, delay);
+        } else {
+          setError(null);
+        }
+      };
+    }
+
+    connect();
 
     return () => {
-      eventSource.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
   }, [appId]);
 

@@ -322,7 +322,7 @@ if (isset($dotenv['PUBLIC_SECRET']) && is_string($dotenv['PUBLIC_SECRET'])) {
 // ------------------------------------------------------------
 // Auth Middleware
 // ------------------------------------------------------------
-$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId);
+$authMiddleware = new AuthMiddleware($jwtSecret, $csrfSecret, $systemTenantId, $cookieDomain);
 
 // ------------------------------------------------------------
 // Controladores

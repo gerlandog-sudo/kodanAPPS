@@ -159,9 +159,9 @@ final class MessagingController
      * GET /api/messages/stream
      * Endpoint SSE de tiempo real optimizado.
      * 
-     * @param array{host: string, port: int, dbname: string, user: string, pass: string, charset: string} $dbConfig
+     * @param \PDO $db Conexión PDO compartida (desde bootstrap)
      */
-    public function stream(array $dbConfig): void
+    public function stream(\PDO $db): void
     {
         header('Content-Type: text/event-stream');
         header('Cache-Control: no-cache');
@@ -188,92 +188,97 @@ final class MessagingController
         // 2. Control de reconexión (Last-Event-ID)
         $lastMessageId = (int)($_SERVER['HTTP_LAST_EVENT_ID'] ?? ($_GET['last_event_id'] ?? 0));
 
-        $dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
-        /** @var \PDO|null $pdo */
-        $pdo = null;
+        // 3. Deshabilitar el timeout de PHP para conexiones largas
+        set_time_limit(0);
+
+        $lastKeepAlive = 0;
 
         while (true) {
             if (connection_aborted()) {
                 break;
             }
 
-            if ($pdo === null) {
-                try {
-                    $pdo = new \PDO($dsn, $dbConfig['user'], $dbConfig['pass'], [
-                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                        \PDO::ATTR_EMULATE_PREPARES => false,
-                    ]);
-                } catch (\Throwable $e) {
-                    usleep(5000000); // esperar 5s
-                    continue;
-                }
-            }
+            try {
+                // Obtener conversaciones activas del usuario
+                $stmt = $db->prepare('/* BYPASS_TENANT_SCOPE */ SELECT conversation_id FROM conversation_participants WHERE user_id = ?');
+                $stmt->execute([$userId]);
+                $conversationIds = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
-            // Obtener conversaciones activas del usuario
-            $stmt = $pdo->prepare('/* BYPASS_TENANT_SCOPE */ SELECT conversation_id FROM conversation_participants WHERE user_id = ?');
-            $stmt->execute([$userId]);
-            $conversationIds = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-
-            if (empty($conversationIds)) {
-                echo ": keep-alive\n\n";
-                if (ob_get_level() > 0) {
-                    ob_flush();
-                }
-                flush();
-            } else {
-                $placeholders = implode(',', array_fill(0, count($conversationIds), '?'));
-                $query = "/* BYPASS_TENANT_SCOPE */
-                          SELECT m.*, u.display_name AS sender_name 
-                          FROM messages m 
-                          LEFT JOIN users u ON u.id = m.sender_id
-                          WHERE m.conversation_id IN ($placeholders) 
-                            AND m.id > ? 
-                          ORDER BY m.id ASC";
-
-                $stmt = $pdo->prepare($query);
-                $params = array_merge($conversationIds, [$lastMessageId]);
-                $stmt->execute($params);
-                $newMessages = $stmt->fetchAll();
-
-                if (!empty($newMessages)) {
-                    foreach ($newMessages as $msg) {
-                        $lastMessageId = (int)$msg['id'];
-                        echo "id: {$lastMessageId}\n";
-                        echo "event: message\n";
-                        echo "data: " . json_encode($msg, JSON_UNESCAPED_UNICODE) . "\n\n";
-                    }
-
-                    // Enviar contador actualizado de no leídos
-                    $unreadStmt = $pdo->prepare("
-                        /* BYPASS_TENANT_SCOPE */
-                        SELECT COUNT(m.id) as unread_count
-                        FROM conversation_participants cp
-                        JOIN messages m ON m.conversation_id = cp.conversation_id
-                        WHERE cp.user_id = ?
-                          AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
-                          AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
-                    ");
-                    $unreadStmt->execute([$userId]);
-                    $unreadCount = (int)$unreadStmt->fetchColumn();
-
-                    echo "event: unread_update\n";
-                    echo "data: " . json_encode(['unread_count' => $unreadCount], JSON_UNESCAPED_UNICODE) . "\n\n";
+                if (empty($conversationIds)) {
+                    $this->sendKeepAlive($lastKeepAlive);
                 } else {
-                    echo ": keep-alive\n\n";
+                    $placeholders = implode(',', array_fill(0, count($conversationIds), '?'));
+                    $query = "/* BYPASS_TENANT_SCOPE */
+                              SELECT m.*, u.display_name AS sender_name 
+                              FROM messages m 
+                              LEFT JOIN users u ON u.id = m.sender_id
+                              WHERE m.conversation_id IN ($placeholders) 
+                                AND m.id > ? 
+                              ORDER BY m.id ASC";
+
+                    $stmt = $db->prepare($query);
+                    $params = array_merge($conversationIds, [$lastMessageId]);
+                    $stmt->execute($params);
+                    $newMessages = $stmt->fetchAll();
+
+                    if (!empty($newMessages)) {
+                        foreach ($newMessages as $msg) {
+                            $lastMessageId = (int)$msg['id'];
+                            echo "id: {$lastMessageId}\n";
+                            echo "event: message\n";
+                            echo "data: " . json_encode($msg, JSON_UNESCAPED_UNICODE) . "\n\n";
+                        }
+
+                        // Enviar contador actualizado de no leídos
+                        $unreadStmt = $db->prepare("
+                            /* BYPASS_TENANT_SCOPE */
+                            SELECT COUNT(m.id) as unread_count
+                            FROM conversation_participants cp
+                            JOIN messages m ON m.conversation_id = cp.conversation_id
+                            WHERE cp.user_id = ?
+                              AND (m.sender_id IS NULL OR m.sender_id != cp.user_id)
+                              AND (cp.last_read_message_id IS NULL OR m.id > cp.last_read_message_id)
+                        ");
+                        $unreadStmt->execute([$userId]);
+                        $unreadCount = (int)$unreadStmt->fetchColumn();
+
+                        echo "event: unread_update\n";
+                        echo "data: " . json_encode(['unread_count' => $unreadCount], JSON_UNESCAPED_UNICODE) . "\n\n";
+                        $lastKeepAlive = time();
+                    } else {
+                        $this->sendKeepAlive($lastKeepAlive);
+                    }
                 }
+
                 if (ob_get_level() > 0) {
                     ob_flush();
                 }
                 flush();
+            } catch (\Throwable $e) {
+                error_log('[SSE] Error en stream: ' . $e->getMessage());
+                // Enviar señal de error para que el cliente reconecte
+                echo "event: error\ndata: " . json_encode(['error' => 'Internal error, reconnecting...']) . "\n\n";
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+                break;
             }
 
-            // Liberar recursos
-            $pdo = null;
-            $stmt = null;
-            $unreadStmt = null;
+            // Polling cada 30 segundos (más frecuente para evitar QUIC idle timeout)
+            usleep(30000000); // 30 segundos
+        }
+    }
 
-            usleep(60000000); // 60 segundos
+    /**
+     * Envía keep-alive si han pasado más de 15 segundos desde el último
+     */
+    private function sendKeepAlive(int &$lastKeepAlive): void
+    {
+        $now = time();
+        if ($now - $lastKeepAlive >= 15) {
+            echo ": keep-alive\n\n";
+            $lastKeepAlive = $now;
         }
     }
 }

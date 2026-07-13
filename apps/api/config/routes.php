@@ -571,15 +571,45 @@ return function (Router $router, array $app): void {
         echo json_encode($app['controllers']['product']->list());
     });
     $router->post('/api/crm/products', function () use ($app) {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        echo json_encode($app['controllers']['product']->create($input));
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            echo json_encode($app['controllers']['product']->create($input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'message' => 'Error de validación',
+                'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
+            ]);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode() ?: 500;
+            if ($code < 400 || $code > 599) { $code = 500; }
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        }
     });
     $router->get('/api/crm/products/{id}', function (array $p) use ($app) {
         echo json_encode($app['controllers']['product']->get($p['id']));
     });
     $router->patch('/api/crm/products/{id}', function (array $p) use ($app) {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        echo json_encode($app['controllers']['product']->update($p['id'], $input));
+        try {
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            echo json_encode($app['controllers']['product']->update($p['id'], $input));
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(422);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'message' => 'Error de validación',
+                'errors' => json_decode($e->getMessage(), true) ?: ['general' => $e->getMessage()],
+            ]);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode() ?: 500;
+            if ($code < 400 || $code > 599) { $code = 500; }
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        }
     });
     $router->delete('/api/crm/products/{id}', function (array $p) use ($app) {
         echo json_encode($app['controllers']['product']->delete($p['id']));
@@ -1238,15 +1268,7 @@ return function (Router $router, array $app): void {
 
     // Endpoints: SSE Stream & Unread Notification Count
     $router->get('/api/messages/stream', function () use ($app) {
-        $dbConfig = [
-            'host' => $app['dotenv']['DB_HOST'] ?? 'localhost',
-            'port' => (int)($app['dotenv']['DB_PORT'] ?? 3306),
-            'dbname' => $app['dotenv']['DB_NAME'] ?? 'admkoda_BBDD_APPS',
-            'user' => $app['dotenv']['DB_USER'] ?? 'kodan_apps',
-            'pass' => $app['dotenv']['DB_PASS'] ?? '',
-            'charset' => 'utf8mb4',
-        ];
-        $app['controllers']['messaging']->stream($dbConfig);
+        $app['controllers']['messaging']->stream($app['pdo']);
     });
 
     $router->get('/api/messages/unread-count', function () use ($app) {

@@ -23,7 +23,7 @@
 |---|-------|----------|--------|
 | 7 | **Reemplazar `$this->pdo->exec()` con prepared statements** en CustomFieldController | `apps/api/src/Controllers/CustomFieldController.php:187-196` | ✅ |
 | 8 | **Definir tipos compartidos** y eliminar `any` de hooks de datos, respuestas de API, payloads de formularios | `packages/shared/src/types/index.ts` + todos los `client.ts`, `useDashboardData.ts`, `useAuth.ts` | ✅ |
-| 9 | **Descomponer Negotiations.tsx** (1275 líneas) — extraer hooks de datos, subcomponentes, lógica de negocio | `apps/crm/src/pages/Negotiations.tsx` | ⏳ pendiente |
+| 9 | **Descomponer Negotiations.tsx** (1275 líneas) — extraer hooks de datos, subcomponentes, lógica de negocio | `apps/crm/src/pages/Negotiations.tsx` → `useNegotiationsData.ts`, `NegotiationFormModal.tsx`, `CalendarView.tsx` | ✅ |
 | 10 | **Descomponer Tasks.tsx** (1252 líneas) — extraer vistas (kanban, calendario, tabla) a componentes separados | `apps/crm/src/pages/Tasks.tsx` | ⏳ pendiente |
 | 11 | **Eliminar catch blocks vacíos** — reemplazar con `toast.error()` + logging | `ThemeContext.tsx` (CRM+SuperAdmin):43, `useDashboardData.ts`:136, `Negotiations.tsx`:212,423, `Dashboard.tsx` (CRM):63 | ✅ |
 | 12 | **Deshabilitar `?debug_api` en producción** y eliminar `diagnose.php` del deploy | `apps/api/src/bootstrap.php:90-148`, `apps/api/public/diagnose.php` | ✅ |
@@ -60,11 +60,11 @@
 
 ```
 P1 - Bloqueantes (seguridad): 5/5 completadas + 1 skip 🚫
-P2 - Alto riesgo:             9/11 completadas (2 grandes pendientes)
+P2 - Alto riesgo:             10/11 completadas (1 gran pendiente: P2.10 Tasks)
 P3 - Mantenibilidad:           7/7 completadas ✅
 P4 - Buenas prácticas:         3/4 completadas
 ─────────────────────────────────
-Total:                       24/28 completadas (+1 bonus)
+Total:                       25/28 completadas (+1 bonus)
 ```
 
-> ✅ **P1 y P2 chico completados**. Quedan pendientes P2.9 (Negotiations), P2.10 (Tasks) — refactors grandes.
+> ✅ **P1 y P2 chico completados**. Queda pendiente P2.10 (Tasks) — refactor grande.

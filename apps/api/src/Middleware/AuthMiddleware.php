@@ -96,6 +96,8 @@ final class AuthMiddleware
     /**
      * Renueva la cookie JWT con un nuevo tiempo de expiración
      * (sesión deslizante: mientras el usuario haga requests, la sesión se mantiene activa)
+     *
+     * @param string[] $roles
      */
     private function refreshJwtCookie(int $userId, int $tenantId, array $roles, string $appId, bool $canApproveHours, bool $isSuperAdmin = false): void
     {

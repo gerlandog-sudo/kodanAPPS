@@ -7,9 +7,13 @@ RUN apk add --no-cache \
     libzip-dev \
     zip \
     unzip \
-    git
+    git \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev
 
-RUN docker-php-ext-install pdo_mysql zip
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql zip gd
 RUN pecl install redis && docker-php-ext-enable redis
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -20,7 +24,7 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 COPY apps/api/ .
 
 FROM php:8.3-fpm-alpine
-RUN apk add --no-cache libzip zip
+RUN apk add --no-cache libzip zip libpng libjpeg-turbo freetype
 
 COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d

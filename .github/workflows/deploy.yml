@@ -1,166 +1,105 @@
-name: Deploy to Production
+name: Production Deployment (kodanAPPS)
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
 
-env:
-  PHP_VERSION: '8.3'
-  NODE_VERSION: '24'
-  SERVER_HOST: ${{ secrets.SERVER_HOST }}
-  SERVER_USER: ${{ secrets.SERVER_USER }}
-  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  DEPLOY_PATH: /home/admkoda/kodanAPPS
-  PUBLIC_HTML_PATH: /home/admkoda/public_html
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  build-and-test:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: pdo, pdo_mysql, mbstring, xml, curl, zip, bcmath, gd, intl
-          tools: composer:v2
-          coverage: none
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v5
+      # 1. Build & Push API Image
+      - name: Build and push API Image
+        uses: docker/build-push-action@v5
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          context: .
+          file: docker/php/Dockerfile.prod
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/kodanapps-api:latest
+            ghcr.io/${{ github.repository_owner }}/kodanapps-api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Install PHP dependencies (api)
-        run: |
-          cd apps/api
-          composer install --optimize-autoloader --no-interaction --no-dev --ignore-platform-req=php
-
-      - name: Run PHPStan Level 6
-        run: |
-          cd apps/api
-          composer install --no-interaction --ignore-platform-req=php
-          php vendor/bin/phpstan analyse
-          composer install --optimize-autoloader --no-interaction --no-dev --ignore-platform-req=php
-
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Build Frontends (crm + tracker + superadmin)
-        run: |
-          npm run build:crm
-          npm run build:tracker
-          npm run build:superadmin
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v6
+      # 2. Build & Push Fronts Image
+      - name: Build and push Fronts Image
+        uses: docker/build-push-action@v5
         with:
-          name: release-${{ github.sha }}
-          path: |
-            package.json
-            apps/api/
-            apps/crm/dist/
-            apps/tracker/dist/
-            apps/superadmin/dist/
-          retention-days: 7
+          context: .
+          file: docker/nginx/Dockerfile.fronts
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/kodanapps-fronts:latest
+            ghcr.io/${{ github.repository_owner }}/kodanapps-fronts:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 3. Build & Push Nginx Proxy Image
+      - name: Build and push Proxy Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/nginx/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/kodanapps-nginx:latest
+            ghcr.io/${{ github.repository_owner }}/kodanapps-nginx:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
-    needs: build-and-test
+    needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v7
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Copiar la carpeta docker completa al VPS (/opt/kodanapps/docker)
+      - name: Set up SSH connection
+        uses: appleboy/scp-action@master
         with:
-          name: release-${{ github.sha }}
-          path: release
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker/"
+          target: "/opt/kodanapps"
 
-      - name: Debug SSH Key
-        run: |
-          echo "Longitud en caracteres:"
-          echo -n "${{ secrets.SSH_PRIVATE_KEY }}" | wc -c
-          echo "Numero de lineas:"
-          echo -n "${{ secrets.SSH_PRIVATE_KEY }}" | wc -l
-          echo "Cabecera:"
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | head -n 1
-          echo "Pie:"
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tail -n 1
-
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.10.0
+      - name: Execute deployment via SSH
+        uses: appleboy/ssh-action@master
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Disable SSH Host Key Verification
-        run: |
-          mkdir -p ~/.ssh
-          echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile /dev/null\n" > ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
-      - name: Deploy Direct to Production
-        run: |
-          # 1. Crear los directorios de destino físicos si no existen
-          ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
-            mkdir -p ${{ env.DEPLOY_PATH }}/api
-            mkdir -p ${{ env.DEPLOY_PATH }}/crm
-            mkdir -p ${{ env.DEPLOY_PATH }}/tracker
-            mkdir -p ${{ env.DEPLOY_PATH }}/superadmin
-          "
-          
-          # 2. Transferir backend de API (esta vez se incluye vendor, pero se excluyen .env y logs locales)
-          rsync -az --delete \
-            --exclude='.env' \
-            --exclude='storage/logs/*' \
-            release/apps/api/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/api/
-          
-          # 3. Transferir compilado del CRM
-          rsync -az --delete \
-            release/apps/crm/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/crm/
-          
-          # 4. Transferir compilado del Tracker
-          rsync -az --delete \
-            release/apps/tracker/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/tracker/
-          
-          # 5. Transferir compilado del Super Admin
-          rsync -az --delete \
-            release/apps/superadmin/dist/ ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/superadmin/
-          
-          # 6. Ejecutar migraciones de BD y ajustar permisos (755/644) para evitar bloqueos en cPanel
-          ssh ${{ env.SERVER_USER }}@${{ env.SERVER_HOST }} "
-            set -e
-            cd ${{ env.DEPLOY_PATH }}/api
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/kodanapps
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Copiar index.php y .htaccess a la raíz de la API para compatibilidad con open_basedir
-            [ -f public/index.php ] && cp public/index.php index.php || true
+            # Descargar imágenes actualizadas usando compose apuntando a la subcarpeta docker/
+            docker compose -f docker/docker-compose.prod.yml pull
             
-            # Asegurar que .htaccess exista en public/ (necesario para rewrites → rutas /api/*)
-            if [ ! -f public/.htaccess ]; then
-              echo 'RewriteEngine On' > public/.htaccess
-              echo 'RewriteCond %{REQUEST_FILENAME} !-d' >> public/.htaccess
-              echo 'RewriteCond %{REQUEST_FILENAME} !-f' >> public/.htaccess
-              echo 'RewriteRule ^ index.php [L]' >> public/.htaccess
-            fi
-            [ -f public/.htaccess ] && cp public/.htaccess .htaccess || true
+            # 1. Correr migraciones en contenedor temporal aislado
+            docker compose -f docker/docker-compose.prod.yml run --rm api php migrations/run.php
             
-            # Crear carpeta de logs si no existe
-            mkdir -p storage/logs
-            chmod 775 storage/logs
+            # 2. Levantar el stack completo actualizando contenedores
+            docker compose -f docker/docker-compose.prod.yml up -d --remove-orphans
             
-            # Correr migraciones
-            if [ -f migrations/run.php ]; then
-              php migrations/run.php
-            fi
-            
-            # Aplicar permisos correctos para políticas estrictivas de cPanel (suexec/ruid2)
-            find ${{ env.DEPLOY_PATH }}/api -type d -exec chmod 755 {} +
-            find ${{ env.DEPLOY_PATH }}/api -type f -exec chmod 644 {} +
-            find ${{ env.DEPLOY_PATH }}/crm -type d -exec chmod 755 {} +
-            find ${{ env.DEPLOY_PATH }}/crm -type f -exec chmod 644 {} +
-            find ${{ env.DEPLOY_PATH }}/tracker -type d -exec chmod 755 {} +
-            find ${{ env.DEPLOY_PATH }}/tracker -type f -exec chmod 644 {} +
-            find ${{ env.DEPLOY_PATH }}/superadmin -type d -exec chmod 755 {} +
-            find ${{ env.DEPLOY_PATH }}/superadmin -type f -exec chmod 644 {} +
-          "
+            # Limpieza de imágenes inactivas
+            docker image prune -f

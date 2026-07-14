@@ -63,3 +63,10 @@ test-results/
 *.njsproj
 *.sln
 *.sw?
+
+# Security, keys, and SQL dumps
+*.pem
+*.key
+scripts/*.sql
+docker/nginx/certs/*.pem
+docker/nginx/certs/*.key

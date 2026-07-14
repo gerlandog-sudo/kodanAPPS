@@ -76,6 +76,7 @@ services:
     volumes:
       - ./php/docker-env.conf:/usr/local/etc/php-fpm.d/docker-env.conf:ro
       - ./.env:/var/www/html/.env:ro
+      - /opt/kodanapps/backups:/opt/kodanapps/backups:ro
 
   fronts:
     image: ghcr.io/gerlandog-sudo/kodanapps-fronts:latest
@@ -96,6 +97,20 @@ services:
     depends_on:
       - api
       - fronts
+    networks:
+      - kodan_net
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: kodanapps_dozzle
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DOZZLE_LEVEL: info
+      DOZZLE_TAILSIZE: 300
+      DOZZLE_FILTER: "status=running"
+      DOZZLE_NO_ANALYTICS: "true"
     networks:
       - kodan_net
 

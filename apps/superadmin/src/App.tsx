@@ -4,6 +4,7 @@ import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { TenantManagement } from './components/TenantManagement';
 import { PlanManagement } from './components/PlanManagement';
 import { RoleManagement } from './components/RoleManagement';
+import { BackupManagement } from './components/BackupManagement';
 import { ChangePassword } from './components/ChangePassword';
 import { AppMetricsManager } from '@kodan-apps/ui-core';
 import { superAdminApi } from './api/client';
@@ -17,6 +18,7 @@ import {
   User,
   Settings,
   Gauge,
+  HardDrive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import './index.css';
@@ -27,7 +29,7 @@ function Logo3DPlaceholder({ size }: { size?: number }) {
   return <div style={{ width: size ?? 48, height: size ?? 48 }} />;
 }
 
-type Route = 'dashboard' | 'tenants' | 'plans' | 'roles' | 'audit' | 'app-metrics';
+type Route = 'dashboard' | 'tenants' | 'plans' | 'roles' | 'audit' | 'app-metrics' | 'backups';
 type View = 'login' | 'set-password' | 'app';
 
 
@@ -38,6 +40,7 @@ const navItems: NavItem[] = [
   { key: 'app-metrics', label: 'Métricas', icon: <Gauge size={18} /> },
   { key: 'roles', label: 'Roles', icon: <Shield size={18} /> },
   { key: 'audit', label: 'Auditoria', icon: <FileSearch size={18} /> },
+  { key: 'backups', label: 'Backups', icon: <HardDrive size={18} /> },
 ];
 
 function AppMetricsManagerPage() {
@@ -214,6 +217,7 @@ function AppContent() {
             {route === 'plans' && <PlanManagement />}
             {route === 'app-metrics' && <AppMetricsManagerPage />}
             {route === 'roles' && <RoleManagement />}
+            {route === 'backups' && <BackupManagement />}
             {route === 'audit' && (
               <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
                 <div className="text-center">

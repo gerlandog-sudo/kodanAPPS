@@ -867,6 +867,94 @@ final class SuperAdminController
     }
 
     /**
+     * GET /api/super-admin/backups
+     * Lista los backups disponibles en el servidor
+     * 
+     * @return array<int, array{filename: string, size: int, size_human: string, date: string, encrypted: bool}>
+     */
+    public function getBackups(): array
+    {
+        $backupDir = '/opt/kodanapps/backups';
+        if (!is_dir($backupDir)) {
+            return [];
+        }
+
+        $files = glob($backupDir . '/db_backup_*');
+        if ($files === false || empty($files)) {
+            return [];
+        }
+
+        // Ordenar por fecha descendente (más reciente primero)
+        rsort($files);
+        $backups = [];
+
+        foreach (array_slice($files, 0, 50) as $file) {
+            if (!is_file($file)) continue;
+            $stat = stat($file);
+            $backups[] = [
+                'filename' => basename($file),
+                'size' => $stat['size'],
+                'size_human' => $this->formatBytes($stat['size']),
+                'date' => date('Y-m-d H:i:s', $stat['mtime']),
+                'encrypted' => str_ends_with($file, '.enc'),
+            ];
+        }
+
+        return $backups;
+    }
+
+    /**
+     * POST /api/super-admin/backups
+     * Ejecuta un backup manual
+     * 
+     * @return array{success: bool, message: string}
+     */
+    public function runBackup(): array
+    {
+        $backupScript = '/opt/kodanapps/scripts/backup-db.sh';
+        
+        if (!file_exists($backupScript)) {
+            // Intentar desde la ruta alternativa dentro del contenedor
+            $backupScript = '/var/www/html/scripts/backup-db.sh';
+        }
+
+        if (!file_exists($backupScript)) {
+            throw new \RuntimeException('Script de backup no encontrado en el servidor', 500);
+        }
+
+        // Ejecutar el script de backup (background, timeout 120s)
+        $output = [];
+        $returnCode = 0;
+        exec('bash ' . escapeshellarg($backupScript) . ' 2>&1', $output, $returnCode);
+
+        if ($returnCode !== 0) {
+            throw new \RuntimeException('Error ejecutando backup: ' . implode("\n", $output), 500);
+        }
+
+        $this->auditLog('BACKUP_MANUAL', [
+            'result' => implode("\n", $output),
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Backup ejecutado correctamente',
+            'output' => $output,
+        ];
+    }
+
+    /**
+     * Formatea bytes a formato legible
+     */
+    private function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        return round($bytes / pow(1024, $pow), $precision) . ' ' . $units[$pow];
+    }
+
+    /**
      * Escribe en audit_logs (tenant_id=0 para Super Admin)
      * 
      * @param array<string, mixed> $details

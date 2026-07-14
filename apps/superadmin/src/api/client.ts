@@ -15,6 +15,14 @@ import type {
   ApiCreateResponse,
 } from '@kodan-apps/shared';
 
+export interface BackupEntry {
+  filename: string;
+  size: number;
+  size_human: string;
+  date: string;
+  encrypted: boolean;
+}
+
 export const superAdminApi = {
   getStats: () => api.get<SuperAdminStats>('/api/super-admin/stats'),
 
@@ -63,6 +71,10 @@ export const superAdminApi = {
     api.patch<ApiSuccessResponse>(`/api/super-admin/app-metrics/${app}/${metric}`, data),
   deleteAppMetric: (app: string, metric: string) =>
     api.delete<ApiSuccessResponse>(`/api/super-admin/app-metrics/${app}/${metric}`),
+
+  // Backups
+  listBackups: () => api.get<BackupEntry[]>('/api/super-admin/backups'),
+  runBackup: () => api.post<{ success: boolean; message: string; output?: string[] }>('/api/super-admin/backups', {}),
 
   // Tenant Usage & Overrides
   getTenantUsage: (tenantId: number) => api.get<TenantUsage>(`/api/super-admin/tenants/${tenantId}/usage`),

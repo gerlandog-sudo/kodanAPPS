@@ -70,6 +70,7 @@ services:
       - kodan_net
     volumes:
       - ./php/docker-env.conf:/usr/local/etc/php-fpm.d/docker-env.conf:ro
+      - ./.env:/var/www/html/.env:ro
 
   fronts:
     image: ghcr.io/gerlandog-sudo/kodanapps-fronts:latest

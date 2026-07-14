@@ -78,8 +78,6 @@ services:
       - ./.env:/var/www/html/.env:ro
       - /opt/kodanapps/backups:/opt/kodanapps/backups:rw
       - /opt/kodanapps/scripts/:/var/www/html/scripts/:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/kodanapps/docker/docker-cli:/usr/local/bin/docker:ro
 
   fronts:
     image: ghcr.io/gerlandog-sudo/kodanapps-fronts:latest

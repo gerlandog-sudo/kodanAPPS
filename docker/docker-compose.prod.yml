@@ -76,7 +76,10 @@ services:
     volumes:
       - ./php/docker-env.conf:/usr/local/etc/php-fpm.d/docker-env.conf:ro
       - ./.env:/var/www/html/.env:ro
-      - /opt/kodanapps/backups:/opt/kodanapps/backups:ro
+      - /opt/kodanapps/backups:/opt/kodanapps/backups:rw
+      - /opt/kodanapps/scripts/:/var/www/html/scripts/:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/kodanapps/docker/docker-cli:/usr/local/bin/docker:ro
 
   fronts:
     image: ghcr.io/gerlandog-sudo/kodanapps-fronts:latest

@@ -1,22 +1,22 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # backup-db.sh - Script de Backup Automático de Base de Datos
 # Debe programarse en un Cron Job (ej: 3 AM diariamente)
 # Uso: ./backup-db.sh
 
-set -euo pipefail
+set -eu
 
 # 1. Cargar variables de entorno del contenedor/sistema
 # Asume que el archivo .env está en la carpeta de ejecución o configuración
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 
 if [ -f "$PARENT_DIR/docker/.env" ]; then
-    source "$PARENT_DIR/docker/.env"
+    . "$PARENT_DIR/docker/.env"
 elif [ -f "$PARENT_DIR/.env.production" ]; then
-    source "$PARENT_DIR/.env.production"
+    . "$PARENT_DIR/.env.production"
 elif [ -f "$PARENT_DIR/.env" ]; then
-    source "$PARENT_DIR/.env"
+    . "$PARENT_DIR/.env"
 else
     echo "ERROR: No se encontró archivo de configuración (.env)" >&2
     exit 1
@@ -43,8 +43,12 @@ ENC_DUMP="${LOCAL_BACKUP_DIR}/db_backup_${DB_NAME}_${TIMESTAMP}.sql.gz.enc"
 
 echo "--> Iniciando backup de la base de datos ${DB_NAME}..."
 
-# 2. Ejecutar mysqldump desde el contenedor Docker
-if ! docker exec kodanapps_mariadb mysqldump -u root -p"${DB_ROOT_PASSWORD}" "${DB_NAME}" > "$TEMP_DUMP"; then
+# 2. Ejecutar mysqldump directamente contra MariaDB (accesible via red interna Docker)
+# Usa DB_HOST (mariadb) y DB_PORT (3306) definidos en .env, o defaults si no están
+DB_HOST="${DB_HOST:-mariadb}"
+DB_PORT="${DB_PORT:-3306}"
+
+if ! mysqldump -h "$DB_HOST" -P "$DB_PORT" -u root -p"${DB_ROOT_PASSWORD}" --ssl=0 "${DB_NAME}" > "$TEMP_DUMP"; then
     echo "ERROR: Falló la ejecución de mysqldump." >&2
     rm -f "$TEMP_DUMP"
     exit 1

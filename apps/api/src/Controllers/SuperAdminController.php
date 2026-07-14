@@ -925,7 +925,7 @@ final class SuperAdminController
         // Ejecutar el script de backup (background, timeout 120s)
         $output = [];
         $returnCode = 0;
-        exec('bash ' . escapeshellarg($backupScript) . ' 2>&1', $output, $returnCode);
+        exec('/bin/sh ' . escapeshellarg($backupScript) . ' 2>&1', $output, $returnCode);
 
         if ($returnCode !== 0) {
             throw new \RuntimeException('Error ejecutando backup: ' . implode("\n", $output), 500);

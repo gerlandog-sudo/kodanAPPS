@@ -417,6 +417,22 @@ return function (Router $router, array $app): void {
         }
     });
 
+    $router->delete('/api/super-admin/backups/{filename}', function (array $p) use ($app) {
+        try {
+            header('Content-Type: application/json');
+            echo json_encode($app['controllers']['superAdmin']->deleteBackup($p['filename'] ?? ''));
+        } catch (\RuntimeException $e) {
+            http_response_code($e->getCode() ?: 500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Backup delete error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    });
+
     $router->get('/api/super-admin/roles', function () use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['superAdmin']->listRoles());

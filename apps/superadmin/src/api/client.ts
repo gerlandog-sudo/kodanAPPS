@@ -75,6 +75,8 @@ export const superAdminApi = {
   // Backups
   listBackups: () => api.get<BackupEntry[]>('/api/super-admin/backups'),
   runBackup: () => api.post<{ success: boolean; message: string; output?: string[] }>('/api/super-admin/backups', {}),
+  deleteBackup: (filename: string) =>
+    api.delete<{ success: boolean; message: string }>(`/api/super-admin/backups/${encodeURIComponent(filename)}`),
 
   // Tenant Usage & Overrides
   getTenantUsage: (tenantId: number) => api.get<TenantUsage>(`/api/super-admin/tenants/${tenantId}/usage`),

@@ -904,6 +904,49 @@ final class SuperAdminController
     }
 
     /**
+     * DELETE /api/super-admin/backups
+     * Elimina un archivo de backup
+     * 
+     * @param string $filename Nombre del archivo a eliminar (ej: db_backup_xxx.sql.gz.enc)
+     * @return array{success: bool, message: string}
+     */
+    public function deleteBackup(string $filename): array
+    {
+        $backupDir = '/opt/kodanapps/backups';
+        
+        // Validar que el filename solo contenga caracteres seguros
+        if (!preg_match('/^db_backup_[\w\-\.]+\.(sql\.gz\.enc|sql\.gz)$/', $filename)) {
+            throw new \RuntimeException('Nombre de archivo inválido', 400);
+        }
+
+        $filePath = $backupDir . '/' . $filename;
+        
+        // Evitar path traversal
+        $realPath = realpath($filePath);
+        if ($realPath === false || !str_starts_with($realPath, realpath($backupDir))) {
+            throw new \RuntimeException('Archivo no encontrado', 404);
+        }
+
+        if (!file_exists($realPath)) {
+            throw new \RuntimeException('Archivo no encontrado', 404);
+        }
+
+        if (!unlink($realPath)) {
+            throw new \RuntimeException('Error al eliminar el archivo de backup', 500);
+        }
+
+        $this->auditLog('BACKUP_DELETE', [
+            'filename' => $filename,
+            'size' => filesize($realPath) ?: 0,
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Backup eliminado correctamente',
+        ];
+    }
+
+    /**
      * POST /api/super-admin/backups
      * Ejecuta un backup manual
      * 

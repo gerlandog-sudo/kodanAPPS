@@ -186,11 +186,11 @@ $envPath = file_exists(__DIR__ . '/../.env') ? __DIR__ . '/../.env' : __DIR__ . 
 $dotenv = parse_ini_file($envPath);
 $dotenv = is_array($dotenv) ? $dotenv : [];
 
-$dbHost = isset($dotenv['DB_HOST']) && is_string($dotenv['DB_HOST']) ? $dotenv['DB_HOST'] : 'localhost';
-$dbPortRaw = isset($dotenv['DB_PORT']) && is_numeric($dotenv['DB_PORT']) ? (int)$dotenv['DB_PORT'] : 3306;
-$dbName = isset($dotenv['DB_NAME']) && is_string($dotenv['DB_NAME']) ? $dotenv['DB_NAME'] : 'admkoda_BBDD_APPS';
-$dbUser = isset($dotenv['DB_USER']) && is_string($dotenv['DB_USER']) ? $dotenv['DB_USER'] : 'kodan_apps';
-$dbPass = isset($dotenv['DB_PASS']) && is_string($dotenv['DB_PASS']) ? $dotenv['DB_PASS'] : '';
+$dbHost = isset($dotenv['DB_HOST']) && is_string($dotenv['DB_HOST']) ? $dotenv['DB_HOST'] : (getenv('DB_HOST') ?: 'localhost');
+$dbPortRaw = isset($dotenv['DB_PORT']) && is_numeric($dotenv['DB_PORT']) ? (int)$dotenv['DB_PORT'] : ((is_string($portEnv = getenv('DB_PORT')) && is_numeric($portEnv)) ? (int)$portEnv : 3306);
+$dbName = isset($dotenv['DB_NAME']) && is_string($dotenv['DB_NAME']) ? $dotenv['DB_NAME'] : (getenv('DB_NAME') ?: 'admkoda_BBDD_APPS');
+$dbUser = isset($dotenv['DB_USER']) && is_string($dotenv['DB_USER']) ? $dotenv['DB_USER'] : (getenv('DB_USER') ?: 'kodan_apps');
+$dbPass = isset($dotenv['DB_PASS']) && is_string($dotenv['DB_PASS']) ? $dotenv['DB_PASS'] : (getenv('DB_PASS') ?: '');
 $dsn = "mysql:host={$dbHost};port={$dbPortRaw};dbname={$dbName};charset=utf8mb4";
 
 $pdo = new TenantAwarePDO(

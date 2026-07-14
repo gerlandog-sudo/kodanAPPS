@@ -68,6 +68,8 @@ services:
         condition: service_healthy
     networks:
       - kodan_net
+    volumes:
+      - ./php/docker-env.conf:/usr/local/etc/php-fpm.d/docker-env.conf:ro
 
   fronts:
     image: ghcr.io/gerlandog-sudo/kodanapps-fronts:latest

@@ -59,14 +59,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Copiar la carpeta docker completa al VPS (/opt/kodanapps/docker)
+      # Copiar las carpetas docker y scripts al VPS
       - name: Set up SSH connection
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker/"
+          source: "docker/,scripts/"
           target: "/opt/kodanapps"
 
       - name: Execute deployment via SSH

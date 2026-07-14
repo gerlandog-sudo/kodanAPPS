@@ -85,21 +85,6 @@ services:
     networks:
       - kodan_net
 
-  nginx:
-    image: ghcr.io/gerlandog-sudo/kodanapps-nginx:latest
-    container_name: kodan_nginx_proxy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/certs:/etc/nginx/certs:ro
-    depends_on:
-      - api
-      - fronts
-    networks:
-      - kodan_net
-
   dozzle:
     image: amir20/dozzle:latest
     container_name: kodanapps_dozzle

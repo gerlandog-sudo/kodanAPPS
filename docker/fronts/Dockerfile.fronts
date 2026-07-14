@@ -28,7 +28,7 @@ RUN npm run build:all
 FROM nginx:alpine
 
 # Copiar configuración interna para los 3 hosts virtuales
-COPY docker/nginx/fronts.nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/fronts/fronts.nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copiar los compilados estáticos del builder
 COPY --from=builder /app/apps/crm/dist /usr/share/nginx/html/crm

@@ -92,10 +92,10 @@ export function HeatmapPage() {
     : [];
 
   const colorClass = (s: number) => {
-    if (s === 0) return 'bg-gray-50 text-gray-400 border-gray-100';
-    if (s <= 80) return 'bg-green-100 text-green-800 border-green-200';
-    if (s <= 100) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    return 'bg-red-100 text-red-800 border-red-200 font-bold';
+    if (s === 0) return 'bg-surface text-text-muted/40 border-border-soft';
+    if (s <= 80) return 'bg-[var(--sys-success)]/10 text-[var(--sys-success)] border-[var(--sys-success)]/20';
+    if (s <= 100) return 'bg-[var(--sys-tertiary)]/10 text-[var(--sys-tertiary)] border-[var(--sys-tertiary)]/20';
+    return 'bg-[var(--sys-error)]/10 text-[var(--sys-error)] border-[var(--sys-error)]/20 font-bold';
   };
 
   const projectOptions = [
@@ -136,19 +136,19 @@ export function HeatmapPage() {
           <div />
         )}
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex bg-gray-100 p-1 rounded-lg">
-            <button onClick={() => setViewMode('weekly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'weekly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          <div className="flex bg-surface p-1 rounded-lg border border-border-soft">
+            <button onClick={() => setViewMode('weekly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'weekly' ? 'bg-surface-raised text-text shadow-sm' : 'text-text-muted hover:text-text'}`}>
               <List size={16} />{' '}Semanal
             </button>
-            <button onClick={() => setViewMode('monthly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'monthly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            <button onClick={() => setViewMode('monthly')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${viewMode === 'monthly' ? 'bg-surface-raised text-text shadow-sm' : 'text-text-muted hover:text-text'}`}>
               <LayoutGrid size={16} />{' '}Mensual
             </button>
           </div>
-          <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
-            <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, -7) : new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
-              <ChevronLeft size={20} className="text-gray-600" />
+          <div className="flex items-center gap-4 bg-surface-raised px-4 py-2 rounded-lg border border-border-soft shadow-sm">
+            <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, -7) : new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1))} className="p-1 hover:bg-surface-hover rounded-md text-text-muted">
+              <ChevronLeft size={20} className="text-text" />
             </button>
-            <div className="flex items-center gap-2 font-medium text-gray-700 min-w-[200px] justify-center">
+            <div className="flex items-center gap-2 font-medium text-text min-w-[200px] justify-center">
               <Calendar size={16} className="text-primary" />
               {viewMode === 'weekly' ? (
                 <>{fmtShort(startOfWeek(baseDate))} - {fmtShort(addDays(startOfWeek(baseDate), 6))}</>
@@ -156,63 +156,63 @@ export function HeatmapPage() {
                 <span className="capitalize">{fmtMonth(baseDate)}</span>
               )}
             </div>
-            <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, 7) : new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1))} className="p-1 hover:bg-gray-100 rounded-md">
-              <ChevronRight size={20} className="text-gray-600" />
+            <button onClick={() => setBaseDate(viewMode === 'weekly' ? addDays(baseDate, 7) : new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1))} className="p-1 hover:bg-surface-hover rounded-md text-text-muted">
+              <ChevronRight size={20} className="text-text" />
             </button>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-green-50 flex items-center justify-center text-green-600"><TrendingUp size={16} /></div>
-          <div><p className="text-xs font-medium text-gray-500">Disponible</p><p className="text-lg font-bold text-gray-900">0% - 80%</p></div>
+        <div className="bg-surface-raised p-4 rounded-lg border border-border-soft shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-[var(--sys-success)]/10 flex items-center justify-center text-[var(--sys-success)]"><TrendingUp size={16} /></div>
+          <div><p className="text-xs font-medium text-text-muted">Disponible</p><p className="text-lg font-bold text-text">0% - 80%</p></div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-yellow-50 flex items-center justify-center text-yellow-600"><Users size={16} /></div>
-          <div><p className="text-xs font-medium text-gray-500">Óptimo</p><p className="text-lg font-bold text-gray-900">81% - 100%</p></div>
+        <div className="bg-surface-raised p-4 rounded-lg border border-border-soft shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-[var(--sys-tertiary)]/10 flex items-center justify-center text-[var(--sys-tertiary)]"><Users size={16} /></div>
+          <div><p className="text-xs font-medium text-text-muted">Óptimo</p><p className="text-lg font-bold text-text">81% - 100%</p></div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-red-50 flex items-center justify-center text-red-600"><AlertTriangle size={16} /></div>
-          <div><p className="text-xs font-medium text-gray-500">Sobrecarga</p><p className="text-lg font-bold text-gray-900">&gt; 100%</p></div>
+        <div className="bg-surface-raised p-4 rounded-lg border border-border-soft shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 rounded-md bg-[var(--sys-error)]/10 flex items-center justify-center text-[var(--sys-error)]"><AlertTriangle size={16} /></div>
+          <div><p className="text-xs font-medium text-text-muted">Sobrecarga</p><p className="text-lg font-bold text-text">&gt; 100%</p></div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-surface-raised rounded-lg border border-border-soft shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50/95 backdrop-blur z-10 border-r border-gray-100 min-w-[120px]">Miembro</th>
+              <tr className="bg-surface/50 border-b border-border-soft">
+                <th className="px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider sticky left-0 bg-surface-raised z-10 border-r border-border-soft min-w-[120px]">Miembro</th>
                 {viewMode === 'weekly' ? weekDays.map((d) => (
-                  <th key={d.getTime()} className="px-4 py-4 text-center border-r border-gray-100 last:border-0 min-w-[120px]">
-                    <div className="text-xs font-semibold text-gray-500 uppercase">{fmtDay(d)}</div>
-                    <div className="text-sm font-bold text-gray-900">{fmtShort(d)}</div>
+                  <th key={d.getTime()} className="px-4 py-4 text-center border-r border-border-soft last:border-0 min-w-[120px]">
+                    <div className="text-xs font-semibold text-text-muted uppercase">{fmtDay(d)}</div>
+                    <div className="text-sm font-bold text-text">{fmtShort(d)}</div>
                   </th>
                 )) : weeks.map((w) => (
-                  <th key={w.label} className="px-4 py-4 text-center border-r border-gray-100 last:border-0 min-w-[140px]">
-                    <div className="text-xs font-semibold text-gray-500 uppercase">{w.label}</div>
-                    <div className="text-sm font-bold text-gray-900">{w.label}</div>
+                  <th key={w.label} className="px-4 py-4 text-center border-r border-border-soft last:border-0 min-w-[140px]">
+                    <div className="text-xs font-semibold text-text-muted uppercase">{w.label}</div>
+                    <div className="text-sm font-bold text-text">{w.label}</div>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border-soft">
               {loading ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                <tr><td colSpan={8} className="px-6 py-12 text-center text-text-muted">
                   <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                   Cargando...
                 </td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center text-gray-500">Sin datos</td></tr>
+                <tr><td colSpan={8} className="px-6 py-12 text-center text-text-muted">Sin datos</td></tr>
               ) : data.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-4 sticky left-0 bg-white z-10 border-r border-gray-100">
-                    <div className="font-medium text-gray-900 truncate max-w-[150px]" title={user.name}>{user.name}</div>
-                    <div className="text-xs text-gray-500">{user.weekly_capacity}h/sem</div>
+                <tr key={user.id} className="hover:bg-surface-hover/30 transition-colors">
+                  <td className="px-4 py-4 sticky left-0 bg-surface-raised z-10 border-r border-border-soft">
+                    <div className="font-medium text-text truncate max-w-[150px]" title={user.name}>{user.name}</div>
+                    <div className="text-xs text-text-muted">{user.weekly_capacity}h/sem</div>
                   </td>
                   {viewMode === 'weekly' ? user.days.map((day, i) => (
-                    <td key={i} className="p-2 border-r border-gray-100 last:border-0">
+                    <td key={i} className="p-2 border-r border-border-soft last:border-0">
                       <div className={`h-full w-full rounded-md border p-3 flex flex-col items-center justify-center transition-all ${colorClass(day.saturation)}`}>
                         <span className="text-lg font-bold">{day.hours.toFixed(1)}h</span>
                         <span className="text-[10px] uppercase tracking-wider opacity-80 mt-1">{day.saturation.toFixed(0)}%</span>
@@ -223,7 +223,7 @@ export function HeatmapPage() {
                     const weekHours = weekDays.reduce((s, d) => s + d.hours, 0);
                     const weekSat = user.weekly_capacity > 0 ? (weekHours / (user.weekly_capacity * weekDays.length / 7)) * 100 : 0;
                     return (
-                      <td key={wi} className="p-2 border-r border-gray-100 last:border-0">
+                      <td key={wi} className="p-2 border-r border-border-soft last:border-0">
                         <div className={`h-full w-full rounded-md border p-3 flex flex-col items-center justify-center transition-all ${colorClass(weekSat)}`}>
                           <span className="text-lg font-bold">{weekHours.toFixed(1)}h</span>
                           <span className="text-[10px] uppercase tracking-wider opacity-80 mt-1">{weekSat.toFixed(0)}%</span>

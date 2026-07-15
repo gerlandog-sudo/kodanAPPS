@@ -83,14 +83,14 @@ export function TimeEntryHistoryModal({ open, onClose, entryId }: TimeEntryHisto
         ) : (
           <div className="relative">
             {/* Línea conectora de la línea de tiempo */}
-            <div className="absolute left-[15px] top-3.5 bottom-3.5 w-[2px] bg-slate-100 dark:bg-slate-800" />
+            <div className="absolute left-[15px] top-3.5 bottom-3.5 w-[2px] bg-border-soft" />
 
             <div className="space-y-6">
               {history.map((log) => {
                 return (
                   <div key={log.id} className="relative pl-10">
                     {/* Círculo de la línea de tiempo */}
-                    <div className="absolute left-[9px] top-1.5 size-3.5 rounded-full border-2 bg-white dark:bg-slate-900" style={{ borderColor: statusColor(log.status) }} />
+                    <div className="absolute left-[9px] top-1.5 size-3.5 rounded-full border-2 bg-surface-raised" style={{ borderColor: statusColor(log.status) }} />
 
                     <div className="space-y-1">
                       {/* Estado superior y Fecha */}

@@ -10,7 +10,7 @@ export function PredictiveAlertsPage() {
           <span className="text-xs font-bold uppercase tracking-wider text-primary">Motor IA Activo</span>
         </div>
       </div>
-      <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+      <div className="bg-surface-raised p-6 rounded-lg border border-border-soft shadow-sm">
         <PredictiveInsights />
       </div>
     </div>

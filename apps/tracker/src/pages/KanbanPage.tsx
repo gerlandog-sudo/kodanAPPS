@@ -16,23 +16,23 @@ const BASE_COLUMNS: ColumnDef[] = [
 const priorityConfig: Record<string, { label: string; badgeClass: string; cardBorder: string }> = {
   low: {
     label: 'BAJA',
-    badgeClass: 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30',
-    cardBorder: 'border-slate-200 dark:border-slate-800'
+    badgeClass: 'bg-[var(--sys-text-muted)]/10 text-[var(--sys-text-muted)] border border-[var(--sys-border)]',
+    cardBorder: 'border-border-soft'
   },
   medium: {
     label: 'MEDIA',
-    badgeClass: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30',
-    cardBorder: 'border-amber-300 dark:border-amber-800/60'
+    badgeClass: 'bg-[var(--sys-primary)]/10 text-[var(--sys-primary)] border border-[var(--sys-primary)]/20',
+    cardBorder: 'border-border-soft'
   },
   high: {
     label: 'ALTA',
-    badgeClass: 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30',
-    cardBorder: 'border-rose-300 dark:border-rose-800/60'
+    badgeClass: 'bg-[var(--sys-tertiary)]/10 text-[var(--sys-tertiary)] border border-[var(--sys-tertiary)]/20',
+    cardBorder: 'border-[var(--sys-tertiary)]/40'
   },
   critical: {
     label: 'CRÍTICA',
-    badgeClass: 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/30',
-    cardBorder: 'border-red-500 dark:border-red-700'
+    badgeClass: 'bg-[var(--sys-error)]/10 text-[var(--sys-error)] border border-[var(--sys-error)]/20 font-bold',
+    cardBorder: 'border-[var(--sys-error)]/50'
   }
 };
 
@@ -193,11 +193,11 @@ export function KanbanPage() {
   return (
     <div className="space-y-6 h-full flex flex-col">
       {/* Barra de Filtros y Acciones */}
-      <div className="flex items-center justify-between gap-3 bg-slate-50/40 dark:bg-slate-900/10 p-3.5 rounded-lg border border-slate-200/50 dark:border-slate-800/40 w-full">
+      <div className="flex items-center justify-between gap-3 bg-surface p-3.5 rounded-lg border border-border-soft w-full">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-56 shrink-0">
             <Input
-              icon={<Search size={16} className="text-slate-400" />}
+              icon={<Search size={16} className="text-text-muted/60" />}
               placeholder="Buscar tareas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -258,7 +258,7 @@ export function KanbanPage() {
             onDrop={handleDrop}
             className="h-full"
             emptyPlaceholder={
-              <div className="h-24 flex items-center justify-center text-xs border border-dashed rounded-lg border-slate-200 dark:border-slate-800" style={{ color: 'var(--sys-text-muted)' }}>
+              <div className="h-24 flex items-center justify-center text-xs border border-dashed rounded-lg border-border-soft" style={{ color: 'var(--sys-text-muted)' }}>
                 Sin tareas
               </div>
             }
@@ -271,7 +271,7 @@ export function KanbanPage() {
                     {config.label}
                   </span>
                   {task.task_type_name && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm tracking-wider bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60 uppercase">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-sm tracking-wider bg-surface text-text-muted border border-border-soft uppercase">
                       {task.task_type_name}
                     </span>
                   )}

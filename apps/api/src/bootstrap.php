@@ -83,6 +83,12 @@ use kodanAPPS\Services\Recounters\CrmUsageRecounter;
 use kodanAPPS\Services\Recounters\TrackerUsageRecounter;
 use kodanAPPS\Controllers\MessagingController;
 use kodanAPPS\Controllers\WorkflowController;
+use kodanAPPS\Repositories\HubRepository;
+use kodanAPPS\Services\HubTokenService;
+use kodanAPPS\Services\HubHandshakeService;
+use kodanAPPS\Services\HubProxyService;
+use kodanAPPS\Services\HubLogService;
+use kodanAPPS\Controllers\HubController;
 
 // ------------------------------------------------------------
 // Debug endpoint — solo disponible si APP_ENV=development
@@ -159,9 +165,11 @@ $allowedOrigins = [
     'https://crm.kodan.software',
     'https://tracker.kodan.software',
     'https://superadmin.kodan.software',
+    'https://hub.kodan.software',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
+    'http://localhost:5176',
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -262,6 +270,15 @@ $dashboardService = new DashboardService($pdo);
 $aiService = new AiService($pdo);
 
 // ------------------------------------------------------------
+// kodanHUB Services
+// ------------------------------------------------------------
+$hubRepo = new HubRepository();
+$hubTokenService = new HubTokenService();
+$hubLogService = new HubLogService();
+$hubProxyService = new HubProxyService($hubRepo, $hubLogService);
+$hubHandshakeService = new HubHandshakeService($hubRepo, $hubTokenService);
+
+// ------------------------------------------------------------
 // Inyectar limit enforcer en repositorios
 // ------------------------------------------------------------
 $accountRepo->setLimitEnforcer($usageLimitEnforcer);
@@ -359,6 +376,16 @@ $dashboardController = new \kodanAPPS\Controllers\DashboardController($pdo);
 $reportController = new ReportController($timeEntryRepo);
 $trackerInsightController = new TrackerInsightController($pdo, $aiService);
 
+// ------------------------------------------------------------
+// kodanHUB Controller
+// ------------------------------------------------------------
+$hubController = new HubController(
+    $hubRepo,
+    $hubHandshakeService,
+    $hubProxyService,
+    $hubTokenService
+);
+
 require_once __DIR__ . '/Controllers/LeadController.php';
 $leadController = new LeadController($publicSecret, $accountRepo, $contactRepo, $oppRepo, $pipelineRepo);
 
@@ -431,5 +458,6 @@ return [
         'report' => $reportController,
         'trackerMetrics' => $trackerMetricsController,
         'trackerInsight' => $trackerInsightController,
+        'hub' => $hubController,
         ],
 ];

@@ -1431,4 +1431,10 @@ return function (Router $router, array $app): void {
             ]);
         }
     });
+
+    // ============================================================
+    // kodanHUB Routes
+    // ============================================================
+    $hubRoutes = require __DIR__ . '/routes_hub.php';
+    $hubRoutes($router, $app);
 };

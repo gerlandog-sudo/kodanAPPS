@@ -7,7 +7,8 @@
     "apps/crm",
     "apps/api",
     "apps/tracker",
-    "apps/superadmin"
+    "apps/superadmin",
+    "apps/hub"
   ],
   "scripts": {
     "dev:superadmin": "npm run dev --workspace=@kodan-apps/superadmin",

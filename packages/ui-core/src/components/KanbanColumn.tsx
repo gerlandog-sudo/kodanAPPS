@@ -13,13 +13,13 @@ export interface KanbanColumnProps {
 
 const getStageBadgeClass = (stage: string) => {
   const colors: Record<string, string> = {
-    todo: 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100/55 dark:border-blue-900/30',
-    in_progress: 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-100/55 dark:border-purple-900/30',
-    review: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100/55 dark:border-amber-900/30',
-    done: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100/55 dark:border-emerald-900/30',
-    archived: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700',
+    todo: 'bg-[var(--sys-primary)]/10 text-[var(--sys-primary)] border border-[var(--sys-primary)]/20',
+    in_progress: 'bg-[var(--sys-tertiary)]/10 text-[var(--sys-tertiary)] border border-[var(--sys-tertiary)]/20',
+    review: 'bg-[var(--sys-tertiary)]/10 text-[var(--sys-tertiary)] border border-[var(--sys-tertiary)]/20',
+    done: 'bg-[var(--sys-success)]/10 text-[var(--sys-success)] border border-[var(--sys-success)]/20',
+    archived: 'bg-[var(--sys-text-muted)]/10 text-[var(--sys-text-muted)] border border-[var(--sys-border)]',
   };
-  return colors[stage] || 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
+  return colors[stage] || 'bg-[var(--sys-text-muted)]/10 text-[var(--sys-text-muted)] border border-[var(--sys-border)]';
 };
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -37,7 +37,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     <div
       ref={setNodeRef}
       className={`bg-transparent pb-2 flex flex-col min-w-[280px] w-[280px] flex-shrink-0 transition-colors duration-200 ${
-        isOver ? 'bg-slate-50/50 dark:bg-slate-800/20 rounded-xl' : ''
+        isOver ? 'bg-surface-hover/30 rounded-xl' : ''
       }`}
     >
       <div className="sticky top-0 z-10 flex items-center justify-between pb-3 select-none gap-2 pt-3 px-1"
@@ -50,7 +50,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               style={{ background: dotColor }}
             />
           )}
-          <span className="font-bold text-xs tracking-wider uppercase text-slate-800 dark:text-slate-200 truncate">
+          <span className="font-bold text-xs tracking-wider uppercase text-text truncate">
             {label}
           </span>
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getStageBadgeClass(stage)}`}>

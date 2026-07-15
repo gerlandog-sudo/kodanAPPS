@@ -23,6 +23,19 @@ export interface BackupEntry {
   encrypted: boolean;
 }
 
+export interface BackupLogEntry {
+  id: number;
+  action: 'BACKUP_MANUAL' | 'BACKUP_AUTO' | 'BACKUP_DELETE';
+  details: {
+    filename?: string;
+    size?: number;
+    success?: boolean;
+    output?: string;
+    logged_at?: string;
+  };
+  created_at: string;
+}
+
 export const superAdminApi = {
   getStats: () => api.get<SuperAdminStats>('/api/super-admin/stats'),
 
@@ -77,6 +90,7 @@ export const superAdminApi = {
   runBackup: () => api.post<{ success: boolean; message: string; output?: string[] }>('/api/super-admin/backups', {}),
   deleteBackup: (filename: string) =>
     api.delete<{ success: boolean; message: string }>(`/api/super-admin/backups/${encodeURIComponent(filename)}`),
+  getBackupLogs: () => api.get<{ logs: BackupLogEntry[] }>('/api/super-admin/backups/logs'),
 
   // Tenant Usage & Overrides
   getTenantUsage: (tenantId: number) => api.get<TenantUsage>(`/api/super-admin/tenants/${tenantId}/usage`),

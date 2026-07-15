@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { superAdminApi } from '../api/client';
-import type { BackupEntry } from '../api/client';
+import type { BackupEntry, BackupLogEntry } from '../api/client';
 import { Button, Table, ConfirmDialog } from '@kodan-apps/ui-core';
 import { toast } from 'sonner';
 import {
@@ -12,6 +12,10 @@ import {
   Unlock,
   Trash2,
   Loader2,
+  Clock,
+  History,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 
 export function BackupManagement() {
@@ -21,8 +25,13 @@ export function BackupManagement() {
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<BackupEntry | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [logs, setLogs] = useState<BackupLogEntry[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
-  useEffect(() => { loadBackups(); }, []);
+  useEffect(() => {
+    loadBackups();
+    loadBackupLogs();
+  }, []);
 
   const loadBackups = async () => {
     try {
@@ -33,6 +42,16 @@ export function BackupManagement() {
     } catch (err: any) {
       toast.error(err.message || 'Error cargando backups');
     } finally { setLoading(false); }
+  };
+
+  const loadBackupLogs = async () => {
+    try {
+      setLogsLoading(true);
+      const result = await superAdminApi.getBackupLogs();
+      setLogs(result.logs);
+    } catch {
+      // Silencioso — los logs son solo informativos
+    } finally { setLogsLoading(false); }
   };
 
   const handleRunBackup = async () => {
@@ -191,6 +210,121 @@ export function BackupManagement() {
             Último: {formatDate(backups[0].date)}
           </span>
         )}
+      </div>
+
+      {/* Historial de ejecuciones */}
+      <div className="mt-6 border-t pt-4" style={{ borderColor: 'var(--sys-outline-variant)' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <History size={16} style={{ color: 'var(--sys-primary)' }} />
+          <span className="text-sm font-medium" style={{ color: 'var(--sys-text)' }}>
+            Historial de ejecuciones
+          </span>
+          {logsLoading && <Loader2 size={14} className="animate-spin" />}
+        </div>
+
+        <Table<BackupLogEntry>
+          data={logs}
+          columns={[
+            {
+              key: 'created_at',
+              header: 'Fecha',
+              sortable: true,
+              width: '180px',
+              render: log => (
+                <span className="text-xs font-medium">{formatDate(log.created_at)}</span>
+              ),
+            },
+            {
+              key: 'action',
+              header: 'Tipo',
+              width: '110px',
+              render: log => {
+                const isAuto = log.action === 'BACKUP_AUTO';
+                const isManual = log.action === 'BACKUP_MANUAL';
+                const color = isAuto
+                  ? 'var(--sys-success)'
+                  : isManual
+                    ? 'var(--sys-primary)'
+                    : 'var(--sys-error)';
+                const bg = isAuto
+                  ? 'color-mix(in srgb, var(--sys-success) 15%, transparent)'
+                  : isManual
+                    ? 'color-mix(in srgb, var(--sys-primary) 15%, transparent)'
+                    : 'color-mix(in srgb, var(--sys-error) 15%, transparent)';
+                const label = isAuto
+                  ? 'Automático'
+                  : isManual
+                    ? 'Manual'
+                    : 'Eliminado';
+                return (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                    style={{ background: bg, color }}
+                  >
+                    {label}
+                  </span>
+                );
+              },
+            },
+            {
+              key: 'filename',
+              header: 'Archivo',
+              render: log => (
+                <span className="text-xs font-mono truncate block max-w-[400px]" style={{ color: 'var(--sys-text-muted)' }}>
+                  {log.details?.filename || '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'size',
+              header: 'Tamaño',
+              width: '80px',
+              render: log => {
+                const size = log.details?.size;
+                if (size == null || size <= 0) return <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>—</span>;
+                return (
+                  <span className="text-xs font-medium">
+                    {size < 1024 ? `${size} B` : `${(size / 1024).toFixed(1)} KB`}
+                  </span>
+                );
+              },
+            },
+            {
+              key: 'success',
+              header: 'Estado',
+              width: '90px',
+              render: log => {
+                const success = log.details?.success;
+                if (success === true) {
+                  return (
+                    <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--sys-success)' }}>
+                      <CheckCircle2 size={12} />
+                      Éxito
+                    </span>
+                  );
+                }
+                if (success === false) {
+                  return (
+                    <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--sys-error)' }}>
+                      <XCircle size={12} />
+                      Fallo
+                    </span>
+                  );
+                }
+                return <span className="text-xs" style={{ color: 'var(--sys-text-muted)' }}>—</span>;
+              },
+            },
+          ]}
+          keyExtractor={log => log.id}
+          loading={logsLoading}
+          pageSize={5}
+          emptyState={{
+            icon: <Clock size={36} />,
+            title: 'Sin ejecuciones',
+            description: 'Cuando el cron ejecute el backup automático (3 AM) o ejecutes uno manual, aparecerá aquí.',
+          }}
+          maxHeight="320px"
+        />
       </div>
     </div>
   );

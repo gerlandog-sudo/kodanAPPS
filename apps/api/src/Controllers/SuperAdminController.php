@@ -921,15 +921,24 @@ final class SuperAdminController
 
         $filePath = $backupDir . '/' . $filename;
         
-        // Evitar path traversal
+        // Validar que el directorio de backups exista y sea accesible
+        $backupDirReal = realpath($backupDir);
+        if ($backupDirReal === false) {
+            throw new \RuntimeException('Directorio de backups no encontrado', 500);
+        }
+
+        // Evitar path traversal: verificar que el archivo esté dentro del directorio
         $realPath = realpath($filePath);
-        if ($realPath === false || !str_starts_with($realPath, realpath($backupDir))) {
+        if ($realPath === false || !str_starts_with($realPath, $backupDirReal)) {
             throw new \RuntimeException('Archivo no encontrado', 404);
         }
 
-        if (!file_exists($realPath)) {
+        if (!is_file($realPath) || !file_exists($realPath)) {
             throw new \RuntimeException('Archivo no encontrado', 404);
         }
+
+        // Capturar tamaño ANTES de eliminar
+        $fileSize = filesize($realPath) ?: 0;
 
         if (!unlink($realPath)) {
             throw new \RuntimeException('Error al eliminar el archivo de backup', 500);
@@ -937,7 +946,7 @@ final class SuperAdminController
 
         $this->auditLog('BACKUP_DELETE', [
             'filename' => $filename,
-            'size' => filesize($realPath) ?: 0,
+            'size' => $fileSize,
         ]);
 
         return [
@@ -983,6 +992,35 @@ final class SuperAdminController
             'message' => 'Backup ejecutado correctamente',
             'output' => $output,
         ];
+    }
+
+    /**
+     * GET /api/super-admin/backups/logs
+     * Obtiene el historial de ejecuciones de backup (manual + automático)
+     * 
+     * @return array{logs: array<int, array{id: int, action: string, details: mixed, created_at: string}>}
+     */
+    public function getBackupLogs(): array
+    {
+        $rows = $this->tenantRepo->rawSelect(
+            "SELECT id, action, details, created_at /* BYPASS_TENANT_SCOPE */
+             FROM audit_logs
+             WHERE action IN ('BACKUP_MANUAL', 'BACKUP_AUTO', 'BACKUP_DELETE')
+             ORDER BY created_at DESC
+             LIMIT 50"
+        );
+
+        $logs = [];
+        foreach ($rows as $row) {
+            $logs[] = [
+                'id' => (int)$row['id'],
+                'action' => $row['action'],
+                'details' => json_decode($row['details'] ?? '{}', true) ?: [],
+                'created_at' => $row['created_at'],
+            ];
+        }
+
+        return ['logs' => $logs];
     }
 
     /**

@@ -43,12 +43,11 @@ ENC_DUMP="${LOCAL_BACKUP_DIR}/db_backup_${DB_NAME}_${TIMESTAMP}.sql.gz.enc"
 
 echo "--> Iniciando backup de la base de datos ${DB_NAME}..."
 
-# 2. Ejecutar mysqldump directamente contra MariaDB (accesible via red interna Docker)
-# Usa DB_HOST (mariadb) y DB_PORT (3306) definidos en .env, o defaults si no están
-DB_HOST="${DB_HOST:-mariadb}"
-DB_PORT="${DB_PORT:-3306}"
+# 2. Ejecutar mysqldump dentro del contenedor MariaDB (vía Docker)
+# El contenedor expone la base de datos en 127.0.0.1:3306
+MYSQL_CONTAINER="kodanapps_mariadb"
 
-if ! mysqldump -h "$DB_HOST" -P "$DB_PORT" -u root -p"${DB_ROOT_PASSWORD}" --ssl=0 "${DB_NAME}" > "$TEMP_DUMP"; then
+if ! docker exec "$MYSQL_CONTAINER" mysqldump -h 127.0.0.1 -P 3306 -u root -p"${DB_ROOT_PASSWORD}" --ssl=0 "${DB_NAME}" > "$TEMP_DUMP"; then
     echo "ERROR: Falló la ejecución de mysqldump." >&2
     rm -f "$TEMP_DUMP"
     exit 1
@@ -91,5 +90,19 @@ fi
 # 6. Limpieza de backups locales antiguos (Retención: mantener últimos 7 días)
 echo "--> Ejecutando limpieza de backups antiguos locales (más de 7 días)..."
 find "$LOCAL_BACKUP_DIR" -type f -name "db_backup_*" -mtime +7 -delete
+
+# 7. Notificar a la API para registro en audit_logs
+BACKUP_SIZE=$(stat -c%s "$FINAL_BACKUP" 2>/dev/null || echo 0)
+if [ -n "${PUBLIC_SECRET:-}" ] && command -v curl &> /dev/null; then
+    echo "--> Notificando a la API..."
+    curl -s -X POST "https://api.kodan.software/api/backup-cron/log" \
+        -H "Content-Type: application/json" \
+        -H "X-Backup-Key: ${PUBLIC_SECRET}" \
+        -d "{\"filename\":\"$(basename "$FINAL_BACKUP")\",\"size\":${BACKUP_SIZE},\"success\":true}" \
+        > /dev/null 2>&1 && echo "--> Notificación exitosa." \
+        || echo "AVISO: No se pudo notificar a la API (el backup se generó igual)." >&2
+else
+    echo "AVISO: PUBLIC_SECRET no configurado o curl no disponible. Omitiendo notificación API." >&2
+fi
 
 echo "--> Proceso de backup finalizado con éxito."

@@ -103,6 +103,10 @@ class Router
         // Limpiar contexto para nueva request
         $this->context = [];
 
+        // Buffer general: evita que PHP warnings/notices (display_errors) corrompan el JSON
+        // Se descarta en cada path (éxito, 404, o excepción)
+        $obLevel = ob_get_level();
+
         try {
             // 1. Ejecutar middleware por prefijo
             foreach ($this->middleware as $prefix => $mw) {
@@ -110,6 +114,7 @@ class Router
                     $result = $mw($this);
                     // Si el middleware retorna false, detener (error ya respondido)
                     if ($result === false) {
+                        while (ob_get_level() > $obLevel) { ob_end_clean(); }
                         return;
                     }
                 }
@@ -149,17 +154,21 @@ class Router
                         \kodanAPPS\Services\WorkflowEngine::clearDebugLogs();
                     }
 
+                    // Descartar buffer externo (posibles warnings del middleware)
+                    while (ob_get_level() > $obLevel) { ob_end_clean(); }
                     echo $output;
                     return;
                 }
             }
 
             // 3. 404
+            while (ob_get_level() > $obLevel) { ob_end_clean(); }
             http_response_code(404);
             header('Content-Type: application/json');
             echo json_encode(['error' => 'Not found']);
 
         } catch (ApiException $e) {
+            while (ob_get_level() > $obLevel) { ob_end_clean(); }
             http_response_code($e->getCode());
             header('Content-Type: application/json');
             $data = $e->toArray();
@@ -172,6 +181,7 @@ class Router
             }
             echo json_encode($data);
         } catch (\InvalidArgumentException $e) {
+            while (ob_get_level() > $obLevel) { ob_end_clean(); }
             http_response_code(422);
             header('Content-Type: application/json');
             $data = [
@@ -187,6 +197,7 @@ class Router
             }
             echo json_encode($data);
         } catch (\RuntimeException $e) {
+            while (ob_get_level() > $obLevel) { ob_end_clean(); }
             $code = (int)$e->getCode();
             if ($code < 400 || $code > 599) {
                 $code = 500;
@@ -204,6 +215,7 @@ class Router
             }
             echo json_encode($data);
         } catch (\Throwable $e) {
+            while (ob_get_level() > $obLevel) { ob_end_clean(); }
             error_log('[Router] Unhandled Throwable: ' . get_class($e) . ' - ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             error_log('[Router] Stack trace: ' . $e->getTraceAsString());
             http_response_code(500);

@@ -433,6 +433,67 @@ return function (Router $router, array $app): void {
         }
     });
 
+    // ============================================================
+    // Backup History (protegido por JWT + super-admin)
+    // ============================================================
+    $router->get('/api/super-admin/backups/logs', function () use ($app) {
+        header('Content-Type: application/json');
+        echo json_encode($app['controllers']['superAdmin']->getBackupLogs());
+    });
+
+    // ============================================================
+    // Cron Backup Logging (autenticado via API key, no JWT)
+    // Llamado por backup-db.sh desde el cron del VPS
+    // ============================================================
+    $router->post('/api/backup-cron/log', function () use ($app) {
+        try {
+            // Validar API key compartida (PUBLIC_SECRET del .env)
+            $apiKey = $_SERVER['HTTP_X_BACKUP_KEY'] ?? '';
+            $expectedKey = $app['dotenv']['PUBLIC_SECRET'] ?? '';
+            if ($apiKey === '' || !hash_equals($expectedKey, $apiKey)) {
+                throw new \RuntimeException('Unauthorized', 401);
+            }
+
+            // Leer body JSON
+            $rawInput = file_get_contents('php://input');
+            if ($rawInput === false || $rawInput === '') {
+                throw new \RuntimeException('Empty request body', 400);
+            }
+
+            $input = json_decode($rawInput, true);
+            if (!is_array($input)) {
+                throw new \RuntimeException('Invalid request body', 400);
+            }
+
+            // Insertar en audit_logs (usar tenant_id = 1 para sistema)
+            $stmt = $app['pdo']->prepare(
+                "INSERT INTO audit_logs (tenant_id, user_id, action, details, created_at)
+                 VALUES (1, 0, 'BACKUP_AUTO', ?, NOW())"
+            );
+            $stmt->execute([json_encode([
+                'filename' => $input['filename'] ?? 'unknown',
+                'size' => $input['size'] ?? 0,
+                'success' => $input['success'] ?? true,
+                'output' => $input['output'] ?? '',
+                'logged_at' => date('c'),
+            ], JSON_UNESCAPED_UNICODE)]);
+
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true]);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode() ?: 500;
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Backup cron log error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    });
+
     $router->get('/api/super-admin/roles', function () use ($app) {
         header('Content-Type: application/json');
         echo json_encode($app['controllers']['superAdmin']->listRoles());

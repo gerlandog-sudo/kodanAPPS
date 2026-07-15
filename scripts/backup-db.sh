@@ -43,12 +43,19 @@ ENC_DUMP="${LOCAL_BACKUP_DIR}/db_backup_${DB_NAME}_${TIMESTAMP}.sql.gz.enc"
 
 echo "--> Iniciando backup de la base de datos ${DB_NAME}..."
 
-# 2. Ejecutar mysqldump dentro del contenedor MariaDB (vía Docker)
-# El contenedor expone la base de datos en 127.0.0.1:3306
+# 2. Ejecutar mysqldump
+# - Si docker está disponible (ej: cron desde el host), ejecuta dentro del contenedor MariaDB
+# - Si no (ej: manual desde el container PHP), conecta directo a mariadb por DNS docker
 MYSQL_CONTAINER="kodanapps_mariadb"
 
-if ! docker exec "$MYSQL_CONTAINER" mysqldump -h 127.0.0.1 -P 3306 -u root -p"${DB_ROOT_PASSWORD}" --ssl=0 "${DB_NAME}" > "$TEMP_DUMP"; then
-    echo "ERROR: Falló la ejecución de mysqldump." >&2
+if command -v docker >/dev/null 2>&1; then
+    docker exec "$MYSQL_CONTAINER" mysqldump -h 127.0.0.1 -P 3306 -u root -p"${DB_ROOT_PASSWORD}" --ssl=0 "${DB_NAME}" > "$TEMP_DUMP"
+else
+    mysqldump -h mariadb -u root -p"${DB_ROOT_PASSWORD}" --ssl=0 "${DB_NAME}" > "$TEMP_DUMP"
+fi
+
+if [ ! -s "$TEMP_DUMP" ]; then
+    echo "ERROR: Falló la ejecución de mysqldump (archivo vacío)." >&2
     rm -f "$TEMP_DUMP"
     exit 1
 fi

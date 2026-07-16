@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="100%" height="100%">
+  <style>
+    :root {
+      --primary: #006a60;
+      --secondary: #6e7e8c;
+      --orbit-glow: rgba(0, 106, 96, 0.2);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #81ffed;
+        --secondary: #f8fafc;
+        --orbit-glow: rgba(129, 255, 237, 0.25);
+      }
+    }
+    .core {
+      fill: var(--primary);
+    }
+    .orbit {
+      stroke: var(--secondary);
+      stroke-width: 1.8;
+      fill: none;
+      opacity: 0.85;
+    }
+    .satellite {
+      fill: var(--secondary);
+    }
+  </style>
+  
+  <!-- Anillo orbital inclinado -->
+  <ellipse cx="24" cy="24" rx="16.5" ry="5.5" transform="rotate(-30 24 24)" class="orbit" />
+  
+  <!-- Esfera Central (Portal Neural) -->
+  <circle cx="24" cy="24" r="8.5" class="core" />
+  
+  <!-- Satélites posicionados sobre la órbita inclinada -->
+  <g transform="rotate(-30 24 24)">
+    <!-- Satélite 1 (extremo izquierdo) -->
+    <circle cx="7.5" cy="24" r="2.2" class="satellite" />
+    <!-- Satélite 2 (extremo derecho) -->
+    <circle cx="40.5" cy="24" r="2.2" class="satellite" />
+    <!-- Satélite 3 (superior / intermedio) -->
+    <circle cx="24" cy="18.5" r="2.2" class="satellite" />
+  </g>
+</svg>

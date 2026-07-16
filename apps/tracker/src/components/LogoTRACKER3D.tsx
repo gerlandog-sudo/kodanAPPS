@@ -85,9 +85,9 @@ export function LogoTRACKER3D({ size = 48, theme }: LogoTRACKER3DProps) {
 
       // ── Watch hands ──────────────────────────────────────────────────
       const handsMaterial = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(isLight ? '#ffffff' : '#f8fafc'),
-        roughness: isLight ? 0.25 : 0.08,
-        metalness: isLight ? 0.1 : 0.92,
+        color: new THREE.Color(isLight ? '#475569' : '#f8fafc'),
+        roughness: isLight ? 0.35 : 0.08,
+        metalness: isLight ? 0.15 : 0.92,
       });
 
       const handW = 0.028;

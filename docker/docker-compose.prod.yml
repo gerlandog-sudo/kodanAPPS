@@ -66,6 +66,7 @@ services:
       COOKIE_DOMAIN: ${COOKIE_DOMAIN}
       SYSTEM_TENANT_ID: ${SYSTEM_TENANT_ID}
       PUBLIC_SECRET: ${PUBLIC_SECRET}
+      DB_SQLITE_PATH: ${DB_SQLITE_PATH}
     depends_on:
       mariadb:
         condition: service_healthy
@@ -78,6 +79,7 @@ services:
       - ./.env:/var/www/html/.env:ro
       - /opt/kodanapps/backups:/opt/kodanapps/backups:rw
       - /opt/kodanapps/scripts/:/var/www/html/scripts/:ro
+      - /opt/kodanapps/docker/hub:/var/www/html/docker/hub:rw
 
   fronts:
     image: ghcr.io/gerlandog-sudo/kodanapps-fronts:latest

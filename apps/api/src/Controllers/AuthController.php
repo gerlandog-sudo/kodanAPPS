@@ -87,6 +87,15 @@ final class AuthController
             return $this->buildLoginResponse($user, $appId, [], false);
         }
 
+        // Hub: app administrativa para superadmins de cualquier tenant (sin plan_limits)
+        if ($appId === 'hub') {
+            if ((int)$user['is_super_admin'] !== 1) {
+                throw new RuntimeException('Acceso denegado: privilegios de Super Admin requeridos.', 403);
+            }
+            // Super Admin en hub pasa directo, sin chequear roles ni plan_limits
+            return $this->buildLoginResponse($user, $appId, [], false);
+        }
+
         // Validar acceso al plan + roles usando PlanAccessValidator
         $appAccess = $this->planAccessValidator->validateAppAccess(
             (int)$user['tenant_id'],

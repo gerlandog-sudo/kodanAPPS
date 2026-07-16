@@ -217,6 +217,50 @@ return function (Router $router, array $app): void {
     });
 
     // ============================================================
+    // Theme (JWT - disponible para cualquier app)
+    // ============================================================
+    $router->get('/api/auth/theme', function () use ($app) {
+        try {
+            $app['auth']->handle();
+            $data = $app['controllers']['auth']->getTheme();
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Get theme error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    });
+
+    $router->put('/api/auth/theme', function () use ($app) {
+        try {
+            $app['auth']->handle();
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $data = $app['controllers']['auth']->updateTheme($input);
+            header('Content-Type: application/json');
+            echo json_encode($data);
+        } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code < 400 || $code > 599) $code = 500;
+            http_response_code($code);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            error_log('Update theme error: ' . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    });
+
+    // ============================================================
     // Middleware: Super Admin (JWT + SuperAdmin role)
     // ============================================================
     $router->use('/api/super-admin', function (Router $router) use ($app) {

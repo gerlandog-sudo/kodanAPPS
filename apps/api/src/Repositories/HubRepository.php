@@ -333,8 +333,8 @@ final class HubRepository
 
         $apps = $this->db->query("
             SELECT a.id, a.name,
-            (SELECT SUM(tokens_in + tokens_out) FROM logs WHERE app_id = a.id) as app_tokens,
-            (SELECT COUNT(*) FROM logs WHERE app_id = a.id) as app_requests
+            COALESCE((SELECT SUM(tokens_in + tokens_out) FROM logs WHERE app_id = a.id), 0) as app_tokens,
+            COALESCE((SELECT COUNT(*) FROM logs WHERE app_id = a.id), 0) as app_requests
             FROM apps a
         ")->fetchAll();
 

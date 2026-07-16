@@ -496,6 +496,66 @@ final class AuthController
     }
 
     /**
+     * GET /api/auth/theme
+     * Obtiene la preferencia de tema del usuario autenticado.
+     *
+     * @return array{theme: string}
+     */
+    public function getTheme(): array
+    {
+        $userId = TenantContext::getUserId();
+        $appId = TenantContext::getAppId();
+
+        $stmt = $this->pdo->prepare(
+            "SELECT theme_colors FROM user_configs WHERE user_id = :uid AND app_id = :app_id LIMIT 1"
+        );
+        $stmt->execute([':uid' => $userId, ':app_id' => $appId]);
+        $row = $stmt->fetch();
+
+        $theme = 'light';
+        if (!empty($row)) {
+            $colors = json_decode($row['theme_colors'], true);
+            if (isset($colors['theme']) && in_array($colors['theme'], ['light', 'dark'], true)) {
+                $theme = $colors['theme'];
+            }
+        }
+
+        return ['theme' => $theme];
+    }
+
+    /**
+     * PUT /api/auth/theme
+     * Guarda la preferencia de tema del usuario autenticado.
+     *
+     * @param array<string, mixed> $input
+     * @return array{success: bool, theme: string}
+     */
+    public function updateTheme(array $input): array
+    {
+        $theme = $input['theme'] ?? '';
+        if (!in_array($theme, ['light', 'dark'], true)) {
+            throw new InvalidArgumentException(json_encode([
+                'message' => 'Tema inválido',
+                'errors' => ['theme' => 'Valores permitidos: light, dark'],
+            ], JSON_UNESCAPED_UNICODE), 422);
+        }
+
+        $userId = TenantContext::getUserId();
+        $appId = TenantContext::getAppId();
+
+        $this->pdo->prepare(
+            "INSERT INTO user_configs (user_id, app_id, theme_colors) VALUES (:uid, :app_id, :colors)
+             ON DUPLICATE KEY UPDATE theme_colors = VALUES(theme_colors)"
+        )->execute([
+            ':uid' => $userId,
+            ':app_id' => $appId,
+            ':colors' => json_encode(['theme' => $theme]),
+        ]);
+
+        return ['success' => true, 'theme' => $theme];
+    }
+
+    /**
      * Generación de JWT compatible con AuthMiddleware
      * 
      * @param array<string, mixed> $payload

@@ -33,7 +33,7 @@ export function LogoHub3D({ size = 48, theme = 'dark' }: LogoHub3DProps) {
       // Anillo orbital (Toroide fino)
       const torusGeometry = new THREE.TorusGeometry(0.85, 0.035, 16, 100);
       const whiteMaterial = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(isLight ? '#ffffff' : '#f8fafc'),
+        color: new THREE.Color(isLight ? '#475569' : '#f8fafc'),
         roughness: isLight ? 0.25 : 0.08,
         metalness: isLight ? 0.1 : 0.92,
       });

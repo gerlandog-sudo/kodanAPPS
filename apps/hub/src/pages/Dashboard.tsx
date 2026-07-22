@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, KpiCard, Table, TableColumn } from '@kodan-apps/ui-core';
-import { RefreshCw, Activity, Globe, Cpu, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Activity, Globe, Cpu, AlertTriangle, BarChart3 } from 'lucide-react';
 import { hubAdminApi, HubStats } from '../api/client';
+
+const POLL_INTERVAL = 30_000; // auto-refresh cada 30s
 
 type AppGridItem = HubStats['apps_grid'][number];
 
@@ -9,9 +11,9 @@ export function Dashboard() {
   const [stats, setStats] = useState<HubStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchStats = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
       const data = await hubAdminApi.getStats();
@@ -23,8 +25,13 @@ export function Dashboard() {
     }
   }, []);
 
+  // Initial fetch + auto-refresh polling
   useEffect(() => {
     fetchStats();
+    intervalRef.current = setInterval(fetchStats, POLL_INTERVAL);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [fetchStats]);
 
   const appsGridColumns: TableColumn<AppGridItem>[] = [
@@ -49,17 +56,6 @@ export function Dashboard() {
           </div>
         </Card>
       )}
-
-      {/* Top bar with refresh */}
-      <div className="flex items-center justify-end shrink-0">
-        <button
-          onClick={fetchStats}
-          disabled={loading}
-          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md font-medium text-xs leading-5 whitespace-nowrap cursor-pointer border border-border-soft bg-surface text-text-muted hover:bg-surface-hover hover:text-text disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-        </button>
-      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
@@ -140,7 +136,7 @@ export function Dashboard() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 shrink-0">
         <Card className="p-5">
           <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--sys-on-bg)' }}>
             Tráfico de la Última Hora
@@ -161,12 +157,12 @@ export function Dashboard() {
             Última Actualización
           </h3>
           <p className="text-xs mb-4" style={{ color: 'var(--sys-on-bg-muted)' }}>
-            Datos desde la base de datos HUB
+            {stats ? `Actualizado ${new Date().toLocaleTimeString()}` : 'Datos desde la base de datos HUB'}
           </p>
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-emerald-400/80 animate-pulse" />
             <span className="text-sm" style={{ color: 'var(--sys-on-bg-muted)' }}>
-              {stats ? new Date().toLocaleTimeString() : '—'}
+              Cada {POLL_INTERVAL / 1000}s
             </span>
           </div>
         </Card>
@@ -174,7 +170,7 @@ export function Dashboard() {
 
       {/* Top Apps Table */}
       <Card className="p-5 flex-1 flex flex-col min-h-0">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--sys-on-bg)' }}>
+        <h3 className="text-sm font-semibold mb-4 shrink-0" style={{ color: 'var(--sys-on-bg)' }}>
           Apps con Mayor Consumo
         </h3>
         <div className="flex-1 min-h-0">

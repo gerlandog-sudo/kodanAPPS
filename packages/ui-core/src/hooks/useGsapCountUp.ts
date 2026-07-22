@@ -10,19 +10,33 @@ export function useGsapCountUp(
   const prevValue = useRef(0)
   const tlRef = useRef<gsap.core.Tween | null>(null)
 
-  const fmt = (v: number) => v.toLocaleString('es-AR', {
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces,
-  })
+  // Sanitize: treat NaN/Infinity as 0 to avoid "NaN" rendering
+  const isValid = Number.isFinite(value)
+  const safeValue = isValid ? value : 0
+
+  const fmt = (v: number) => {
+    const safe = Number.isFinite(v) ? v : 0
+    return safe.toLocaleString('es-AR', {
+      minimumFractionDigits: decimalPlaces,
+      maximumFractionDigits: decimalPlaces,
+    })
+  }
 
   useEffect(() => {
     if (!enabled || !ref.current) return
-    if (prevValue.current === value) return
+
+    // If value is invalid, just show fallback without animating
+    if (!isValid) {
+      ref.current.textContent = `${prefix}0${suffix}`
+      return
+    }
+
+    if (prevValue.current === safeValue) return
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReducedMotion) {
-      ref.current.textContent = `${prefix}${fmt(value)}${suffix}`
-      prevValue.current = value
+      ref.current.textContent = `${prefix}${fmt(safeValue)}${suffix}`
+      prevValue.current = safeValue
       return
     }
 
@@ -30,7 +44,7 @@ export function useGsapCountUp(
 
     const obj = { val: prevValue.current }
     tlRef.current = gsap.to(obj, {
-      val: value,
+      val: safeValue,
       duration,
       ease: 'power2.out',
       onUpdate: () => {
@@ -39,15 +53,15 @@ export function useGsapCountUp(
         }
       },
       onComplete: () => {
-        prevValue.current = value
+        prevValue.current = safeValue
         if (ref.current) {
-          ref.current.textContent = `${prefix}${fmt(value)}${suffix}`
+          ref.current.textContent = `${prefix}${fmt(safeValue)}${suffix}`
         }
       }
     })
 
     return () => { tlRef.current?.kill() }
-  }, [value, duration, enabled, prefix, suffix, decimalPlaces])
+  }, [safeValue, isValid, duration, enabled, prefix, suffix, decimalPlaces])
 
   return ref
 }

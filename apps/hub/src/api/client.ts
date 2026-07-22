@@ -72,11 +72,11 @@ export const hubAdminApi = {
 // ============================================================
 
 export interface HubStats {
-  tokens: string;
-  requests: string;
+  tokens: number;
+  requests: number;
   apps_active: number;
-  hour: string;
-  errors: string;
+  hour: number;
+  errors: number;
   apps_grid: Array<{
     id: number;
     name: string;
@@ -150,8 +150,8 @@ export interface LogEntry {
 
 export interface ConsumptionStats {
   totals: {
-    tokens: string;
-    requests: string;
+    tokens: number;
+    requests: number;
     latency: string;
     efficiency: string;
   };

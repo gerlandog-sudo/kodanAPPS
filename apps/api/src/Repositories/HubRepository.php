@@ -339,11 +339,11 @@ final class HubRepository
         ")->fetchAll();
 
         return [
-            'tokens' => number_format((float)$tokens),
-            'requests' => number_format((float)$reqs),
+            'tokens' => (int)$tokens,
+            'requests' => (int)$reqs,
             'apps_active' => $appsCount,
-            'hour' => number_format((float)$hour),
-            'errors' => number_format((float)$errors),
+            'hour' => (int)$hour,
+            'errors' => (int)$errors,
             'apps_grid' => $apps,
         ];
     }
@@ -407,8 +407,8 @@ final class HubRepository
 
         return [
             'totals' => [
-                'tokens' => number_format((float)($totalsData['total_tokens'] ?: 0)),
-                'requests' => number_format((float)($totalsData['total_requests'] ?: 0)),
+                'tokens' => (int)($totalsData['total_tokens'] ?: 0),
+                'requests' => (int)($totalsData['total_requests'] ?: 0),
                 'latency' => round((float)($totalsData['avg_latency'] ?: 0), 3) . 's',
                 'efficiency' => $totalsData['total_requests'] > 0
                     ? round(($totalsData['total_success'] / $totalsData['total_requests']) * 100, 1) . '%'

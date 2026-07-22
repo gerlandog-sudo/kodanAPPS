@@ -185,8 +185,8 @@ export function AppsManagement() {
         </Button>
       </div>
 
-      <Card className="p-4">
-        <div className="flex items-center gap-3 mb-4">
+      <Card className="p-4 flex-1 flex flex-col min-h-0">
+        <div className="flex items-center gap-3 mb-4 shrink-0">
           <div className="relative flex-1 max-w-sm">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--sys-on-bg-muted)' }} />
             <Input
@@ -207,6 +207,7 @@ export function AppsManagement() {
           keyExtractor={(item) => item.id}
           loading={loading}
           actions={actions}
+          maxHeight="100%"
           currentPage={page}
           pageSize={limit}
           totalRecords={total}

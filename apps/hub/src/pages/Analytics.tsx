@@ -182,6 +182,7 @@ export function Analytics() {
             data={stats?.data ?? []}
             keyExtractor={(e) => e.id}
             loading={loading}
+            maxHeight="100%"
             emptyState={{
               icon: <Activity size={32} />,
               title: 'Sin datos',

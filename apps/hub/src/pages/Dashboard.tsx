@@ -82,28 +82,28 @@ export function Dashboard() {
           <>
             <KpiCard
               label="Tokens Consumidos"
-              value={Number(stats.tokens)}
+              value={stats.tokens}
               icon={<Activity size={20} />}
               iconBg="rgba(129, 255, 237, 0.1)"
               iconColor="#81ffed"
               backContent={
                 <div className="text-center">
                   <p className="text-xs text-white/40">Total acumulado</p>
-                  <p className="text-lg font-bold text-white">{Number(stats.tokens).toLocaleString()}</p>
+                  <p className="text-lg font-bold text-white">{stats.tokens.toLocaleString()}</p>
                 </div>
               }
               subtitle="Desde el inicio"
             />
             <KpiCard
               label="Peticiones"
-              value={Number(stats.requests)}
+              value={stats.requests}
               icon={<Globe size={20} />}
               iconBg="rgba(99, 102, 241, 0.1)"
               iconColor="#6366f1"
               backContent={
                 <div className="text-center">
                   <p className="text-xs text-white/40">Total peticiones</p>
-                  <p className="text-lg font-bold text-white">{Number(stats.requests).toLocaleString()}</p>
+                  <p className="text-lg font-bold text-white">{stats.requests.toLocaleString()}</p>
                 </div>
               }
               subtitle="Desde el inicio"
@@ -124,15 +124,15 @@ export function Dashboard() {
             />
             <KpiCard
               label="Errores (24h)"
-              value={Number(stats.errors)}
+              value={stats.errors}
               icon={<AlertTriangle size={20} />}
-              iconBg={Number(stats.errors) > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)'}
-              iconColor={Number(stats.errors) > 0 ? '#ef4444' : '#34d399'}
+              iconBg={stats.errors > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(52, 211, 153, 0.1)'}
+              iconColor={stats.errors > 0 ? '#ef4444' : '#34d399'}
               backContent={
                 <div className="text-center">
                   <p className="text-xs text-white/40">Últimas 24h</p>
-                  <p className={`text-lg font-bold ${Number(stats.errors) > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                    {Number(stats.errors)}
+                  <p className={`text-lg font-bold ${stats.errors > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                    {stats.errors}
                   </p>
                 </div>
               }
@@ -186,6 +186,7 @@ export function Dashboard() {
             data={stats?.apps_grid ?? []}
             keyExtractor={(item) => item.id}
             loading={loading}
+            maxHeight="100%"
             emptyState={{
               icon: <BarChart3 size={40} />,
               title: 'Sin datos',

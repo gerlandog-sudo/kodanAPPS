@@ -43,9 +43,10 @@ export function KpiCard({
     minimumFractionDigits: decimalPlaces,
     maximumFractionDigits: decimalPlaces,
   }
-  const displayValue = (formatCurrency ? Math.round(value) : value).toLocaleString('es-AR', fmtOpts)
+  const safeValue = Number.isFinite(value) ? value : 0
+  const displayValue = (formatCurrency ? Math.round(safeValue) : safeValue).toLocaleString('es-AR', fmtOpts)
 
-  const countRef = useGsapCountUp(value, {
+  const countRef = useGsapCountUp(safeValue, {
     duration: 0.8,
     prefix,
     suffix,

@@ -110,20 +110,7 @@ export function ServicesManagement() {
   ];
 
   return (
-    <div className="flex flex-col gap-4 h-full">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--sys-on-bg)' }}>Asignación IA</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--sys-on-bg-muted)' }}>
-            Vinculá apps con modelos del catálogo
-          </p>
-        </div>
-        <Button onClick={() => { setEditingService(null); setFormOpen(true); }}>
-          <Plus size={16} />
-          Nueva Asignación
-        </Button>
-      </div>
-
+    <div className="flex-1 flex flex-col min-h-0 gap-4">
       <Card className="p-4 flex-1 flex flex-col min-h-0">
         <div className="flex items-center gap-3 mb-4 shrink-0">
           <div className="relative flex-1 max-w-sm">
@@ -137,6 +124,10 @@ export function ServicesManagement() {
           </div>
           <Button variant="secondary" onClick={fetchServices} disabled={loading}>
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </Button>
+          <Button onClick={() => { setEditingService(null); setFormOpen(true); }}>
+            <Plus size={16} />
+            Nueva Asignación
           </Button>
         </div>
 

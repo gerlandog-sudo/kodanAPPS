@@ -5,14 +5,12 @@ import { Dashboard } from './pages/Dashboard';
 import { AppsManagement } from './pages/AppsManagement';
 import { CatalogManagement } from './pages/CatalogManagement';
 import { ServicesManagement } from './pages/ServicesManagement';
-import { Analytics } from './pages/Analytics';
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import {
   LayoutDashboard,
   Layers,
   Database,
   Cpu,
-  BarChart3,
   Settings,
   User,
 } from 'lucide-react';
@@ -24,7 +22,7 @@ function Logo3DPlaceholder({ size }: { size?: number }) {
   return <div style={{ width: size ?? 48, height: size ?? 48 }} />;
 }
 
-type Route = 'dashboard' | 'apps' | 'catalog' | 'services' | 'analytics';
+type Route = 'dashboard' | 'apps' | 'catalog' | 'services';
 type View = 'login' | 'set-password' | 'app';
 
 const navItems: NavItem[] = [
@@ -32,7 +30,6 @@ const navItems: NavItem[] = [
   { key: 'apps', label: 'Aplicaciones', icon: <Layers size={18} /> },
   { key: 'catalog', label: 'Catálogo IA', icon: <Database size={18} /> },
   { key: 'services', label: 'Asignación IA', icon: <Cpu size={18} /> },
-  { key: 'analytics', label: 'Estadísticas', icon: <BarChart3 size={18} /> },
 ];
 
 function AppContent() {
@@ -145,7 +142,6 @@ function AppContent() {
             {route === 'apps' && <AppsManagement />}
             {route === 'catalog' && <CatalogManagement />}
             {route === 'services' && <ServicesManagement />}
-            {route === 'analytics' && <Analytics />}
           </div>
         </main>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, KpiCard, Table, TableColumn, Button } from '@kodan-apps/ui-core';
+import { Card, KpiCard, Table, TableColumn } from '@kodan-apps/ui-core';
 import { RefreshCw, Activity, Globe, Cpu, AlertTriangle, BarChart3 } from 'lucide-react';
 import { hubAdminApi, HubStats } from '../api/client';
 
@@ -40,23 +40,9 @@ export function Dashboard() {
   ];
 
   return (
-    <div className="flex flex-col gap-6 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--sys-on-bg)' }}>Dashboard</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--sys-on-bg-muted)' }}>
-            Resumen operativo del Hub de IA
-          </p>
-        </div>
-        <Button variant="secondary" onClick={fetchStats} disabled={loading}>
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          {loading ? 'Cargando...' : 'Actualizar'}
-        </Button>
-      </div>
-
+    <div className="flex-1 flex flex-col min-h-0 gap-4">
       {error && (
-        <Card className="p-4">
+        <Card className="p-4 shrink-0">
           <div className="flex items-center gap-3 text-red-400">
             <AlertTriangle size={20} />
             <span>{error}</span>
@@ -64,8 +50,19 @@ export function Dashboard() {
         </Card>
       )}
 
+      {/* Top bar with refresh */}
+      <div className="flex items-center justify-end shrink-0">
+        <button
+          onClick={fetchStats}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md font-medium text-xs leading-5 whitespace-nowrap cursor-pointer border border-border-soft bg-surface text-text-muted hover:bg-surface-hover hover:text-text disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+        </button>
+      </div>
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} className="p-5">

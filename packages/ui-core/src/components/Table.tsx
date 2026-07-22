@@ -184,8 +184,8 @@ export function Table<T>({
 
   if (loading) {
     return (
-      <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden">
-        <div className="overflow-x-auto overflow-y-auto" style={maxHeight ? { maxHeight } : undefined}>
+      <div className={`w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden${maxHeight ? ' flex flex-col' : ''}`} style={maxHeight ? { maxHeight } as React.CSSProperties : undefined}>
+        <div className={`overflow-x-auto overflow-y-auto${maxHeight ? ' flex-1 min-h-0' : ''}`}>
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -241,10 +241,14 @@ export function Table<T>({
   const actionBtn = 'cursor-pointer active:scale-[0.92]'
 
   return (
-    <div className="w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden" ref={tableRef}>
+    <div
+      ref={tableRef}
+      className={`w-full bg-surface-raised border border-border-soft rounded-lg overflow-hidden${maxHeight ? ' flex flex-col' : ''}`}
+      style={maxHeight ? { maxHeight } as React.CSSProperties : undefined}
+    >
       {selectable && selectedItems.length > 0 && bulkActions && bulkActions.length > 0 && (
         <div
-          className="flex items-center gap-3 px-4 py-2 mb-2 rounded-md bg-primary-container border text-[13px] text-on-primary-container"
+          className={`flex items-center gap-3 px-4 py-2 mb-2 rounded-md bg-primary-container border text-[13px] text-on-primary-container${maxHeight ? ' shrink-0' : ''}`}
           style={{ borderColor: 'color-mix(in srgb, var(--sys-primary) 30%, transparent)' }}
         >
           <span className="font-semibold text-xs">
@@ -273,7 +277,7 @@ export function Table<T>({
         </div>
       )}
 
-      <div className="overflow-x-auto overflow-y-auto" style={maxHeight ? { maxHeight } : undefined}>
+      <div className={`overflow-x-auto overflow-y-auto${maxHeight ? ' flex-1 min-h-0' : ''}`}>
         <table className="w-full border-collapse">
           <thead>
             <tr>
@@ -455,13 +459,15 @@ export function Table<T>({
       </div>
 
       {hasPages && totalPages > 1 && (
-        <PaginationBar
-          page={activePage}
-          totalPages={totalPages}
-          totalRecords={total}
-          pageSize={pageSize!}
-          onPageChange={goToPage}
-        />
+        <div className={maxHeight ? 'shrink-0' : ''}>
+          <PaginationBar
+            page={activePage}
+            totalPages={totalPages}
+            totalRecords={total}
+            pageSize={pageSize!}
+            onPageChange={goToPage}
+          />
+        </div>
       )}
     </div>
   )

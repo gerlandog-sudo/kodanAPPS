@@ -1,3 +1,4 @@
+# Build timestamp: 2026-07-23 12:10 - forced rebuild for testService fix
 FROM php:8.3-fpm-alpine as builder
 
 RUN apk add --no-cache \

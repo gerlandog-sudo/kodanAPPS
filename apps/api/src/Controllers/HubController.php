@@ -328,35 +328,50 @@ final class HubController
      */
     public function testService(int $id): void
     {
-        $service = $this->repo->getServiceById($id);
-        if (!$service) {
-            http_response_code(404);
-            echo json_encode(['status' => 'error', 'message' => 'Servicio no encontrado.']);
-            return;
+        try {
+            $service = $this->repo->getServiceById($id);
+            if (!$service) {
+                http_response_code(404);
+                echo json_encode(['status' => 'error', 'message' => 'Servicio no encontrado.']);
+                return;
+            }
+
+            $startTime = microtime(true);
+            $p = ['messages' => [['role' => 'user', 'content' => "respond only with 'pong'"]]];
+
+            if ($service['protocol'] === 'openai-v1') {
+                $res = $this->callOpenAIDirect($service, $p);
+            } else {
+                $res = $this->callGeminiDirect($service, $p);
+            }
+
+            $latency = round(microtime(true) - $startTime, 2);
+
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => $res['status'],
+                'http_code' => $res['http_code'] ?? 0,
+                'response' => $res['response'] ?? '',
+                'data' => $res['data'] ?? null,
+                'message' => $res['message'] ?? '',
+                'debug_request' => $p,
+                'debug_endpoint' => $service['endpoint'],
+                'latency' => $latency . 's',
+            ]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'error',
+                'http_code' => 500,
+                'response' => '',
+                'data' => null,
+                'message' => 'Error interno: ' . $e->getMessage(),
+                'debug_request' => null,
+                'debug_endpoint' => '',
+                'latency' => '0s',
+            ]);
         }
-
-        $startTime = microtime(true);
-        $p = ['messages' => [['role' => 'user', 'content' => "respond only with 'pong'"]]];
-
-        if ($service['protocol'] === 'openai-v1') {
-            $res = $this->callOpenAIDirect($service, $p);
-        } else {
-            $res = $this->callGeminiDirect($service, $p);
-        }
-
-        $latency = round(microtime(true) - $startTime, 2);
-
-        header('Content-Type: application/json');
-        echo json_encode([
-            'status' => $res['status'],
-            'http_code' => $res['http_code'] ?? 0,
-            'response' => $res['response'] ?? '',
-            'data' => $res['data'] ?? null,
-            'message' => $res['message'] ?? '',
-            'debug_request' => $p,
-            'debug_endpoint' => $service['endpoint'],
-            'latency' => $latency . 's',
-        ]);
     }
 
     /**
@@ -435,86 +450,139 @@ final class HubController
 
     private function callOpenAIDirect(array $service, array $payload): array
     {
-        $messages = $payload['messages'] ?? [['role' => 'user', 'content' => 'pong']];
-        $openAiPayload = [
-            'model' => $service['identifier'],
-            'messages' => $messages,
-            'temperature' => 0.7,
-            'max_tokens' => 10,
-        ];
+        try {
+            $messages = $payload['messages'] ?? [];
+            if (empty($messages)) {
+                $messages[] = ['role' => 'user', 'content' => 'Hello (System Auto-Ping)'];
+            }
 
-        $ch = curl_init($service['endpoint']);
-        curl_setopt_array($ch, [
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . trim($service['api_key']),
-            ],
-            CURLOPT_POSTFIELDS => json_encode($openAiPayload),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_TIMEOUT => 30,
-        ]);
+            $openAiPayload = [
+                'model' => $service['identifier'],
+                'messages' => $messages,
+                'temperature' => 0.7,
+                'max_tokens' => 10,
+            ];
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
+            $ch = curl_init($service['endpoint']);
+            if ($ch === false) {
+                return ['status' => 'error', 'message' => 'No se pudo inicializar cURL', 'http_code' => 500];
+            }
 
-        if ($error) {
-            return ['status' => 'error', 'message' => 'CURL Error: ' . $error, 'http_code' => 500];
+            curl_setopt_array($ch, [
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . trim($service['api_key']),
+                ],
+                CURLOPT_POSTFIELDS => json_encode($openAiPayload),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_TIMEOUT => 60,
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            $this->logAiDebug('OpenAI', $service['identifier'], $httpCode, $openAiPayload, $response, $error);
+
+            if ($error) {
+                return ['status' => 'error', 'message' => 'OpenAI Proxy CURL Error: ' . $error, 'http_code' => 500];
+            }
+
+            $data = json_decode($response, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return ['status' => 'error', 'message' => 'Error decodificando respuesta JSON', 'http_code' => $httpCode, 'response' => $response];
+            }
+
+            $extractedText = $data['choices'][0]['message']['content'] ?? ($data['choices'][0]['text'] ?? '');
+
+            return [
+                'status' => ($httpCode === 200 && !empty($extractedText)) ? 'success' : 'error',
+                'http_code' => $httpCode,
+                'response' => $extractedText,
+                'data' => $data,
+                'message' => $data['error']['message'] ?? ($httpCode === 200 ? 'OK' : 'OpenAI API Error ' . $httpCode),
+            ];
+        } catch (\Throwable $e) {
+            return ['status' => 'error', 'message' => 'Excepción en callOpenAIDirect: ' . $e->getMessage(), 'http_code' => 500];
         }
-
-        $data = json_decode($response, true);
-        $extractedText = $data['choices'][0]['message']['content'] ?? '';
-
-        return [
-            'status' => ($httpCode === 200 && !empty($extractedText)) ? 'success' : 'error',
-            'http_code' => $httpCode,
-            'response' => $extractedText,
-            'data' => $data,
-            'message' => $data['error']['message'] ?? 'OK',
-        ];
     }
 
     private function callGeminiDirect(array $service, array $payload): array
     {
-        $url = ($service['endpoint'] ?: "https://generativelanguage.googleapis.com/v1/models/")
-            . $service['identifier'] . ":generateContent?key=" . trim($service['api_key']);
+        try {
+            $baseUrl = $service['endpoint'] ?: "https://generativelanguage.googleapis.com/v1/models/";
+            $url = $baseUrl . $service['identifier'] . ":generateContent?key=" . trim($service['api_key']);
 
-        $geminiPayload = [
-            'contents' => [['parts' => [['text' => 'respond only with pong']]]],
-            'generationConfig' => ['temperature' => 0.7, 'maxOutputTokens' => 10],
-        ];
+            $geminiPayload = [
+                'contents' => [['parts' => [['text' => 'respond only with pong']]]],
+                'generationConfig' => ['temperature' => 0.7, 'maxOutputTokens' => 10],
+            ];
 
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($geminiPayload),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_TIMEOUT => 30,
-        ]);
+            $ch = curl_init($url);
+            if ($ch === false) {
+                return ['status' => 'error', 'message' => 'No se pudo inicializar cURL', 'http_code' => 500];
+            }
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
+            curl_setopt_array($ch, [
+                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                CURLOPT_POSTFIELDS => json_encode($geminiPayload),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_TIMEOUT => 60,
+            ]);
 
-        if ($error) {
-            return ['status' => 'error', 'message' => 'CURL Error: ' . $error, 'http_code' => 500];
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            $this->logAiDebug('Gemini', $service['identifier'], $httpCode, $geminiPayload, $response, $error);
+
+            if ($error) {
+                return ['status' => 'error', 'message' => 'CURL Error: ' . $error, 'http_code' => 500];
+            }
+
+            $data = json_decode($response, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return ['status' => 'error', 'message' => 'Error decodificando respuesta JSON', 'http_code' => $httpCode, 'response' => $response];
+            }
+
+            $extractedText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+            return [
+                'status' => ($httpCode === 200 && !empty($extractedText)) ? 'success' : 'error',
+                'http_code' => $httpCode,
+                'response' => $extractedText,
+                'data' => $data,
+                'message' => $data['error']['message'] ?? ($httpCode === 200 ? 'OK' : 'API Error ' . $httpCode),
+            ];
+        } catch (\Throwable $e) {
+            return ['status' => 'error', 'message' => 'Excepción en callGeminiDirect: ' . $e->getMessage(), 'http_code' => 500];
         }
+    }
 
-        $data = json_decode($response, true);
-        $extractedText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
-        return [
-            'status' => ($httpCode === 200 && !empty($extractedText)) ? 'success' : 'error',
-            'http_code' => $httpCode,
-            'response' => $extractedText,
-            'data' => $data,
-            'message' => $data['error']['message'] ?? 'OK',
-        ];
+    private function logAiDebug(string $provider, string $model, int $httpCode, array $request, string $response, string $error): void
+    {
+        try {
+            $logDir = dirname(__DIR__, 2) . '/logs';
+            if (!is_dir($logDir)) {
+                @mkdir($logDir, 0777, true);
+            }
+            $logFile = $logDir . '/ai_debug.log';
+            $logMsg = "[" . date('Y-m-d H:i:s') . "] PROXY: $provider | MODEL: $model | STATUS: $httpCode\n";
+            $logMsg .= "REQUEST: " . json_encode($request) . "\n";
+            $logMsg .= "RESPONSE: " . substr($response, 0, 1000) . "\n";
+            if ($error) {
+                $logMsg .= "CURL ERROR: $error\n";
+            }
+            $logMsg .= "---\n";
+            @file_put_contents($logFile, $logMsg, FILE_APPEND);
+        } catch (\Throwable $e) {
+            // Silently ignore logging errors
+        }
     }
 }

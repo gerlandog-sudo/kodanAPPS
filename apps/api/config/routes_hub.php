@@ -48,24 +48,24 @@ return function (Router $router, array $app): void {
             $hubController->createApp();
         });
 
-        $router->patch('/api/hub-admin/apps/{id}', function (int $id) use ($auth, $hubController) {
+        $router->patch('/api/hub-admin/apps/{id}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->updateApp($id);
+            $hubController->updateApp($p['id']);
         });
 
-        $router->post('/api/hub-admin/apps/{id}/rotate-token', function (int $id) use ($auth, $hubController) {
+        $router->post('/api/hub-admin/apps/{id}/rotate-token', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->rotateToken($id);
+            $hubController->rotateToken($p['id']);
         });
 
-        $router->post('/api/hub-admin/apps/{id}/toggle-status', function (int $id) use ($auth, $hubController) {
+        $router->post('/api/hub-admin/apps/{id}/toggle-status', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->toggleAppStatus($id);
+            $hubController->toggleAppStatus($p['id']);
         });
 
-        $router->delete('/api/hub-admin/apps/{id}', function (int $id) use ($auth, $hubController) {
+        $router->delete('/api/hub-admin/apps/{id}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->archiveApp($id);
+            $hubController->archiveApp($p['id']);
         });
 
         // --- Catalog CRUD ---
@@ -79,14 +79,14 @@ return function (Router $router, array $app): void {
             $hubController->createCatalogEntry();
         });
 
-        $router->patch('/api/hub-admin/catalog/{id}', function (int $id) use ($auth, $hubController) {
+        $router->patch('/api/hub-admin/catalog/{id}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->updateCatalogEntry($id);
+            $hubController->updateCatalogEntry($p['id']);
         });
 
-        $router->delete('/api/hub-admin/catalog/{id}', function (int $id) use ($auth, $hubController) {
+        $router->delete('/api/hub-admin/catalog/{id}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->deleteCatalogEntry($id);
+            $hubController->deleteCatalogEntry($p['id']);
         });
 
         // --- Services CRUD ---
@@ -100,14 +100,14 @@ return function (Router $router, array $app): void {
             $hubController->createService();
         });
 
-        $router->patch('/api/hub-admin/services/{id}', function (int $id) use ($auth, $hubController) {
+        $router->patch('/api/hub-admin/services/{id}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->updateService($id);
+            $hubController->updateService($p['id']);
         });
 
-        $router->delete('/api/hub-admin/services/{id}', function (int $id) use ($auth, $hubController) {
+        $router->delete('/api/hub-admin/services/{id}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->deleteService($id);
+            $hubController->deleteService($p['id']);
         });
 
         $router->post('/api/hub-admin/services/{id}/test', function (array $p) use ($auth, $hubController) {
@@ -127,14 +127,14 @@ return function (Router $router, array $app): void {
         });
 
         // --- Settings ---
-        $router->get('/api/hub-admin/settings/{key}', function (string $key) use ($auth, $hubController) {
+        $router->get('/api/hub-admin/settings/{key}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->getSetting($key);
+            $hubController->getSetting($p['key']);
         });
 
-        $router->put('/api/hub-admin/settings/{key}', function (string $key) use ($auth, $hubController) {
+        $router->put('/api/hub-admin/settings/{key}', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->updateSetting($key);
+            $hubController->updateSetting($p['key']);
         });
     });
 };

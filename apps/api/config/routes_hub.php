@@ -110,9 +110,9 @@ return function (Router $router, array $app): void {
             $hubController->deleteService($id);
         });
 
-        $router->post('/api/hub-admin/services/{id}/test', function (int $id) use ($auth, $hubController) {
+        $router->post('/api/hub-admin/services/{id}/test', function (array $p) use ($auth, $hubController) {
             $auth->handle();
-            $hubController->testService($id);
+            $hubController->testService($p['id']);
         });
 
         // --- Analytics ---

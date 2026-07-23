@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Input, ConfirmDialog } from '@kodan-apps/ui-core';
 import type { TableColumn, TableAction } from '@kodan-apps/ui-core';
-import { Plus, Search, RefreshCw, Trash2, TestTube, CheckCircle, XCircle, Inbox, Pencil } from 'lucide-react';
+import { Plus, Search, RefreshCw, Trash2, Play, CheckCircle, XCircle, Inbox, Pencil } from 'lucide-react';
 import { hubAdminApi, ServiceAssignment } from '../api/client';
 import { ServiceFormModal } from '../components/ServiceFormModal';
 import { ServiceDiagnosticModal } from '../components/ServiceDiagnosticModal';
@@ -93,7 +93,7 @@ export function ServicesManagement() {
   const actions: TableAction<ServiceAssignment>[] = [
     {
       label: 'Testear',
-      icon: <TestTube size={14} />,
+      icon: <Play size={14} />,
       onClick: (row) => setDiagServiceId(row.id),
     },
     {

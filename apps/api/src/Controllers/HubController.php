@@ -448,6 +448,43 @@ final class HubController
         return $headers;
     }
 
+    private function httpPost(string $url, array $headers, array $body, int $timeout = 30): array
+    {
+        $httpOptions = [
+            'http' => [
+                'method' => 'POST',
+                'header' => [],
+                'content' => json_encode($body),
+                'timeout' => $timeout,
+                'ignore_errors' => true,
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ],
+        ];
+
+        foreach ($headers as $name => $value) {
+            $httpOptions['http']['header'][] = "$name: $value";
+        }
+
+        $context = stream_context_create($httpOptions);
+        $response = @file_get_contents($url, false, $context);
+
+        $httpCode = 0;
+        if (isset($http_response_header)) {
+            preg_match('#HTTP/\d\.\d\s+(\d+)#', $http_response_header[0], $matches);
+            $httpCode = (int)($matches[1] ?? 0);
+        }
+
+        $error = '';
+        if ($response === false) {
+            $error = error_get_last()['message'] ?? 'Unknown error';
+        }
+
+        return [$response, $httpCode, $error];
+    }
+
     private function callOpenAIDirect(array $service, array $payload): array
     {
         try {
@@ -463,32 +500,20 @@ final class HubController
                 'max_tokens' => 10,
             ];
 
-            $ch = curl_init($service['endpoint']);
-            if ($ch === false) {
-                return ['status' => 'error', 'message' => 'No se pudo inicializar cURL', 'http_code' => 500];
-            }
-
-            curl_setopt_array($ch, [
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/json',
-                    'Authorization: Bearer ' . trim($service['api_key']),
+            [$response, $httpCode, $error] = $this->httpPost(
+                $service['endpoint'],
+                [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . trim($service['api_key']),
                 ],
-                CURLOPT_POSTFIELDS => json_encode($openAiPayload),
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_TIMEOUT => 60,
-            ]);
+                $openAiPayload,
+                30
+            );
 
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error = curl_error($ch);
-            curl_close($ch);
-
-            $this->logAiDebug('OpenAI', $service['identifier'], $httpCode, $openAiPayload, $response, $error);
+            $this->logAiDebug('OpenAI', $service['identifier'], $httpCode, $openAiPayload, $response ?: '', $error);
 
             if ($error) {
-                return ['status' => 'error', 'message' => 'OpenAI Proxy CURL Error: ' . $error, 'http_code' => 500];
+                return ['status' => 'error', 'message' => 'OpenAI HTTP Error: ' . $error, 'http_code' => 500];
             }
 
             $data = json_decode($response, true);
@@ -521,29 +546,17 @@ final class HubController
                 'generationConfig' => ['temperature' => 0.7, 'maxOutputTokens' => 10],
             ];
 
-            $ch = curl_init($url);
-            if ($ch === false) {
-                return ['status' => 'error', 'message' => 'No se pudo inicializar cURL', 'http_code' => 500];
-            }
+            [$response, $httpCode, $error] = $this->httpPost(
+                $url,
+                ['Content-Type' => 'application/json'],
+                $geminiPayload,
+                30
+            );
 
-            curl_setopt_array($ch, [
-                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_POSTFIELDS => json_encode($geminiPayload),
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_TIMEOUT => 60,
-            ]);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error = curl_error($ch);
-            curl_close($ch);
-
-            $this->logAiDebug('Gemini', $service['identifier'], $httpCode, $geminiPayload, $response, $error);
+            $this->logAiDebug('Gemini', $service['identifier'], $httpCode, $geminiPayload, $response ?: '', $error);
 
             if ($error) {
-                return ['status' => 'error', 'message' => 'CURL Error: ' . $error, 'http_code' => 500];
+                return ['status' => 'error', 'message' => 'Gemini HTTP Error: ' . $error, 'http_code' => 500];
             }
 
             $data = json_decode($response, true);

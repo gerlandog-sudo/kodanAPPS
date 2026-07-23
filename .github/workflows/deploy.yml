@@ -79,6 +79,13 @@ jobs:
             cd /opt/kodanapps
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
+            # Asegurar permisos de escritura para SQLite del Hub
+            # (www-data dentro del contenedor necesita escribir en el volumen montado)
+            mkdir -p /opt/kodanapps/docker/hub
+            touch /opt/kodanapps/docker/hub/hub.sqlite
+            chmod 777 /opt/kodanapps/docker/hub
+            chmod 666 /opt/kodanapps/docker/hub/hub.sqlite
+            
             # Descargar imágenes actualizadas usando compose apuntando a la subcarpeta docker/
             docker compose -f docker/docker-compose.prod.yml pull
             
